@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buy Sell Trade Sxm — Petites annonces de l'île</title>
+<meta name="description" content="Achetez et vendez d'occasion sur toute l'île : Saint-Martin et Sint Maarten, en euros ou en dollars, en français, anglais ou néerlandais.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sea:#0B6E7F;
+    --sea-deep:#08525F;
+    --ink:#132A2E;
+    --paper:#FBF7EF;
+    --paper-deep:#F0E7D4;
+    --sun:#F2B705;
+    --coral:#E4572E;
+    --fr:#C1443B;
+    --nl:#1E5AA8;
+    --white:#FFFFFF;
+    --mute:#5C6B6A;
+    --line:#132A2E;
+    --field:#FFFFFF;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--white);
+    color:var(--ink);
+    font-family:'Instrument Sans',system-ui,sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.grotesk{font-family:'Space Grotesk','Instrument Sans',sans-serif;letter-spacing:-0.02em;}
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  button{font-family:inherit;font-size:inherit;cursor:pointer;color:inherit;background:none;border:none;}
+  input,select{font-family:inherit;font-size:inherit;color:inherit;}
+  :focus-visible{outline:3px solid var(--sea);outline-offset:2px;border-radius:4px;}
+
+  /* ---------------- TOP BAR ---------------- */
+  .topbar{
+    position:sticky;top:0;z-index:60;
+    background:var(--paper);
+    border-bottom:2px solid var(--line);
+  }
+  .bar-inner{
+    max-width:1320px;margin:0 auto;
+    padding:12px 24px;
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+    gap:20px;
+  }
+  .logo{display:flex;flex-direction:column;line-height:1;}
+  .logo .mark{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:21px;
+    letter-spacing:-0.03em;
+  }
+  .logo .mark b{color:var(--sea);}
+  .logo .sub{font-size:10.5px;color:var(--mute);font-weight:500;margin-top:3px;letter-spacing:0.01em;}
+
+  .search{
+    display:flex;align-items:stretch;
+    border:2px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--field);
+    overflow:hidden;
+    max-width:640px;
+  }
+  .search input[type=text]{
+    flex:1;min-width:0;
+    border:none;padding:0 14px;
+    background:transparent;
+  }
+  .search input[type=text]::placeholder{color:#9AA6A5;}
+  .search .divide{width:2px;background:var(--paper-deep);}
+  .search select{
+    border:none;background:transparent;
+    padding:0 30px 0 12px;
+    max-width:160px;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23132A2E'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;
+  }
+  .cur-toggle{display:flex;align-items:center;padding:0 4px;background:var(--paper);}
+  .cur-toggle button{
+    width:30px;height:30px;border-radius:7px;
+    font-weight:600;color:var(--mute);
+  }
+  .cur-toggle button[aria-pressed=true]{background:var(--ink);color:var(--white);}
+  .search .go{
+    background:var(--sea);color:var(--white);
+    font-weight:600;padding:0 22px;
+    border-left:2px solid var(--line);
+  }
+  .search .go:hover{background:var(--sea-deep);}
+
+  .bar-actions{display:flex;align-items:center;gap:6px;}
+  .lang{display:flex;border:2px solid var(--line);border-radius:8px;overflow:hidden;margin-right:6px;}
+  .lang button{padding:5px 8px;font-size:12px;font-weight:600;color:var(--mute);}
+  .lang button[aria-pressed=true]{background:var(--sea);color:var(--white);}
+  .icon-btn{
+    display:flex;align-items:center;gap:6px;
+    padding:8px 10px;border-radius:8px;font-weight:500;color:var(--ink);
+  }
+  .icon-btn:hover{background:var(--paper-deep);}
+  .icon-btn .n{
+    font-size:11px;font-weight:700;
+    background:var(--ink);color:var(--white);
+    min-width:17px;height:17px;border-radius:9px;
+    display:inline-flex;align-items:center;justify-content:center;padding:0 4px;
+  }
+  .icon-btn.on .heart{color:var(--coral);}
+  .post{
+    background:var(--sun);color:var(--ink);
+    font-weight:700;
+    padding:10px 16px;border-radius:9px;
+    border:2px solid var(--line);
+    white-space:nowrap;
+  }
+  .post:hover{background:#e0a800;}
+
+  /* ---------------- CATEGORY RAIL ---------------- */
+  .catrail{
+    border-bottom:2px solid var(--line);
+    background:var(--white);
+    position:sticky;top:69px;z-index:55;
+  }
+  .catrail-inner{
+    max-width:1320px;margin:0 auto;padding:0 24px;
+    display:flex;gap:4px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .catrail-inner::-webkit-scrollbar{display:none;}
+  .cat{
+    position:relative;
+    padding:14px 12px;
+    white-space:nowrap;
+    font-weight:500;color:var(--mute);
+    flex-shrink:0;
+  }
+  .cat:hover{color:var(--ink);}
+  .cat[aria-pressed=true]{color:var(--ink);font-weight:600;}
+  .cat[aria-pressed=true]::after{
+    content:"";position:absolute;left:12px;right:12px;bottom:-2px;height:4px;
+    background:var(--sea);
+  }
+
+  /* ---------------- LAYOUT ---------------- */
+  .layout{
+    max-width:1320px;margin:0 auto;
+    padding:28px 24px 64px;
+    display:grid;
+    grid-template-columns:248px 1fr;
+    gap:32px;
+    align-items:start;
+  }
+
+  /* ---------------- FILTERS ---------------- */
+  .filters{
+    position:sticky;top:132px;
+    border:2px solid var(--line);
+    border-radius:14px;
+    background:var(--paper);
+    padding:20px 18px;
+  }
+  .filters h2{font-size:15px;font-weight:700;margin-bottom:4px;}
+  .filters .hint{font-size:12px;color:var(--mute);margin-bottom:18px;}
+  .fgroup{padding:16px 0;border-top:1.5px solid rgba(19,42,46,.16);}
+  .fgroup:first-of-type{border-top:none;padding-top:0;}
+  .fgroup > .flabel{font-weight:600;font-size:13px;margin-bottom:10px;display:block;}
+  .price-row{display:flex;gap:8px;align-items:center;}
+  .price-row input{
+    width:100%;border:2px solid var(--line);border-radius:7px;
+    padding:7px 8px;background:var(--field);
+  }
+  .price-row span{color:var(--mute);}
+  .cur-prefix{font-weight:600;font-size:12px;color:var(--mute);margin-top:8px;display:block;}
+  .check{
+    display:flex;align-items:center;gap:9px;
+    padding:6px 0;font-size:13px;cursor:pointer;
+  }
+  .check input{
+    appearance:none;width:18px;height:18px;flex-shrink:0;
+    border:2px solid var(--line);border-radius:5px;background:var(--field);
+    display:grid;place-content:center;
+  }
+  .check input:checked{background:var(--sea);border-color:var(--sea);}
+  .check input:checked::after{content:"";width:9px;height:9px;background:var(--white);clip-path:polygon(14% 44%,0 65%,44% 100%,100% 16%,80% 0,39% 62%);}
+  .check .side-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .check .side-dot.fr{background:var(--fr);}
+  .check .side-dot.nl{background:var(--nl);}
+  .save-search{
+    margin-top:18px;width:100%;
+    border:2px dashed var(--line);border-radius:9px;
+    padding:11px;font-weight:600;font-size:13px;
+    background:var(--field);
+    transition:background .15s;
+  }
+  .save-search:hover{background:var(--paper-deep);}
+  .save-search.saved{background:var(--sea);color:var(--white);border-style:solid;border-color:var(--sea);}
+  .saved-list{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+  .saved-list .s{
+    font-size:12px;color:var(--sea-deep);font-weight:600;
+    display:flex;align-items:center;gap:6px;
+  }
+  .saved-list .s::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--sea);}
+
+  /* ---------------- RESULTS ---------------- */
+  .board-head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;}
+  .board-head h2{font-size:19px;font-weight:700;}
+  .board-head .tally{font-size:12px;color:var(--mute);}
+
+  .board{
+    display:flex;gap:16px;
+    overflow-x:auto;
+    padding:22px 16px 26px;
+    margin:0 -4px 34px;
+    background:
+      repeating-linear-gradient(115deg, rgba(19,42,46,.035) 0 2px, transparent 2px 9px),
+      radial-gradient(circle at 20% 30%, rgba(19,42,46,.05), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(19,42,46,.05), transparent 40%),
+      var(--paper-deep);
+    border:2px solid var(--line);
+    border-radius:16px;
+    scrollbar-width:thin;
+  }
+  .board .card{flex:0 0 262px;}
+
+  .results-head{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;margin-bottom:18px;
+  }
+  .count{font-weight:600;font-size:15px;}
+  .count small{color:var(--mute);font-weight:400;}
+  .controls{display:flex;align-items:center;gap:10px;}
+  .controls select{
+    border:2px solid var(--line);border-radius:8px;
+    padding:7px 30px 7px 10px;background:var(--field);font-weight:500;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23132A2E'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 11px center;
+  }
+  .view-toggle{display:flex;border:2px solid var(--line);border-radius:8px;overflow:hidden;}
+  .view-toggle button{padding:7px 9px;color:var(--mute);display:flex;}
+  .view-toggle button[aria-pressed=true]{background:var(--ink);color:var(--white);}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px 16px;
+  }
+
+  /* ---------------- CARD ---------------- */
+  .card{
+    position:relative;
+    border:2px solid var(--line);
+    border-radius:12px;
+    background:var(--white);
+    overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .card .stripe{position:absolute;left:0;top:0;bottom:0;width:4px;z-index:3;}
+  .card .stripe.fr{background:var(--fr);}
+  .card .stripe.nl{background:var(--nl);}
+  .card .photo{
+    position:relative;
+    aspect-ratio:4/3;
+    display:flex;align-items:center;justify-content:center;
+    font-size:48px;
+    overflow:hidden;
+  }
+  .card .photo::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 44px rgba(19,42,46,.14);pointer-events:none;}
+  .card .photo .emo{transition:transform .18s ease;filter:drop-shadow(0 5px 7px rgba(0,0,0,.2));}
+  .card:hover .photo .emo{transform:scale(1.08);}
+  .card .gallery{
+    position:absolute;left:8px;bottom:8px;
+    background:rgba(19,42,46,.82);color:var(--white);
+    font-size:11px;font-weight:600;
+    padding:2px 7px;border-radius:20px;
+    display:flex;align-items:center;gap:4px;
+  }
+  .fav{
+    position:absolute;right:8px;top:8px;z-index:4;
+    width:32px;height:32px;border-radius:50%;
+    background:rgba(255,255,255,.92);
+    border:2px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;line-height:1;
+    transition:transform .12s ease;
+  }
+  .fav:hover{transform:scale(1.1);}
+  .fav[aria-pressed=true]{color:var(--coral);}
+  .fav[aria-pressed=true].pop{animation:pop .28s ease;}
+  @keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.35);}100%{transform:scale(1);}}
+
+  .card .body{padding:11px 12px 13px;display:flex;flex-direction:column;gap:5px;flex:1;}
+  .card .price{font-weight:600;font-size:16px;display:flex;align-items:baseline;gap:7px;font-variant-numeric:tabular-nums;}
+  .card .price .alt{font-size:12.5px;font-weight:400;color:var(--mute);}
+  .card .price .drop{
+    font-size:12px;font-weight:700;color:var(--white);background:var(--coral);
+    width:17px;height:17px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+    align-self:center;
+  }
+  .card .ttl{
+    font-size:13.5px;line-height:1.35;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+    min-height:2.7em;
+  }
+  .card .meta{font-size:11.5px;color:var(--mute);margin-top:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .card .meta .area{font-weight:600;color:var(--ink);}
+  .card .meta .area .n{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;}
+  .card .meta .area .n.fr{background:var(--fr);}
+  .card .meta .area .n.nl{background:var(--nl);}
+  .badges{display:flex;gap:5px;flex-wrap:wrap;}
+  .badge{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.01em;}
+  .badge.pro{color:var(--sea-deep);border:1.5px solid var(--sea);}
+  .badge.urgent{background:var(--sun);color:var(--ink);border:1.5px solid var(--line);}
+  .card .status-tag{
+    position:absolute;inset:0;z-index:5;
+    background:rgba(251,247,239,.78);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Instrument Sans',sans-serif;font-style:italic;font-weight:600;
+    font-size:17px;color:var(--ink);
+  }
+  .card .status-tag span{border:2px solid var(--line);background:var(--white);padding:5px 16px;border-radius:8px;transform:rotate(-4deg);}
+
+  /* pinned featured cards */
+  .board .card{
+    box-shadow:4px 5px 0 rgba(19,42,46,.9);
+    --tilt:-0.8deg;
+  }
+  .board .card:nth-child(2){--tilt:0.9deg;}
+  .board .card:nth-child(3){--tilt:-0.4deg;}
+  .board .card:nth-child(4){--tilt:0.6deg;}
+  .board .card{transform:rotate(var(--tilt));animation:pindrop .5s cubic-bezier(.2,.9,.3,1.1) backwards;animation-delay:calc(var(--i,0) * 55ms);}
+  @keyframes pindrop{from{opacity:0;transform:rotate(calc(var(--tilt) * 6)) translateY(-14px);}}
+  .board .pin{
+    position:absolute;left:50%;top:-9px;transform:translateX(-50%);z-index:6;
+    width:16px;height:16px;border-radius:50%;
+    background:radial-gradient(circle at 34% 34%, #ff9166, var(--coral) 60%, #a5371c);
+    border:2px solid var(--line);
+  }
+
+  /* list view */
+  .grid.list{grid-template-columns:1fr;gap:12px;}
+  .grid.list .card{flex-direction:row;}
+  .grid.list .card .photo{aspect-ratio:auto;width:190px;flex-shrink:0;font-size:40px;}
+  .grid.list .card .body{padding:14px 16px;}
+  .grid.list .card .ttl{-webkit-line-clamp:1;min-height:0;font-size:15px;}
+  .grid.list .card .fav{right:12px;}
+
+  .no-results{
+    grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--mute);
+    border:2px dashed var(--line);border-radius:14px;
+  }
+  .no-results b{display:block;color:var(--ink);font-family:'Space Grotesk',sans-serif;font-size:17px;margin-bottom:6px;}
+
+  /* ---------------- HERO BAND ---------------- */
+  .hero{
+    background:
+      radial-gradient(circle at 88% -20%, rgba(11,110,127,.15), transparent 46%),
+      radial-gradient(circle at 2% 130%, rgba(242,183,5,.16), transparent 44%),
+      var(--paper);
+    border-bottom:2px solid var(--line);
+  }
+  .hero-inner{
+    max-width:1320px;margin:0 auto;padding:34px 24px 30px;
+  }
+  .hero h1{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;
+    font-size:clamp(23px,3.1vw,36px);line-height:1.06;
+    max-width:22ch;
+  }
+  .hero p{margin-top:12px;color:var(--mute);max-width:58ch;font-size:14.5px;line-height:1.55;}
+  .hero-props{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px;}
+  .prop{
+    display:flex;align-items:center;gap:8px;
+    background:var(--white);border:2px solid var(--line);border-radius:10px;
+    padding:8px 13px;font-weight:600;font-size:12.5px;
+  }
+  .prop .k{
+    width:21px;height:21px;border-radius:6px;flex-shrink:0;
+    display:grid;place-content:center;
+    font-size:11px;color:var(--white);background:var(--sea);
+    font-family:'Space Grotesk',sans-serif;
+  }
+  .prop .k.split{background:linear-gradient(90deg,var(--fr) 0 50%,var(--nl) 50% 100%);}
+  .prop .k.cur{background:var(--ink);letter-spacing:-0.03em;}
+
+  /* ---------------- MARKETING STRIP ---------------- */
+  .strip{border-top:2px solid var(--line);background:var(--paper);}
+  .strip-inner{max-width:1320px;margin:0 auto;padding:56px 24px;}
+  .strip h2{font-family:'Space Grotesk',sans-serif;font-size:clamp(20px,2.4vw,27px);font-weight:700;margin-bottom:7px;}
+  .strip .lede{color:var(--mute);max-width:54ch;margin-bottom:30px;line-height:1.55;}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .step{background:var(--white);border:2px solid var(--line);border-radius:13px;padding:22px 20px;}
+  .step .h{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15.5px;margin-bottom:8px;display:flex;align-items:center;gap:9px;}
+  .step .h .d{width:9px;height:9px;border-radius:50%;background:var(--sea);flex-shrink:0;}
+  .step p{font-size:13.5px;color:var(--mute);line-height:1.55;}
+  .trust{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:18px;}
+  .trust .t b{font-family:'Space Grotesk',sans-serif;display:block;font-size:13.5px;margin-bottom:5px;}
+  .trust .t p{color:var(--mute);line-height:1.5;font-size:13px;}
+
+  .getapp{border-top:2px solid var(--line);background:var(--ink);color:var(--paper);}
+  .getapp-inner{max-width:1320px;margin:0 auto;padding:52px 24px;text-align:center;}
+  .getapp h2{font-family:'Space Grotesk',sans-serif;color:var(--paper);font-size:clamp(22px,2.8vw,32px);font-weight:700;margin-bottom:11px;}
+  .getapp p{color:#AFC3C1;max-width:46ch;margin:0 auto 26px;line-height:1.55;}
+  .getapp .stores{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+  .getapp .store{
+    text-align:left;
+    background:var(--paper);color:var(--ink);
+    border:2px solid var(--paper);border-radius:11px;padding:10px 22px;
+  }
+  .getapp .store:hover{background:var(--sun);border-color:var(--sun);}
+  .getapp .store .sm{font-size:10.5px;color:var(--mute);display:block;}
+  .getapp .store .big{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;}
+
+  /* ---------------- FOOTER ---------------- */
+  footer{border-top:2px solid var(--line);background:var(--paper);}
+  .foot-inner{
+    max-width:1320px;margin:0 auto;padding:32px 24px;
+    display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+    font-size:12.5px;color:var(--mute);
+  }
+  .foot-inner .flag-key{display:flex;gap:16px;align-items:center;}
+  .foot-inner .flag-key span{display:flex;align-items:center;gap:6px;}
+  .foot-inner .flag-key i{width:9px;height:9px;border-radius:50%;font-style:normal;}
+  .foot-inner .flag-key i.fr{background:var(--fr);}
+  .foot-inner .flag-key i.nl{background:var(--nl);}
+
+  /* ---------------- MOBILE FILTER FAB ---------------- */
+  .filter-fab{
+    display:none;
+    position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
+    z-index:70;
+    background:var(--ink);color:var(--white);
+    font-weight:600;
+    padding:12px 22px;border-radius:30px;
+    border:2px solid var(--line);
+    box-shadow:0 6px 20px rgba(19,42,46,.35);
+  }
+  .scrim{display:none;}
+
+  @media (max-width:1180px){
+    .grid{grid-template-columns:repeat(3,1fr);}
+  }
+  @media (max-width:1080px){
+    .bar-inner{grid-template-columns:auto 1fr;grid-template-areas:"logo actions" "search search";row-gap:12px;}
+    .logo{grid-area:logo;}
+    .bar-actions{grid-area:actions;justify-self:end;}
+    .search{grid-area:search;max-width:none;}
+    .catrail{top:0;position:static;}
+    .filters{top:16px;}
+  }
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;}
+    .filters{
+      position:fixed;top:0;left:0;bottom:0;z-index:80;
+      width:300px;max-width:86vw;border-radius:0;border-width:0 2px 0 0;
+      transform:translateX(-100%);transition:transform .25s ease;
+      overflow-y:auto;
+    }
+    .filters.open{transform:none;}
+    .scrim.show{display:block;position:fixed;inset:0;background:rgba(19,42,46,.4);z-index:75;}
+    .filter-fab{display:block;}
+    .grid{grid-template-columns:repeat(2,1fr);}
+    .steps{grid-template-columns:1fr;}
+    .trust{grid-template-columns:1fr 1fr;}
+    .hero-inner{padding:26px 24px;}
+  }
+  @media (max-width:620px){
+    .bar-actions .label{display:none;}
+    .lang{margin-right:2px;}
+    .post{padding:10px 12px;}
+    .grid{grid-template-columns:repeat(2,1fr);gap:12px 10px;}
+    .card .ttl{font-size:12.5px;}
+    .board .card{flex-basis:220px;}
+    .trust{grid-template-columns:1fr;}
+    .hero h1{font-size:24px;}
+  }
+  @media (max-width:400px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .board .card{animation:none;}
+    .fav.pop{animation:none;}
+    *{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="bar-inner">
+    <a href="#" class="logo" aria-label="Buy Sell Trade Sint Maarten, accueil">
+      <span class="mark">Buy<b>·</b>Sell<b>·</b>Trade</span>
+      <span class="sub">Sint Maarten &nbsp;/&nbsp; Saint-Martin</span>
+    </a>
+
+    <form class="search" role="search" onsubmit="return applySearch(event)">
+      <input type="text" id="q" data-i18n-ph="searchPh" placeholder="Que cherchez-vous&nbsp;?" aria-label="Mot-clé">
+      <div class="divide"></div>
+      <select id="area" aria-label="Zone">
+        <option value="">Toute l'île</option>
+        <optgroup label="Côté français" id="og-fr"></optgroup>
+        <optgroup label="Côté néerlandais" id="og-nl"></optgroup>
+      </select>
+      <div class="cur-toggle" role="group" aria-label="Devise">
+        <button type="button" id="cur-eur" aria-pressed="true" onclick="setCurrency('eur')">€</button>
+        <button type="button" id="cur-usd" aria-pressed="false" onclick="setCurrency('usd')">$</button>
+      </div>
+      <button type="submit" class="go" data-i18n="searchBtn">Rechercher</button>
+    </form>
+
+    <div class="bar-actions">
+      <div class="lang" role="group" aria-label="Langue">
+        <button type="button" aria-pressed="true" onclick="setLang('fr')">FR</button>
+        <button type="button" aria-pressed="false" onclick="setLang('en')">EN</button>
+        <button type="button" aria-pressed="false" onclick="setLang('nl')">NL</button>
+      </div>
+      <button type="button" class="icon-btn" id="favBtn" onclick="scrollFavs()">
+        <span class="heart" aria-hidden="true">&#9829;</span>
+        <span class="label" data-i18n="favoris">Favoris</span>
+        <span class="n" id="favCount">0</span>
+      </button>
+      <button type="button" class="icon-btn">
+        <span aria-hidden="true">&#9993;</span>
+        <span class="label" data-i18n="messages">Messages</span>
+        <span class="n">3</span>
+      </button>
+      <button type="button" class="post" data-i18n="postAd">Déposer une annonce</button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <h1 data-i18n="heroH">Une île. Pas de frontière. Une seule place de marché.</h1>
+      <p data-i18n="heroP">Publiez en euros ou en dollars, discutez avec un voisin, retrouvez-vous à Marigot ou Philipsburg — les deux côtés sur le même tableau.</p>
+    </div>
+    <div class="hero-props">
+      <span class="prop"><span class="k split" aria-hidden="true"></span><span data-i18n="prop1">Deux côtés, un tableau</span></span>
+      <span class="prop"><span class="k cur" aria-hidden="true">€$</span><span data-i18n="prop2">Prix en € et en $</span></span>
+      <span class="prop"><span class="k" aria-hidden="true">3</span><span data-i18n="prop3">Français, English, Nederlands</span></span>
+    </div>
+  </div>
+</section>
+
+<nav class="catrail" aria-label="Catégories">
+  <div class="catrail-inner" id="catrail"></div>
+</nav>
+
+<main class="layout">
+  <aside class="filters" id="filters" aria-label="Filtres">
+    <h2 data-i18n="filters">Filtres</h2>
+    <p class="hint" data-i18n="filtersHint">Affine la planche de l'île.</p>
+
+    <div class="fgroup">
+      <span class="flabel" data-i18n="price">Prix</span>
+      <div class="price-row">
+        <input type="number" id="pmin" min="0" placeholder="min" aria-label="Prix minimum" oninput="render()">
+        <span>&ndash;</span>
+        <input type="number" id="pmax" min="0" placeholder="max" aria-label="Prix maximum" oninput="render()">
+      </div>
+      <span class="cur-prefix" id="curPrefix">en euros (&euro;)</span>
+    </div>
+
+    <div class="fgroup">
+      <span class="flabel" data-i18n="side">Côté de l'île</span>
+      <div id="sideFilters"></div>
+    </div>
+
+    <div class="fgroup">
+      <span class="flabel" data-i18n="condition">État</span>
+      <div id="condFilters"></div>
+    </div>
+
+    <button type="button" class="save-search" id="saveBtn" onclick="saveSearch()" data-i18n="saveSearch">Enregistrer cette recherche</button>
+    <div class="saved-list" id="savedList"></div>
+  </aside>
+
+  <section class="results" aria-label="Annonces">
+    <div class="board-head">
+      <h2 data-i18n="featured">À la une sur l'île</h2>
+      <span class="tally" id="boardTally"></span>
+    </div>
+    <div class="board" id="board"></div>
+
+    <div class="results-head">
+      <p class="count" id="count"></p>
+      <div class="controls">
+        <label for="sort" class="visually-hidden" style="position:absolute;left:-9999px;" data-i18n="sortBy">Trier par</label>
+        <select id="sort" onchange="setSort(this.value)"></select>
+        <div class="view-toggle" role="group" aria-label="Affichage">
+          <button type="button" id="v-grid" aria-pressed="true" onclick="setView('grid')" title="Grille" aria-label="Grille">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor"><rect width="6" height="6"/><rect x="9" width="6" height="6"/><rect y="9" width="6" height="6"/><rect x="9" y="9" width="6" height="6"/></svg>
+          </button>
+          <button type="button" id="v-list" aria-pressed="false" onclick="setView('list')" title="Liste" aria-label="Liste">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor"><rect width="15" height="3"/><rect y="6" width="15" height="3"/><rect y="12" width="15" height="3"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </section>
+</main>
+
+<div class="scrim" id="scrim" onclick="toggleFilters(false)"></div>
+<button type="button" class="filter-fab" onclick="toggleFilters(true)" data-i18n="filters">Filtres</button>
+
+<section class="strip">
+  <div class="strip-inner">
+    <h2 data-i18n="howH">Trois gestes, et c'est sur le tableau de l'île</h2>
+    <p class="lede" data-i18n="howL">Pas de validation de compte, pas d'attente. Publiez aujourd'hui, recevez un message ce soir.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="h"><span class="d"></span><span data-i18n="s1h">Photographiez et publiez</span></div>
+        <p data-i18n="s1p">Des photos, un prix en € ou en $, votre zone — Marigot, Philipsburg, Grand Case, où que vous soyez sur l'île.</p>
+      </div>
+      <div class="step">
+        <div class="h"><span class="d"></span><span data-i18n="s2h">Discutez, sans appeler</span></div>
+        <p data-i18n="s2p">Les acheteurs vous écrivent dans l'app. Votre numéro reste privé jusqu'à ce que vous décidiez de le partager.</p>
+      </div>
+      <div class="step">
+        <div class="h"><span class="d"></span><span data-i18n="s3h">Retrouvez-vous et vendez</span></div>
+        <p data-i18n="s3p">Un lieu, la main à la main, marqué vendu. Laissez-vous une note pour le prochain sur l'île.</p>
+      </div>
+    </div>
+    <div class="trust">
+      <div class="t"><b data-i18n="t1h">Deux territoires, une app</b><p data-i18n="t1p">Anglais, français et néerlandais, avec le prix dans la devise de votre côté de l'île.</p></div>
+      <div class="t"><b data-i18n="t2h">Messagerie intégrée</b><p data-i18n="t2p">Posez une question, négociez, organisez le retrait — sans donner votre numéro.</p></div>
+      <div class="t"><b data-i18n="t3h">Signaler et bloquer</b><p data-i18n="t3p">Chaque annonce et chaque profil peut être signalé. Une petite île tourne à la confiance.</p></div>
+      <div class="t"><b data-i18n="t4h">Trié par zone</b><p data-i18n="t4p">Parcourez Marigot séparément de Simpson Bay, ou toute l'île d'un seul coup d'œil.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="getapp">
+  <div class="getapp-inner">
+    <h2 data-i18n="getH">Déposez votre première annonce aujourd'hui</h2>
+    <p data-i18n="getP">C'est gratuit, c'est local, et votre voisin cherche sans doute déjà ce que vous vendez.</p>
+    <div class="stores">
+      <a href="#" class="store"><span class="sm" data-i18n="dlOn">Télécharger sur</span><span class="big">App&nbsp;Store</span></a>
+      <a href="#" class="store"><span class="sm" data-i18n="getOn">Disponible sur</span><span class="big">Google&nbsp;Play</span></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-inner">
+    <span>&copy; 2026 Buy&middot;Sell&middot;Trade Sxm &mdash; <span data-i18n="footNote">petites annonces des deux côtés de l'île</span></span>
+    <span class="flag-key">
+      <span><i class="fr"></i> <span data-i18n="frSide">Côté français &middot; Marigot</span></span>
+      <span><i class="nl"></i> <span data-i18n="nlSide">Côté néerlandais &middot; Philipsburg</span></span>
+    </span>
+  </div>
+</footer>
+
+<script>
+/* ---------------- DATA ---------------- */
+const AREAS = {
+  fr:["Marigot","Grand Case","Sandy Ground","Cul-de-Sac","Baie Orientale","Quartier d'Orléans"],
+  nl:["Philipsburg","Simpson Bay","Cole Bay","Cupecoy","Maho","Dutch Quarter"]
+};
+
+const CATS = [
+  {id:"all",  fr:"Toutes catégories", en:"All categories",  nl:"Alle categorieën"},
+  {id:"voit", fr:"Voitures",          en:"Cars",            nl:"Auto's"},
+  {id:"scoot",fr:"Scooters & motos",  en:"Scooters & bikes",nl:"Scooters"},
+  {id:"immo", fr:"Immobilier",        en:"Property",        nl:"Vastgoed"},
+  {id:"bat",  fr:"Bateaux & nautisme",en:"Boats & marine",  nl:"Boten"},
+  {id:"elec", fr:"Électronique",      en:"Electronics",     nl:"Elektronica"},
+  {id:"meub", fr:"Meubles & déco",    en:"Furniture",       nl:"Meubels"},
+  {id:"menag",fr:"Électroménager",    en:"Appliances",      nl:"Witgoed"},
+  {id:"mode", fr:"Mode",              en:"Fashion",         nl:"Mode"},
+  {id:"job",  fr:"Emploi",            en:"Jobs",            nl:"Vacatures"},
+  {id:"serv", fr:"Services",          en:"Services",        nl:"Diensten"},
+  {id:"pro",  fr:"Matériel pro",      en:"Business gear",   nl:"Zakelijk"},
+  {id:"lois", fr:"Loisirs",           en:"Leisure",         nl:"Vrije tijd"}
+];
+
+const CONDS = [
+  {id:"neuf",  fr:"Neuf",           en:"New",           nl:"Nieuw"},
+  {id:"tbe",   fr:"Très bon état",  en:"Very good",     nl:"Zeer goed"},
+  {id:"bon",   fr:"Bon état",       en:"Good",          nl:"Goed"},
+  {id:"corr",  fr:"État correct",   en:"Fair",          nl:"Redelijk"},
+  {id:"piece", fr:"Pour pièces",    en:"For parts",     nl:"Voor onderdelen"}
+];
+
+const I18N = {
+  fr:{searchPh:"Que cherchez-vous ?",searchBtn:"Rechercher",postAd:"Déposer une annonce",favoris:"Favoris",messages:"Messages",
+      filters:"Filtres",filtersHint:"Affine la planche de l'île.",price:"Prix",side:"Côté de l'île",condition:"État",
+      saveSearch:"Enregistrer cette recherche",featured:"À la une sur l'île",sortBy:"Trier par",
+      footNote:"petites annonces des deux côtés de l'île",frSide:"Côté français · Marigot",nlSide:"Côté néerlandais · Philipsburg",
+      sort_recent:"Plus récentes",sort_pxup:"Prix croissant",sort_pxdn:"Prix décroissant",sort_near:"Au plus près",
+      results:n=>`${n.toLocaleString('fr-FR')} annonces`,onIsland:"sur toute l'île",
+      ago_h:n=>`il y a ${n} h`,ago_d:n=>`il y a ${n} j`,reserved:"Réservé",sold:"Vendu",urgent:"Urgent",
+      priceIn:c=>c==='eur'?"en euros (€)":"en dollars ($)",noneT:"Rien sur la planche",noneB:"Élargis la zone ou le prix pour voir plus d'annonces.",
+      heroH:"Une île. Pas de frontière. Une seule place de marché.",
+      heroP:"Publiez en euros ou en dollars, discutez avec un voisin, retrouvez-vous à Marigot ou Philipsburg — les deux côtés sur le même tableau.",
+      prop1:"Deux côtés, un tableau",prop2:"Prix en € et en $",prop3:"Français, English, Nederlands",
+      howH:"Trois gestes, et c'est sur le tableau de l'île",
+      howL:"Pas de validation de compte, pas d'attente. Publiez aujourd'hui, recevez un message ce soir.",
+      s1h:"Photographiez et publiez",s1p:"Des photos, un prix en € ou en $, votre zone — Marigot, Philipsburg, Grand Case, où que vous soyez sur l'île.",
+      s2h:"Discutez, sans appeler",s2p:"Les acheteurs vous écrivent dans l'app. Votre numéro reste privé jusqu'à ce que vous décidiez de le partager.",
+      s3h:"Retrouvez-vous et vendez",s3p:"Un lieu, la main à la main, marqué vendu. Laissez-vous une note pour le prochain sur l'île.",
+      t1h:"Deux territoires, une app",t1p:"Anglais, français et néerlandais, avec le prix dans la devise de votre côté de l'île.",
+      t2h:"Messagerie intégrée",t2p:"Posez une question, négociez, organisez le retrait — sans donner votre numéro.",
+      t3h:"Signaler et bloquer",t3p:"Chaque annonce et chaque profil peut être signalé. Une petite île tourne à la confiance.",
+      t4h:"Trié par zone",t4p:"Parcourez Marigot séparément de Simpson Bay, ou toute l'île d'un seul coup d'œil.",
+      getH:"Déposez votre première annonce aujourd'hui",getP:"C'est gratuit, c'est local, et votre voisin cherche sans doute déjà ce que vous vendez.",
+      dlOn:"Télécharger sur",getOn:"Disponible sur"},
+  en:{searchPh:"What are you looking for?",searchBtn:"Search",postAd:"Post an ad",favoris:"Saved",messages:"Messages",
+      filters:"Filters",filtersHint:"Narrow the island board.",price:"Price",side:"Side of the island",condition:"Condition",
+      saveSearch:"Save this search",featured:"Featured on the island",sortBy:"Sort by",
+      footNote:"classifieds from both sides of the island",frSide:"French side · Marigot",nlSide:"Dutch side · Philipsburg",
+      sort_recent:"Most recent",sort_pxup:"Price low to high",sort_pxdn:"Price high to low",sort_near:"Nearest",
+      results:n=>`${n.toLocaleString('en-US')} listings`,onIsland:"across the island",
+      ago_h:n=>`${n} h ago`,ago_d:n=>`${n} d ago`,reserved:"Reserved",sold:"Sold",urgent:"Urgent",
+      priceIn:c=>c==='eur'?"in euros (€)":"in dollars ($)",noneT:"Nothing on the board",noneB:"Widen the area or price to see more listings.",
+      heroH:"One island. No border. One marketplace.",
+      heroP:"Post in euros or dollars, chat with a neighbour, meet in Marigot or Philipsburg — both sides on the same board.",
+      prop1:"Two sides, one board",prop2:"Prices in € and $",prop3:"Français, English, Nederlands",
+      howH:"Three steps, and it's on the island's board",
+      howL:"No account approvals, no waiting. Post today, get a message tonight.",
+      s1h:"Snap and post",s1p:"Photos, a price in € or $, your area — Marigot, Philipsburg, Grand Case, wherever you are on the island.",
+      s2h:"Chat, don't call",s2p:"Buyers message you in the app. Your number stays yours until you decide to share it.",
+      s3h:"Meet and sell",s3p:"Pick a spot, hand it over, mark it sold. Leave each other a rating for the next person on the island.",
+      t1h:"Two territories, one app",t1p:"English, French and Dutch, with the price in whichever currency fits your side.",
+      t2h:"Messaging built in",t2p:"Ask a question, negotiate, arrange pickup — without handing out your number.",
+      t3h:"Report and block",t3p:"Every listing and every profile can be flagged. A small island runs on trust.",
+      t4h:"Sorted by area",t4p:"Browse Marigot separately from Simpson Bay, or the whole island at once.",
+      getH:"Post your first listing today",getP:"It's free, it's local, and your neighbour is probably already looking for what you're selling.",
+      dlOn:"Download on the",getOn:"Get it on"},
+  nl:{searchPh:"Wat zoek je?",searchBtn:"Zoeken",postAd:"Plaats een advertentie",favoris:"Bewaard",messages:"Berichten",
+      filters:"Filters",filtersHint:"Verfijn het eilandbord.",price:"Prijs",side:"Kant van het eiland",condition:"Staat",
+      saveSearch:"Zoekopdracht opslaan",featured:"Uitgelicht op het eiland",sortBy:"Sorteren op",
+      footNote:"advertenties van beide kanten van het eiland",frSide:"Franse kant · Marigot",nlSide:"Nederlandse kant · Philipsburg",
+      sort_recent:"Nieuwste",sort_pxup:"Prijs oplopend",sort_pxdn:"Prijs aflopend",sort_near:"Dichtstbij",
+      results:n=>`${n.toLocaleString('nl-NL')} advertenties`,onIsland:"over het hele eiland",
+      ago_h:n=>`${n} u geleden`,ago_d:n=>`${n} d geleden`,reserved:"Gereserveerd",sold:"Verkocht",urgent:"Dringend",
+      priceIn:c=>c==='eur'?"in euro (€)":"in dollar ($)",noneT:"Niets op het bord",noneB:"Verbreed het gebied of de prijs voor meer advertenties.",
+      heroH:"Eén eiland. Geen grens. Eén marktplaats.",
+      heroP:"Plaats in euro's of dollars, chat met een buur, spreek af in Marigot of Philipsburg — beide kanten op hetzelfde bord.",
+      prop1:"Twee kanten, één bord",prop2:"Prijzen in € en $",prop3:"Français, English, Nederlands",
+      howH:"Drie stappen en het staat op het eilandbord",
+      howL:"Geen accountgoedkeuring, geen wachten. Plaats vandaag, ontvang vanavond een bericht.",
+      s1h:"Fotografeer en plaats",s1p:"Foto's, een prijs in € of $, jouw gebied — Marigot, Philipsburg, Grand Case, waar je ook bent op het eiland.",
+      s2h:"Chat, niet bellen",s2p:"Kopers sturen je een bericht in de app. Je nummer blijft van jou tot je het deelt.",
+      s3h:"Ontmoet en verkoop",s3p:"Kies een plek, geef het over, markeer als verkocht. Laat een beoordeling achter voor de volgende op het eiland.",
+      t1h:"Twee gebieden, één app",t1p:"Engels, Frans en Nederlands, met de prijs in de valuta van jouw kant.",
+      t2h:"Berichten ingebouwd",t2p:"Stel een vraag, onderhandel, regel het ophalen — zonder je nummer te geven.",
+      t3h:"Melden en blokkeren",t3p:"Elke advertentie en elk profiel kan gemeld worden. Een klein eiland draait op vertrouwen.",
+      t4h:"Gesorteerd op gebied",t4p:"Bekijk Marigot los van Simpson Bay, of het hele eiland in één keer.",
+      getH:"Plaats vandaag je eerste advertentie",getP:"Het is gratis, het is lokaal, en je buur zoekt waarschijnlijk al wat jij verkoopt.",
+      dlOn:"Download in de",getOn:"Verkrijgbaar via"}
+};
+
+const G = {
+  voit:["linear-gradient(150deg,#CDE8E4,#9FCFC8)","🚗"], scoot:["linear-gradient(150deg,#FBE3C7,#F3C58C)","🛵"],
+  immo:["linear-gradient(150deg,#DCEAF6,#A9CCE6)","🏝️"], bat:["linear-gradient(150deg,#CFE4EE,#93BFD4)","⛵"],
+  elec:["linear-gradient(150deg,#E7E1F4,#C3B6E4)","📱"], meub:["linear-gradient(150deg,#F6DDDF,#E4AEB4)","🛋️"],
+  menag:["linear-gradient(150deg,#E2F0EC,#B7D8CF)","🧊"], mode:["linear-gradient(150deg,#F7E5CF,#EBC59A)","👗"],
+  job:["linear-gradient(150deg,#E9EDD6,#CBD79E)","💼"], serv:["linear-gradient(150deg,#E3EAE9,#BCCCC9)","🧰"],
+  pro:["linear-gradient(150deg,#EFE7D6,#D6C39B)","🔧"], lois:["linear-gradient(150deg,#D6ECEF,#A6D2D8)","🏄"]
+};
+
+// eur/usd roughly paired; drop = price-drop flag
+const L = [
+  {id:1, t:"Scooter Piaggio Liberty 125, révisé, 2 casques", cat:"scoot", side:"fr", area:"Marigot",       cond:"tbe",  eur:850,  usd:920,  ph:6,  pics:8, pro:false, urgent:true,  feat:true},
+  {id:2, t:"T2 vue lagon, meublé, dispo 1er du mois",        cat:"immo",  side:"nl", area:"Simpson Bay",   cond:"bon",  eur:1250, usd:1350, ph:2,  pics:12,pro:true,  urgent:false, feat:true},
+  {id:3, t:"Hobie Cat 16 avec remorque, voiles OK",           cat:"bat",   side:"nl", area:"Simpson Bay",   cond:"bon",  eur:3200, usd:3450, ph:20, pics:6, pro:false, urgent:false, feat:true},
+  {id:4, t:"iPhone 13 128 Go, batterie 89%, sous coque",      cat:"elec",  side:"fr", area:"Grand Case",    cond:"tbe",  eur:360,  usd:390,  ph:1,  pics:5, pro:false, urgent:true,  feat:true, drop:true},
+  {id:5, t:"Canapé rotin 3 places + coussins déperlants",     cat:"meub",  side:"nl", area:"Cole Bay",      cond:"bon",  eur:210,  usd:225,  ph:9,  pics:4, pro:false, urgent:false},
+  {id:6, t:"Yamaha 4x4 Kodiak 450, entretien à jour",         cat:"scoot", side:"nl", area:"Dutch Quarter", cond:"tbe",  eur:4800, usd:5150, ph:30, pics:10,pro:false, urgent:false},
+  {id:7, t:"Frigo américain Samsung, froid ventilé",          cat:"menag", side:"fr", area:"Cul-de-Sac",    cond:"bon",  eur:290,  usd:315,  ph:14, pics:3, pro:false, urgent:false},
+  {id:8, t:"Serveur / barman expérimenté — Baie Orientale",   cat:"job",   side:"fr", area:"Baie Orientale",cond:"neuf", eur:0,    usd:0,    ph:5,  pics:1, pro:true,  urgent:true,  salary:true},
+  {id:9, t:"Kitesurf Duotone 10m + barre, pack complet",      cat:"lois",  side:"nl", area:"Cupecoy",       cond:"tbe",  eur:640,  usd:690,  ph:26, pics:7, pro:false, urgent:false},
+  {id:10,t:"Suzuki Jimny 2019, clim, 62 000 km",              cat:"voit",  side:"nl", area:"Philipsburg",   cond:"tbe",  eur:14500,usd:15600,ph:3,  pics:14,pro:true,  urgent:false, drop:true},
+  {id:11,t:"MacBook Air M1, 8/256, clavier AZERTY",           cat:"elec",  side:"fr", area:"Marigot",       cond:"tbe",  eur:560,  usd:605,  ph:7,  pics:6, pro:false, urgent:false},
+  {id:12,t:"Studio Grand Case, pieds dans l'eau, courte durée",cat:"immo", side:"fr", area:"Grand Case",    cond:"bon",  eur:900,  usd:970,  ph:11, pics:9, pro:true,  urgent:false},
+  {id:13,t:"Annexe 3,10 m + moteur Tohatsu 9.8, révisé",      cat:"bat",   side:"nl", area:"Simpson Bay",   cond:"bon",  eur:2100, usd:2260, ph:19, pics:5, pro:false, urgent:false},
+  {id:14,t:"Lot 6 chaises teck jardin + table pliante",       cat:"meub",  side:"fr", area:"Sandy Ground",  cond:"corr", eur:120,  usd:130,  ph:34, pics:4, pro:false, urgent:false},
+  {id:15,t:"Groupe électrogène Honda 2 kVA, insonorisé",      cat:"pro",   side:"nl", area:"Cole Bay",      cond:"tbe",  eur:430,  usd:465,  ph:16, pics:3, pro:true,  urgent:true},
+  {id:16,t:"Vélo électrique VTC, 2 batteries, phare neuf",    cat:"lois",  side:"fr", area:"Quartier d'Orléans",cond:"bon",eur:520, usd:560,  ph:22, pics:6, pro:false, urgent:false, drop:true},
+  {id:17,t:"Climatiseur split 12000 BTU, pose incluse",       cat:"menag", side:"nl", area:"Maho",          cond:"neuf", eur:340,  usd:365,  ph:8,  pics:2, pro:true,  urgent:false},
+  {id:18,t:"Ménage villas & check-out, équipe dispo",         cat:"serv",  side:"nl", area:"Cupecoy",       cond:"neuf", eur:0,    usd:0,    ph:12, pics:1, pro:true,  urgent:false, salary:true},
+  {id:19,t:"PS5 + 2 manettes + 4 jeux, boîte d'origine",      cat:"elec",  side:"fr", area:"Marigot",       cond:"tbe",  eur:380,  usd:410,  ph:4,  pics:5, pro:false, urgent:true},
+  {id:20,t:"Renault Clio IV 2016, CT OK, 1re main",           cat:"voit",  side:"fr", area:"Cul-de-Sac",    cond:"bon",  eur:6200, usd:6700, ph:28, pics:11,pro:false, urgent:false},
+  {id:21,t:"Paddle gonflable 10'6 + pagaie carbone",          cat:"lois",  side:"nl", area:"Simpson Bay",   cond:"tbe",  eur:250,  usd:270,  ph:15, pics:4, pro:false, urgent:false},
+  {id:22,t:"Meuble TV manguier massif, 1,60 m",               cat:"meub",  side:"fr", area:"Baie Orientale",cond:"tbe",  eur:180,  usd:195,  ph:40, pics:3, pro:false, urgent:false, reserved:true},
+  {id:23,t:"Compresseur plongée Bauer, 225 bar, révisé",      cat:"pro",   side:"nl", area:"Philipsburg",   cond:"bon",  eur:2600, usd:2800, ph:33, pics:6, pro:true,  urgent:false},
+  {id:24,t:"Table à langer + transat + parc, lot bébé",       cat:"meub",  side:"fr", area:"Grand Case",    cond:"bon",  eur:90,   usd:98,   ph:9,  pics:5, pro:false, urgent:false, sold:true},
+  {id:25,t:"Jantes 17\" + pneus été 205/45, jeu de 4",        cat:"voit",  side:"nl", area:"Cole Bay",      cond:"corr", eur:220,  usd:238,  ph:21, pics:4, pro:false, urgent:false},
+  {id:26,t:"Cours d'anglais & néerlandais, particuliers",     cat:"serv",  side:"fr", area:"Marigot",       cond:"neuf", eur:0,    usd:0,    ph:17, pics:1, pro:false, urgent:false, salary:true}
+];
+
+/* ---------------- STATE ---------------- */
+const state = {
+  lang:"fr", cur:"eur", cat:"all",
+  q:"", area:"",
+  sides:new Set(), conds:new Set(),
+  sort:"recent", view:"grid",
+  favs:new Set(), saved:[]
+};
+
+/* ---------------- HELPERS ---------------- */
+const t = () => I18N[state.lang];
+const money = (n, c) => (c==="eur"?"€":"$") + n.toLocaleString(state.lang==="en"?"en-US":state.lang==="nl"?"nl-NL":"fr-FR");
+
+function priceHTML(l){
+  if(l.salary) return `<span class="alt">${t().sort_recent?"":""}</span><span>${state.lang==="fr"?"Salaire à convenir":state.lang==="nl"?"Salaris in overleg":"Pay negotiable"}</span>`;
+  const eur = money(l.eur,"eur"), usd = money(l.usd,"usd");
+  const primary = state.cur==="eur" ? eur : usd;
+  const secondary = state.cur==="eur" ? usd : eur;
+  const dropLbl = state.lang==="nl"?"prijs verlaagd":state.lang==="en"?"price dropped":"prix en baisse";
+  const drop = l.drop ? `<span class="drop" title="${dropLbl}" aria-label="${dropLbl}">&#8595;</span>` : "";
+  return `<span class="amt">${primary}</span><span class="alt">${secondary}</span>${drop}`;
+}
+
+function agoHTML(h){
+  return h < 24 ? t().ago_h(h) : t().ago_d(Math.round(h/24));
+}
+
+function condLabel(id){ const c = CONDS.find(x=>x.id===id); return c ? c[state.lang] : ""; }
+
+/* ---------------- RENDER: CARD ---------------- */
+function cardHTML(l, pinned, idx){
+  const [bg, emo] = G[l.cat];
+  const status = l.sold ? t().sold : l.reserved ? t().reserved : "";
+  const badges = [];
+  if(l.pro) badges.push(`<span class="badge pro">Pro</span>`);
+  if(l.urgent) badges.push(`<span class="badge urgent">${t().urgent}</span>`);
+  const isFav = state.favs.has(l.id);
+  return `
+    <article class="card" ${pinned?`style="--i:${idx}"`:""}>
+      ${pinned?`<span class="pin" aria-hidden="true"></span>`:""}
+      <span class="stripe ${l.side}" aria-hidden="true"></span>
+      <button type="button" class="fav" aria-pressed="${isFav}"
+        aria-label="${state.lang==="fr"?"Ajouter aux favoris":state.lang==="nl"?"Aan favorieten toevoegen":"Add to favourites"}"
+        onclick="toggleFav(${l.id}, this)">${isFav?"&#9829;":"&#9825;"}</button>
+      <div class="photo" style="background:${bg}">
+        <span class="emo" aria-hidden="true">${emo}</span>
+        <span class="gallery"><span aria-hidden="true">&#9634;</span> ${l.pics}</span>
+      </div>
+      ${status?`<div class="status-tag"><span>${status}</span></div>`:""}
+      <div class="body">
+        <div class="price">${priceHTML(l)}</div>
+        <div class="ttl">${l.t}</div>
+        <div class="badges">${badges.join("")}</div>
+        <div class="meta">
+          <span class="area"><span class="n ${l.side}"></span>${l.area}</span>
+          <span aria-hidden="true">·</span>
+          <span>${agoHTML(l.ph)}</span>
+          <span aria-hidden="true">·</span>
+          <span>${condLabel(l.cond)}</span>
+        </div>
+      </div>
+    </article>`;
+}
+
+/* ---------------- RENDER: FILTER + LOGIC ---------------- */
+function passesFilters(l){
+  if(state.cat!=="all" && l.cat!==state.cat) return false;
+  if(state.q){
+    const hay = (l.t + " " + l.area).toLowerCase();
+    if(!hay.includes(state.q.toLowerCase())) return false;
+  }
+  if(state.area && l.area!==state.area) return false;
+  if(state.sides.size && !state.sides.has(l.side)) return false;
+  if(state.conds.size && !state.conds.has(l.cond)) return false;
+  const pmin = parseFloat(document.getElementById("pmin").value);
+  const pmax = parseFloat(document.getElementById("pmax").value);
+  const val = state.cur==="eur" ? l.eur : l.usd;
+  if(!l.salary){
+    if(!isNaN(pmin) && val < pmin) return false;
+    if(!isNaN(pmax) && val > pmax) return false;
+  }
+  return true;
+}
+
+function sortList(arr){
+  const key = state.cur==="eur" ? "eur" : "usd";
+  const a = [...arr];
+  if(state.sort==="recent") a.sort((x,y)=>x.ph-y.ph);
+  else if(state.sort==="pxup") a.sort((x,y)=>(x.salary?1e12:x[key])-(y.salary?1e12:y[key]));
+  else if(state.sort==="pxdn") a.sort((x,y)=>(y.salary?-1:y[key])-(x.salary?-1:x[key]));
+  else if(state.sort==="near") a.sort((x,y)=>x.area.localeCompare(y.area));
+  return a;
+}
+
+function render(){
+  // featured board
+  const feat = L.filter(l => l.feat && passesFilters(l));
+  const board = document.getElementById("board");
+  board.innerHTML = feat.map((l,i)=>cardHTML(l,true,i)).join("") ||
+    `<p style="padding:24px;color:var(--mute)">${t().noneB}</p>`;
+  document.getElementById("boardTally").textContent =
+    feat.length ? `${feat.length} · ${t().onIsland}` : "";
+
+  // main grid
+  const list = sortList(L.filter(passesFilters));
+  const grid = document.getElementById("grid");
+  grid.className = "grid" + (state.view==="list" ? " list" : "");
+  grid.innerHTML = list.length
+    ? list.map(l=>cardHTML(l,false)).join("")
+    : `<div class="no-results"><b>${t().noneT}</b>${t().noneB}</div>`;
+
+  document.getElementById("count").innerHTML =
+    `${t().results(list.length)} <small>${state.cat==="all" ? "" : "· " + CATS.find(c=>c.id===state.cat)[state.lang]}</small>`;
+
+  document.getElementById("favCount").textContent = state.favs.size;
+  document.getElementById("favBtn").classList.toggle("on", state.favs.size>0);
+}
+
+/* ---------------- INTERACTIONS ---------------- */
+function applySearch(e){
+  e.preventDefault();
+  state.q = document.getElementById("q").value.trim();
+  state.area = document.getElementById("area").value;
+  render();
+  return false;
+}
+function setCurrency(c){
+  state.cur = c;
+  document.getElementById("cur-eur").setAttribute("aria-pressed", c==="eur");
+  document.getElementById("cur-usd").setAttribute("aria-pressed", c==="usd");
+  document.getElementById("curPrefix").textContent = t().priceIn(c);
+  render();
+}
+function setSort(v){ state.sort = v; render(); }
+function setView(v){
+  state.view = v;
+  document.getElementById("v-grid").setAttribute("aria-pressed", v==="grid");
+  document.getElementById("v-list").setAttribute("aria-pressed", v==="list");
+  render();
+}
+function setCat(id, btn){
+  state.cat = id;
+  document.querySelectorAll("#catrail .cat").forEach(b=>b.setAttribute("aria-pressed", b===btn));
+  render();
+}
+function toggleFav(id, btn){
+  if(state.favs.has(id)) state.favs.delete(id); else state.favs.add(id);
+  const on = state.favs.has(id);
+  btn.setAttribute("aria-pressed", on);
+  btn.innerHTML = on ? "&#9829;" : "&#9825;";
+  btn.classList.remove("pop"); void btn.offsetWidth; btn.classList.add("pop");
+  document.getElementById("favCount").textContent = state.favs.size;
+  document.getElementById("favBtn").classList.toggle("on", state.favs.size>0);
+}
+function scrollFavs(){
+  const first = [...document.querySelectorAll(".fav[aria-pressed=true]")][0];
+  if(first) first.closest(".card").scrollIntoView({behavior:"smooth", block:"center"});
+}
+function saveSearch(){
+  const btn = document.getElementById("saveBtn");
+  const parts = [];
+  if(state.cat!=="all") parts.push(CATS.find(c=>c.id===state.cat)[state.lang]);
+  if(state.q) parts.push(`"${state.q}"`);
+  if(state.area) parts.push(state.area);
+  state.sides.forEach(s=> parts.push(s==="fr" ? "🇫🇷" : "🇳🇱"));
+  const label = parts.length ? parts.join(" · ") : t().onIsland;
+  if(!state.saved.includes(label)) state.saved.push(label);
+  btn.classList.add("saved");
+  btn.textContent = state.lang==="fr" ? "Recherche enregistrée ✓" : state.lang==="nl" ? "Opgeslagen ✓" : "Search saved ✓";
+  setTimeout(()=>{ btn.classList.remove("saved"); btn.textContent = t().saveSearch; }, 1600);
+  document.getElementById("savedList").innerHTML =
+    state.saved.map(s=>`<span class="s">${s}</span>`).join("");
+}
+function toggleFilters(open){
+  document.getElementById("filters").classList.toggle("open", open);
+  document.getElementById("scrim").classList.toggle("show", open);
+}
+
+/* ---------------- I18N SWAP ---------------- */
+function setLang(lang){
+  state.lang = lang;
+  document.documentElement.lang = lang;
+  document.querySelectorAll(".lang button").forEach(b=>
+    b.setAttribute("aria-pressed", b.textContent.trim().toLowerCase()===lang));
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const k = el.getAttribute("data-i18n");
+    if(t()[k]) el.textContent = t()[k];
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{
+    const k = el.getAttribute("data-i18n-ph");
+    if(t()[k]) el.setAttribute("placeholder", t()[k]);
+  });
+  buildCats(); buildFilters(); buildSort();
+  document.getElementById("curPrefix").textContent = t().priceIn(state.cur);
+  render();
+}
+
+/* ---------------- BUILDERS ---------------- */
+function buildAreas(){
+  const ogfr = document.getElementById("og-fr"), ognl = document.getElementById("og-nl");
+  ogfr.innerHTML = AREAS.fr.map(a=>`<option value="${a}">${a}</option>`).join("");
+  ognl.innerHTML = AREAS.nl.map(a=>`<option value="${a}">${a}</option>`).join("");
+}
+function buildCats(){
+  document.getElementById("catrail").innerHTML = CATS.map(c=>
+    `<button type="button" class="cat" aria-pressed="${c.id===state.cat}" onclick="setCat('${c.id}', this)">${c[state.lang]}</button>`
+  ).join("");
+}
+function buildFilters(){
+  document.getElementById("sideFilters").innerHTML = `
+    <label class="check"><input type="checkbox" value="fr" ${state.sides.has("fr")?"checked":""} onchange="toggleSet('sides','fr',this.checked)">
+      <span class="side-dot fr"></span> ${state.lang==="fr"?"Côté français":state.lang==="nl"?"Franse kant":"French side"}</label>
+    <label class="check"><input type="checkbox" value="nl" ${state.sides.has("nl")?"checked":""} onchange="toggleSet('sides','nl',this.checked)">
+      <span class="side-dot nl"></span> ${state.lang==="fr"?"Côté néerlandais":state.lang==="nl"?"Nederlandse kant":"Dutch side"}</label>`;
+  document.getElementById("condFilters").innerHTML = CONDS.map(c=>
+    `<label class="check"><input type="checkbox" value="${c.id}" ${state.conds.has(c.id)?"checked":""} onchange="toggleSet('conds','${c.id}',this.checked)"> ${c[state.lang]}</label>`
+  ).join("");
+}
+function buildSort(){
+  const opts = [["recent",t().sort_recent],["pxup",t().sort_pxup],["pxdn",t().sort_pxdn],["near",t().sort_near]];
+  document.getElementById("sort").innerHTML = opts.map(([v,lbl])=>
+    `<option value="${v}" ${v===state.sort?"selected":""}>${t().sortBy}: ${lbl}</option>`
+  ).join("");
+}
+function toggleSet(setName, val, on){
+  on ? state[setName].add(val) : state[setName].delete(val);
+  render();
+}
+
+/* ---------------- INIT ---------------- */
+buildAreas(); buildCats(); buildFilters(); buildSort(); render();
+</script>
+</body>
+</html>
