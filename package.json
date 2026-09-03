@@ -1,0 +1,25 @@
+{
+  "name": "buy-sell-trade-sxm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test:share": "node playwright-share-qa.js",
+    "playwright:install": "playwright install chromium"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm/issues"
+  },
+  "homepage": "https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm#readme",
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}
