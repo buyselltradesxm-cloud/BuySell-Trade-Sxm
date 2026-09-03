@@ -707,6 +707,12 @@
   .chat-compose input{border:2px solid var(--line);border-radius:9px;padding:9px 10px;min-width:0;}
   .chat-compose button{border:2px solid var(--line);border-radius:9px;background:var(--sun);font-weight:800;padding:9px 12px;}
   .chat-compose button:hover{background:#e0a800;}
+  .chat-actions{display:flex;flex-wrap:wrap;gap:7px;padding:10px;border-top:1.5px solid rgba(19,42,46,.14);background:var(--paper);}
+  .chat-action{
+    border:1.5px solid var(--line);border-radius:8px;background:var(--white);
+    padding:7px 9px;font-size:12px;font-weight:800;
+  }
+  .chat-action:hover{background:var(--paper-deep);}
   .detail-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
   .share-box{
     border:2px solid var(--line);border-radius:12px;background:var(--paper);
@@ -768,6 +774,8 @@
     padding:10px 11px;min-height:42px;
   }
   .field textarea{resize:vertical;min-height:92px;}
+  .business-extra{display:none;grid-column:1/-1;grid-template-columns:repeat(2,1fr);gap:12px;}
+  .business-extra.show{display:grid;}
   .upload-box{
     border:2px dashed var(--line);border-radius:12px;background:var(--white);
     padding:14px;display:grid;gap:12px;
@@ -871,6 +879,34 @@
   }
   .profile-tool b{font-family:'Space Grotesk',sans-serif;font-size:13px;}
   .profile-tool span{font-size:12px;color:var(--mute);line-height:1.35;}
+  .pro-dashboard{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+  .pro-panel{
+    border:2px solid var(--line);border-radius:12px;background:var(--paper);
+    padding:14px;display:grid;gap:10px;
+  }
+  .pro-panel h4{font-size:15px;font-family:'Space Grotesk',sans-serif;}
+  .pro-panel p,.pro-panel li{font-size:12.5px;color:var(--mute);line-height:1.45;}
+  .pro-panel ul{display:grid;gap:4px;padding-left:18px;}
+  .pro-status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .pro-status span{
+    border:1.5px solid var(--line);border-radius:8px;background:var(--white);
+    padding:6px 8px;font-size:12px;font-weight:900;
+  }
+  .pro-status .active{background:var(--sea);color:var(--white);}
+  .pro-status .pending{background:var(--sun);color:var(--ink);}
+  .payment-summary{
+    border:2px solid var(--line);border-radius:13px;background:var(--white);
+    padding:15px;display:grid;gap:10px;margin-bottom:14px;
+  }
+  .payment-summary h3{font-size:18px;}
+  .payment-line{display:flex;justify-content:space-between;gap:12px;border-top:1.5px solid rgba(19,42,46,.14);padding-top:10px;}
+  .payment-line b{font-family:'Space Grotesk',sans-serif;}
+  .payment-demo{
+    border:2px dashed var(--line);border-radius:12px;background:var(--paper);
+    padding:13px;display:grid;gap:7px;
+  }
+  .payment-demo strong{font-family:'Space Grotesk',sans-serif;}
+  .payment-demo p{font-size:13px;color:var(--mute);line-height:1.45;}
   .mini-listing{display:grid;gap:8px;}
   .mini-row{
     display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;
@@ -962,6 +998,7 @@
     .auth-grid{grid-template-columns:1fr;}
     .profile-stats{grid-template-columns:repeat(2,1fr);}
     .profile-tools{grid-template-columns:1fr;}
+    .pro-dashboard{grid-template-columns:1fr;}
     .mobile-nav{display:block;}
     .mobile-ad-slot{display:block;}
     body{padding-bottom:146px;}
@@ -1429,6 +1466,16 @@
                   </ul>
                   <span class="plan-price" data-i18n="planPriceSoon">Prix à définir</span>
                 </button>
+                <button type="button" class="plan-card" aria-pressed="false" onclick="selectAccountPlan('dealer-pro', this)">
+                  <span class="plan-top"><strong data-i18n="planDealerTitle">Dealer Pro</strong><span class="plan-badge" data-i18n="planDealerBadge">79 €/mois</span></span>
+                  <p data-i18n="planDealerText">Pour concessionnaires auto, motos, scooters, bateaux et jet skis.</p>
+                  <ul>
+                    <li data-i18n="planDealer1">Page concessionnaire + logo</li>
+                    <li data-i18n="planDealer2">Inventaire complet avec annonces prioritaires</li>
+                    <li data-i18n="planDealer3">WhatsApp, téléphone, site web et statistiques</li>
+                  </ul>
+                  <span class="plan-price" data-i18n="planDealerPrice">79 €/mois</span>
+                </button>
               </div>
               <p class="plan-note" id="planPaymentNote" data-i18n="planPaymentNote">Les plans Pro nécessitent un abonnement payé avant activation. Sans paiement confirmé, le compte Pro ne peut pas publier.</p>
               <button type="button" class="subcat-reset" onclick="openBoostInfo()" data-i18n="planLearnMore">Voir comment fonctionne Boost & Pro</button>
@@ -1444,6 +1491,24 @@
             <div class="field" id="businessNameField" hidden>
               <label for="businessName" data-i18n="businessNameLabel">Nom du commerce</label>
               <input id="businessName" minlength="2" placeholder="Nom de votre commerce">
+            </div>
+            <div class="business-extra" id="businessExtraFields">
+              <div class="field">
+                <label for="businessPhone" data-i18n="businessPhoneLabel">Téléphone</label>
+                <input id="businessPhone" type="tel" placeholder="+1 721 555 0142">
+              </div>
+              <div class="field">
+                <label for="businessWhatsapp" data-i18n="businessWhatsappLabel">WhatsApp</label>
+                <input id="businessWhatsapp" type="tel" placeholder="+590 690 00 00 00">
+              </div>
+              <div class="field">
+                <label for="businessWebsite" data-i18n="businessWebsiteLabel">Site Internet</label>
+                <input id="businessWebsite" type="url" placeholder="https://votrebusiness.com">
+              </div>
+              <div class="field">
+                <label for="businessLogo" data-i18n="businessLogoLabel">Logo URL</label>
+                <input id="businessLogo" type="url" placeholder="https://.../logo.png">
+              </div>
             </div>
             <div class="field">
               <label for="accountPassword" data-i18n="passwordLabel">Mot de passe</label>
@@ -1481,6 +1546,40 @@
           </div>
         </form>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="paymentModal" role="dialog" aria-modal="true" aria-labelledby="paymentTitle">
+  <div class="dialog small">
+    <div class="dialog-head">
+      <h2 id="paymentTitle" data-i18n="paymentTitle">Activer l'abonnement Pro</h2>
+      <button type="button" class="close-btn" onclick="cancelPaymentFlow()" aria-label="Fermer">x</button>
+    </div>
+    <div class="dialog-body">
+      <form onsubmit="return confirmDemoPayment(event)">
+        <div class="payment-summary">
+          <span class="profile-kicker" data-i18n="paymentKicker">Paiement obligatoire</span>
+          <h3 id="paymentPlanName">Pro Starter</h3>
+          <p id="paymentPlanText" class="upload-help">Votre boutique sera activée après paiement confirmé.</p>
+          <div class="payment-line">
+            <span data-i18n="paymentAmountLabel">Montant</span>
+            <b data-i18n="planPriceSoon">Prix à définir</b>
+          </div>
+          <div class="payment-line">
+            <span data-i18n="paymentStatusLabel">Statut</span>
+            <b data-i18n="paymentWaiting">En attente de paiement</b>
+          </div>
+        </div>
+        <div class="payment-demo">
+          <strong data-i18n="paymentDemoTitle">Prototype de paiement</strong>
+          <p data-i18n="paymentDemoText">Pour le lancement réel, ce bouton sera remplacé par un checkout sécurisé Stripe. Aujourd'hui il simule un paiement validé pour tester le parcours Pro.</p>
+        </div>
+        <div class="detail-actions">
+          <button type="submit" class="primary-btn" data-i18n="paymentConfirm">Confirmer le paiement test</button>
+          <button type="button" class="secondary-btn" onclick="cancelPaymentFlow()" data-i18n="cancelLabel">Annuler</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -1650,6 +1749,12 @@
   </div>
 </footer>
 
+<!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
+     Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+<script src="supabase-config.js"></script>
+<script src="supabase-api.js"></script>
+
 <script>
 /* ---------------- DATA ---------------- */
 const AREAS = {
@@ -1670,7 +1775,10 @@ const CATS = [
   {id:"mode", fr:"Mode",                    en:"Fashion"},
   {id:"food", fr:"Alimentation & Boissons", en:"Food & Drinks"},
   {id:"job",  fr:"Emploi",                  en:"Jobs"},
+  {id:"gaming", fr:"Gaming",                en:"Gaming"},
   {id:"lois", fr:"Loisirs",                 en:"Leisure"},
+  {id:"pets", fr:"Animaux",                 en:"Pets"},
+  {id:"beauty", fr:"Beauté",                en:"Beauty"},
   {id:"billet",fr:"Billetterie",            en:"Tickets"},
   {id:"serv", fr:"Services",                en:"Services"},
   {id:"pro",  fr:"Matériel pro",            en:"Business gear"},
@@ -1697,19 +1805,20 @@ const SUBCATS = {
         {id:"all-immo", fr:"Tout Immobilier", en:"All property"}
       ]},
       {fr:"Ventes immobilières", en:"Property sales", items:[
-        {id:"sale", fr:"Ventes immobilières", en:"Property for sale"},
+        {id:"sale", fr:"À vendre", en:"For sale"},
         {id:"sale-apartment", fr:"Appartement", en:"Apartment"},
         {id:"sale-house", fr:"Maison", en:"House"},
         {id:"sale-land", fr:"Terrain", en:"Land"}
       ]},
       {fr:"Locations", en:"Rentals", items:[
-        {id:"rent", fr:"Locations", en:"Rentals"},
+        {id:"rent", fr:"À louer", en:"For rent"},
+        {id:"vacation-rental", fr:"Location de vacances", en:"Vacation rental"},
         {id:"rent-apartment", fr:"Appartement", en:"Apartment"},
         {id:"rent-house", fr:"Maison", en:"House"},
         {id:"rent-parking", fr:"Parking", en:"Parking"},
         {id:"roommates", fr:"Colocations", en:"Roommates"},
-        {id:"offices", fr:"Bureaux & commerces", en:"Offices & shops"},
-        {id:"moving", fr:"Services de déménagement", en:"Moving services"}
+        {id:"commercial", fr:"Commercial", en:"Commercial"},
+        {id:"offices", fr:"Bureaux & commerces", en:"Offices & shops"}
       ]},
       {fr:"Immobilier neuf", en:"New developments", items:[
         {id:"new-property", fr:"Immobilier neuf", en:"New property"},
@@ -1724,12 +1833,18 @@ const SUBCATS = {
     fr:"Voitures",
     en:"Cars",
     groups:[
-      {fr:"Acheter & vendre", en:"Buy & sell", items:[
-        {id:"car-sale", fr:"Vente de voitures", en:"Cars for sale"},
-        {id:"auto-parts", fr:"Pièces & équipement auto", en:"Car parts and equipment"}
+      {fr:"Véhicules", en:"Vehicles", items:[
+        {id:"car-sale", fr:"Voitures", en:"Cars"},
+        {id:"truck-sale", fr:"Trucks / utilitaires", en:"Trucks"},
+        {id:"dealer-inventory", fr:"Inventaire concessionnaire", en:"Dealer inventory"}
+      ]},
+      {fr:"Pièces", en:"Parts", items:[
+        {id:"auto-parts", fr:"Pièces auto", en:"Car parts"},
+        {id:"truck-parts", fr:"Pièces utilitaires", en:"Truck parts"}
       ]},
       {fr:"Services", en:"Services", items:[
-        {id:"mechanic", fr:"Services de réparations mécaniques", en:"Mechanical repair services"}
+        {id:"mechanic", fr:"Réparation mécanique", en:"Mechanical repair"},
+        {id:"dealer-account", fr:"Compte concessionnaire", en:"Dealer account"}
       ]}
     ]
   },
@@ -1739,7 +1854,7 @@ const SUBCATS = {
     groups:[
       {fr:"Acheter & vendre", en:"Buy & sell", items:[
         {id:"scooter-sale", fr:"Scooters à vendre", en:"Scooters for sale"},
-        {id:"motorbike-sale", fr:"Motos à vendre", en:"Motorbikes for sale"}
+        {id:"motorbike-sale", fr:"Motos à vendre", en:"Motorcycles for sale"}
       ]},
       {fr:"Pièces & équipements", en:"Parts & equipment", items:[
         {id:"motorbike-parts", fr:"Pièces moto", en:"Motorbike parts"},
@@ -1748,6 +1863,21 @@ const SUBCATS = {
       ]},
       {fr:"Services", en:"Services", items:[
         {id:"scooter-mechanic", fr:"Réparation scooters & motos", en:"Scooter and motorbike repairs"}
+      ]}
+    ]
+  },
+  bat:{
+    fr:"Bateaux & nautisme",
+    en:"Boats & marine",
+    groups:[
+      {fr:"Vente", en:"For sale", items:[
+        {id:"boat-sale", fr:"Bateaux", en:"Boats"},
+        {id:"jet-ski-sale", fr:"Jet skis", en:"Jet skis"},
+        {id:"marine-trailer", fr:"Remorques bateau", en:"Boat trailers"}
+      ]},
+      {fr:"Pièces & services", en:"Parts & services", items:[
+        {id:"marine-parts", fr:"Pièces nautiques", en:"Marine parts"},
+        {id:"marine-service", fr:"Entretien nautique", en:"Marine service"}
       ]}
     ]
   },
@@ -1777,6 +1907,9 @@ const SUBCATS = {
     en:"Jobs",
     groups:[
       {fr:"Types de poste", en:"Job types", items:[
+        {id:"hiring", fr:"Je recrute", en:"I am hiring"},
+        {id:"looking-work", fr:"Je cherche du travail", en:"I'm looking for work"},
+        {id:"cv", fr:"Publier un CV", en:"Post a resume"},
         {id:"full-time", fr:"Temps plein", en:"Full-time"},
         {id:"part-time", fr:"Temps partiel", en:"Part-time"},
         {id:"seasonal", fr:"Saisonnier", en:"Seasonal"},
@@ -1789,6 +1922,7 @@ const SUBCATS = {
         {id:"office-admin", fr:"Bureau & administration", en:"Office and admin"}
       ]},
       {fr:"Services emploi", en:"Job services", items:[
+        {id:"paid-job-post", fr:"Offre d'emploi entreprise", en:"Paid job post"},
         {id:"internship", fr:"Stages", en:"Internships"},
         {id:"training", fr:"Formations", en:"Training"}
       ]}
@@ -1809,6 +1943,74 @@ const SUBCATS = {
       ]},
       {fr:"Services", en:"Services", items:[
         {id:"catering", fr:"Traiteur & événements", en:"Catering & events"}
+      ]}
+    ]
+  },
+  gaming:{
+    fr:"Gaming",
+    en:"Gaming",
+    groups:[
+      {fr:"Consoles & jeux", en:"Consoles & games", items:[
+        {id:"playstation", fr:"PlayStation", en:"PlayStation"},
+        {id:"xbox", fr:"Xbox", en:"Xbox"},
+        {id:"nintendo", fr:"Nintendo", en:"Nintendo"},
+        {id:"pc-gaming", fr:"PC gaming", en:"PC gaming"}
+      ]},
+      {fr:"Accessoires", en:"Accessories", items:[
+        {id:"controllers", fr:"Manettes", en:"Controllers"},
+        {id:"gaming-headsets", fr:"Casques gaming", en:"Gaming headsets"}
+      ]}
+    ]
+  },
+  pets:{
+    fr:"Animaux",
+    en:"Pets",
+    groups:[
+      {fr:"Animaux & accessoires", en:"Pets & supplies", items:[
+        {id:"dogs", fr:"Chiens", en:"Dogs"},
+        {id:"cats", fr:"Chats", en:"Cats"},
+        {id:"pet-supplies", fr:"Accessoires animaux", en:"Pet supplies"},
+        {id:"pet-services", fr:"Garde & services animaux", en:"Pet sitting and services"}
+      ]}
+    ]
+  },
+  beauty:{
+    fr:"Beauté",
+    en:"Beauty",
+    groups:[
+      {fr:"Services beauté", en:"Beauty services", items:[
+        {id:"hairdresser", fr:"Coiffure", en:"Hairdresser"},
+        {id:"nails", fr:"Ongles", en:"Nails"},
+        {id:"makeup", fr:"Maquillage", en:"Makeup"},
+        {id:"barber", fr:"Barbier", en:"Barber"}
+      ]},
+      {fr:"Produits", en:"Products", items:[
+        {id:"beauty-products", fr:"Produits beauté", en:"Beauty products"}
+      ]}
+    ]
+  },
+  serv:{
+    fr:"Services",
+    en:"Services",
+    groups:[
+      {fr:"Maison & entretien", en:"Home maintenance", items:[
+        {id:"cleaning", fr:"Ménage / nettoyage", en:"Cleaning"},
+        {id:"plumber", fr:"Plombier", en:"Plumber"},
+        {id:"electrician", fr:"Électricien", en:"Electrician"},
+        {id:"gardening", fr:"Jardinage", en:"Gardening"}
+      ]},
+      {fr:"Auto & bâtiment", en:"Auto and construction", items:[
+        {id:"mechanic-service", fr:"Mécanicien", en:"Mechanic"},
+        {id:"construction-service", fr:"Construction", en:"Construction"},
+        {id:"moving-service", fr:"Déménagement", en:"Moving"}
+      ]},
+      {fr:"Créatif & digital", en:"Creative and digital", items:[
+        {id:"photographer", fr:"Photographe", en:"Photographer"},
+        {id:"web-it", fr:"Web / IT", en:"Web / IT"}
+      ]},
+      {fr:"Visibilité Pro", en:"Pro visibility", items:[
+        {id:"verified-pro", fr:"Verified Pro", en:"Verified Pro"},
+        {id:"top-service", fr:"Top Service Provider", en:"Top Service Provider"}
       ]}
     ]
   }
@@ -1887,12 +2089,58 @@ Object.assign(I18N.fr, {
   planPremium1:"Tout Pro Plus",
   planPremium2:"Emplacements front page",
   planPremium3:"Priorité dans les annonces sponsorisées",
+  planDealerTitle:"Dealer Pro",
+  planDealerBadge:"79 €/mois",
+  planDealerText:"Pour concessionnaires auto, motos, scooters, bateaux et jet skis.",
+  planDealer1:"Page concessionnaire + logo",
+  planDealer2:"Inventaire complet avec annonces prioritaires",
+  planDealer3:"WhatsApp, téléphone, site web et statistiques",
+  planDealerPrice:"79 €/mois",
   planPriceSoon:"Prix à définir",
   planLearnMore:"Voir comment fonctionne Boost & Pro",
   planPaymentNote:"Les plans Pro nécessitent un abonnement payé avant activation. Sans paiement confirmé, le compte Pro ne peut pas publier.",
   continueToPayment:"Continuer vers le paiement",
   proPaymentRequired:"Un abonnement Pro payé est obligatoire avant de créer un compte professionnel.",
-  proPostBlocked:"Votre abonnement Pro doit être activé par paiement avant de publier comme professionnel."
+  proPostBlocked:"Votre abonnement Pro doit être activé par paiement avant de publier comme professionnel.",
+  paymentTitle:"Activer l'abonnement Pro",
+  paymentKicker:"Paiement obligatoire",
+  paymentAmountLabel:"Montant",
+  paymentStatusLabel:"Statut",
+  paymentWaiting:"En attente de paiement",
+  paymentDemoTitle:"Prototype de paiement",
+  paymentDemoText:"Pour le lancement réel, ce bouton sera remplacé par un checkout sécurisé Stripe. Aujourd'hui il simule un paiement validé pour tester le parcours Pro.",
+  paymentConfirm:"Confirmer le paiement test",
+  paymentPlanText:"Votre boutique sera activée après paiement confirmé. Vous pourrez ensuite publier vos produits, recevoir des messages et utiliser les options de visibilité.",
+  paymentSuccess:"Paiement confirmé. Votre compte Pro est actif.",
+  proDashboardTitle:"Espace Pro",
+  proStorefrontTitle:"Vitrine business",
+  proStorefrontText:"Votre page business regroupe vos produits, logo, WhatsApp, téléphone, site web, badge Pro, avis clients et informations de confiance.",
+  proProductsTitle:"Produits à vendre",
+  proProductsText:"Chaque produit se publie comme une annonce: photos réelles, prix en euro ou dollar, catégorie, quartier et chat direct avec les acheteurs.",
+  proVisibilityTitle:"Visibilité",
+  proVisibilityText:"Les boosts payants mettent un produit en avant sur la page d'accueil et dans les emplacements sponsorisés après paiement confirmé.",
+  proOpenStore:"Voir ma boutique",
+  proAddProduct:"Ajouter un produit",
+  proBoostProduct:"Booster un produit",
+  proActive:"Abonnement actif",
+  proInactive:"Paiement requis",
+  proPlan:"Plan",
+  businessPhoneLabel:"Téléphone",
+  businessWhatsappLabel:"WhatsApp",
+  businessWebsiteLabel:"Site Internet",
+  businessLogoLabel:"Logo URL",
+  chatLocation:"Partager un lieu",
+  chatPhoto:"Envoyer une photo",
+  chatOffer:"Faire une offre",
+  chatReport:"Signaler",
+  chatBlock:"Bloquer",
+  locationDraft:"Bonjour, pouvons-nous nous retrouver dans un lieu public proche de cette zone ?",
+  offerDraft:"Bonjour, accepteriez-vous une offre à ",
+  photoSent:"Photo ajoutée au chat",
+  reportSent:"Merci. Cette annonce sera revue par l'équipe.",
+  sellerBlocked:"Vendeur bloqué dans ce prototype.",
+  dealerAccountNote:"Dealer Pro est pensé pour les concessionnaires: inventaire complet, logo, WhatsApp, téléphone, site web, statistiques et annonces prioritaires.",
+  jobMonetizationNote:"Les CV et recherches d'emploi restent gratuits. Les entreprises pourront payer par offre ou via abonnement employeur."
 });
 
 Object.assign(I18N.en, {
@@ -1919,12 +2167,58 @@ Object.assign(I18N.en, {
   planPremium1:"Everything in Pro Plus",
   planPremium2:"Front page placements",
   planPremium3:"Priority in sponsored listings",
+  planDealerTitle:"Dealer Pro",
+  planDealerBadge:"79 €/month",
+  planDealerText:"For car, motorcycle, scooter, boat, and jet ski dealers.",
+  planDealer1:"Dealer page + logo",
+  planDealer2:"Full inventory with priority listings",
+  planDealer3:"WhatsApp, phone, website, and stats",
+  planDealerPrice:"79 €/month",
   planPriceSoon:"Pricing to define",
   planLearnMore:"See how Boost & Pro works",
   planPaymentNote:"Pro plans require a paid subscription before activation. Without confirmed payment, a Pro account cannot publish.",
   continueToPayment:"Continue to payment",
   proPaymentRequired:"A paid Pro subscription is required before creating a business account.",
-  proPostBlocked:"Your Pro subscription must be activated by payment before posting as a business."
+  proPostBlocked:"Your Pro subscription must be activated by payment before posting as a business.",
+  paymentTitle:"Activate Pro subscription",
+  paymentKicker:"Payment required",
+  paymentAmountLabel:"Amount",
+  paymentStatusLabel:"Status",
+  paymentWaiting:"Waiting for payment",
+  paymentDemoTitle:"Payment prototype",
+  paymentDemoText:"For the real launch, this button will be replaced by secure Stripe checkout. Today it simulates an approved payment so we can test the Pro flow.",
+  paymentConfirm:"Confirm demo payment",
+  paymentPlanText:"Your store will be activated after confirmed payment. Then you can publish products, receive messages, and use visibility options.",
+  paymentSuccess:"Payment confirmed. Your Pro account is active.",
+  proDashboardTitle:"Pro workspace",
+  proStorefrontTitle:"Business storefront",
+  proStorefrontText:"Your business page brings together your products, logo, WhatsApp, phone, website, Pro badge, customer ratings, and trust information.",
+  proProductsTitle:"Products for sale",
+  proProductsText:"Each product is posted like a listing: real photos, euro or dollar price, category, area, and direct buyer chat.",
+  proVisibilityTitle:"Visibility",
+  proVisibilityText:"Paid boosts feature a product on the home page and sponsored ad spaces after confirmed payment.",
+  proOpenStore:"View my store",
+  proAddProduct:"Add product",
+  proBoostProduct:"Boost product",
+  proActive:"Subscription active",
+  proInactive:"Payment required",
+  proPlan:"Plan",
+  businessPhoneLabel:"Phone",
+  businessWhatsappLabel:"WhatsApp",
+  businessWebsiteLabel:"Website",
+  businessLogoLabel:"Logo URL",
+  chatLocation:"Share location",
+  chatPhoto:"Send photo",
+  chatOffer:"Make offer",
+  chatReport:"Report",
+  chatBlock:"Block",
+  locationDraft:"Hi, can we meet in a public place near this area?",
+  offerDraft:"Hi, would you accept an offer of ",
+  photoSent:"Photo added to chat",
+  reportSent:"Thanks. This listing will be reviewed by the team.",
+  sellerBlocked:"Seller blocked in this prototype.",
+  dealerAccountNote:"Dealer Pro is built for dealers: full inventory, logo, WhatsApp, phone, website, stats, and priority listings.",
+  jobMonetizationNote:"Resumes and job search stay free. Companies can pay per job post or use an employer subscription."
 });
 
 const G = {
@@ -1940,6 +2234,9 @@ const G = {
   mode:{img:"https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=900&q=80", alt:"Second-hand clothes on a rack"},
   food:{img:"https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80", alt:"Fresh fruit and vegetables at a local market"},
   job:{img:"https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80", alt:"People working in a local business"},
+  gaming:{img:"https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=900&q=80", alt:"Game console and controller for sale"},
+  pets:{img:"https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=900&q=80", alt:"Dog with pet accessories"},
+  beauty:{img:"https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80", alt:"Hair salon and beauty service"},
   serv:{img:"https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80", alt:"Cleaning service supplies"},
   pro:{img:"https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=900&q=80", alt:"Professional tools for sale"},
   lois:{img:"https://contents.mediadecathlon.com/m16448636/k%24a9868b188f582b1b78f10453523d3956/picture.jpg", alt:"Stand up paddle board for sale"},
@@ -2004,6 +2301,21 @@ const CATEGORY_PHOTOS = {
   job:[
     {img:G.job.img, alt:G.job.alt},
     {img:"https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80", alt:"Team hiring and job listing"}
+  ],
+  gaming:[
+    {img:G.gaming.img, alt:G.gaming.alt},
+    {img:"https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=900&q=80", alt:"Gaming setup and monitor"},
+    {img:"https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?auto=format&fit=crop&w=900&q=80", alt:"Video game controller closeup"}
+  ],
+  pets:[
+    {img:G.pets.img, alt:G.pets.alt},
+    {img:"https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=900&q=80", alt:"Cat looking at camera"},
+    {img:"https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=900&q=80", alt:"Pet grooming supplies"}
+  ],
+  beauty:[
+    {img:G.beauty.img, alt:G.beauty.alt},
+    {img:"https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=900&q=80", alt:"Nail care and manicure service"},
+    {img:"https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=900&q=80", alt:"Hairdresser working in salon"}
   ],
   loisirs:[
     {img:G.lois.img, alt:G.lois.alt}
@@ -2107,7 +2419,15 @@ const L = [
   {id:30,t:"Cartons de déménagement propres, lot complet",    cat:"autres",side:"fr", area:"Concordia",     cond:"bon",  cur:"eur", eur:20, usd:22, ph:13, pics:3, pro:false, urgent:false},
   {id:31,t:"Colombo de poulet maison - portion à emporter", te:"Homemade chicken colombo - takeaway portion", cat:"food", sub:"prepared-food", side:"fr", area:"Marigot", cond:"neuf", cur:"eur", eur:12, usd:13, ph:2, pics:3, pro:true, urgent:false, feat:true, delivery:"pickup", desc:"Préparé le jour même. Commande avant 11 h et retrait à Marigot entre 12 h et 14 h.", desce:"Prepared the same day. Order before 11 a.m. and collect in Marigot between noon and 2 p.m."},
   {id:32,t:"Panier de fruits et légumes locaux", te:"Local fruit and vegetable box", cat:"food", sub:"fresh-produce", side:"nl", area:"Philipsburg", cond:"neuf", cur:"usd", eur:23, usd:25, ph:4, pics:5, pro:true, urgent:false, delivery:"delivery", desc:"Produits locaux de saison. Réservez votre panier dans le chat et récupérez-le à Philipsburg.", desce:"Seasonal local produce. Reserve your box in chat and collect it in Philipsburg."},
-  {id:33,t:"Viennoiseries fraîches - boîte de 8", te:"Fresh pastries - box of 8", cat:"food", sub:"bakery", side:"fr", area:"Grand Case", cond:"neuf", cur:"eur", eur:16, usd:18, ph:5, pics:4, pro:true, urgent:false, delivery:"pickup", desc:"Croissants et pains au chocolat préparés le matin. Réservation recommandée.", desce:"Croissants and pain au chocolat baked in the morning. Pre-ordering is recommended."}
+  {id:33,t:"Viennoiseries fraîches - boîte de 8", te:"Fresh pastries - box of 8", cat:"food", sub:"bakery", side:"fr", area:"Grand Case", cond:"neuf", cur:"eur", eur:16, usd:18, ph:5, pics:4, pro:true, urgent:false, delivery:"pickup", desc:"Croissants et pains au chocolat préparés le matin. Réservation recommandée.", desce:"Croissants and pain au chocolat baked in the morning. Pre-ordering is recommended."},
+  {id:34,t:"Toyota Hilux double cabine - inventaire concessionnaire", te:"Toyota Hilux double cab - dealer inventory", cat:"voit", sub:"dealer-inventory", side:"nl", area:"Philipsburg", cond:"tbe", cur:"usd", eur:25200, usd:27200, ph:3, pics:16, pro:true, urgent:false, feat:true, delivery:"pickup", desc:"Véhicule visible chez le concessionnaire. Financement et reprise possibles sur demande.", desce:"Vehicle available at the dealership. Financing and trade-in available on request."},
+  {id:35,t:"Jet ski Yamaha VX Cruiser 2021", te:"2021 Yamaha VX Cruiser jet ski", cat:"bat", sub:"jet-ski-sale", side:"fr", area:"Baie Nettlé", cond:"bon", cur:"eur", eur:7600, usd:8200, ph:18, pics:9, pro:false, urgent:false, delivery:"meetup", negotiable:true},
+  {id:36,t:"Villa 2 chambres - location vacances Orient Bay", te:"2-bedroom villa - Orient Bay vacation rental", cat:"immo", sub:"vacation-rental", side:"fr", area:"Baie Orientale", cond:"tbe", cur:"eur", eur:185, usd:200, ph:12, pics:14, pro:true, urgent:false, delivery:"meetup"},
+  {id:37,t:"Offre d'emploi: réceptionniste hôtel - Maho", te:"Job offer: hotel receptionist - Maho", cat:"job", sub:"paid-job-post", side:"nl", area:"Maho", cond:"neuf", cur:"usd", eur:0, usd:0, ph:4, pics:1, pro:true, urgent:true, salary:true},
+  {id:38,t:"Service nettoyage villas - check-in / check-out", te:"Villa cleaning service - check-in / check-out", cat:"serv", sub:"cleaning", side:"fr", area:"Terres Basses", cond:"neuf", cur:"eur", eur:0, usd:0, ph:9, pics:4, pro:true, urgent:false, salary:true, delivery:"delivery"},
+  {id:39,t:"Coiffure braids & brushing à domicile", te:"Braids and blowout at-home hair service", cat:"beauty", sub:"hairdresser", side:"nl", area:"Cole Bay", cond:"neuf", cur:"usd", eur:0, usd:0, ph:7, pics:5, pro:true, urgent:false, salary:true, delivery:"meetup"},
+  {id:40,t:"Nintendo Switch OLED + 3 jeux", te:"Nintendo Switch OLED + 3 games", cat:"gaming", sub:"nintendo", side:"fr", area:"Marigot", cond:"tbe", cur:"eur", eur:240, usd:260, ph:6, pics:5, pro:false, urgent:true, delivery:"meetup", negotiable:true},
+  {id:41,t:"Accessoires chien: panier, laisse, gamelles", te:"Dog accessories: bed, leash, bowls", cat:"pets", sub:"pet-supplies", side:"nl", area:"Simpson Bay", cond:"bon", cur:"usd", eur:42, usd:45, ph:16, pics:4, pro:false, urgent:false, delivery:"pickup", negotiable:true}
 ];
 
 /* ---------------- STATE ---------------- */
@@ -2125,6 +2445,9 @@ let userListings = [];
 let selectedPostPhotos = [];
 let usersByEmail = {};
 let pendingAuthAction = null;
+let pendingProSignup = null;
+let pendingPaymentExistingUser = false;
+let pendingAfterPayment = null;
 
 const chatThreads = {
   4:{seller:"Maya", updated:"12 min", messages:[
@@ -2233,6 +2556,15 @@ function hasActiveProSubscription(user = state.user){
 }
 function isPaidPlan(plan){
   return plan && plan !== "personal-free";
+}
+function planLabel(plan){
+  const labels = {
+    "personal-free":t().planPersonalTitle,
+    "pro-starter":t().planStarterTitle,
+    "pro-plus":t().planPlusTitle,
+    "pro-premium":t().planPremiumTitle
+  };
+  return labels[plan] || t().planStarterTitle;
 }
 function mediaFor(l){
   if(l.photos?.length) return {img:l.photos[0], alt:titleFor(l)};
@@ -2891,6 +3223,22 @@ function openBoostInfo(){
   openModal("boostModal");
 }
 
+function openPaymentModal({existingUser=false, plan=null, after=null} = {}){
+  pendingPaymentExistingUser = existingUser;
+  pendingAfterPayment = after;
+  const selectedPlan = plan || pendingProSignup?.accountPlan || state.user?.accountPlan || "pro-starter";
+  document.getElementById("paymentPlanName").textContent = planLabel(selectedPlan);
+  document.getElementById("paymentPlanText").textContent = t().paymentPlanText;
+  openModal("paymentModal");
+}
+
+function cancelPaymentFlow(){
+  pendingProSignup = null;
+  pendingPaymentExistingUser = false;
+  pendingAfterPayment = null;
+  closeModal("paymentModal");
+}
+
 function renderProfile(){
   const user = normalizeUser(state.user);
   state.user = user;
@@ -2900,10 +3248,14 @@ function renderProfile(){
   });
   const body = document.getElementById("profileBody");
   const displayName = user.businessName || user.name;
-  const profileType = user.accountType === "business" ? (state.lang==="fr" ? "Boutique Pro SXM" : "SXM Pro Store") : (state.lang==="fr" ? "Vendeur local" : "Local seller");
+  const isBusiness = user.accountType === "business";
+  const proActive = hasActiveProSubscription(user);
+  const profileType = isBusiness ? (state.lang==="fr" ? "Boutique Pro SXM" : "SXM Pro Store") : (state.lang==="fr" ? "Vendeur local" : "Local seller");
   const profileCopy = own.length
     ? (state.lang==="fr" ? "Votre vitrine commence à prendre forme. Gardez vos photos propres, répondez vite et marquez les annonces vendues." : "Your storefront is taking shape. Keep photos clean, reply fast, and mark sold listings.")
-    : (state.lang==="fr" ? "Prêt à vendre sur l'île ? Ajoutez une vraie photo, un prix clair, et votre annonce peut partir aujourd'hui." : "Ready to sell on the island? Add a real photo, a clear price, and your listing can move today.");
+    : isBusiness
+      ? (state.lang==="fr" ? "Votre boutique Pro est prête à recevoir vos produits. Ajoutez des photos propres, un prix clair, et gardez le chat ouvert aux clients." : "Your Pro store is ready for products. Add clean photos, a clear price, and keep chat open for customers.")
+      : (state.lang==="fr" ? "Prêt à vendre sur l'île ? Ajoutez une vraie photo, un prix clair, et votre annonce peut partir aujourd'hui." : "Ready to sell on the island? Add a real photo, a clear price, and your listing can move today.");
   body.innerHTML = `
     <section class="profile-hero">
       <div class="profile-avatar">${esc(user.avatar)}</div>
@@ -2912,6 +3264,7 @@ function renderProfile(){
         <h3>${esc(displayName)}</h3>
         <p>${esc(user.email)} · ${esc(user.area || "SXM")}</p>
         <p>${t().memberSince} ${joined}</p>
+        ${isBusiness ? `<p><strong>${t().proPlan}:</strong> ${planLabel(user.accountPlan)} · ${proActive ? t().proActive : t().proInactive}</p>` : ""}
         <p class="profile-copy">${profileCopy}</p>
       </div>
     </section>
@@ -2946,6 +3299,7 @@ function renderProfile(){
         </button>
       </div>
     </section>
+    ${isBusiness ? proDashboardHTML(user, own, proActive) : ""}
     <section class="profile-section">
       <h3>${t().profileListings}</h3>
       <div class="mini-listing">
@@ -2957,6 +3311,43 @@ function renderProfile(){
       <button type="button" class="secondary-btn" onclick="logoutUser()">${t().logoutLabel}</button>
     </div>`;
   persistState();
+}
+
+function proDashboardHTML(user, own, proActive){
+  return `
+    <section class="profile-section">
+      <h3>${t().proDashboardTitle}</h3>
+      <div class="pro-status">
+        <span class="${proActive ? "active" : "pending"}">${proActive ? t().proActive : t().proInactive}</span>
+        <span>${t().proPlan}: ${planLabel(user.accountPlan)}</span>
+        <span>${own.length} ${t().activeListings}</span>
+      </div>
+      <div class="pro-dashboard">
+        <article class="pro-panel">
+          <h4>${t().proStorefrontTitle}</h4>
+          <p>${t().proStorefrontText}</p>
+          <button type="button" class="secondary-btn" onclick="showToast('${esc(t().comingSoon)}')">${t().proOpenStore}</button>
+        </article>
+        <article class="pro-panel">
+          <h4>${t().proProductsTitle}</h4>
+          <p>${t().proProductsText}</p>
+          <button type="button" class="primary-btn" onclick="closeModal('profileModal');openPostModal()">${t().proAddProduct}</button>
+        </article>
+        <article class="pro-panel">
+          <h4>${t().proVisibilityTitle}</h4>
+          <p>${t().proVisibilityText}</p>
+          <button type="button" class="secondary-btn" onclick="closeModal('profileModal');openBoostInfo()">${t().proBoostProduct}</button>
+        </article>
+        <article class="pro-panel">
+          <h4>${state.lang==="fr" ? "Méthode de vente" : "Selling method"}</h4>
+          <ul>
+            <li>${state.lang==="fr" ? "Publiez chaque produit avec ses propres photos et son stock." : "Publish each product with its own photos and stock."}</li>
+            <li>${state.lang==="fr" ? "Les acheteurs contactent le commerce dans le chat instantané." : "Buyers contact the business through instant chat."}</li>
+            <li>${state.lang==="fr" ? "Les avis renforcent la confiance autour de votre boutique." : "Ratings build trust around your store."}</li>
+          </ul>
+        </article>
+      </div>
+    </section>`;
 }
 
 function miniListingHTML(l){
@@ -3007,7 +3398,7 @@ function openPostModal(){
   }
   if(state.user.accountType === "business" && !hasActiveProSubscription(state.user)){
     showToast(t().proPostBlocked);
-    openBoostInfo();
+    openPaymentModal({existingUser:true, plan:state.user.accountPlan, after:"post"});
     return;
   }
   buildPostForm();
@@ -3045,6 +3436,9 @@ async function createAccount(e){
   const password = document.getElementById("accountPassword").value;
   const confirmation = document.getElementById("accountPasswordConfirm").value;
   const error = document.getElementById("createAccountError");
+  const accountType = document.getElementById("accountType").value;
+  const accountPlan = document.getElementById("accountPlan").value;
+  const businessName = accountType === "business" ? document.getElementById("businessName").value.trim() : "";
   if(usersByEmail[key]){
     error.textContent = t().emailExists;
     return false;
@@ -3053,11 +3447,18 @@ async function createAccount(e){
     error.textContent = t().passwordMismatch;
     return false;
   }
-  const accountType = document.getElementById("accountType").value;
-  const accountPlan = document.getElementById("accountPlan").value;
   if(isPaidPlan(accountPlan)){
-    error.textContent = t().proPaymentRequired;
-    openBoostInfo();
+    error.textContent = "";
+    pendingProSignup = {
+      name:document.getElementById("accountName").value.trim(),
+      email,
+      key,
+      accountType:"business",
+      accountPlan,
+      businessName,
+      passwordHash:await hashPassword(password)
+    };
+    openPaymentModal({plan:accountPlan});
     return false;
   }
   state.user = normalizeUser(createUserProfile({
@@ -3065,7 +3466,7 @@ async function createAccount(e){
     email,
     accountType,
     accountPlan,
-    businessName:accountType === "business" ? document.getElementById("businessName").value.trim() : ""
+    businessName
   }));
   state.user.passwordHash = await hashPassword(password);
   usersByEmail[key] = state.user;
@@ -3074,6 +3475,45 @@ async function createAccount(e){
   e.target.reset();
   selectAccountPlan("personal-free", document.querySelector(".plan-card"));
   completeAuth();
+  return false;
+}
+
+async function confirmDemoPayment(e){
+  e.preventDefault();
+  if(pendingProSignup){
+    if(usersByEmail[pendingProSignup.key]){
+      document.getElementById("createAccountError").textContent = t().emailExists;
+      closeModal("paymentModal");
+      return false;
+    }
+    state.user = normalizeUser(createUserProfile(pendingProSignup));
+    state.user.passwordHash = pendingProSignup.passwordHash;
+    state.user.subscriptionStatus = "active";
+    state.user.subscriptionStarted = new Date().toISOString();
+    usersByEmail[pendingProSignup.key] = state.user;
+    pendingProSignup = null;
+    persistState();
+    showToast(t().paymentSuccess);
+    document.querySelector("#accountModal .auth-card").reset();
+    selectAccountPlan("personal-free", document.querySelector(".plan-card"));
+    closeModal("paymentModal");
+    completeAuth();
+    return false;
+  }
+  if(pendingPaymentExistingUser && state.user){
+    state.user = normalizeUser(state.user);
+    state.user.subscriptionStatus = "active";
+    state.user.subscriptionStarted = new Date().toISOString();
+    usersByEmail[state.user.email.toLowerCase()] = state.user;
+    persistState();
+    showToast(t().paymentSuccess);
+    closeModal("paymentModal");
+    const next = pendingAfterPayment;
+    pendingPaymentExistingUser = false;
+    pendingAfterPayment = null;
+    render();
+    if(next === "post") openPostModal();
+  }
   return false;
 }
 
@@ -3332,7 +3772,10 @@ document.addEventListener("keydown", e=>{
 
 document.querySelectorAll(".modal").forEach(modal=>{
   modal.addEventListener("click", e=>{
-    if(e.target === modal) closeModal(modal.id);
+    if(e.target === modal){
+      if(modal.id === "paymentModal") cancelPaymentFlow();
+      else closeModal(modal.id);
+    }
   });
 });
 
@@ -3347,6 +3790,13 @@ window.addEventListener("popstate", openListingFromUrl);
 
 /* ---------------- INIT ---------------- */
 loadLocalState(); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl();
+
+/* Supabase : si configuré, remplace les annonces de démo par celles de la base. */
+if (window.SB && SB.enabled()) {
+  SB.hydrate().then(function (ok) {
+    if (ok) console.info("[Supabase] annonces chargées depuis la base.");
+  });
+}
 </script>
 </body>
 </html>

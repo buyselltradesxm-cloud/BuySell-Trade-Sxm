@@ -871,6 +871,34 @@
   }
   .profile-tool b{font-family:'Space Grotesk',sans-serif;font-size:13px;}
   .profile-tool span{font-size:12px;color:var(--mute);line-height:1.35;}
+  .pro-dashboard{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+  .pro-panel{
+    border:2px solid var(--line);border-radius:12px;background:var(--paper);
+    padding:14px;display:grid;gap:10px;
+  }
+  .pro-panel h4{font-size:15px;font-family:'Space Grotesk',sans-serif;}
+  .pro-panel p,.pro-panel li{font-size:12.5px;color:var(--mute);line-height:1.45;}
+  .pro-panel ul{display:grid;gap:4px;padding-left:18px;}
+  .pro-status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .pro-status span{
+    border:1.5px solid var(--line);border-radius:8px;background:var(--white);
+    padding:6px 8px;font-size:12px;font-weight:900;
+  }
+  .pro-status .active{background:var(--sea);color:var(--white);}
+  .pro-status .pending{background:var(--sun);color:var(--ink);}
+  .payment-summary{
+    border:2px solid var(--line);border-radius:13px;background:var(--white);
+    padding:15px;display:grid;gap:10px;margin-bottom:14px;
+  }
+  .payment-summary h3{font-size:18px;}
+  .payment-line{display:flex;justify-content:space-between;gap:12px;border-top:1.5px solid rgba(19,42,46,.14);padding-top:10px;}
+  .payment-line b{font-family:'Space Grotesk',sans-serif;}
+  .payment-demo{
+    border:2px dashed var(--line);border-radius:12px;background:var(--paper);
+    padding:13px;display:grid;gap:7px;
+  }
+  .payment-demo strong{font-family:'Space Grotesk',sans-serif;}
+  .payment-demo p{font-size:13px;color:var(--mute);line-height:1.45;}
   .mini-listing{display:grid;gap:8px;}
   .mini-row{
     display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;
@@ -962,6 +990,7 @@
     .auth-grid{grid-template-columns:1fr;}
     .profile-stats{grid-template-columns:repeat(2,1fr);}
     .profile-tools{grid-template-columns:1fr;}
+    .pro-dashboard{grid-template-columns:1fr;}
     .mobile-nav{display:block;}
     .mobile-ad-slot{display:block;}
     body{padding-bottom:146px;}
@@ -1485,6 +1514,40 @@
   </div>
 </div>
 
+<div class="modal" id="paymentModal" role="dialog" aria-modal="true" aria-labelledby="paymentTitle">
+  <div class="dialog small">
+    <div class="dialog-head">
+      <h2 id="paymentTitle" data-i18n="paymentTitle">Activer l'abonnement Pro</h2>
+      <button type="button" class="close-btn" onclick="cancelPaymentFlow()" aria-label="Fermer">x</button>
+    </div>
+    <div class="dialog-body">
+      <form onsubmit="return confirmDemoPayment(event)">
+        <div class="payment-summary">
+          <span class="profile-kicker" data-i18n="paymentKicker">Paiement obligatoire</span>
+          <h3 id="paymentPlanName">Pro Starter</h3>
+          <p id="paymentPlanText" class="upload-help">Votre boutique sera activée après paiement confirmé.</p>
+          <div class="payment-line">
+            <span data-i18n="paymentAmountLabel">Montant</span>
+            <b data-i18n="planPriceSoon">Prix à définir</b>
+          </div>
+          <div class="payment-line">
+            <span data-i18n="paymentStatusLabel">Statut</span>
+            <b data-i18n="paymentWaiting">En attente de paiement</b>
+          </div>
+        </div>
+        <div class="payment-demo">
+          <strong data-i18n="paymentDemoTitle">Prototype de paiement</strong>
+          <p data-i18n="paymentDemoText">Pour le lancement réel, ce bouton sera remplacé par un checkout sécurisé Stripe. Aujourd'hui il simule un paiement validé pour tester le parcours Pro.</p>
+        </div>
+        <div class="detail-actions">
+          <button type="submit" class="primary-btn" data-i18n="paymentConfirm">Confirmer le paiement test</button>
+          <button type="button" class="secondary-btn" onclick="cancelPaymentFlow()" data-i18n="cancelLabel">Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="messagesModal" role="dialog" aria-modal="true" aria-labelledby="messagesTitle">
   <div class="dialog small">
     <div class="dialog-head">
@@ -1649,6 +1712,12 @@
     <p class="policy-note" data-i18n="illegalPolicy">Les objets illégaux, armes, drogues, contrefaçons, produits volés et articles dangereux sont strictement interdits. Les comptes en infraction peuvent être supprimés et bannis définitivement.</p>
   </div>
 </footer>
+
+<!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
+     Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+<script src="supabase-config.js"></script>
+<script src="supabase-api.js"></script>
 
 <script>
 /* ---------------- DATA ---------------- */
@@ -1892,7 +1961,30 @@ Object.assign(I18N.fr, {
   planPaymentNote:"Les plans Pro nécessitent un abonnement payé avant activation. Sans paiement confirmé, le compte Pro ne peut pas publier.",
   continueToPayment:"Continuer vers le paiement",
   proPaymentRequired:"Un abonnement Pro payé est obligatoire avant de créer un compte professionnel.",
-  proPostBlocked:"Votre abonnement Pro doit être activé par paiement avant de publier comme professionnel."
+  proPostBlocked:"Votre abonnement Pro doit être activé par paiement avant de publier comme professionnel.",
+  paymentTitle:"Activer l'abonnement Pro",
+  paymentKicker:"Paiement obligatoire",
+  paymentAmountLabel:"Montant",
+  paymentStatusLabel:"Statut",
+  paymentWaiting:"En attente de paiement",
+  paymentDemoTitle:"Prototype de paiement",
+  paymentDemoText:"Pour le lancement réel, ce bouton sera remplacé par un checkout sécurisé Stripe. Aujourd'hui il simule un paiement validé pour tester le parcours Pro.",
+  paymentConfirm:"Confirmer le paiement test",
+  paymentPlanText:"Votre boutique sera activée après paiement confirmé. Vous pourrez ensuite publier vos produits, recevoir des messages et utiliser les options de visibilité.",
+  paymentSuccess:"Paiement confirmé. Votre compte Pro est actif.",
+  proDashboardTitle:"Espace Pro",
+  proStorefrontTitle:"Vitrine business",
+  proStorefrontText:"Votre page business regroupe vos produits, votre badge Pro, les avis clients et vos informations de confiance.",
+  proProductsTitle:"Produits à vendre",
+  proProductsText:"Chaque produit se publie comme une annonce: photos réelles, prix en euro ou dollar, catégorie, quartier et chat direct avec les acheteurs.",
+  proVisibilityTitle:"Visibilité",
+  proVisibilityText:"Les boosts payants mettent un produit en avant sur la page d'accueil et dans les emplacements sponsorisés après paiement confirmé.",
+  proOpenStore:"Voir ma boutique",
+  proAddProduct:"Ajouter un produit",
+  proBoostProduct:"Booster un produit",
+  proActive:"Abonnement actif",
+  proInactive:"Paiement requis",
+  proPlan:"Plan"
 });
 
 Object.assign(I18N.en, {
@@ -1924,7 +2016,30 @@ Object.assign(I18N.en, {
   planPaymentNote:"Pro plans require a paid subscription before activation. Without confirmed payment, a Pro account cannot publish.",
   continueToPayment:"Continue to payment",
   proPaymentRequired:"A paid Pro subscription is required before creating a business account.",
-  proPostBlocked:"Your Pro subscription must be activated by payment before posting as a business."
+  proPostBlocked:"Your Pro subscription must be activated by payment before posting as a business.",
+  paymentTitle:"Activate Pro subscription",
+  paymentKicker:"Payment required",
+  paymentAmountLabel:"Amount",
+  paymentStatusLabel:"Status",
+  paymentWaiting:"Waiting for payment",
+  paymentDemoTitle:"Payment prototype",
+  paymentDemoText:"For the real launch, this button will be replaced by secure Stripe checkout. Today it simulates an approved payment so we can test the Pro flow.",
+  paymentConfirm:"Confirm demo payment",
+  paymentPlanText:"Your store will be activated after confirmed payment. Then you can publish products, receive messages, and use visibility options.",
+  paymentSuccess:"Payment confirmed. Your Pro account is active.",
+  proDashboardTitle:"Pro workspace",
+  proStorefrontTitle:"Business storefront",
+  proStorefrontText:"Your business page brings together your products, Pro badge, customer ratings, and trust information.",
+  proProductsTitle:"Products for sale",
+  proProductsText:"Each product is posted like a listing: real photos, euro or dollar price, category, area, and direct buyer chat.",
+  proVisibilityTitle:"Visibility",
+  proVisibilityText:"Paid boosts feature a product on the home page and sponsored ad spaces after confirmed payment.",
+  proOpenStore:"View my store",
+  proAddProduct:"Add product",
+  proBoostProduct:"Boost product",
+  proActive:"Subscription active",
+  proInactive:"Payment required",
+  proPlan:"Plan"
 });
 
 const G = {
@@ -2125,6 +2240,9 @@ let userListings = [];
 let selectedPostPhotos = [];
 let usersByEmail = {};
 let pendingAuthAction = null;
+let pendingProSignup = null;
+let pendingPaymentExistingUser = false;
+let pendingAfterPayment = null;
 
 const chatThreads = {
   4:{seller:"Maya", updated:"12 min", messages:[
@@ -2233,6 +2351,15 @@ function hasActiveProSubscription(user = state.user){
 }
 function isPaidPlan(plan){
   return plan && plan !== "personal-free";
+}
+function planLabel(plan){
+  const labels = {
+    "personal-free":t().planPersonalTitle,
+    "pro-starter":t().planStarterTitle,
+    "pro-plus":t().planPlusTitle,
+    "pro-premium":t().planPremiumTitle
+  };
+  return labels[plan] || t().planStarterTitle;
 }
 function mediaFor(l){
   if(l.photos?.length) return {img:l.photos[0], alt:titleFor(l)};
@@ -2891,6 +3018,22 @@ function openBoostInfo(){
   openModal("boostModal");
 }
 
+function openPaymentModal({existingUser=false, plan=null, after=null} = {}){
+  pendingPaymentExistingUser = existingUser;
+  pendingAfterPayment = after;
+  const selectedPlan = plan || pendingProSignup?.accountPlan || state.user?.accountPlan || "pro-starter";
+  document.getElementById("paymentPlanName").textContent = planLabel(selectedPlan);
+  document.getElementById("paymentPlanText").textContent = t().paymentPlanText;
+  openModal("paymentModal");
+}
+
+function cancelPaymentFlow(){
+  pendingProSignup = null;
+  pendingPaymentExistingUser = false;
+  pendingAfterPayment = null;
+  closeModal("paymentModal");
+}
+
 function renderProfile(){
   const user = normalizeUser(state.user);
   state.user = user;
@@ -2900,10 +3043,14 @@ function renderProfile(){
   });
   const body = document.getElementById("profileBody");
   const displayName = user.businessName || user.name;
-  const profileType = user.accountType === "business" ? (state.lang==="fr" ? "Boutique Pro SXM" : "SXM Pro Store") : (state.lang==="fr" ? "Vendeur local" : "Local seller");
+  const isBusiness = user.accountType === "business";
+  const proActive = hasActiveProSubscription(user);
+  const profileType = isBusiness ? (state.lang==="fr" ? "Boutique Pro SXM" : "SXM Pro Store") : (state.lang==="fr" ? "Vendeur local" : "Local seller");
   const profileCopy = own.length
     ? (state.lang==="fr" ? "Votre vitrine commence à prendre forme. Gardez vos photos propres, répondez vite et marquez les annonces vendues." : "Your storefront is taking shape. Keep photos clean, reply fast, and mark sold listings.")
-    : (state.lang==="fr" ? "Prêt à vendre sur l'île ? Ajoutez une vraie photo, un prix clair, et votre annonce peut partir aujourd'hui." : "Ready to sell on the island? Add a real photo, a clear price, and your listing can move today.");
+    : isBusiness
+      ? (state.lang==="fr" ? "Votre boutique Pro est prête à recevoir vos produits. Ajoutez des photos propres, un prix clair, et gardez le chat ouvert aux clients." : "Your Pro store is ready for products. Add clean photos, a clear price, and keep chat open for customers.")
+      : (state.lang==="fr" ? "Prêt à vendre sur l'île ? Ajoutez une vraie photo, un prix clair, et votre annonce peut partir aujourd'hui." : "Ready to sell on the island? Add a real photo, a clear price, and your listing can move today.");
   body.innerHTML = `
     <section class="profile-hero">
       <div class="profile-avatar">${esc(user.avatar)}</div>
@@ -2912,6 +3059,7 @@ function renderProfile(){
         <h3>${esc(displayName)}</h3>
         <p>${esc(user.email)} · ${esc(user.area || "SXM")}</p>
         <p>${t().memberSince} ${joined}</p>
+        ${isBusiness ? `<p><strong>${t().proPlan}:</strong> ${planLabel(user.accountPlan)} · ${proActive ? t().proActive : t().proInactive}</p>` : ""}
         <p class="profile-copy">${profileCopy}</p>
       </div>
     </section>
@@ -2946,6 +3094,7 @@ function renderProfile(){
         </button>
       </div>
     </section>
+    ${isBusiness ? proDashboardHTML(user, own, proActive) : ""}
     <section class="profile-section">
       <h3>${t().profileListings}</h3>
       <div class="mini-listing">
@@ -2957,6 +3106,43 @@ function renderProfile(){
       <button type="button" class="secondary-btn" onclick="logoutUser()">${t().logoutLabel}</button>
     </div>`;
   persistState();
+}
+
+function proDashboardHTML(user, own, proActive){
+  return `
+    <section class="profile-section">
+      <h3>${t().proDashboardTitle}</h3>
+      <div class="pro-status">
+        <span class="${proActive ? "active" : "pending"}">${proActive ? t().proActive : t().proInactive}</span>
+        <span>${t().proPlan}: ${planLabel(user.accountPlan)}</span>
+        <span>${own.length} ${t().activeListings}</span>
+      </div>
+      <div class="pro-dashboard">
+        <article class="pro-panel">
+          <h4>${t().proStorefrontTitle}</h4>
+          <p>${t().proStorefrontText}</p>
+          <button type="button" class="secondary-btn" onclick="showToast('${esc(t().comingSoon)}')">${t().proOpenStore}</button>
+        </article>
+        <article class="pro-panel">
+          <h4>${t().proProductsTitle}</h4>
+          <p>${t().proProductsText}</p>
+          <button type="button" class="primary-btn" onclick="closeModal('profileModal');openPostModal()">${t().proAddProduct}</button>
+        </article>
+        <article class="pro-panel">
+          <h4>${t().proVisibilityTitle}</h4>
+          <p>${t().proVisibilityText}</p>
+          <button type="button" class="secondary-btn" onclick="closeModal('profileModal');openBoostInfo()">${t().proBoostProduct}</button>
+        </article>
+        <article class="pro-panel">
+          <h4>${state.lang==="fr" ? "Méthode de vente" : "Selling method"}</h4>
+          <ul>
+            <li>${state.lang==="fr" ? "Publiez chaque produit avec ses propres photos et son stock." : "Publish each product with its own photos and stock."}</li>
+            <li>${state.lang==="fr" ? "Les acheteurs contactent le commerce dans le chat instantané." : "Buyers contact the business through instant chat."}</li>
+            <li>${state.lang==="fr" ? "Les avis renforcent la confiance autour de votre boutique." : "Ratings build trust around your store."}</li>
+          </ul>
+        </article>
+      </div>
+    </section>`;
 }
 
 function miniListingHTML(l){
@@ -3007,7 +3193,7 @@ function openPostModal(){
   }
   if(state.user.accountType === "business" && !hasActiveProSubscription(state.user)){
     showToast(t().proPostBlocked);
-    openBoostInfo();
+    openPaymentModal({existingUser:true, plan:state.user.accountPlan, after:"post"});
     return;
   }
   buildPostForm();
@@ -3045,6 +3231,9 @@ async function createAccount(e){
   const password = document.getElementById("accountPassword").value;
   const confirmation = document.getElementById("accountPasswordConfirm").value;
   const error = document.getElementById("createAccountError");
+  const accountType = document.getElementById("accountType").value;
+  const accountPlan = document.getElementById("accountPlan").value;
+  const businessName = accountType === "business" ? document.getElementById("businessName").value.trim() : "";
   if(usersByEmail[key]){
     error.textContent = t().emailExists;
     return false;
@@ -3053,11 +3242,18 @@ async function createAccount(e){
     error.textContent = t().passwordMismatch;
     return false;
   }
-  const accountType = document.getElementById("accountType").value;
-  const accountPlan = document.getElementById("accountPlan").value;
   if(isPaidPlan(accountPlan)){
-    error.textContent = t().proPaymentRequired;
-    openBoostInfo();
+    error.textContent = "";
+    pendingProSignup = {
+      name:document.getElementById("accountName").value.trim(),
+      email,
+      key,
+      accountType:"business",
+      accountPlan,
+      businessName,
+      passwordHash:await hashPassword(password)
+    };
+    openPaymentModal({plan:accountPlan});
     return false;
   }
   state.user = normalizeUser(createUserProfile({
@@ -3065,7 +3261,7 @@ async function createAccount(e){
     email,
     accountType,
     accountPlan,
-    businessName:accountType === "business" ? document.getElementById("businessName").value.trim() : ""
+    businessName
   }));
   state.user.passwordHash = await hashPassword(password);
   usersByEmail[key] = state.user;
@@ -3074,6 +3270,45 @@ async function createAccount(e){
   e.target.reset();
   selectAccountPlan("personal-free", document.querySelector(".plan-card"));
   completeAuth();
+  return false;
+}
+
+async function confirmDemoPayment(e){
+  e.preventDefault();
+  if(pendingProSignup){
+    if(usersByEmail[pendingProSignup.key]){
+      document.getElementById("createAccountError").textContent = t().emailExists;
+      closeModal("paymentModal");
+      return false;
+    }
+    state.user = normalizeUser(createUserProfile(pendingProSignup));
+    state.user.passwordHash = pendingProSignup.passwordHash;
+    state.user.subscriptionStatus = "active";
+    state.user.subscriptionStarted = new Date().toISOString();
+    usersByEmail[pendingProSignup.key] = state.user;
+    pendingProSignup = null;
+    persistState();
+    showToast(t().paymentSuccess);
+    document.querySelector("#accountModal .auth-card").reset();
+    selectAccountPlan("personal-free", document.querySelector(".plan-card"));
+    closeModal("paymentModal");
+    completeAuth();
+    return false;
+  }
+  if(pendingPaymentExistingUser && state.user){
+    state.user = normalizeUser(state.user);
+    state.user.subscriptionStatus = "active";
+    state.user.subscriptionStarted = new Date().toISOString();
+    usersByEmail[state.user.email.toLowerCase()] = state.user;
+    persistState();
+    showToast(t().paymentSuccess);
+    closeModal("paymentModal");
+    const next = pendingAfterPayment;
+    pendingPaymentExistingUser = false;
+    pendingAfterPayment = null;
+    render();
+    if(next === "post") openPostModal();
+  }
   return false;
 }
 
@@ -3332,7 +3567,10 @@ document.addEventListener("keydown", e=>{
 
 document.querySelectorAll(".modal").forEach(modal=>{
   modal.addEventListener("click", e=>{
-    if(e.target === modal) closeModal(modal.id);
+    if(e.target === modal){
+      if(modal.id === "paymentModal") cancelPaymentFlow();
+      else closeModal(modal.id);
+    }
   });
 });
 
@@ -3347,6 +3585,13 @@ window.addEventListener("popstate", openListingFromUrl);
 
 /* ---------------- INIT ---------------- */
 loadLocalState(); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl();
+
+/* Supabase : si configuré, remplace les annonces de démo par celles de la base. */
+if (window.SB && SB.enabled()) {
+  SB.hydrate().then(function (ok) {
+    if (ok) console.info("[Supabase] annonces chargées depuis la base.");
+  });
+}
 </script>
 </body>
 </html>
