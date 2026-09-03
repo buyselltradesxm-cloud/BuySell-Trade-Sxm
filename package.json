@@ -5,6 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test:share": "node playwright-share-qa.js",
+    "test:gallery-search": "node playwright-gallery-search-qa.js",
+    "test:pro-payment": "node playwright-pro-payment-qa.js",
+    "test:qa": "npm run test:share && npm run test:gallery-search && npm run test:pro-payment",
     "playwright:install": "playwright install chromium"
   },
   "repository": {

@@ -10,7 +10,7 @@
   "use strict";
 
   /* ---- conversion  ligne DB  <->  objet annonce de l'app ---- */
-  function rowToListing(r) {
+    function rowToListing(r) {
     var created = r.created_at ? new Date(r.created_at).getTime() : Date.now();
     var hours = Math.max(1, Math.round((Date.now() - created) / 3600000));
     var photos = Array.isArray(r.photos) ? r.photos : [];
@@ -29,6 +29,7 @@
       pics: photos.length,
       photos: photos,
       desc: r.description || "",
+      vehicle: r.vehicle || null,
       delivery: r.delivery || undefined,
       negotiable: !!r.negotiable,
       pro: !!r.is_pro,
@@ -36,9 +37,20 @@
       feat: !!r.is_featured,
       drop: !!r.price_dropped,
       salary: !!r.is_salary,
+      boosted: !!r.is_boosted,
+      boost: r.boost_days ? {
+        days: r.boost_days,
+        eur: Number(r.boost_price_eur) || 0,
+        usd: Number(r.boost_price_usd) || 0,
+        paid: !!r.is_boosted,
+        startedAt: r.boost_started_at || null
+      } : null,
       reserved: r.status === "reserved",
       sold: r.status === "sold",
-      sellerId: r.seller_id || null
+      sellerId: r.seller_id || null,
+      // l'app filtre "mes annonces" sur `ownerId` : on aligne les deux noms
+      ownerId: r.seller_id || null,
+      sellerName: (r.profiles && r.profiles.name) || r.seller_name || undefined
     };
   }
 
@@ -55,6 +67,7 @@
       price_eur: o.eur || 0,
       price_usd: o.usd || 0,
       description: o.desc || null,
+      vehicle: o.vehicle || null,
       delivery: o.delivery || null,
       negotiable: !!o.negotiable,
       is_pro: !!o.pro,
@@ -62,6 +75,11 @@
       is_featured: !!o.feat,
       price_dropped: !!o.drop,
       is_salary: !!o.salary,
+      is_boosted: !!o.boosted,
+      boost_days: o.boost && o.boost.days ? o.boost.days : null,
+      boost_price_eur: o.boost && o.boost.eur ? o.boost.eur : null,
+      boost_price_usd: o.boost && o.boost.usd ? o.boost.usd : null,
+      boost_started_at: o.boost && o.boost.startedAt ? o.boost.startedAt : null,
       photos: o.photos || [],
       status: o.sold ? "sold" : o.reserved ? "reserved" : "active"
     };
@@ -86,7 +104,54 @@
         console.warn("[SB] fetchListings:", res.error.message);
         return null;
       }
-      return res.data.map(rowToListing);
+      var rows = res.data || [];
+      var sellerIds = Array.from(new Set(rows.map(function (r) { return r.seller_id; }).filter(Boolean)));
+      var profilesById = {};
+      if (sellerIds.length) {
+        var prof = await window.db
+          .from("profiles")
+          .select("id,name,business_name")
+          .in("id", sellerIds);
+        if (!prof.error && prof.data) {
+          prof.data.forEach(function (p) {
+            profilesById[p.id] = p.business_name || p.name || "";
+          });
+        }
+      }
+      return rows.map(function (r) {
+        var listing = rowToListing(r);
+        if (r.seller_id && profilesById[r.seller_id]) listing.sellerName = profilesById[r.seller_id];
+        return listing;
+      });
+    },
+
+    // upload d'un lot de fichiers image dans le bucket public "listing-photos".
+    // Reçoit des File (input type=file) ; renvoie un tableau d'URLs publiques.
+    uploadPhotos: async function (files) {
+      if (!window.db || !files || !files.length) return [];
+      var user = await SB.currentUser();
+      if (!user) return [];
+      var bucket = window.db.storage.from("listing-photos");
+      var urls = [];
+      for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        if (!file || typeof file.name === "undefined") continue;
+        var ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+        var path =
+          user.id + "/" + Date.now() + "-" + i + "-" +
+          Math.random().toString(36).slice(2, 8) + "." + ext;
+        var up = await bucket.upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type || "image/jpeg"
+        });
+        if (up.error) {
+          console.warn("[SB] uploadPhotos:", up.error.message);
+          continue;
+        }
+        urls.push(bucket.getPublicUrl(path).data.publicUrl);
+      }
+      return urls;
     },
 
     // insère une annonce pour l'utilisateur connecté ; renvoie l'objet créé ou null
@@ -107,6 +172,41 @@
         return null;
       }
       return rowToListing(res.data);
+    },
+
+    // met à jour une annonce existante. Les règles Supabase autorisent le
+    // propriétaire, et le schéma ajoute aussi l'accès aux admins.
+    updateListing: async function (listingObj) {
+      if (!window.db || !listingObj || !listingObj.id) return null;
+      var user = await SB.currentUser();
+      if (!user) return null;
+      var res = await window.db
+        .from("listings")
+        .update(listingToRow(listingObj, listingObj.sellerId || listingObj.ownerId || null))
+        .eq("id", listingObj.id)
+        .select()
+        .single();
+      if (res.error) {
+        console.warn("[SB] updateListing:", res.error.message);
+        return null;
+      }
+      return rowToListing(res.data);
+    },
+
+    // supprime une annonce. Côté base, réservé au propriétaire ou à un admin.
+    deleteListing: async function (id) {
+      if (!window.db || !id) return false;
+      var user = await SB.currentUser();
+      if (!user) return false;
+      var res = await window.db
+        .from("listings")
+        .delete()
+        .eq("id", id);
+      if (res.error) {
+        console.warn("[SB] deleteListing:", res.error.message);
+        return false;
+      }
+      return true;
     },
 
     // recharge L depuis la base puis rafraîchit l'affichage
@@ -159,6 +259,32 @@
       return res.data;
     },
 
+    // écrit / met à jour les champs de profil de l'utilisateur connecté.
+    // `fields` : { name, account_type, account_plan, business_name, phone }
+    upsertProfile: async function (fields) {
+      if (!window.db) return null;
+      var user = await SB.currentUser();
+      if (!user) return null;
+      var row = Object.assign({ id: user.id }, fields || {});
+      var res = await window.db
+        .from("profiles")
+        .upsert(row, { onConflict: "id" })
+        .select()
+        .single();
+      if (res.error) {
+        console.warn("[SB] upsertProfile:", res.error.message);
+        return null;
+      }
+      return res.data;
+    },
+
+    // session courante (ou null) — synchrone côté cache du client
+    currentSession: async function () {
+      if (!window.db) return null;
+      var res = await window.db.auth.getSession();
+      return (res && res.data && res.data.session) || null;
+    },
+
     // rappelée à chaque connexion / déconnexion ; cb(user|null)
     onAuthChange: function (cb) {
       if (!window.db) return;
@@ -172,6 +298,84 @@
     markMessageRead: async function (msgId) {
       if (!window.db) return;
       return window.db.rpc("mark_message_read", { msg_id: msgId });
+    },
+
+    // envoie un message ; renvoie la ligne créée ou null
+    sendMessage: async function (opts) {
+      if (!window.db) return null;
+      var user = await SB.currentUser();
+      if (!user || !opts || !opts.recipientId || !opts.body) return null;
+      var res = await window.db
+        .from("messages")
+        .insert({
+          listing_id: opts.listingId || null,
+          sender_id: user.id,
+          recipient_id: opts.recipientId,
+          body: opts.body
+        })
+        .select()
+        .single();
+      if (res.error) {
+        console.warn("[SB] sendMessage:", res.error.message);
+        return null;
+      }
+      return res.data;
+    },
+
+    // tous les messages où l'utilisateur est impliqué, ordre chronologique
+    fetchMessages: async function () {
+      if (!window.db) return null;
+      var user = await SB.currentUser();
+      if (!user) return null;
+      var res = await window.db
+        .from("messages")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (res.error) {
+        console.warn("[SB] fetchMessages:", res.error.message);
+        return null;
+      }
+      return res.data;
+    },
+
+    // regroupe les messages en conversations { key, listingId, otherId, messages[], unread }
+    fetchInbox: async function () {
+      if (!window.db) return null;
+      var user = await SB.currentUser();
+      var rows = await SB.fetchMessages();
+      if (!rows || !user) return null;
+      var threads = {};
+      rows.forEach(function (m) {
+        var otherId = m.sender_id === user.id ? m.recipient_id : m.sender_id;
+        var key = (m.listing_id || "0") + ":" + otherId;
+        if (!threads[key]) {
+          threads[key] = {
+            key: key,
+            listingId: m.listing_id || null,
+            otherId: otherId,
+            messages: [],
+            unread: 0
+          };
+        }
+        threads[key].messages.push(m);
+        if (!m.read && m.recipient_id === user.id) threads[key].unread++;
+      });
+      return Object.keys(threads).map(function (k) { return threads[k]; });
+    },
+
+    // abonnement realtime : cb(message) à chaque nouveau message reçu.
+    // renvoie une fonction pour se désabonner (ou no-op).
+    subscribeInbox: function (cb) {
+      if (!window.db) return function () {};
+      var channel = window.db
+        .channel("inbox-" + Math.random().toString(36).slice(2))
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "messages" },
+          function (payload) { cb && cb(payload.new); }
+        )
+        .subscribe();
+      return function () { window.db.removeChannel(channel); };
     }
   };
 

@@ -6,6 +6,9 @@
 - French, English, and Dutch interface copy.
 - EUR/USD display and island-side filtering for Saint-Martin and Sint Maarten.
 - Mobile app-style bottom navigation for core actions.
+- Local verticals expanded around Marketplace, Vehicles, Property, Jobs, Services, Boats, Gaming, Pets, and Beauty.
+- Pro and Dealer account paths include business profile, badge, inventory, WhatsApp, phone, website, and visibility features.
+- Seller trust now appears in listing details with ratings, reviews, verification, sales count, and fast responder signals.
 
 ## Website Features To Build Next
 
@@ -16,6 +19,11 @@
 - Real chat with inbox, unread states, attachments, blocked users, and moderation reporting.
 - Admin dashboard for reported listings, banned users, category management, and featured listings.
 - SEO pages for categories and areas, for example `/vehicles`, `/electronics`, `/marigot`, and `/simpson-bay`.
+- Dealer storefront pages with logo, full vehicle inventory, lead buttons, analytics, and priority listing slots.
+- Property agency accounts with larger inventory limits, vacation rental support, commercial listings, and promoted visibility.
+- Jobs vertical with free resumes/job search and paid employer posting or employer subscriptions.
+- Services vertical with Verified Pro and Top Service Provider badges for cleaning, plumbing, electrical, mechanics, beauty, photo, gardening, construction, moving, and Web / IT.
+- Keep individual posting free at launch until marketplace inventory is strong.
 
 ## Mobile App Features
 
@@ -24,6 +32,17 @@
 - Camera-first posting flow with image compression.
 - Offline draft saving while taking photos.
 - Bottom-tab navigation: Browse, Saved, Post, Messages, Profile.
+- In-app chat actions: share location, send photo, make offer, report, and block.
+- Mobile monetization surfaces: AdMob banner, native in-feed ads, listing boosts, and sponsored local business placements.
+
+## Monetization Strategy
+
+- Listing boosts for sellers who want more visibility.
+- Paid professional subscriptions for local businesses.
+- Dealer Pro offer at 79 EUR per month for automotive and marine dealers.
+- Direct local advertising and AdMob for mobile inventory.
+- Later secure payment protection with buyer protection and commission.
+- Later paid packages for property agencies and employers.
 
 ## Suggested Technical Direction
 
