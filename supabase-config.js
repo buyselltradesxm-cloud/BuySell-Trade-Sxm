@@ -6,8 +6,9 @@
  *  La clé "anon public" EST faite pour être dans le code frontend.
  *  Ne mets JAMAIS la clé "service_role" ici.
  * ============================================================ */
-window.SUPABASE_URL = "PASTE_YOUR_PROJECT_URL";      // ex : https://abcdxyz.supabase.co
-window.SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_KEY";    // ex : eyJhbGciOiJIUzI1NiI...
+window.SUPABASE_URL = "https://ujykgiitlcuqiiepsyiz.supabase.co";
+// Clé "publishable" (nouveau format) — sûre pour le navigateur si la RLS est activée.
+window.SUPABASE_ANON_KEY = "sb_publishable_5fm__ewJT9UVii8lcmeZlQ_aC84_N0q";
 
 /* Crée le client `db` seulement si la config est remplie ET si la
  * librairie CDN a bien chargé. Sinon l'app retombe sur son mode local
