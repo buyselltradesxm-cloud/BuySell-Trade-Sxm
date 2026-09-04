@@ -5,15 +5,16 @@ const projectRef = process.env.SUPABASE_PROJECT_REF || "ujykgiitlcuqiiepsyiz";
 const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const localOnly = process.argv.includes("--local-only");
 
 function missing(name) {
   console.error(`Missing ${name}.`);
   process.exitCode = 1;
 }
 
-if (!accessToken) missing("SUPABASE_ACCESS_TOKEN");
+if (!accessToken && !localOnly) missing("SUPABASE_ACCESS_TOKEN");
 if (!googleClientId) missing("GOOGLE_CLIENT_ID");
-if (!googleClientSecret) missing("GOOGLE_CLIENT_SECRET");
+if (!googleClientSecret && !localOnly) missing("GOOGLE_CLIENT_SECRET");
 if (process.exitCode) {
   console.error("");
   console.error("Set them in this terminal, then run this command again:");
@@ -25,6 +26,17 @@ if (process.exitCode) {
 }
 
 async function main() {
+  if (localOnly) {
+    updateLocalConfig();
+    console.log(JSON.stringify({
+      ok: true,
+      googleEnabled: true,
+      localConfigUpdated: true,
+      supabaseNotUpdated: true
+    }, null, 2));
+    return;
+  }
+
   const response = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/config/auth`, {
     method: "PATCH",
     headers: {
@@ -55,10 +67,7 @@ async function main() {
     process.exit(1);
   }
 
-  const configPath = path.join(__dirname, "..", "supabase-config.js");
-  const config = fs.readFileSync(configPath, "utf8");
-  const updated = config.replace(/google:\s*false/, "google: true");
-  fs.writeFileSync(configPath, updated);
+  updateLocalConfig();
 
   console.log(JSON.stringify({
     ok: true,
@@ -68,6 +77,13 @@ async function main() {
     siteUrl: "https://buyselltradesxm.com",
     localConfigUpdated: true
   }, null, 2));
+}
+
+function updateLocalConfig() {
+  const configPath = path.join(__dirname, "..", "supabase-config.js");
+  const config = fs.readFileSync(configPath, "utf8");
+  const updated = config.replace(/google:\s*false/, "google: true");
+  fs.writeFileSync(configPath, updated);
 }
 
 main().catch(err => {

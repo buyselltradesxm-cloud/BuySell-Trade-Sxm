@@ -13,6 +13,7 @@
     "test:live-flow": "node live-supabase-flow-qa.js",
     "test:live-admin": "node live-admin-access-qa.js",
     "supabase:enable-google-auth": "node scripts/enable-google-auth.js",
+    "supabase:enable-google-auth-local": "node scripts/enable-google-auth.js --local-only",
     "test:qa": "npm run test:share && npm run test:gallery-search && npm run test:pro-payment && npm run test:social-auth && npm run test:uuid-listing && npm run test:backend && npm run test:live-admin",
     "playwright:install": "playwright install chromium"
   },
