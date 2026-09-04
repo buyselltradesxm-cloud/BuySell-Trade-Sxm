@@ -55,7 +55,7 @@
   }
 
   function listingToRow(o, sellerId) {
-    return {
+    var row = {
       seller_id: sellerId || null,
       title: o.t,
       category: o.cat,
@@ -83,6 +83,18 @@
       photos: o.photos || [],
       status: o.sold ? "sold" : o.reserved ? "reserved" : "active"
     };
+    row.seller_name = o.sellerName || null;
+    return row;
+  }
+
+  function withoutSellerName(row) {
+    var copy = Object.assign({}, row);
+    delete copy.seller_name;
+    return copy;
+  }
+
+  function isMissingSellerNameColumn(error) {
+    return !!error && /seller_name|column/i.test(error.message || "");
   }
 
   var SB = {
@@ -105,7 +117,11 @@
         return null;
       }
       var rows = res.data || [];
-      var sellerIds = Array.from(new Set(rows.map(function (r) { return r.seller_id; }).filter(Boolean)));
+      var listings = rows.map(function (r) { return rowToListing(r); });
+      var missingSellerIds = rows
+        .filter(function (r) { return r.seller_id && !r.seller_name; })
+        .map(function (r) { return r.seller_id; });
+      var sellerIds = Array.from(new Set(missingSellerIds));
       var profilesById = {};
       if (sellerIds.length) {
         var prof = await window.db
@@ -118,9 +134,8 @@
           });
         }
       }
-      return rows.map(function (r) {
-        var listing = rowToListing(r);
-        if (r.seller_id && profilesById[r.seller_id]) listing.sellerName = profilesById[r.seller_id];
+      return listings.map(function (listing) {
+        if (listing.sellerId && profilesById[listing.sellerId]) listing.sellerName = profilesById[listing.sellerId];
         return listing;
       });
     },
@@ -162,11 +177,19 @@
         console.warn("[SB] insertListing: pas connecté");
         return null;
       }
+      var row = listingToRow(listingObj, user.id);
       var res = await window.db
         .from("listings")
-        .insert(listingToRow(listingObj, user.id))
+        .insert(row)
         .select()
         .single();
+      if (res.error && isMissingSellerNameColumn(res.error)) {
+        res = await window.db
+          .from("listings")
+          .insert(withoutSellerName(row))
+          .select()
+          .single();
+      }
       if (res.error) {
         console.warn("[SB] insertListing:", res.error.message);
         return null;
@@ -180,12 +203,21 @@
       if (!window.db || !listingObj || !listingObj.id) return null;
       var user = await SB.currentUser();
       if (!user) return null;
+      var row = listingToRow(listingObj, listingObj.sellerId || listingObj.ownerId || null);
       var res = await window.db
         .from("listings")
-        .update(listingToRow(listingObj, listingObj.sellerId || listingObj.ownerId || null))
+        .update(row)
         .eq("id", listingObj.id)
         .select()
         .single();
+      if (res.error && isMissingSellerNameColumn(res.error)) {
+        res = await window.db
+          .from("listings")
+          .update(withoutSellerName(row))
+          .eq("id", listingObj.id)
+          .select()
+          .single();
+      }
       if (res.error) {
         console.warn("[SB] updateListing:", res.error.message);
         return null;
@@ -198,6 +230,8 @@
       if (!window.db || !id) return false;
       var user = await SB.currentUser();
       if (!user) return false;
+      var rpc = await window.db.rpc("admin_delete_listing", { listing_id: id });
+      if (!rpc.error) return !!rpc.data;
       var res = await window.db
         .from("listings")
         .delete()
@@ -207,6 +241,19 @@
         return false;
       }
       return true;
+    },
+
+    adminSetListingStatus: async function (id, status) {
+      if (!window.db || !id || !status) return null;
+      var res = await window.db.rpc("admin_set_listing_status", {
+        listing_id: id,
+        new_status: status
+      });
+      if (res.error) {
+        console.warn("[SB] adminSetListingStatus:", res.error.message);
+        return null;
+      }
+      return res.data ? rowToListing(res.data) : null;
     },
 
     // recharge L depuis la base puis rafraîchit l'affichage

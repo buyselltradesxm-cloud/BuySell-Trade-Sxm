@@ -82,8 +82,10 @@ alter table profiles enable row level security;
 
 drop policy if exists "profiles: lecture publique" on profiles;
 drop policy if exists "profiles: lecture connectés" on profiles;
-create policy "profiles: lecture connectés"
-  on profiles for select to authenticated using (true);
+drop policy if exists "profiles: lecture privee" on profiles;
+create policy "profiles: lecture privee"
+  on profiles for select to authenticated
+  using (auth.uid() = id or is_admin());
 
 drop policy if exists "profiles: chacun gère le sien" on profiles;
 create policy "profiles: chacun gère le sien"
@@ -141,6 +143,7 @@ create table if not exists listings (
   boost_price_usd numeric,
   boost_started_at timestamptz,
   photos         text[] default '{}',
+  seller_name    text,
   status         text default 'active',         -- 'active' | 'reserved' | 'sold'
   created_at     timestamptz default now()
 );
@@ -151,6 +154,31 @@ alter table listings add column if not exists boost_days       integer;
 alter table listings add column if not exists boost_price_eur  numeric;
 alter table listings add column if not exists boost_price_usd  numeric;
 alter table listings add column if not exists boost_started_at timestamptz;
+alter table listings add column if not exists seller_name      text;
+
+create or replace function set_listing_seller_name()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  display_name text;
+begin
+  if new.seller_id is not null then
+    select coalesce(business_name, name)
+      into display_name
+      from public.profiles
+     where id = new.seller_id;
+
+    if display_name is not null and length(trim(display_name)) > 0 then
+      new.seller_name := display_name;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists set_listing_seller_name_trigger on listings;
+create trigger set_listing_seller_name_trigger
+  before insert or update of seller_id, seller_name on listings
+  for each row execute function set_listing_seller_name();
 
 alter table listings enable row level security;
 
@@ -263,6 +291,45 @@ create policy "admin_settings: admin gère tout"
   using (is_admin())
   with check (is_admin());
 
+create or replace function admin_set_listing_status(listing_id bigint, new_status text)
+returns public.listings
+language plpgsql security definer set search_path = public as $$
+declare
+  updated_listing public.listings;
+begin
+  if not is_admin() then
+    raise exception 'admin only';
+  end if;
+  if new_status not in ('active', 'reserved', 'sold') then
+    raise exception 'invalid status';
+  end if;
+  update public.listings
+     set status = new_status
+   where id = listing_id
+   returning * into updated_listing;
+  insert into public.admin_events (admin_id, action, target_type, target_id, metadata)
+  values (auth.uid(), 'admin_set_listing_status', 'listing', listing_id::text, jsonb_build_object('status', new_status));
+  return updated_listing;
+end;
+$$;
+
+create or replace function admin_delete_listing(listing_id bigint)
+returns boolean
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then
+    raise exception 'admin only';
+  end if;
+  delete from public.listings where id = listing_id;
+  insert into public.admin_events (admin_id, action, target_type, target_id, metadata)
+  values (auth.uid(), 'admin_delete_listing', 'listing', listing_id::text, '{}'::jsonb);
+  return true;
+end;
+$$;
+
+grant execute on function admin_set_listing_status(bigint, text) to authenticated;
+grant execute on function admin_delete_listing(bigint) to authenticated;
+
 -- ------------------------------------------------------------
 --  MESSAGES  (chat entre acheteur et vendeur)
 -- ------------------------------------------------------------
@@ -327,11 +394,24 @@ create policy "listing-photos: lecture publique"
   using (bucket_id = 'listing-photos');
 
 drop policy if exists "listing-photos: upload connecte" on storage.objects;
-create policy "listing-photos: upload connecte"
+drop policy if exists "listing-photos: upload dossier utilisateur" on storage.objects;
+create policy "listing-photos: upload dossier utilisateur"
   on storage.objects for insert to authenticated
-  with check (bucket_id = 'listing-photos');
+  with check (
+    bucket_id = 'listing-photos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+    and not is_banned()
+  );
 
 drop policy if exists "listing-photos: gestion proprietaire" on storage.objects;
-create policy "listing-photos: gestion proprietaire"
+drop policy if exists "listing-photos: suppression proprietaire ou admin" on storage.objects;
+create policy "listing-photos: suppression proprietaire ou admin"
   on storage.objects for delete to authenticated
-  using (bucket_id = 'listing-photos' and owner = auth.uid());
+  using (
+    bucket_id = 'listing-photos'
+    and (
+      owner = auth.uid()
+      or (storage.foldername(name))[1] = auth.uid()::text
+      or is_admin()
+    )
+  );

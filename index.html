@@ -4625,8 +4625,13 @@ async function markListingStatusAdmin(id, status){
   if(!l) return;
   l.sold = status === "sold";
   l.reserved = status === "reserved";
-  await syncAdminListing(l);
-  if(canUseSupabaseAdmin() && SB.logAdminEvent) await SB.logAdminEvent("mark_listing_status", "listing", id, {status});
+  if(canUseSupabaseAdmin() && SB.adminSetListingStatus){
+    const row = await SB.adminSetListingStatus(id, status);
+    if(row) Object.assign(l, row);
+  } else {
+    await syncAdminListing(l);
+    if(canUseSupabaseAdmin() && SB.logAdminEvent) await SB.logAdminEvent("mark_listing_status", "listing", id, {status});
+  }
   refreshAdmin();
 }
 

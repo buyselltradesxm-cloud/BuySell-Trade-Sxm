@@ -98,8 +98,10 @@ alter table public.admin_settings enable row level security;
 
 drop policy if exists "profiles: lecture publique" on public.profiles;
 drop policy if exists "profiles: lecture connectés" on public.profiles;
-create policy "profiles: lecture connectés"
-  on public.profiles for select to authenticated using (true);
+drop policy if exists "profiles: lecture privee" on public.profiles;
+create policy "profiles: lecture privee"
+  on public.profiles for select to authenticated
+  using (auth.uid() = id or public.is_admin());
 
 drop policy if exists "profiles: chacun gère le sien" on public.profiles;
 create policy "profiles: chacun gère le sien"
