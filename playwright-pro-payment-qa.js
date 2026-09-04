@@ -9,7 +9,7 @@ const { chromium } = require("playwright");
     if (msg.type() === "error") errors.push(msg.text());
   });
 
-  await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
+  await page.goto("http://localhost:5173/?local=1", { waitUntil: "domcontentloaded" });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: "domcontentloaded" });
 
@@ -72,19 +72,29 @@ const { chromium } = require("playwright");
   await page.locator("#accountPassword").fill("password123");
   await page.locator("#accountPasswordConfirm").fill("password123");
   await page.getByRole("button", { name: /créer mon compte|create my account/i }).click();
-  await page.locator("#postModal.open").waitFor();
+  await Promise.race([
+    page.locator("#postModal.open").waitFor({ timeout: 10000 }).catch(() => null),
+    page.locator("#toast").getByText(/confirmez votre email|confirm your email/i).waitFor({ timeout: 10000 }).catch(() => null)
+  ]);
 
   const userAfterSignup = await page.evaluate(() => {
     const raw = localStorage.getItem("bstsxm-state");
     return raw ? JSON.parse(raw).user : null;
   });
-  if (userAfterSignup?.accountType !== "personal") errors.push("Free signup did not create a personal account.");
-  if (userAfterSignup?.accountPlan !== "personal-free") errors.push("Free signup did not use the Personal Free plan.");
+  const emailConfirmationRequired = await page.locator("#toast").innerText().then(text => /confirmez votre email|confirm your email/i.test(text)).catch(() => false);
+  if (emailConfirmationRequired && userAfterSignup) {
+    errors.push("Confirmed-email signup should not sign the user in before email verification.");
+  }
+  if (!emailConfirmationRequired) {
+    if (userAfterSignup?.accountType !== "personal") errors.push("Free signup did not create a personal account.");
+    if (userAfterSignup?.accountPlan !== "personal-free") errors.push("Free signup did not use the Personal Free plan.");
+  }
 
   console.log(JSON.stringify({
     errors,
     loginHasSocial: /Continuer avec Google|Continue with Google/.test(loginText),
     pricingHasPlans: /Pro Starter/.test(pricingText) && /Dealer Pro/.test(pricingText),
+    emailConfirmationRequired,
     accountType: userAfterSignup?.accountType,
     accountPlan: userAfterSignup?.accountPlan
   }, null, 2));

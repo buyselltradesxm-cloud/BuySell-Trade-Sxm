@@ -4831,6 +4831,17 @@ async function applySupabaseUser(sbUser){
   let profile = null;
   try { profile = await SB.fetchProfile(sbUser.id); } catch(e){}
   const meta = sbUser.user_metadata || {};
+  if(!profile && window.SB && SB.enabled()){
+    try {
+      profile = await SB.upsertProfile({
+        name: meta.name || (sbUser.email || "").split("@")[0],
+        account_type: meta.account_type || "personal",
+        account_plan: meta.account_plan || "personal-free",
+        business_name: meta.business_name || null,
+        phone: meta.phone || null
+      });
+    } catch(e){}
+  }
   const accountType = (profile && profile.account_type) || meta.account_type || "personal";
   state.user = normalizeUser({
     id: sbUser.id,
@@ -4875,13 +4886,17 @@ async function createAccount(e){
   // sur le parcours démo local tant que Stripe n'est pas branché (slice suivante).
   if(useSupabase && !isPaidPlan(accountPlan)){
     const name = document.getElementById("accountName").value.trim();
-    const { data, error: sbErr } = await SB.signUp(email, password, name);
+    const { data, error: sbErr } = await SB.signUp(email, password, {
+      name,
+      account_type: accountType,
+      account_plan: accountPlan
+    });
     if(sbErr){
       error.textContent = sbErr.message || t().emailExists;
       return false;
     }
-    await SB.upsertProfile({ name, account_type: accountType, account_plan: accountPlan });
     if(data && data.session && data.user){
+      await SB.upsertProfile({ name, account_type: accountType, account_plan: accountPlan });
       await applySupabaseUser(data.user);
       showToast(state.lang==="fr" ? "Compte créé" : "Account created");
       e.target.reset();
@@ -4946,24 +4961,18 @@ async function confirmDemoPayment(e){
     // ou une fonction serveur avant d'ecrire subscription_status en base.
     if(window.SB && SB.enabled() && window.ENABLE_SUPABASE_PAID_SIGNUP){
       const p = pendingProSignup;
-      const { data, error: sbErr } = await SB.signUp(p.email, p.password, p.name);
+      const { data, error: sbErr } = await SB.signUp(p.email, p.password, {
+        name: p.name,
+        account_type: "business",
+        account_plan: p.accountPlan,
+        business_name: p.businessName || null,
+        phone: p.businessPhone || null
+      });
       if(sbErr){
         document.getElementById("createAccountError").textContent = sbErr.message || t().emailExists;
         closeModal("paymentModal");
         return false;
       }
-      await SB.upsertProfile({
-        name: p.name,
-        account_type: "business",
-        account_plan: p.accountPlan,
-        business_name: p.businessName || null,
-        business_phone: p.businessPhone || null,
-        business_whatsapp: p.businessWhatsapp || null,
-        business_website: p.businessWebsite || null,
-        business_logo: p.businessLogo || null,
-        subscription_status: "active",
-        subscription_started: new Date().toISOString()
-      });
       pendingProSignup = null;
       showToast(t().paymentSuccess);
       const card = document.querySelector("#accountModal .auth-card");
@@ -4971,6 +4980,18 @@ async function confirmDemoPayment(e){
       selectAccountPlan("personal-free", document.querySelector(".plan-card"));
       closeModal("paymentModal");
       if(data && data.session && data.user){
+        await SB.upsertProfile({
+          name: p.name,
+          account_type: "business",
+          account_plan: p.accountPlan,
+          business_name: p.businessName || null,
+          business_phone: p.businessPhone || null,
+          business_whatsapp: p.businessWhatsapp || null,
+          business_website: p.businessWebsite || null,
+          business_logo: p.businessLogo || null,
+          subscription_status: "active",
+          subscription_started: new Date().toISOString()
+        });
         await applySupabaseUser(data.user);
         state.user.subscriptionStatus = "active";
         persistState();

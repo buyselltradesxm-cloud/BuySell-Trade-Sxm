@@ -269,12 +269,13 @@
 
     /* --------- AUTHENTIFICATION --------- */
 
-    signUp: async function (email, password, name) {
+    signUp: async function (email, password, profile) {
       if (!window.db) return { error: { message: "Supabase non configuré" } };
+      var meta = typeof profile === "object" ? profile : { name: profile || "" };
       return window.db.auth.signUp({
         email: email,
         password: password,
-        options: { data: { name: name || "" } }
+        options: { data: meta }
       });
     },
 
