@@ -13,6 +13,21 @@ const { chromium } = require("playwright");
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: "domcontentloaded" });
 
+  const headerLogin = page.locator("#profileBtn");
+  const headerPricing = page.locator(".bar-actions").getByRole("button", { name: /^Pricing$/i });
+  if (!(await headerLogin.isVisible())) errors.push("Login/Profile button is missing from the header.");
+  if (!(await headerPricing.isVisible())) errors.push("Pricing button is missing from the header.");
+  const headerLoginText = await headerLogin.innerText();
+  if (!/Login/.test(headerLoginText)) errors.push(`Signed-out header should say Login, got "${headerLoginText}".`);
+
+  await headerPricing.click();
+  await page.locator("#boostModal.open").waitFor();
+  const directPricingText = await page.locator("#boostModal").innerText();
+  if (!/Pro Starter/.test(directPricingText) || !/Dealer Pro/.test(directPricingText)) {
+    errors.push("Header Pricing button does not open the pricing plans.");
+  }
+  await page.keyboard.press("Escape");
+
   await page.getByRole("button", { name: /déposer|post/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
 
@@ -25,8 +40,12 @@ const { chromium } = require("playwright");
   if (!/Créer un compte est gratuit|Creating an account is free/.test(loginText)) {
     errors.push("Free account message is missing from the login modal.");
   }
+  if (await page.locator("#accountModal .auth-intro").getByRole("button", { name: /^Pricing$/i }).count()) {
+    errors.push("Pricing button should not be inside the login modal.");
+  }
 
-  await page.locator("#accountModal .auth-intro").getByRole("button", { name: /^Pricing$/i }).click();
+  await page.keyboard.press("Escape");
+  await headerPricing.click();
   await page.locator("#boostModal.open").waitFor();
   const pricingText = await page.locator("#boostModal").innerText();
   for (const expected of ["Personal", "Pro Starter", "Pro Plus", "Pro Premium", "Dealer Pro"]) {
