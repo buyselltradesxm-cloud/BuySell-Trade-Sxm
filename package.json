@@ -8,7 +8,8 @@
     "test:gallery-search": "node playwright-gallery-search-qa.js",
     "test:pro-payment": "node playwright-pro-payment-qa.js",
     "test:uuid-listing": "node playwright-uuid-listing-qa.js",
-    "test:qa": "npm run test:share && npm run test:gallery-search && npm run test:pro-payment && npm run test:uuid-listing",
+    "test:backend": "node backend-health-qa.js",
+    "test:qa": "npm run test:share && npm run test:gallery-search && npm run test:pro-payment && npm run test:uuid-listing && npm run test:backend",
     "playwright:install": "playwright install chromium"
   },
   "repository": {
