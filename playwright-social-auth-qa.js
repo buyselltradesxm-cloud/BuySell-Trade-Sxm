@@ -28,17 +28,9 @@ const { chromium } = require("playwright");
   await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /login/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
-
-  const facebookBeforeUrl = page.url();
-  await page.getByRole("button", { name: /Facebook/i }).first().click();
-  await page.waitForTimeout(500);
-  const facebookAfterUrl = page.url();
-  const facebookToast = await page.locator("#toast").innerText().catch(() => "");
-  results.push({ provider: "Facebook", beforeUrl: facebookBeforeUrl, afterUrl: facebookAfterUrl, toast: facebookToast });
-  if (facebookAfterUrl !== facebookBeforeUrl) errors.push("Facebook click navigated away before provider was enabled.");
-  if (!/Facebook login/i.test(facebookToast)) {
-    errors.push("Facebook did not show a clear setup toast.");
-  }
+  const facebookButtonCount = await page.getByRole("button", { name: /Facebook/i }).count();
+  results.push({ provider: "Facebook", visibleButtons: facebookButtonCount });
+  if (facebookButtonCount) errors.push("Facebook login button should not be shown.");
 
   console.log(JSON.stringify({ errors, results }, null, 2));
   await browser.close();
