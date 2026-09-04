@@ -5026,6 +5026,14 @@ async function socialAuth(provider){
     showToast(state.lang==="fr" ? "Connexion sociale indisponible hors ligne." : "Social login unavailable offline.");
     return;
   }
+  const enabledProviders = window.SUPABASE_OAUTH_PROVIDERS || {};
+  if(!enabledProviders[provider]){
+    const name = provider === "google" ? "Google" : "Facebook";
+    showToast(state.lang==="fr"
+      ? `${name} login doit d'abord être activé dans Supabase.`
+      : `${name} login must be enabled in Supabase first.`);
+    return;
+  }
   const { error } = await SB.signInWithOAuth(provider);
   if(error) showToast(error.message || (state.lang==="fr" ? "Connexion impossible." : "Could not sign in."));
   // succès: Supabase redirige vers ce même onglet; onAuthChange() reprend la main au retour.

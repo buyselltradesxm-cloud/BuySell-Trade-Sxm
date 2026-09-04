@@ -10,6 +10,17 @@ window.SUPABASE_URL = "https://ujykgiitlcuqiiepsyiz.supabase.co";
 // Clé "publishable" (nouveau format) — sûre pour le navigateur si la RLS est activée.
 window.SUPABASE_ANON_KEY = "sb_publishable_5fm__ewJT9UVii8lcmeZlQ_aC84_N0q";
 
+/* OAuth social login.
+ * Mets un provider a true seulement APRES l'avoir active dans:
+ * Supabase -> Authentication -> Providers.
+ * Tant que c'est false, l'app affiche un message propre au lieu d'envoyer
+ * l'utilisateur vers l'erreur "Unsupported provider".
+ */
+window.SUPABASE_OAUTH_PROVIDERS = {
+  google: false,
+  facebook: false
+};
+
 /* Crée le client `db` seulement si la config est remplie ET si la
  * librairie CDN a bien chargé. Sinon l'app retombe sur son mode local
  * (données de démo + faux comptes) sans planter. */
