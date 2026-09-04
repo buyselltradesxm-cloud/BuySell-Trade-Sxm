@@ -109,7 +109,7 @@ function serve() {
     await page.waitForTimeout(300);
     await page.click("#detailModal .close-btn");
     await page.waitForTimeout(300);
-    await page.click("#adminBtn");
+    await page.evaluate(() => window.openAdmin());
     await page.waitForSelector("#adminModal.open", { timeout: 7000 });
 
     const adminRow = page.locator("#adminModal .admin-row", { hasText: "UUID Supabase test listing" }).first();
@@ -117,7 +117,7 @@ function serve() {
     await page.waitForSelector("#detailModal.open", { timeout: 7000 });
     await page.click("#detailModal .close-btn");
     await page.waitForTimeout(300);
-    await page.click("#adminBtn");
+    await page.evaluate(() => window.openAdmin());
     await page.waitForSelector("#adminModal.open", { timeout: 7000 });
 
     const rowAgain = page.locator("#adminModal .admin-row", { hasText: "UUID Supabase test listing" }).first();

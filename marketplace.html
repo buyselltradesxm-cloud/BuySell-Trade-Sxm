@@ -1293,10 +1293,6 @@
         <span aria-hidden="true">€</span>
         <span class="label" data-i18n="pricingLabel">Pricing</span>
       </button>
-      <button type="button" class="icon-btn" id="adminBtn" onclick="openAdmin()" hidden>
-        <span aria-hidden="true">⚙</span>
-        <span class="label">Admin</span>
-      </button>
       <button type="button" class="post" onclick="openPostModal()" data-i18n="postAd">Déposer une annonce</button>
     </div>
   </div>
@@ -3566,8 +3562,6 @@ function render(){
   if(profileBtnLabel) profileBtnLabel.textContent = profileLabel;
   if(mobileProfileLabel) mobileProfileLabel.textContent = profileLabel;
   document.getElementById("profileBtn").classList.toggle("on", !!state.user);
-  const adminBtn = document.getElementById("adminBtn");
-  if(adminBtn) adminBtn.hidden = !isAdminUser();
   document.getElementById("favBtn").classList.toggle("on", state.favs.size>0);
   const activeCount = activeFilterTotal();
   document.getElementById("activeFilterCount").textContent = activeCount ? t().activeFilters(activeCount) : "";

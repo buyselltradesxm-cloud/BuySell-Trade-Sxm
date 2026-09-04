@@ -28,7 +28,7 @@ const siteUrl = "https://buyselltradesxm.com/";
 
     const openedFromUrl = await page.evaluate(() => !!document.querySelector("#accountModal.open"));
     if (!openedFromUrl) {
-      await page.click("#adminBtn");
+      await page.evaluate(() => window.openAdmin());
       await page.waitForTimeout(500);
     }
 
