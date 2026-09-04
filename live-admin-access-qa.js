@@ -54,7 +54,8 @@ const siteUrl = "https://buyselltradesxm.com/";
   }
 
   await checkAdminAccess("?admin-access-qa=1", "admin button");
-  await checkAdminAccess("admin/", "admin route");
+  await checkAdminAccess("admin/", "admin route with slash");
+  await checkAdminAccess("admin", "admin route without slash");
 
   console.log(JSON.stringify({ errors, results }, null, 2));
   await browser.close();
