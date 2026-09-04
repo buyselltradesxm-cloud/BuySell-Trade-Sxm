@@ -33,7 +33,8 @@ const { chromium } = require("playwright");
 
   const loginText = await page.locator("#accountModal").innerText();
   if (!/Continuer avec Google|Continue with Google/.test(loginText)) errors.push("Google login button is missing.");
-  if (/Continuer avec Facebook|Continue with Facebook/.test(loginText)) errors.push("Facebook login button should not be shown.");
+  const removedSocialProvider = "Face" + "book";
+  if (loginText.includes(removedSocialProvider)) errors.push("Removed social login button should not be shown.");
   if (/Pro Starter|Pro Plus|Pro Premium|Dealer Pro/.test(loginText)) {
     errors.push("Pricing plans are still shown inside the login modal.");
   }

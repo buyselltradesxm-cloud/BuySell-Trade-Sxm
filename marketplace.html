@@ -5018,16 +5018,19 @@ async function confirmDemoPayment(e){
 }
 
 async function socialAuth(provider){
+  if(provider !== "google"){
+    showToast(state.lang==="fr" ? "Ce mode de connexion n'est pas disponible." : "This sign-in method is not available.");
+    return;
+  }
   if(!(window.SB && SB.enabled())){
     showToast(state.lang==="fr" ? "Connexion sociale indisponible hors ligne." : "Social login unavailable offline.");
     return;
   }
   const enabledProviders = window.SUPABASE_OAUTH_PROVIDERS || {};
   if(!enabledProviders[provider]){
-    const name = provider === "google" ? "Google" : "Facebook";
     showToast(state.lang==="fr"
-      ? `${name} login doit d'abord être activé dans Supabase.`
-      : `${name} login must be enabled in Supabase first.`);
+      ? "Google login doit d'abord être activé dans Supabase."
+      : "Google login must be enabled in Supabase first.");
     return;
   }
   const { error } = await SB.signInWithOAuth(provider);

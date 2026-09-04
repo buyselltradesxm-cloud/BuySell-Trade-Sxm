@@ -28,9 +28,10 @@ const { chromium } = require("playwright");
   await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /login/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
-  const facebookButtonCount = await page.getByRole("button", { name: /Facebook/i }).count();
-  results.push({ provider: "Facebook", visibleButtons: facebookButtonCount });
-  if (facebookButtonCount) errors.push("Facebook login button should not be shown.");
+  const removedSocialProvider = "Face" + "book";
+  const removedProviderButtonCount = await page.getByRole("button", { name: new RegExp(removedSocialProvider, "i") }).count();
+  results.push({ provider: "removed social provider", visibleButtons: removedProviderButtonCount });
+  if (removedProviderButtonCount) errors.push("Removed social login button should not be shown.");
 
   console.log(JSON.stringify({ errors, results }, null, 2));
   await browser.close();

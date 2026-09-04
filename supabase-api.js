@@ -283,7 +283,7 @@
       return window.db.auth.signInWithPassword({ email: email, password: password });
     },
 
-    // provider: "google" | "facebook" | tout provider OAuth activé côté Supabase.
+    // provider: "google" | tout provider OAuth activé côté Supabase.
     // Redirige le navigateur ; onAuthChange() reprend la main au retour (session
     // détectée automatiquement dans l'URL par supabase-js).
     signInWithOAuth: async function (provider) {
