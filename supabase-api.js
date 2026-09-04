@@ -283,6 +283,17 @@
       return window.db.auth.signInWithPassword({ email: email, password: password });
     },
 
+    // provider: "google" | "facebook" | tout provider OAuth activé côté Supabase.
+    // Redirige le navigateur ; onAuthChange() reprend la main au retour (session
+    // détectée automatiquement dans l'URL par supabase-js).
+    signInWithOAuth: async function (provider) {
+      if (!window.db) return { error: { message: "Supabase non configuré" } };
+      return window.db.auth.signInWithOAuth({
+        provider: provider,
+        options: { redirectTo: window.location.origin + window.location.pathname }
+      });
+    },
+
     signOut: async function () {
       if (!window.db) return;
       return window.db.auth.signOut();

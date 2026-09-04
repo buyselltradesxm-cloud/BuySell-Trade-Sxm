@@ -29,6 +29,10 @@ async function request(label, endpoint, options = {}) {
   return { label, status: response.status, ok: response.ok, body };
 }
 
+function expected(check, ok, note) {
+  return { ...check, httpOk: check.ok, ok, note };
+}
+
 function fail(errors, label, detail) {
   errors.push(`${label}: ${detail}`);
 }
@@ -56,21 +60,21 @@ function fail(errors, label, detail) {
       reason: "anon qa should fail"
     })
   });
-  checks.push(reportInsert);
+  checks.push(expected(reportInsert, reportInsert.status >= 400, "Expected security rejection"));
   if (reportInsert.status < 400) fail(errors, reportInsert.label, `expected rejection, got ${reportInsert.status}`);
 
   const adminStatus = await request("anon cannot call admin status RPC", "/rest/v1/rpc/admin_set_listing_status", {
     method: "POST",
     body: JSON.stringify({ listing_id: 1, new_status: "active" })
   });
-  checks.push(adminStatus);
+  checks.push(expected(adminStatus, adminStatus.status >= 400, "Expected admin-only rejection"));
   if (adminStatus.status < 400) fail(errors, adminStatus.label, `expected rejection, got ${adminStatus.status}`);
 
   const adminDelete = await request("anon cannot call admin delete RPC", "/rest/v1/rpc/admin_delete_listing", {
     method: "POST",
     body: JSON.stringify({ listing_id: 1 })
   });
-  checks.push(adminDelete);
+  checks.push(expected(adminDelete, adminDelete.status >= 400, "Expected admin-only rejection"));
   if (adminDelete.status < 400) fail(errors, adminDelete.label, `expected rejection, got ${adminDelete.status}`);
 
   const publicBridge = await fetch("https://buyselltradesxm.com/supabase-api.js?backend-health=1");
