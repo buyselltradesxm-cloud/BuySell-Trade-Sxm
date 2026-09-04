@@ -47,6 +47,7 @@
   img{max-width:100%;display:block;}
   button{font-family:inherit;font-size:inherit;cursor:pointer;color:inherit;background:none;border:none;}
   input,select{font-family:inherit;font-size:inherit;color:inherit;}
+  [hidden]{display:none!important;}
   :focus-visible{outline:3px solid var(--sea);outline-offset:2px;border-radius:4px;}
 
   /* ---------------- TOP BAR ---------------- */
@@ -3114,7 +3115,9 @@ function normalizeUser(user){
 const ADMIN_EMAILS = new Set(["admin@buyselltradesxm.com","admin@bstsxm.com","buyselltradesxm@gmail.com","rxmarketing09@gmail.com"]);
 function isAdminUser(user=state.user){
   const email = (user?.email || "").toLowerCase();
-  return !!user && (user.role === "admin" || (isLocalDevHost() && ADMIN_EMAILS.has(email)));
+  if(!user) return false;
+  if(isLocalDevHost() && ADMIN_EMAILS.has(email)) return true;
+  return user.provider === "supabase" && user.role === "admin" && ADMIN_EMAILS.has(email);
 }
 function titleFor(l){
   return state.lang === "en" && l.te ? l.te : l.t;
