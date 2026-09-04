@@ -888,6 +888,8 @@
   .vehicle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
   .vehicle-description-grid{display:grid;grid-template-columns:1fr;gap:12px;}
   .vehicle-description-grid textarea{min-height:78px;}
+  .business-extra{display:none;grid-column:1/-1;grid-template-columns:repeat(2,1fr);gap:12px;}
+  .business-extra.show{display:grid;}
   .upload-box{
     border:2px dashed var(--line);border-radius:12px;background:var(--white);
     padding:14px;display:grid;gap:12px;
@@ -2074,19 +2076,20 @@ const SUBCATS = {
         {id:"all-immo", fr:"Tout Immobilier", en:"All property"}
       ]},
       {fr:"Ventes immobilières", en:"Property sales", items:[
-        {id:"sale", fr:"Ventes immobilières", en:"Property for sale"},
+        {id:"sale", fr:"À vendre", en:"For sale"},
         {id:"sale-apartment", fr:"Appartement", en:"Apartment"},
         {id:"sale-house", fr:"Maison", en:"House"},
         {id:"sale-land", fr:"Terrain", en:"Land"}
       ]},
       {fr:"Locations", en:"Rentals", items:[
-        {id:"rent", fr:"Locations", en:"Rentals"},
+        {id:"rent", fr:"À louer", en:"For rent"},
+        {id:"vacation-rental", fr:"Location de vacances", en:"Vacation rental"},
         {id:"rent-apartment", fr:"Appartement", en:"Apartment"},
         {id:"rent-house", fr:"Maison", en:"House"},
         {id:"rent-parking", fr:"Parking", en:"Parking"},
         {id:"roommates", fr:"Colocations", en:"Roommates"},
-        {id:"offices", fr:"Bureaux & commerces", en:"Offices & shops"},
-        {id:"moving", fr:"Services de déménagement", en:"Moving services"}
+        {id:"commercial", fr:"Commercial", en:"Commercial"},
+        {id:"offices", fr:"Bureaux & commerces", en:"Offices & shops"}
       ]},
       {fr:"Immobilier neuf", en:"New developments", items:[
         {id:"new-property", fr:"Immobilier neuf", en:"New property"},
@@ -2101,16 +2104,20 @@ const SUBCATS = {
     fr:"Véhicules",
     en:"Vehicles",
     groups:[
-      {fr:"Acheter & vendre", en:"Buy & sell", items:[
-        {id:"car-sale", fr:"Vente de voitures", en:"Cars for sale"},
+      {fr:"Véhicules", en:"Vehicles", items:[
+        {id:"car-sale", fr:"Voitures", en:"Cars"},
         {id:"motorbike-sale", fr:"Motos", en:"Motorcycles"},
         {id:"scooter-sale", fr:"Scooters", en:"Scooters"},
         {id:"truck-sale", fr:"Trucks / utilitaires", en:"Trucks"},
-        {id:"dealer-inventory", fr:"Inventaire concessionnaire", en:"Dealer inventory"},
-        {id:"auto-parts", fr:"Pièces & équipement auto", en:"Car parts and equipment"}
+        {id:"dealer-inventory", fr:"Inventaire concessionnaire", en:"Dealer inventory"}
+      ]},
+      {fr:"Pièces", en:"Parts", items:[
+        {id:"auto-parts", fr:"Pièces auto", en:"Car parts"},
+        {id:"motorbike-parts", fr:"Pièces moto", en:"Motorcycle parts"},
+        {id:"truck-parts", fr:"Pièces utilitaires", en:"Truck parts"}
       ]},
       {fr:"Services", en:"Services", items:[
-        {id:"mechanic", fr:"Services de réparations mécaniques", en:"Mechanical repair services"},
+        {id:"mechanic", fr:"Réparation mécanique", en:"Mechanical repair"},
         {id:"dealer-account", fr:"Compte concessionnaire", en:"Dealer account"}
       ]}
     ]
@@ -2121,7 +2128,7 @@ const SUBCATS = {
     groups:[
       {fr:"Acheter & vendre", en:"Buy & sell", items:[
         {id:"scooter-sale", fr:"Scooters à vendre", en:"Scooters for sale"},
-        {id:"motorbike-sale", fr:"Motos à vendre", en:"Motorbikes for sale"}
+        {id:"motorbike-sale", fr:"Motos à vendre", en:"Motorcycles for sale"}
       ]},
       {fr:"Pièces & équipements", en:"Parts & equipment", items:[
         {id:"motorbike-parts", fr:"Pièces moto", en:"Motorbike parts"},
@@ -2130,6 +2137,21 @@ const SUBCATS = {
       ]},
       {fr:"Services", en:"Services", items:[
         {id:"scooter-mechanic", fr:"Réparation scooters & motos", en:"Scooter and motorbike repairs"}
+      ]}
+    ]
+  },
+  bat:{
+    fr:"Bateaux & nautisme",
+    en:"Boats & marine",
+    groups:[
+      {fr:"Vente", en:"For sale", items:[
+        {id:"boat-sale", fr:"Bateaux", en:"Boats"},
+        {id:"jet-ski-sale", fr:"Jet skis", en:"Jet skis"},
+        {id:"marine-trailer", fr:"Remorques bateau", en:"Boat trailers"}
+      ]},
+      {fr:"Pièces & services", en:"Parts & services", items:[
+        {id:"marine-parts", fr:"Pièces nautiques", en:"Marine parts"},
+        {id:"marine-service", fr:"Entretien nautique", en:"Marine service"}
       ]}
     ]
   },
@@ -2159,6 +2181,9 @@ const SUBCATS = {
     en:"Jobs",
     groups:[
       {fr:"Types de poste", en:"Job types", items:[
+        {id:"hiring", fr:"Je recrute", en:"I am hiring"},
+        {id:"looking-work", fr:"Je cherche du travail", en:"I'm looking for work"},
+        {id:"cv", fr:"Publier un CV", en:"Post a resume"},
         {id:"full-time", fr:"Temps plein", en:"Full-time"},
         {id:"part-time", fr:"Temps partiel", en:"Part-time"},
         {id:"seasonal", fr:"Saisonnier", en:"Seasonal"},
@@ -2171,6 +2196,7 @@ const SUBCATS = {
         {id:"office-admin", fr:"Bureau & administration", en:"Office and admin"}
       ]},
       {fr:"Services emploi", en:"Job services", items:[
+        {id:"paid-job-post", fr:"Offre d'emploi entreprise", en:"Paid job post"},
         {id:"internship", fr:"Stages", en:"Internships"},
         {id:"training", fr:"Formations", en:"Training"}
       ]}
@@ -2191,6 +2217,74 @@ const SUBCATS = {
       ]},
       {fr:"Services", en:"Services", items:[
         {id:"catering", fr:"Traiteur & événements", en:"Catering & events"}
+      ]}
+    ]
+  },
+  gaming:{
+    fr:"Gaming",
+    en:"Gaming",
+    groups:[
+      {fr:"Consoles & jeux", en:"Consoles & games", items:[
+        {id:"playstation", fr:"PlayStation", en:"PlayStation"},
+        {id:"xbox", fr:"Xbox", en:"Xbox"},
+        {id:"nintendo", fr:"Nintendo", en:"Nintendo"},
+        {id:"pc-gaming", fr:"PC gaming", en:"PC gaming"}
+      ]},
+      {fr:"Accessoires", en:"Accessories", items:[
+        {id:"controllers", fr:"Manettes", en:"Controllers"},
+        {id:"gaming-headsets", fr:"Casques gaming", en:"Gaming headsets"}
+      ]}
+    ]
+  },
+  pets:{
+    fr:"Animaux",
+    en:"Pets",
+    groups:[
+      {fr:"Animaux & accessoires", en:"Pets & supplies", items:[
+        {id:"dogs", fr:"Chiens", en:"Dogs"},
+        {id:"cats", fr:"Chats", en:"Cats"},
+        {id:"pet-supplies", fr:"Accessoires animaux", en:"Pet supplies"},
+        {id:"pet-services", fr:"Garde & services animaux", en:"Pet sitting and services"}
+      ]}
+    ]
+  },
+  beauty:{
+    fr:"Beauté",
+    en:"Beauty",
+    groups:[
+      {fr:"Services beauté", en:"Beauty services", items:[
+        {id:"hairdresser", fr:"Coiffure", en:"Hairdresser"},
+        {id:"nails", fr:"Ongles", en:"Nails"},
+        {id:"makeup", fr:"Maquillage", en:"Makeup"},
+        {id:"barber", fr:"Barbier", en:"Barber"}
+      ]},
+      {fr:"Produits", en:"Products", items:[
+        {id:"beauty-products", fr:"Produits beauté", en:"Beauty products"}
+      ]}
+    ]
+  },
+  serv:{
+    fr:"Services",
+    en:"Services",
+    groups:[
+      {fr:"Maison & entretien", en:"Home maintenance", items:[
+        {id:"cleaning", fr:"Ménage / nettoyage", en:"Cleaning"},
+        {id:"plumber", fr:"Plombier", en:"Plumber"},
+        {id:"electrician", fr:"Électricien", en:"Electrician"},
+        {id:"gardening", fr:"Jardinage", en:"Gardening"}
+      ]},
+      {fr:"Auto & bâtiment", en:"Auto and construction", items:[
+        {id:"mechanic-service", fr:"Mécanicien", en:"Mechanic"},
+        {id:"construction-service", fr:"Construction", en:"Construction"},
+        {id:"moving-service", fr:"Déménagement", en:"Moving"}
+      ]},
+      {fr:"Créatif & digital", en:"Creative and digital", items:[
+        {id:"photographer", fr:"Photographe", en:"Photographer"},
+        {id:"web-it", fr:"Web / IT", en:"Web / IT"}
+      ]},
+      {fr:"Visibilité Pro", en:"Pro visibility", items:[
+        {id:"verified-pro", fr:"Verified Pro", en:"Verified Pro"},
+        {id:"top-service", fr:"Top Service Provider", en:"Top Service Provider"}
       ]}
     ]
   }
@@ -2269,6 +2363,13 @@ Object.assign(I18N.fr, {
   planPremium1:"Tout Pro Plus",
   planPremium2:"Emplacements front page",
   planPremium3:"Priorité dans les annonces sponsorisées",
+  planDealerTitle:"Dealer Pro",
+  planDealerBadge:"79 €/mois",
+  planDealerText:"Pour concessionnaires auto, motos, scooters, bateaux et jet skis.",
+  planDealer1:"Page concessionnaire + logo",
+  planDealer2:"Inventaire complet avec annonces prioritaires",
+  planDealer3:"WhatsApp, téléphone, site web et statistiques",
+  planDealerPrice:"79 €/mois",
   planPriceSoon:"Prix à définir",
   planLearnMore:"Voir comment fonctionne Boost & Pro",
   planPaymentNote:"Les plans Pro nécessitent un abonnement payé avant activation. Sans paiement confirmé, le compte Pro ne peut pas publier.",
@@ -2287,7 +2388,7 @@ Object.assign(I18N.fr, {
   paymentSuccess:"Paiement confirmé. Votre compte Pro est actif.",
   proDashboardTitle:"Espace Pro",
   proStorefrontTitle:"Vitrine business",
-  proStorefrontText:"Votre page business regroupe vos produits, votre badge Pro, les avis clients et vos informations de confiance.",
+  proStorefrontText:"Votre page business regroupe vos produits, logo, WhatsApp, téléphone, site web, badge Pro, avis clients et informations de confiance.",
   proProductsTitle:"Produits à vendre",
   proProductsText:"Chaque produit se publie comme une annonce: photos réelles, prix en euro ou dollar, catégorie, quartier et chat direct avec les acheteurs.",
   proVisibilityTitle:"Visibilité",
@@ -2298,13 +2399,6 @@ Object.assign(I18N.fr, {
   proActive:"Abonnement actif",
   proInactive:"Paiement requis",
   proPlan:"Plan",
-  planDealerTitle:"Dealer Pro",
-  planDealerBadge:"79 €/mois",
-  planDealerText:"Pour concessionnaires auto, motos, scooters, bateaux et jet skis.",
-  planDealer1:"Page concessionnaire + logo",
-  planDealer2:"Inventaire complet avec annonces prioritaires",
-  planDealer3:"WhatsApp, téléphone, site web et statistiques",
-  planDealerPrice:"79 €/mois",
   businessPhoneLabel:"Téléphone",
   businessWhatsappLabel:"WhatsApp",
   businessWebsiteLabel:"Site Internet",
@@ -2319,6 +2413,8 @@ Object.assign(I18N.fr, {
   photoSent:"Photo ajoutée au chat",
   reportSent:"Merci. Cette annonce sera revue par l'équipe.",
   sellerBlocked:"Vendeur bloqué dans ce prototype.",
+  dealerAccountNote:"Dealer Pro est pensé pour les concessionnaires: inventaire complet, logo, WhatsApp, téléphone, site web, statistiques et annonces prioritaires.",
+  jobMonetizationNote:"Les CV et recherches d'emploi restent gratuits. Les entreprises pourront payer par offre ou via abonnement employeur.",
   dealerGuideTitle:"Dealer Pro",
   dealerGuideText:"Pour les concessionnaires: logo, page professionnelle, inventaire complet, WhatsApp, téléphone, site web, statistiques et annonces prioritaires.",
   jobsGuideTitle:"Jobs & employeurs",
@@ -2426,6 +2522,13 @@ Object.assign(I18N.en, {
   planPremium1:"Everything in Pro Plus",
   planPremium2:"Front page placements",
   planPremium3:"Priority in sponsored listings",
+  planDealerTitle:"Dealer Pro",
+  planDealerBadge:"79 €/month",
+  planDealerText:"For car, motorcycle, scooter, boat, and jet ski dealers.",
+  planDealer1:"Dealer page + logo",
+  planDealer2:"Full inventory with priority listings",
+  planDealer3:"WhatsApp, phone, website, and stats",
+  planDealerPrice:"79 €/month",
   planPriceSoon:"Pricing to define",
   planLearnMore:"See how Boost & Pro works",
   planPaymentNote:"Pro plans require a paid subscription before activation. Without confirmed payment, a Pro account cannot publish.",
@@ -2444,7 +2547,7 @@ Object.assign(I18N.en, {
   paymentSuccess:"Payment confirmed. Your Pro account is active.",
   proDashboardTitle:"Pro workspace",
   proStorefrontTitle:"Business storefront",
-  proStorefrontText:"Your business page brings together your products, Pro badge, customer ratings, and trust information.",
+  proStorefrontText:"Your business page brings together your products, logo, WhatsApp, phone, website, Pro badge, customer ratings, and trust information.",
   proProductsTitle:"Products for sale",
   proProductsText:"Each product is posted like a listing: real photos, euro or dollar price, category, area, and direct buyer chat.",
   proVisibilityTitle:"Visibility",
@@ -2455,13 +2558,6 @@ Object.assign(I18N.en, {
   proActive:"Subscription active",
   proInactive:"Payment required",
   proPlan:"Plan",
-  planDealerTitle:"Dealer Pro",
-  planDealerBadge:"79 €/month",
-  planDealerText:"For car, motorcycle, scooter, boat, and jet ski dealers.",
-  planDealer1:"Dealer page + logo",
-  planDealer2:"Full inventory with priority listings",
-  planDealer3:"WhatsApp, phone, website, and stats",
-  planDealerPrice:"79 €/month",
   businessPhoneLabel:"Phone",
   businessWhatsappLabel:"WhatsApp",
   businessWebsiteLabel:"Website",
@@ -2476,6 +2572,8 @@ Object.assign(I18N.en, {
   photoSent:"Photo added to chat",
   reportSent:"Thanks. This listing will be reviewed by the team.",
   sellerBlocked:"Seller blocked in this prototype.",
+  dealerAccountNote:"Dealer Pro is built for dealers: full inventory, logo, WhatsApp, phone, website, stats, and priority listings.",
+  jobMonetizationNote:"Resumes and job search stay free. Companies can pay per job post or use an employer subscription.",
   dealerGuideTitle:"Dealer Pro",
   dealerGuideText:"For dealers: logo, professional page, full inventory, WhatsApp, phone, website, analytics, and priority listings.",
   jobsGuideTitle:"Jobs & employers",
@@ -2639,6 +2737,21 @@ const CATEGORY_PHOTOS = {
   job:[
     {img:G.job.img, alt:G.job.alt},
     {img:"https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80", alt:"Team hiring and job listing"}
+  ],
+  gaming:[
+    {img:G.gaming.img, alt:G.gaming.alt},
+    {img:"https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=900&q=80", alt:"Gaming setup and monitor"},
+    {img:"https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?auto=format&fit=crop&w=900&q=80", alt:"Video game controller closeup"}
+  ],
+  pets:[
+    {img:G.pets.img, alt:G.pets.alt},
+    {img:"https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=900&q=80", alt:"Cat looking at camera"},
+    {img:"https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=900&q=80", alt:"Pet grooming supplies"}
+  ],
+  beauty:[
+    {img:G.beauty.img, alt:G.beauty.alt},
+    {img:"https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=900&q=80", alt:"Nail care and manicure service"},
+    {img:"https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=900&q=80", alt:"Hairdresser working in salon"}
   ],
   loisirs:[
     {img:G.lois.img, alt:G.lois.alt}
@@ -2812,7 +2925,7 @@ function loadLocalState(){
     if(data.user) state.user = normalizeUser(data.user);
     if(data.usersByEmail) usersByEmail = data.usersByEmail;
     if(state.user?.email) usersByEmail[state.user.email.toLowerCase()] = state.user;
-    if(data.favs) state.favs = new Set(data.favs);
+    if(data.favs) state.favs = new Set(data.favs.map(idKey));
     if(data.saved) state.saved = data.saved.map((item,index)=>
       typeof item === "string" ? {id:`legacy-${index}`,label:item} : item);
     if(data.adminReports) adminReports = data.adminReports;
@@ -2884,6 +2997,12 @@ function esc(s){
   return String(s ?? "").replace(/[&<>"']/g, ch => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[ch]));
+}
+function idKey(id){
+  return String(id ?? "");
+}
+function jsArg(value){
+  return esc(JSON.stringify(idKey(value)));
 }
 function initials(name, email){
   const base = (name || email || "?").trim();
@@ -3130,9 +3249,10 @@ function listingSharePayload(l){
   };
 }
 function threadFor(id){
-  const l = L.find(x=>x.id===id);
-  if(!chatThreads[id]){
-    chatThreads[id] = {
+  const key = idKey(id);
+  const l = L.find(x=>idKey(x.id)===key);
+  if(!chatThreads[key]){
+    chatThreads[key] = {
       seller:sellerName(l || {id}),
       updated:state.lang==="fr" ? "nouveau" : "new",
       messages:[
@@ -3140,7 +3260,7 @@ function threadFor(id){
       ]
     };
   }
-  return chatThreads[id];
+  return chatThreads[key];
 }
 
 /* Rendu d'une bulle - partagé entre le rendu initial, l'envoi et le realtime. */
@@ -3163,7 +3283,7 @@ function sbMsgToBubble(m){
 /* Charge l'historique réel d'une conversation depuis Supabase et rafraîchit le log. */
 async function hydrateRealThread(id){
   if(!(window.SB && SB.enabled()) || !state.user || state.user.provider !== "supabase") return;
-  const l = L.find(x=>x.id===id);
+  const l = L.find(x=>idKey(x.id)===idKey(id));
   if(!l || !l.sellerId || l.sellerId === state.user.id) return;
   const inbox = await SB.fetchInbox();
   if(!inbox) return;
@@ -3180,7 +3300,8 @@ async function hydrateRealThread(id){
 }
 
 function chatHTML(id){
-  const l = L.find(x=>x.id===id);
+  const idParam = jsArg(id);
+  const l = L.find(x=>idKey(x.id)===idKey(id));
   const thread = threadFor(id);
   const rows = thread.messages.map(m => bubbleRowHTML(m, thread.seller)).join("");
   return `
@@ -3190,22 +3311,23 @@ function chatHTML(id){
         <small>${t().chatOnline}</small>
       </div>
       <div class="chat-log" id="chatLog-${id}">${rows}</div>
-      <form class="chat-compose" onsubmit="return sendListingMessage(${id}, event)">
+      <form class="chat-compose" onsubmit="return sendListingMessage(${idParam}, event)">
         <input id="chatInput-${id}" ${state.user ? "" : "disabled"} placeholder="${state.user ? t().chatPlaceholder : t().loginToChat}" value="${state.user ? esc(t().defaultMessage) : ""}">
         <button type="submit" ${state.user ? "" : "disabled"}>${t().chatSend}</button>
       </form>
       <div class="chat-actions">
-        <button type="button" class="chat-action" onclick="quickChatAction(${id}, 'location')">${t().chatLocation}</button>
-        <button type="button" class="chat-action" onclick="quickChatAction(${id}, 'photo')">${t().chatPhoto}</button>
-        <button type="button" class="chat-action" onclick="quickChatAction(${id}, 'offer')">${t().chatOffer}</button>
-        <button type="button" class="chat-action" onclick="quickChatAction(${id}, 'report')">${t().chatReport}</button>
-        <button type="button" class="chat-action" onclick="quickChatAction(${id}, 'block')">${t().chatBlock}</button>
+        <button type="button" class="chat-action" onclick="quickChatAction(${idParam}, 'location')">${t().chatLocation}</button>
+        <button type="button" class="chat-action" onclick="quickChatAction(${idParam}, 'photo')">${t().chatPhoto}</button>
+        <button type="button" class="chat-action" onclick="quickChatAction(${idParam}, 'offer')">${t().chatOffer}</button>
+        <button type="button" class="chat-action" onclick="quickChatAction(${idParam}, 'report')">${t().chatReport}</button>
+        <button type="button" class="chat-action" onclick="quickChatAction(${idParam}, 'block')">${t().chatBlock}</button>
       </div>
     </div>`;
 }
 
 /* ---------------- RENDER: CARD ---------------- */
 function cardHTML(l, pinned, idx){
+  const idParam = jsArg(l.id);
   const gallery = listingGallery(l);
   const media = gallery[0] || mediaFor(l);
   const photoCount = l.photos?.length || l.pics || 1;
@@ -3214,17 +3336,17 @@ function cardHTML(l, pinned, idx){
   if(l.pro) badges.push(`<span class="badge pro">Pro</span>`);
   if(l.urgent) badges.push(`<span class="badge urgent">${t().urgent}</span>`);
   if(l.boosted) badges.push(`<span class="badge boosted">${t().boostBadge}</span>`);
-  const isFav = state.favs.has(l.id);
+  const isFav = state.favs.has(idKey(l.id));
   return `
-    <article class="card" ${pinned?`style="--i:${idx}"`:""} onclick="openListing(${l.id})" tabindex="0" onkeydown="cardKey(event, ${l.id})">
+    <article class="card" ${pinned?`style="--i:${idx}"`:""} onclick="openListing(${idParam})" tabindex="0" onkeydown="cardKey(event, ${idParam})">
       ${pinned?`<span class="pin" aria-hidden="true"></span>`:""}
       <span class="stripe ${l.side}" aria-hidden="true"></span>
       <button type="button" class="fav" aria-pressed="${isFav}"
         aria-label="${state.lang==="fr"?"Ajouter aux favoris":"Add to favourites"}"
-        onclick="toggleFav(${l.id}, this, event)">${isFav?"&#9829;":"&#9825;"}</button>
+        onclick="toggleFav(${idParam}, this, event)">${isFav?"&#9829;":"&#9825;"}</button>
       <button type="button" class="share-card" aria-label="${t().shareLabel}" title="${t().shareLabel}"
-        onclick="shareListing(${l.id}, event)"><span aria-hidden="true">&#8599;</span>${t().shareLabel}</button>
-      ${isOwnListing(l) && !l.sold ? `<button type="button" class="boost-card-action" onclick="openBoostCheckout(${l.id}, event)" aria-label="${t().boostCta}">${t().boostCardCta}</button>` : ""}
+        onclick="shareListing(${idParam}, event)"><span aria-hidden="true">&#8599;</span>${t().shareLabel}</button>
+      ${isOwnListing(l) && !l.sold ? `<button type="button" class="boost-card-action" onclick="openBoostCheckout(${idParam}, event)" aria-label="${t().boostCta}">${t().boostCardCta}</button>` : ""}
       <div class="photo">
         <img src="${media.img}" alt="${media.alt}" loading="lazy">
         <span class="gallery"><span aria-hidden="true">&#9634;</span> ${photoCount}</span>
@@ -3507,8 +3629,9 @@ function scrollCats(dir){
 }
 function toggleFav(id, btn){
   if(arguments[2]) arguments[2].stopPropagation();
-  if(state.favs.has(id)) state.favs.delete(id); else state.favs.add(id);
-  const on = state.favs.has(id);
+  const key = idKey(id);
+  if(state.favs.has(key)) state.favs.delete(key); else state.favs.add(key);
+  const on = state.favs.has(key);
   btn.setAttribute("aria-pressed", on);
   btn.innerHTML = on ? "&#9829;" : "&#9825;";
   btn.classList.remove("pop"); void btn.offsetWidth; btn.classList.add("pop");
@@ -3665,7 +3788,7 @@ function openListing(id, syncUrl = true){
   const detail = document.getElementById("detailBody");
   const thumbs = gallery.length > 1 ? `
     <div class="photo-preview" style="margin-top:10px">
-      ${gallery.map((item,i)=>`<button type="button" class="gallery-thumb ${i===0 ? "active" : ""}" data-full="${esc(item.img)}" data-alt="${esc(item.alt)}" onclick="setMainListingPhoto(${l.id}, this.dataset.full, this.dataset.alt, this)" aria-label="${esc(listingTitle)} photo ${i+1}"><img src="${item.img}" alt="${esc(item.alt)}" loading="eager"></button>`).join("")}
+        ${gallery.map((item,i)=>`<button type="button" class="gallery-thumb ${i===0 ? "active" : ""}" data-full="${esc(item.img)}" data-alt="${esc(item.alt)}" onclick="setMainListingPhoto(${jsArg(l.id)}, this.dataset.full, this.dataset.alt, this)" aria-label="${esc(listingTitle)} photo ${i+1}"><img src="${item.img}" alt="${esc(item.alt)}" loading="eager"></button>`).join("")}
     </div>` : "";
   document.getElementById("detailTitle").textContent = listingTitle;
   detail.innerHTML = `
@@ -3687,10 +3810,10 @@ function openListing(id, syncUrl = true){
         </div>
         ${chatHTML(l.id)}
         <div class="detail-actions">
-          ${state.user ? "" : `<button type="button" class="primary-btn" onclick="requestListingLogin(${l.id})">${state.lang==="fr"?"Se connecter pour discuter":"Log in to chat"}</button>`}
-          ${isOwnListing(l) && !l.sold ? `<button type="button" class="primary-btn" onclick="openBoostCheckout(${l.id}, event)">${t().boostCta}</button>` : ""}
-          <button type="button" class="primary-btn" onclick="shareListing(${l.id}, event)">${t().shareLabel}</button>
-          <button type="button" class="secondary-btn" onclick="toggleFavFromDetail(${l.id})">${state.favs.has(id)?t().savedLabel:t().saveLabel}</button>
+          ${state.user ? "" : `<button type="button" class="primary-btn" onclick="requestListingLogin(${jsArg(l.id)})">${state.lang==="fr"?"Se connecter pour discuter":"Log in to chat"}</button>`}
+          ${isOwnListing(l) && !l.sold ? `<button type="button" class="primary-btn" onclick="openBoostCheckout(${jsArg(l.id)}, event)">${t().boostCta}</button>` : ""}
+          <button type="button" class="primary-btn" onclick="shareListing(${jsArg(l.id)}, event)">${t().shareLabel}</button>
+          <button type="button" class="secondary-btn" onclick="toggleFavFromDetail(${jsArg(l.id)})">${state.favs.has(idKey(id))?t().savedLabel:t().saveLabel}</button>
         </div>
         <div class="share-box">
           <div>
@@ -3726,17 +3849,20 @@ function openListingFromAdmin(id){
 }
 
 function toggleFavFromDetail(id){
-  if(state.favs.has(id)) state.favs.delete(id); else state.favs.add(id);
+  const key = idKey(id);
+  if(state.favs.has(key)) state.favs.delete(key); else state.favs.add(key);
   persistState();
   render();
   openListing(id);
-  showToast(state.favs.has(id) ? t().savedToast : t().removedToast);
+  showToast(state.favs.has(key) ? t().savedToast : t().removedToast);
 }
 
 async function copyText(text){
   if(navigator.clipboard?.writeText && window.isSecureContext){
-    await navigator.clipboard.writeText(text);
-    return true;
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(e){}
   }
   const helper = document.createElement("textarea");
   helper.value = text;
@@ -3761,7 +3887,7 @@ async function copyListingLink(id, e){
 
 async function shareListing(id, e){
   if(e) e.stopPropagation();
-  const l = L.find(x=>x.id===id);
+  const l = L.find(x=>idKey(x.id)===idKey(id));
   if(!l) return;
   const payload = listingSharePayload(l);
   if(navigator.share){
@@ -3788,7 +3914,7 @@ async function sendListingMessage(id, e){
     requireAccount(`listing:${id}`);
     return false;
   }
-  const l = L.find(x=>x.id===id);
+  const l = L.find(x=>idKey(x.id)===idKey(id));
   if(!l) return;
   const input = document.getElementById(`chatInput-${id}`);
   const text = (input?.value || t().defaultMessage).trim();
@@ -3900,7 +4026,7 @@ async function openMessages(){
   }
   const list = document.getElementById("threadList");
   const threads = Object.entries(chatThreads).map(([id, thread])=>{
-    const l = L.find(x=>x.id==id);
+    const l = L.find(x=>idKey(x.id)===idKey(id));
     const last = thread.messages[thread.messages.length - 1];
     return {id, thread, listing:l, last};
   }).filter(x=>x.listing);
@@ -3925,7 +4051,7 @@ async function openMessages(){
   }
 
   list.innerHTML = threads.length ? threads.map(({id, thread, listing, last})=>`
-    <button type="button" class="thread" onclick="closeModal('messagesModal');openListing(${id})">
+    <button type="button" class="thread" onclick="closeModal('messagesModal');openListing(${jsArg(id)})">
       <b>${esc(thread.seller)}</b>
       <small>${esc(titleFor(listing))} · ${esc(thread.updated || last.at)}</small>
       <span>${esc(last[state.lang] || last.en || last.fr || last.text)}</span>
@@ -3970,7 +4096,7 @@ function startBoostFlow(){
 
 function openBoostCheckout(id, event){
   if(event) event.stopPropagation();
-  const l = L.find(x=>x.id === id);
+  const l = L.find(x=>idKey(x.id) === idKey(id));
   if(!l) return;
   if(!state.user || !isOwnListing(l)){
     requireAccount("boost");
@@ -3998,7 +4124,7 @@ function selectBoostPlan(days, btn){
 
 function confirmListingBoost(e){
   e.preventDefault();
-  const l = L.find(x=>x.id === pendingBoostListingId);
+  const l = L.find(x=>idKey(x.id) === idKey(pendingBoostListingId));
   if(!l) return false;
   const plan = boostPlan(pendingBoostDays);
   l.boosted = true;
@@ -4155,17 +4281,18 @@ function proDashboardHTML(user, own, proActive){
 }
 
 function miniListingHTML(l){
+  const idParam = jsArg(l.id);
   const media = mediaFor(l);
   const status = l.sold ? t().sold : l.reserved ? t().reserved : state.lang==="fr" ? "Active" : "Active";
   return `
     <div class="mini-row">
       <img src="${media.img}" alt="">
-      <button type="button" class="mini-main" onclick="closeModal('profileModal');openListing(${l.id})">
+      <button type="button" class="mini-main" onclick="closeModal('profileModal');openListing(${idParam})">
         <b>${esc(titleFor(l))}</b><br><small>${esc(l.area)} · ${priceHTML(l).replace(/<[^>]*>/g," ")}</small>
       </button>
       <div class="mini-actions">
         <small>${status}</small>
-        ${l.sold ? "" : `<button type="button" class="secondary-btn" onclick="openBoostCheckout(${l.id}, event)">${t().boostCta}</button>`}
+        ${l.sold ? "" : `<button type="button" class="secondary-btn" onclick="openBoostCheckout(${idParam}, event)">${t().boostCta}</button>`}
       </div>
     </div>`;
 }
@@ -4203,7 +4330,7 @@ function completeAuth(){
   else if(action === "messages") openMessages();
   else if(action === "boost") startBoostFlow();
   else if(action === "admin") openAdmin();
-  else if(action?.startsWith("listing:")) openListing(Number(action.split(":")[1]));
+  else if(action?.startsWith("listing:")) openListing(action.slice("listing:".length));
 }
 
 function ensureAdminReports(){
@@ -4229,7 +4356,7 @@ function canUseSupabaseAdmin(){
 }
 
 function isUuid(value){
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(String(value || ""));
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
 }
 
 function reportFromRow(row){
@@ -4403,10 +4530,10 @@ function adminListingRows(items){
       <img src="${mediaFor(l).img}" alt="">
       <div><b>${esc(titleFor(l))}</b><br><small>${esc(l.area || "SXM")} · ${esc(adminPrice(l))} · ${esc(l.cat)}${l.boosted ? " · Boost" : ""}${l.sold ? " · Sold" : ""}</small></div>
       <div class="admin-actions">
-        <button type="button" onclick="openListingFromAdmin('${esc(String(l.id))}')">${state.lang==="fr" ? "Voir" : "View"}</button>
-        <button type="button" class="primary" onclick="toggleFeaturedAdmin(${l.id})">${l.feat ? (state.lang==="fr" ? "Retirer une" : "Unfeature") : (state.lang==="fr" ? "Mettre une" : "Feature")}</button>
-        <button type="button" onclick="markListingStatusAdmin(${l.id}, '${l.sold ? "active" : "sold"}')">${l.sold ? "Active" : "Sold"}</button>
-        <button type="button" class="danger" onclick="removeListingAdmin(${l.id})">${state.lang==="fr" ? "Supprimer" : "Remove"}</button>
+        <button type="button" onclick="openListingFromAdmin(${jsArg(l.id)})">${state.lang==="fr" ? "Voir" : "View"}</button>
+        <button type="button" class="primary" onclick="toggleFeaturedAdmin(${jsArg(l.id)})">${l.feat ? (state.lang==="fr" ? "Retirer une" : "Unfeature") : (state.lang==="fr" ? "Mettre une" : "Feature")}</button>
+        <button type="button" onclick="markListingStatusAdmin(${jsArg(l.id)}, '${l.sold ? "active" : "sold"}')">${l.sold ? "Active" : "Sold"}</button>
+        <button type="button" class="danger" onclick="removeListingAdmin(${jsArg(l.id)})">${state.lang==="fr" ? "Supprimer" : "Remove"}</button>
       </div>
     </div>`).join("") || `<p>${state.lang==="fr" ? "Rien à afficher." : "Nothing to show."}</p>`}</div>`;
 }
@@ -4422,7 +4549,7 @@ function adminReportRows(items){
       ${l ? `<img src="${mediaFor(l).img}" alt="">` : ""}
       <div><b>${esc(l ? titleFor(l) : "Listing removed")}</b><br><small>${esc(r.reason)} · ${r.createdAt ? new Date(r.createdAt).toLocaleDateString(state.lang==="fr"?"fr-FR":"en-US") : ""} · ${esc(r.status)}</small>${r.notes ? `<br><small>${esc(r.notes)}</small>` : ""}</div>
       <div class="admin-actions">
-        ${l ? `<button type="button" onclick="openListingFromAdmin('${esc(String(l.id))}')">${state.lang==="fr" ? "Voir" : "View"}</button><button type="button" class="danger" onclick="removeListingAdmin(${l.id})">${state.lang==="fr" ? "Supprimer" : "Remove"}</button>` : ""}
+        ${l ? `<button type="button" onclick="openListingFromAdmin(${jsArg(l.id)})">${state.lang==="fr" ? "Voir" : "View"}</button><button type="button" class="danger" onclick="removeListingAdmin(${jsArg(l.id)})">${state.lang==="fr" ? "Supprimer" : "Remove"}</button>` : ""}
         <button type="button" class="primary" onclick="resolveReportAdmin('${r.id}')">${state.lang==="fr" ? "Résoudre" : "Resolve"}</button>
       </div>
     </div>`;
@@ -5134,9 +5261,9 @@ document.querySelectorAll(".modal").forEach(modal=>{
 });
 
 function openListingFromUrl(){
-  const id = Number(new URLSearchParams(window.location.search).get("listing"));
+  const id = new URLSearchParams(window.location.search).get("listing");
   if(!id) return;
-  const exists = L.some(l=>l.id===id);
+  const exists = L.some(l=>idKey(l.id)===idKey(id));
   if(exists) setTimeout(()=>openListing(id, false), 120);
 }
 

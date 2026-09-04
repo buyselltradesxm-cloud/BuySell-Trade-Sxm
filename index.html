@@ -2925,7 +2925,7 @@ function loadLocalState(){
     if(data.user) state.user = normalizeUser(data.user);
     if(data.usersByEmail) usersByEmail = data.usersByEmail;
     if(state.user?.email) usersByEmail[state.user.email.toLowerCase()] = state.user;
-    if(data.favs) state.favs = new Set(data.favs);
+    if(data.favs) state.favs = new Set(data.favs.map(idKey));
     if(data.saved) state.saved = data.saved.map((item,index)=>
       typeof item === "string" ? {id:`legacy-${index}`,label:item} : item);
     if(data.adminReports) adminReports = data.adminReports;
@@ -2997,6 +2997,12 @@ function esc(s){
   return String(s ?? "").replace(/[&<>"']/g, ch => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[ch]));
+}
+function idKey(id){
+  return String(id ?? "");
+}
+function jsArg(value){
+  return esc(JSON.stringify(idKey(value)));
 }
 function initials(name, email){
   const base = (name || email || "?").trim();
@@ -3243,9 +3249,10 @@ function listingSharePayload(l){
   };
 }
 function threadFor(id){
-  const l = L.find(x=>x.id===id);
-  if(!chatThreads[id]){
-    chatThreads[id] = {
+  const key = idKey(id);
+  const l = L.find(x=>idKey(x.id)===key);
+  if(!chatThreads[key]){
+    chatThreads[key] = {
       seller:sellerName(l || {id}),
       updated:state.lang==="fr" ? "nouveau" : "new",
       messages:[
@@ -3253,7 +3260,7 @@ function threadFor(id){
       ]
     };
   }
-  return chatThreads[id];
+  return chatThreads[key];
 }
 
 /* Rendu d'une bulle - partagé entre le rendu initial, l'envoi et le realtime. */
@@ -3276,7 +3283,7 @@ function sbMsgToBubble(m){
 /* Charge l'historique réel d'une conversation depuis Supabase et rafraîchit le log. */
 async function hydrateRealThread(id){
   if(!(window.SB && SB.enabled()) || !state.user || state.user.provider !== "supabase") return;
-  const l = L.find(x=>x.id===id);
+  const l = L.find(x=>idKey(x.id)===idKey(id));
   if(!l || !l.sellerId || l.sellerId === state.user.id) return;
   const inbox = await SB.fetchInbox();
   if(!inbox) return;
@@ -3293,7 +3300,8 @@ async function hydrateRealThread(id){
 }
 
 function chatHTML(id){
-  const l = L.find(x=>x.id===id);
+  const idParam = jsArg(id);
+  const l = L.find(x=>idKey(x.id)===idKey(id));
   const thread = threadFor(id);
   const rows = thread.messages.map(m => bubbleRowHTML(m, thread.seller)).join("");
   return `
@@ -3303,22 +3311,23 @@ function chatHTML(id){
         <small>${t().chatOnline}</small>
       </div>
       <div class="chat-log" id="chatLog-${id}">${rows}</div>
-      <form class="chat-compose" onsubmit="return sendListingMessage(${id}, event)">
+      <form class="chat-compose" onsubmit="return sendListingMessage(${idParam}, event)">
         <input id="chatInput-${id}" ${state.user ? "" : "disabled"} placeholder="${state.user ? t().chatPlaceholder : t().loginToChat}" value="${state.user ? esc(t().defaultMessage) : ""}">
         <button type="submit" ${state.user ? "" : "disabled"}>${t().chatSend}</button>
       </form>
       <div class="chat-actions">
-        <button type="button" class="chat-action" onclick="quickChatAction(${id}, 'location')">${t().chatLocation}</button>
-        <button type="button" class="chat-action" onclick="quickChatAction(${id}, 'photo')">${t().chatPhoto}</button>
-        <button type="button" class="chat-action" onclick="quickChatAction(${id}, 'offer')">${t().chatOffer}</button>
-        <button type="button" class="chat-action" onclick="quickChatAction(${id}, 'report')">${t().chatReport}</button>
-        <button type="button" class="chat-action" onclick="quickChatAction(${id}, 'block')">${t().chatBlock}</button>
+        <button type="button" class="chat-action" onclick="quickChatAction(${idParam}, 'location')">${t().chatLocation}</button>
+        <button type="button" class="chat-action" onclick="quickChatAction(${idParam}, 'photo')">${t().chatPhoto}</button>
+        <button type="button" class="chat-action" onclick="quickChatAction(${idParam}, 'offer')">${t().chatOffer}</button>
+        <button type="button" class="chat-action" onclick="quickChatAction(${idParam}, 'report')">${t().chatReport}</button>
+        <button type="button" class="chat-action" onclick="quickChatAction(${idParam}, 'block')">${t().chatBlock}</button>
       </div>
     </div>`;
 }
 
 /* ---------------- RENDER: CARD ---------------- */
 function cardHTML(l, pinned, idx){
+  const idParam = jsArg(l.id);
   const gallery = listingGallery(l);
   const media = gallery[0] || mediaFor(l);
   const photoCount = l.photos?.length || l.pics || 1;
@@ -3327,17 +3336,17 @@ function cardHTML(l, pinned, idx){
   if(l.pro) badges.push(`<span class="badge pro">Pro</span>`);
   if(l.urgent) badges.push(`<span class="badge urgent">${t().urgent}</span>`);
   if(l.boosted) badges.push(`<span class="badge boosted">${t().boostBadge}</span>`);
-  const isFav = state.favs.has(l.id);
+  const isFav = state.favs.has(idKey(l.id));
   return `
-    <article class="card" ${pinned?`style="--i:${idx}"`:""} onclick="openListing(${l.id})" tabindex="0" onkeydown="cardKey(event, ${l.id})">
+    <article class="card" ${pinned?`style="--i:${idx}"`:""} onclick="openListing(${idParam})" tabindex="0" onkeydown="cardKey(event, ${idParam})">
       ${pinned?`<span class="pin" aria-hidden="true"></span>`:""}
       <span class="stripe ${l.side}" aria-hidden="true"></span>
       <button type="button" class="fav" aria-pressed="${isFav}"
         aria-label="${state.lang==="fr"?"Ajouter aux favoris":"Add to favourites"}"
-        onclick="toggleFav(${l.id}, this, event)">${isFav?"&#9829;":"&#9825;"}</button>
+        onclick="toggleFav(${idParam}, this, event)">${isFav?"&#9829;":"&#9825;"}</button>
       <button type="button" class="share-card" aria-label="${t().shareLabel}" title="${t().shareLabel}"
-        onclick="shareListing(${l.id}, event)"><span aria-hidden="true">&#8599;</span>${t().shareLabel}</button>
-      ${isOwnListing(l) && !l.sold ? `<button type="button" class="boost-card-action" onclick="openBoostCheckout(${l.id}, event)" aria-label="${t().boostCta}">${t().boostCardCta}</button>` : ""}
+        onclick="shareListing(${idParam}, event)"><span aria-hidden="true">&#8599;</span>${t().shareLabel}</button>
+      ${isOwnListing(l) && !l.sold ? `<button type="button" class="boost-card-action" onclick="openBoostCheckout(${idParam}, event)" aria-label="${t().boostCta}">${t().boostCardCta}</button>` : ""}
       <div class="photo">
         <img src="${media.img}" alt="${media.alt}" loading="lazy">
         <span class="gallery"><span aria-hidden="true">&#9634;</span> ${photoCount}</span>
@@ -3620,8 +3629,9 @@ function scrollCats(dir){
 }
 function toggleFav(id, btn){
   if(arguments[2]) arguments[2].stopPropagation();
-  if(state.favs.has(id)) state.favs.delete(id); else state.favs.add(id);
-  const on = state.favs.has(id);
+  const key = idKey(id);
+  if(state.favs.has(key)) state.favs.delete(key); else state.favs.add(key);
+  const on = state.favs.has(key);
   btn.setAttribute("aria-pressed", on);
   btn.innerHTML = on ? "&#9829;" : "&#9825;";
   btn.classList.remove("pop"); void btn.offsetWidth; btn.classList.add("pop");
@@ -3778,7 +3788,7 @@ function openListing(id, syncUrl = true){
   const detail = document.getElementById("detailBody");
   const thumbs = gallery.length > 1 ? `
     <div class="photo-preview" style="margin-top:10px">
-      ${gallery.map((item,i)=>`<button type="button" class="gallery-thumb ${i===0 ? "active" : ""}" data-full="${esc(item.img)}" data-alt="${esc(item.alt)}" onclick="setMainListingPhoto(${l.id}, this.dataset.full, this.dataset.alt, this)" aria-label="${esc(listingTitle)} photo ${i+1}"><img src="${item.img}" alt="${esc(item.alt)}" loading="eager"></button>`).join("")}
+        ${gallery.map((item,i)=>`<button type="button" class="gallery-thumb ${i===0 ? "active" : ""}" data-full="${esc(item.img)}" data-alt="${esc(item.alt)}" onclick="setMainListingPhoto(${jsArg(l.id)}, this.dataset.full, this.dataset.alt, this)" aria-label="${esc(listingTitle)} photo ${i+1}"><img src="${item.img}" alt="${esc(item.alt)}" loading="eager"></button>`).join("")}
     </div>` : "";
   document.getElementById("detailTitle").textContent = listingTitle;
   detail.innerHTML = `
@@ -3800,10 +3810,10 @@ function openListing(id, syncUrl = true){
         </div>
         ${chatHTML(l.id)}
         <div class="detail-actions">
-          ${state.user ? "" : `<button type="button" class="primary-btn" onclick="requestListingLogin(${l.id})">${state.lang==="fr"?"Se connecter pour discuter":"Log in to chat"}</button>`}
-          ${isOwnListing(l) && !l.sold ? `<button type="button" class="primary-btn" onclick="openBoostCheckout(${l.id}, event)">${t().boostCta}</button>` : ""}
-          <button type="button" class="primary-btn" onclick="shareListing(${l.id}, event)">${t().shareLabel}</button>
-          <button type="button" class="secondary-btn" onclick="toggleFavFromDetail(${l.id})">${state.favs.has(id)?t().savedLabel:t().saveLabel}</button>
+          ${state.user ? "" : `<button type="button" class="primary-btn" onclick="requestListingLogin(${jsArg(l.id)})">${state.lang==="fr"?"Se connecter pour discuter":"Log in to chat"}</button>`}
+          ${isOwnListing(l) && !l.sold ? `<button type="button" class="primary-btn" onclick="openBoostCheckout(${jsArg(l.id)}, event)">${t().boostCta}</button>` : ""}
+          <button type="button" class="primary-btn" onclick="shareListing(${jsArg(l.id)}, event)">${t().shareLabel}</button>
+          <button type="button" class="secondary-btn" onclick="toggleFavFromDetail(${jsArg(l.id)})">${state.favs.has(idKey(id))?t().savedLabel:t().saveLabel}</button>
         </div>
         <div class="share-box">
           <div>
@@ -3839,17 +3849,20 @@ function openListingFromAdmin(id){
 }
 
 function toggleFavFromDetail(id){
-  if(state.favs.has(id)) state.favs.delete(id); else state.favs.add(id);
+  const key = idKey(id);
+  if(state.favs.has(key)) state.favs.delete(key); else state.favs.add(key);
   persistState();
   render();
   openListing(id);
-  showToast(state.favs.has(id) ? t().savedToast : t().removedToast);
+  showToast(state.favs.has(key) ? t().savedToast : t().removedToast);
 }
 
 async function copyText(text){
   if(navigator.clipboard?.writeText && window.isSecureContext){
-    await navigator.clipboard.writeText(text);
-    return true;
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(e){}
   }
   const helper = document.createElement("textarea");
   helper.value = text;
@@ -3874,7 +3887,7 @@ async function copyListingLink(id, e){
 
 async function shareListing(id, e){
   if(e) e.stopPropagation();
-  const l = L.find(x=>x.id===id);
+  const l = L.find(x=>idKey(x.id)===idKey(id));
   if(!l) return;
   const payload = listingSharePayload(l);
   if(navigator.share){
@@ -3901,7 +3914,7 @@ async function sendListingMessage(id, e){
     requireAccount(`listing:${id}`);
     return false;
   }
-  const l = L.find(x=>x.id===id);
+  const l = L.find(x=>idKey(x.id)===idKey(id));
   if(!l) return;
   const input = document.getElementById(`chatInput-${id}`);
   const text = (input?.value || t().defaultMessage).trim();
@@ -4013,7 +4026,7 @@ async function openMessages(){
   }
   const list = document.getElementById("threadList");
   const threads = Object.entries(chatThreads).map(([id, thread])=>{
-    const l = L.find(x=>x.id==id);
+    const l = L.find(x=>idKey(x.id)===idKey(id));
     const last = thread.messages[thread.messages.length - 1];
     return {id, thread, listing:l, last};
   }).filter(x=>x.listing);
@@ -4038,7 +4051,7 @@ async function openMessages(){
   }
 
   list.innerHTML = threads.length ? threads.map(({id, thread, listing, last})=>`
-    <button type="button" class="thread" onclick="closeModal('messagesModal');openListing(${id})">
+    <button type="button" class="thread" onclick="closeModal('messagesModal');openListing(${jsArg(id)})">
       <b>${esc(thread.seller)}</b>
       <small>${esc(titleFor(listing))} · ${esc(thread.updated || last.at)}</small>
       <span>${esc(last[state.lang] || last.en || last.fr || last.text)}</span>
@@ -4083,7 +4096,7 @@ function startBoostFlow(){
 
 function openBoostCheckout(id, event){
   if(event) event.stopPropagation();
-  const l = L.find(x=>x.id === id);
+  const l = L.find(x=>idKey(x.id) === idKey(id));
   if(!l) return;
   if(!state.user || !isOwnListing(l)){
     requireAccount("boost");
@@ -4111,7 +4124,7 @@ function selectBoostPlan(days, btn){
 
 function confirmListingBoost(e){
   e.preventDefault();
-  const l = L.find(x=>x.id === pendingBoostListingId);
+  const l = L.find(x=>idKey(x.id) === idKey(pendingBoostListingId));
   if(!l) return false;
   const plan = boostPlan(pendingBoostDays);
   l.boosted = true;
@@ -4268,17 +4281,18 @@ function proDashboardHTML(user, own, proActive){
 }
 
 function miniListingHTML(l){
+  const idParam = jsArg(l.id);
   const media = mediaFor(l);
   const status = l.sold ? t().sold : l.reserved ? t().reserved : state.lang==="fr" ? "Active" : "Active";
   return `
     <div class="mini-row">
       <img src="${media.img}" alt="">
-      <button type="button" class="mini-main" onclick="closeModal('profileModal');openListing(${l.id})">
+      <button type="button" class="mini-main" onclick="closeModal('profileModal');openListing(${idParam})">
         <b>${esc(titleFor(l))}</b><br><small>${esc(l.area)} · ${priceHTML(l).replace(/<[^>]*>/g," ")}</small>
       </button>
       <div class="mini-actions">
         <small>${status}</small>
-        ${l.sold ? "" : `<button type="button" class="secondary-btn" onclick="openBoostCheckout(${l.id}, event)">${t().boostCta}</button>`}
+        ${l.sold ? "" : `<button type="button" class="secondary-btn" onclick="openBoostCheckout(${idParam}, event)">${t().boostCta}</button>`}
       </div>
     </div>`;
 }
@@ -4316,7 +4330,7 @@ function completeAuth(){
   else if(action === "messages") openMessages();
   else if(action === "boost") startBoostFlow();
   else if(action === "admin") openAdmin();
-  else if(action?.startsWith("listing:")) openListing(Number(action.split(":")[1]));
+  else if(action?.startsWith("listing:")) openListing(action.slice("listing:".length));
 }
 
 function ensureAdminReports(){
@@ -4516,10 +4530,10 @@ function adminListingRows(items){
       <img src="${mediaFor(l).img}" alt="">
       <div><b>${esc(titleFor(l))}</b><br><small>${esc(l.area || "SXM")} · ${esc(adminPrice(l))} · ${esc(l.cat)}${l.boosted ? " · Boost" : ""}${l.sold ? " · Sold" : ""}</small></div>
       <div class="admin-actions">
-        <button type="button" onclick="openListingFromAdmin('${esc(String(l.id))}')">${state.lang==="fr" ? "Voir" : "View"}</button>
-        <button type="button" class="primary" onclick="toggleFeaturedAdmin(${l.id})">${l.feat ? (state.lang==="fr" ? "Retirer une" : "Unfeature") : (state.lang==="fr" ? "Mettre une" : "Feature")}</button>
-        <button type="button" onclick="markListingStatusAdmin(${l.id}, '${l.sold ? "active" : "sold"}')">${l.sold ? "Active" : "Sold"}</button>
-        <button type="button" class="danger" onclick="removeListingAdmin(${l.id})">${state.lang==="fr" ? "Supprimer" : "Remove"}</button>
+        <button type="button" onclick="openListingFromAdmin(${jsArg(l.id)})">${state.lang==="fr" ? "Voir" : "View"}</button>
+        <button type="button" class="primary" onclick="toggleFeaturedAdmin(${jsArg(l.id)})">${l.feat ? (state.lang==="fr" ? "Retirer une" : "Unfeature") : (state.lang==="fr" ? "Mettre une" : "Feature")}</button>
+        <button type="button" onclick="markListingStatusAdmin(${jsArg(l.id)}, '${l.sold ? "active" : "sold"}')">${l.sold ? "Active" : "Sold"}</button>
+        <button type="button" class="danger" onclick="removeListingAdmin(${jsArg(l.id)})">${state.lang==="fr" ? "Supprimer" : "Remove"}</button>
       </div>
     </div>`).join("") || `<p>${state.lang==="fr" ? "Rien à afficher." : "Nothing to show."}</p>`}</div>`;
 }
@@ -4535,7 +4549,7 @@ function adminReportRows(items){
       ${l ? `<img src="${mediaFor(l).img}" alt="">` : ""}
       <div><b>${esc(l ? titleFor(l) : "Listing removed")}</b><br><small>${esc(r.reason)} · ${r.createdAt ? new Date(r.createdAt).toLocaleDateString(state.lang==="fr"?"fr-FR":"en-US") : ""} · ${esc(r.status)}</small>${r.notes ? `<br><small>${esc(r.notes)}</small>` : ""}</div>
       <div class="admin-actions">
-        ${l ? `<button type="button" onclick="openListingFromAdmin('${esc(String(l.id))}')">${state.lang==="fr" ? "Voir" : "View"}</button><button type="button" class="danger" onclick="removeListingAdmin(${l.id})">${state.lang==="fr" ? "Supprimer" : "Remove"}</button>` : ""}
+        ${l ? `<button type="button" onclick="openListingFromAdmin(${jsArg(l.id)})">${state.lang==="fr" ? "Voir" : "View"}</button><button type="button" class="danger" onclick="removeListingAdmin(${jsArg(l.id)})">${state.lang==="fr" ? "Supprimer" : "Remove"}</button>` : ""}
         <button type="button" class="primary" onclick="resolveReportAdmin('${r.id}')">${state.lang==="fr" ? "Résoudre" : "Resolve"}</button>
       </div>
     </div>`;
@@ -5247,9 +5261,9 @@ document.querySelectorAll(".modal").forEach(modal=>{
 });
 
 function openListingFromUrl(){
-  const id = Number(new URLSearchParams(window.location.search).get("listing"));
+  const id = new URLSearchParams(window.location.search).get("listing");
   if(!id) return;
-  const exists = L.some(l=>l.id===id);
+  const exists = L.some(l=>idKey(l.id)===idKey(id));
   if(exists) setTimeout(()=>openListing(id, false), 120);
 }
 
