@@ -278,6 +278,193 @@
       return res.data;
     },
 
+    /* --------- ADMIN / MODERATION --------- */
+
+    logAdminEvent: async function (action, targetType, targetId, metadata) {
+      if (!window.db || !action) return null;
+      var user = await SB.currentUser();
+      if (!user) return null;
+      var res = await window.db
+        .from("admin_events")
+        .insert({
+          admin_id: user.id,
+          action: action,
+          target_type: targetType || null,
+          target_id: targetId == null ? null : String(targetId),
+          metadata: metadata || null
+        })
+        .select()
+        .single();
+      if (res.error) {
+        console.warn("[SB] logAdminEvent:", res.error.message);
+        return null;
+      }
+      return res.data;
+    },
+
+    fetchReports: async function () {
+      if (!window.db) return null;
+      var res = await window.db
+        .from("reports")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (res.error) {
+        console.warn("[SB] fetchReports:", res.error.message);
+        return null;
+      }
+      return res.data || [];
+    },
+
+    createReport: async function (listingId, reason, notes) {
+      if (!window.db || !listingId) return null;
+      var user = await SB.currentUser();
+      if (!user) return null;
+      var res = await window.db
+        .from("reports")
+        .insert({
+          listing_id: listingId,
+          reporter_id: user.id,
+          reason: reason || "Listing reported",
+          notes: notes || null
+        })
+        .select()
+        .single();
+      if (res.error) {
+        console.warn("[SB] createReport:", res.error.message);
+        return null;
+      }
+      return res.data;
+    },
+
+    resolveReport: async function (id) {
+      if (!window.db || !id) return null;
+      var res = await window.db
+        .from("reports")
+        .update({ status: "resolved", resolved_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single();
+      if (res.error) {
+        console.warn("[SB] resolveReport:", res.error.message);
+        return null;
+      }
+      await SB.logAdminEvent("resolve_report", "report", id, {});
+      return res.data;
+    },
+
+    fetchBannedUsers: async function () {
+      if (!window.db) return null;
+      var res = await window.db
+        .from("banned_users")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (res.error) {
+        console.warn("[SB] fetchBannedUsers:", res.error.message);
+        return null;
+      }
+      return res.data || [];
+    },
+
+    banUser: async function (userId, reason) {
+      if (!window.db || !userId) return null;
+      var admin = await SB.currentUser();
+      if (!admin) return null;
+      var res = await window.db
+        .from("banned_users")
+        .upsert({
+          user_id: userId,
+          reason: reason || "Admin moderation",
+          banned_by: admin.id
+        }, { onConflict: "user_id" })
+        .select()
+        .single();
+      if (res.error) {
+        console.warn("[SB] banUser:", res.error.message);
+        return null;
+      }
+      await SB.logAdminEvent("ban_user", "user", userId, { reason: reason || null });
+      return res.data;
+    },
+
+    unbanUser: async function (userId) {
+      if (!window.db || !userId) return false;
+      var res = await window.db
+        .from("banned_users")
+        .delete()
+        .eq("user_id", userId);
+      if (res.error) {
+        console.warn("[SB] unbanUser:", res.error.message);
+        return false;
+      }
+      await SB.logAdminEvent("unban_user", "user", userId, {});
+      return true;
+    },
+
+    fetchProfiles: async function () {
+      if (!window.db) return null;
+      var res = await window.db
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (res.error) {
+        console.warn("[SB] fetchProfiles:", res.error.message);
+        return null;
+      }
+      return res.data || [];
+    },
+
+    updateUserRole: async function (userId, role) {
+      if (!window.db || !userId || !role) return null;
+      var res = await window.db
+        .from("profiles")
+        .update({ role: role })
+        .eq("id", userId)
+        .select()
+        .single();
+      if (res.error) {
+        console.warn("[SB] updateUserRole:", res.error.message);
+        return null;
+      }
+      await SB.logAdminEvent("update_user_role", "user", userId, { role: role });
+      return res.data;
+    },
+
+    fetchAdminSettings: async function (key) {
+      if (!window.db || !key) return null;
+      var res = await window.db
+        .from("admin_settings")
+        .select("value")
+        .eq("key", key)
+        .maybeSingle();
+      if (res.error) {
+        console.warn("[SB] fetchAdminSettings:", res.error.message);
+        return null;
+      }
+      return res.data ? res.data.value : null;
+    },
+
+    saveAdminSettings: async function (key, value) {
+      if (!window.db || !key) return null;
+      var user = await SB.currentUser();
+      if (!user) return null;
+      var res = await window.db
+        .from("admin_settings")
+        .upsert({
+          key: key,
+          value: value || {},
+          updated_by: user.id,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "key" })
+        .select()
+        .single();
+      if (res.error) {
+        console.warn("[SB] saveAdminSettings:", res.error.message);
+        return null;
+      }
+      await SB.logAdminEvent("save_admin_settings", "admin_settings", key, value || {});
+      return res.data;
+    },
+
     // session courante (ou null) — synchrone côté cache du client
     currentSession: async function () {
       if (!window.db) return null;

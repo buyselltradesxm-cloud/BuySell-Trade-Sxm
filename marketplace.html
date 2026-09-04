@@ -10,6 +10,7 @@
 <meta property="og:type" content="website">
 <meta property="og:image" content="BuySellTradeSxm.Logo.png">
 <meta name="twitter:card" content="summary">
+<link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -2777,6 +2778,7 @@ let userListings = [];
 let adminTab = "overview";
 let adminReports = [];
 let adminBanned = [];
+let adminProfiles = [];
 let adminCategoryStatus = {};
 let selectedPostPhotos = [];   // aperçus (data URL) pour l'affichage
 let selectedPostFiles = [];    // File d'origine, pour l'upload Supabase Storage
@@ -2849,6 +2851,32 @@ function persistState(){
   }));
 }
 
+function isLocalDevHost(){
+  return location.hostname === "localhost" || location.hostname === "127.0.0.1";
+}
+
+function createLocalAdminUser(email="buyselltradesxm@gmail.com"){
+  const name = email.split("@")[0] || "Admin Test";
+  return normalizeUser({
+    id:`admin-${name}`,
+    email,
+    name,
+    role:"admin",
+    avatar:initials(name, email),
+    accountType:"personal",
+    accountPlan:"personal-free",
+    provider:"local"
+  });
+}
+
+function applyLocalAdminTestMode(){
+  const params = new URLSearchParams(location.search || "");
+  if(!isLocalDevHost() || !params.has("local") || !params.has("admin")) return;
+  const user = createLocalAdminUser(params.get("email") || "buyselltradesxm@gmail.com");
+  state.user = user;
+  usersByEmail[user.email.toLowerCase()] = user;
+}
+
 /* ---------------- HELPERS ---------------- */
 const t = () => I18N[state.lang];
 const money = (n, c) => (c==="eur"?"€":"$") + n.toLocaleString(state.lang==="en"?"en-US":"fr-FR");
@@ -2902,10 +2930,10 @@ function normalizeUser(user){
     trusted:user.trusted !== false
   };
 }
-const ADMIN_EMAILS = new Set(["admin@buyselltradesxm.com","admin@bstsxm.com","buyselltradesxm@gmail.com"]);
+const ADMIN_EMAILS = new Set(["admin@buyselltradesxm.com","admin@bstsxm.com","buyselltradesxm@gmail.com","rxmarketing09@gmail.com"]);
 function isAdminUser(user=state.user){
   const email = (user?.email || "").toLowerCase();
-  return !!user && (user.role === "admin" || ADMIN_EMAILS.has(email));
+  return !!user && (user.role === "admin" || (isLocalDevHost() && ADMIN_EMAILS.has(email)));
 }
 function titleFor(l){
   return state.lang === "en" && l.te ? l.te : l.t;
@@ -3626,9 +3654,9 @@ function syncListingToUrl(id){
 
 function openListing(id, syncUrl = true){
   restoreListingsIfNeeded();
-  const l = L.find(x=>x.id===id);
+  const l = L.find(x=>String(x.id)===String(id));
   if(!l) return;
-  if(syncUrl) syncListingToUrl(id);
+  if(syncUrl) syncListingToUrl(l.id);
   const gallery = listingGallery(l);
   const media = gallery[0] || mediaFor(l);
   const listingTitle = titleFor(l);
@@ -3690,6 +3718,11 @@ function openListing(id, syncUrl = true){
   if(window.SB && SB.enabled() && state.user && state.user.provider === "supabase" && l.sellerId && l.sellerId !== state.user.id){
     hydrateRealThread(l.id);
   }
+}
+
+function openListingFromAdmin(id){
+  closeModal("adminModal");
+  setTimeout(()=>openListing(id), 80);
 }
 
 function toggleFavFromDetail(id){
@@ -3819,7 +3852,7 @@ async function sendListingMessage(id, e){
   return false;
 }
 
-function quickChatAction(id, type){
+async function quickChatAction(id, type){
   if(!state.user){
     closeModal("detailModal");
     requireAccount(`listing:${id}`);
@@ -3829,7 +3862,23 @@ function quickChatAction(id, type){
   if(type === "location" && input) input.value = t().locationDraft;
   if(type === "offer" && input) input.value = `${t().offerDraft}${state.cur === "eur" ? "€" : "$"}`;
   if(type === "photo") showToast(t().photoSent);
-  if(type === "report") showToast(t().reportSent);
+  if(type === "report"){
+    if(window.SB && SB.enabled() && state.user?.provider === "supabase" && SB.createReport){
+      const l = L.find(item=>String(item.id) === String(id));
+      await SB.createReport(id, state.lang==="fr" ? "Signalement utilisateur" : "User report", l ? titleFor(l) : "");
+    } else {
+      const exists = adminReports.some(r=>String(r.listingId) === String(id) && r.status !== "resolved");
+      if(!exists) adminReports.unshift({
+        id:`rep-${id}-${Date.now()}`,
+        listingId:id,
+        reason:state.lang==="fr" ? "Signalement utilisateur" : "User report",
+        status:"open",
+        createdAt:new Date().toISOString()
+      });
+      persistState();
+    }
+    showToast(t().reportSent);
+  }
   if(type === "block") showToast(t().sellerBlocked);
   if(input && (type === "location" || type === "offer")) input.focus();
 }
@@ -4158,6 +4207,7 @@ function completeAuth(){
 }
 
 function ensureAdminReports(){
+  if(window.SB && SB.enabled() && state.user?.provider === "supabase") return;
   if(adminReports.length) return;
   const picks = L.filter(l=>[4,10,20].includes(Number(l.id))).slice(0,3);
   adminReports = picks.map((l,index)=>({
@@ -4174,11 +4224,84 @@ function ensureAdminReports(){
   persistState();
 }
 
+function canUseSupabaseAdmin(){
+  return !!(window.SB && SB.enabled() && state.user?.provider === "supabase" && isAdminUser());
+}
+
+function isUuid(value){
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(String(value || ""));
+}
+
+function reportFromRow(row){
+  return {
+    id:row.id,
+    listingId:row.listing_id,
+    reporterId:row.reporter_id,
+    reason:row.reason,
+    notes:row.notes || "",
+    status:row.status || "open",
+    createdAt:row.created_at,
+    resolvedAt:row.resolved_at || null
+  };
+}
+
+function profileFromRow(row){
+  return normalizeUser({
+    id:row.id,
+    provider:"supabase",
+    email:"",
+    name:row.name || row.business_name || "Supabase user",
+    accountType:row.account_type || "personal",
+    accountPlan:row.account_plan || "personal-free",
+    businessName:row.business_name || "",
+    businessPhone:row.business_phone || row.phone || "",
+    role:row.role || "user"
+  });
+}
+
+async function loadSupabaseAdminData(){
+  if(!canUseSupabaseAdmin()) return false;
+  const [reports, banned, profiles, categoryStatus] = await Promise.all([
+    SB.fetchReports ? SB.fetchReports() : null,
+    SB.fetchBannedUsers ? SB.fetchBannedUsers() : null,
+    SB.fetchProfiles ? SB.fetchProfiles() : null,
+    SB.fetchAdminSettings ? SB.fetchAdminSettings("category_status") : null
+  ]);
+  if(Array.isArray(reports)) adminReports = reports.map(reportFromRow);
+  if(Array.isArray(banned)) adminBanned = banned.map(row=>String(row.user_id));
+  if(Array.isArray(profiles)) adminProfiles = profiles.map(profileFromRow);
+  if(categoryStatus && typeof categoryStatus === "object") adminCategoryStatus = categoryStatus;
+  buildCats();
+  buildFilters();
+  return true;
+}
+
+async function loadSupabasePublicSettings(){
+  if(!(window.SB && SB.enabled() && SB.fetchAdminSettings)) return false;
+  const categoryStatus = await SB.fetchAdminSettings("category_status");
+  if(categoryStatus && typeof categoryStatus === "object"){
+    adminCategoryStatus = categoryStatus;
+    buildCats();
+    buildFilters();
+    render();
+    return true;
+  }
+  return false;
+}
+
 function adminPrice(l){
   return l.salary ? (state.lang==="fr" ? "Salaire" : "Salary") : priceHTML(l).replace(/<[^>]*>/g," ").trim();
 }
 
 function adminUsers(){
+  if(adminProfiles.length){
+    const counts = new Map();
+    L.forEach(l=>{
+      const key = l.ownerId || l.sellerId;
+      if(key) counts.set(String(key), (counts.get(String(key)) || 0) + 1);
+    });
+    return adminProfiles.map(u=>({...u, listings:counts.get(String(u.id)) || 0}));
+  }
   const map = new Map();
   Object.values(usersByEmail).forEach(user=>{
     if(!user?.email) return;
@@ -4214,7 +4337,7 @@ function adminStats(){
   };
 }
 
-function openAdmin(){
+async function openAdmin(){
   if(!state.user){
     requireAccount("admin");
     showToast(state.lang==="fr" ? "Connectez-vous avec un compte admin." : "Sign in with an admin account.");
@@ -4224,7 +4347,8 @@ function openAdmin(){
     showToast(state.lang==="fr" ? "Accès admin réservé." : "Admin access only.");
     return;
   }
-  ensureAdminReports();
+  if(canUseSupabaseAdmin()) await loadSupabaseAdminData();
+  else ensureAdminReports();
   renderAdmin(adminTab);
   openModal("adminModal");
 }
@@ -4279,7 +4403,7 @@ function adminListingRows(items){
       <img src="${mediaFor(l).img}" alt="">
       <div><b>${esc(titleFor(l))}</b><br><small>${esc(l.area || "SXM")} · ${esc(adminPrice(l))} · ${esc(l.cat)}${l.boosted ? " · Boost" : ""}${l.sold ? " · Sold" : ""}</small></div>
       <div class="admin-actions">
-        <button type="button" onclick="openListing(${l.id})">${state.lang==="fr" ? "Voir" : "View"}</button>
+        <button type="button" onclick="openListingFromAdmin('${esc(String(l.id))}')">${state.lang==="fr" ? "Voir" : "View"}</button>
         <button type="button" class="primary" onclick="toggleFeaturedAdmin(${l.id})">${l.feat ? (state.lang==="fr" ? "Retirer une" : "Unfeature") : (state.lang==="fr" ? "Mettre une" : "Feature")}</button>
         <button type="button" onclick="markListingStatusAdmin(${l.id}, '${l.sold ? "active" : "sold"}')">${l.sold ? "Active" : "Sold"}</button>
         <button type="button" class="danger" onclick="removeListingAdmin(${l.id})">${state.lang==="fr" ? "Supprimer" : "Remove"}</button>
@@ -4296,9 +4420,9 @@ function adminReportRows(items){
     const l = L.find(x=>String(x.id) === String(r.listingId));
     return `<div class="admin-row ${l ? "" : "no-img"}">
       ${l ? `<img src="${mediaFor(l).img}" alt="">` : ""}
-      <div><b>${esc(l ? titleFor(l) : "Listing removed")}</b><br><small>${esc(r.reason)} · ${new Date(r.createdAt).toLocaleDateString(state.lang==="fr"?"fr-FR":"en-US")} · ${esc(r.status)}</small></div>
+      <div><b>${esc(l ? titleFor(l) : "Listing removed")}</b><br><small>${esc(r.reason)} · ${r.createdAt ? new Date(r.createdAt).toLocaleDateString(state.lang==="fr"?"fr-FR":"en-US") : ""} · ${esc(r.status)}</small>${r.notes ? `<br><small>${esc(r.notes)}</small>` : ""}</div>
       <div class="admin-actions">
-        ${l ? `<button type="button" onclick="openListing(${l.id})">${state.lang==="fr" ? "Voir" : "View"}</button><button type="button" class="danger" onclick="removeListingAdmin(${l.id})">${state.lang==="fr" ? "Supprimer" : "Remove"}</button>` : ""}
+        ${l ? `<button type="button" onclick="openListingFromAdmin('${esc(String(l.id))}')">${state.lang==="fr" ? "Voir" : "View"}</button><button type="button" class="danger" onclick="removeListingAdmin(${l.id})">${state.lang==="fr" ? "Supprimer" : "Remove"}</button>` : ""}
         <button type="button" class="primary" onclick="resolveReportAdmin('${r.id}')">${state.lang==="fr" ? "Résoudre" : "Resolve"}</button>
       </div>
     </div>`;
@@ -4316,8 +4440,8 @@ function adminUsersHTML(){
       return `<div class="admin-row no-img">
         <div><b>${esc(u.businessName || u.name || u.email)}</b><br><small>${esc(u.email || "")} · ${esc(u.accountType || "personal")} · ${u.listings || 0} listings · ${banned ? "Banned" : "Active"}</small></div>
         <div class="admin-actions">
-          <button type="button" onclick="toggleAdminRole('${esc(String(u.id))}')">${u.role === "admin" ? "User" : "Admin"}</button>
-          <button type="button" class="danger" onclick="toggleBanUser('${esc(String(u.id))}')">${banned ? (state.lang==="fr" ? "Débloquer" : "Unban") : (state.lang==="fr" ? "Bannir" : "Ban")}</button>
+          <button type="button" onclick="toggleAdminRole('${esc(String(u.id))}')" ${canUseSupabaseAdmin() && !isUuid(u.id) ? "disabled" : ""}>${u.role === "admin" ? "User" : "Admin"}</button>
+          <button type="button" class="danger" onclick="toggleBanUser('${esc(String(u.id))}')" ${canUseSupabaseAdmin() && !isUuid(u.id) ? "disabled" : ""}>${banned ? (state.lang==="fr" ? "Débloquer" : "Unban") : (state.lang==="fr" ? "Bannir" : "Ban")}</button>
         </div>
       </div>`;
     }).join("")}
@@ -4365,6 +4489,7 @@ async function toggleFeaturedAdmin(id){
   l.feat = !l.feat;
   if(l.feat && !l.boosted) l.boosted = true;
   await syncAdminListing(l);
+  if(canUseSupabaseAdmin() && SB.logAdminEvent) await SB.logAdminEvent(l.feat ? "feature_listing" : "unfeature_listing", "listing", id, {});
   refreshAdmin();
 }
 
@@ -4374,6 +4499,7 @@ async function markListingStatusAdmin(id, status){
   l.sold = status === "sold";
   l.reserved = status === "reserved";
   await syncAdminListing(l);
+  if(canUseSupabaseAdmin() && SB.logAdminEvent) await SB.logAdminEvent("mark_listing_status", "listing", id, {status});
   refreshAdmin();
 }
 
@@ -4384,32 +4510,68 @@ async function removeListingAdmin(id){
   userListings = userListings.filter(x=>String(x.id) !== String(id));
   adminReports = adminReports.map(r=>String(r.listingId) === String(id) ? {...r,status:"resolved"} : r);
   await syncAdminListing(removed, true);
+  if(canUseSupabaseAdmin() && SB.logAdminEvent) await SB.logAdminEvent("remove_listing", "listing", id, {});
   refreshAdmin();
 }
 
-function resolveReportAdmin(id){
-  adminReports = adminReports.map(r=>r.id === id ? {...r,status:"resolved",resolvedAt:new Date().toISOString()} : r);
-  refreshAdmin();
-}
-
-function toggleBanUser(id){
-  const key = String(id);
-  adminBanned = adminBanned.includes(key) ? adminBanned.filter(x=>x!==key) : [...adminBanned, key];
-  refreshAdmin();
-}
-
-function toggleAdminRole(id){
-  const user = Object.values(usersByEmail).find(u=>String(u.id) === String(id));
-  if(user){
-    user.role = user.role === "admin" ? "user" : "admin";
-    usersByEmail[(user.email || "").toLowerCase()] = user;
+async function resolveReportAdmin(id){
+  if(canUseSupabaseAdmin() && SB.resolveReport){
+    const row = await SB.resolveReport(id);
+    if(row) adminReports = adminReports.map(r=>String(r.id) === String(id) ? reportFromRow(row) : r);
+  } else {
+    adminReports = adminReports.map(r=>r.id === id ? {...r,status:"resolved",resolvedAt:new Date().toISOString()} : r);
   }
   refreshAdmin();
 }
 
-function toggleCategoryAdmin(id){
+async function toggleBanUser(id){
+  const key = String(id);
+  if(canUseSupabaseAdmin()){
+    if(!isUuid(key)){
+      showToast(state.lang==="fr" ? "Utilisateur Supabase requis." : "Supabase user required.");
+      return;
+    }
+    if(adminBanned.includes(key)){
+      const ok = SB.unbanUser ? await SB.unbanUser(key) : false;
+      if(ok) adminBanned = adminBanned.filter(x=>x!==key);
+    } else {
+      const row = SB.banUser ? await SB.banUser(key) : null;
+      if(row) adminBanned = [...adminBanned, key];
+    }
+  } else {
+    adminBanned = adminBanned.includes(key) ? adminBanned.filter(x=>x!==key) : [...adminBanned, key];
+  }
+  refreshAdmin();
+}
+
+async function toggleAdminRole(id){
+  const key = String(id);
+  if(canUseSupabaseAdmin()){
+    if(!isUuid(key)){
+      showToast(state.lang==="fr" ? "Utilisateur Supabase requis." : "Supabase user required.");
+      return;
+    }
+    const user = adminProfiles.find(u=>String(u.id) === key);
+    const nextRole = user?.role === "admin" ? "user" : "admin";
+    const row = SB.updateUserRole ? await SB.updateUserRole(key, nextRole) : null;
+    if(row){
+      adminProfiles = adminProfiles.map(u=>String(u.id) === key ? profileFromRow(row) : u);
+      if(String(state.user?.id) === key) state.user.role = row.role || nextRole;
+    }
+  } else {
+    const user = Object.values(usersByEmail).find(u=>String(u.id) === key);
+    if(user){
+      user.role = user.role === "admin" ? "user" : "admin";
+      usersByEmail[(user.email || "").toLowerCase()] = user;
+    }
+  }
+  refreshAdmin();
+}
+
+async function toggleCategoryAdmin(id){
   adminCategoryStatus[id] = {hidden:!adminCategoryStatus[id]?.hidden};
   if(state.cat === id && adminCategoryStatus[id].hidden) state.cat = "all";
+  if(canUseSupabaseAdmin() && SB.saveAdminSettings) await SB.saveAdminSettings("category_status", adminCategoryStatus);
   buildCats();
   buildFilters();
   refreshAdmin();
@@ -4663,6 +4825,15 @@ async function loginAccount(e){
     const { data, error: sbErr } = await SB.signIn(email, password);
     if(!sbErr && data && data.user){
       await applySupabaseUser(data.user);
+      showToast(t().loginToast);
+      e.target.reset();
+      completeAuth();
+      return false;
+    }
+    if(isLocalDevHost() && ADMIN_EMAILS.has(key)){
+      state.user = createLocalAdminUser(key);
+      usersByEmail[key] = state.user;
+      persistState();
       showToast(t().loginToast);
       e.target.reset();
       completeAuth();
@@ -4971,11 +5142,27 @@ function openListingFromUrl(){
 
 window.addEventListener("popstate", openListingFromUrl);
 
+Object.assign(window, {
+  openAdmin,
+  openListingFromAdmin,
+  renderAdmin,
+  toggleFeaturedAdmin,
+  markListingStatusAdmin,
+  removeListingAdmin,
+  resolveReportAdmin,
+  toggleBanUser,
+  toggleAdminRole,
+  toggleCategoryAdmin
+});
+window.__bstState = state;
+
 /* ---------------- INIT ---------------- */
-loadLocalState(); restoreListingsIfNeeded(); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl();
+loadLocalState(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl();
 
 /* Supabase : si configuré, remplace les annonces de démo par celles de la base. */
 if (window.SB && SB.enabled()) {
+  if(location.hostname !== "localhost" && location.hostname !== "127.0.0.1") loadSupabasePublicSettings();
+
   SB.hydrate().then(function (ok) {
     if (ok) console.info("[Supabase] annonces chargées depuis la base.");
   });

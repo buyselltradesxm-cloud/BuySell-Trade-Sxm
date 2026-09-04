@@ -44,6 +44,22 @@ returns boolean language sql stable security definer set search_path = public as
   );
 $$;
 
+create table if not exists banned_users (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  reason     text,
+  banned_by  uuid references auth.users(id) on delete set null,
+  created_at timestamptz default now()
+);
+
+create or replace function is_banned(user_id uuid default auth.uid())
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1
+      from public.banned_users
+     where banned_users.user_id = $1
+  );
+$$;
+
 create or replace function protect_profile_role()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
@@ -73,8 +89,9 @@ create trigger protect_profile_role_trigger
 alter table profiles enable row level security;
 
 drop policy if exists "profiles: lecture publique" on profiles;
-create policy "profiles: lecture publique"
-  on profiles for select using (true);
+drop policy if exists "profiles: lecture connectés" on profiles;
+create policy "profiles: lecture connectés"
+  on profiles for select to authenticated using (true);
 
 drop policy if exists "profiles: chacun gère le sien" on profiles;
 create policy "profiles: chacun gère le sien"
@@ -152,18 +169,18 @@ create policy "listings: lecture publique"
 drop policy if exists "listings: créer la sienne (connecté)" on listings;
 create policy "listings: créer la sienne (connecté)"
   on listings for insert to authenticated
-  with check (auth.uid() = seller_id);
+  with check (auth.uid() = seller_id and not is_banned());
 
 drop policy if exists "listings: modifier la sienne" on listings;
 create policy "listings: modifier la sienne"
   on listings for update to authenticated
-  using (auth.uid() = seller_id)
-  with check (auth.uid() = seller_id);   -- empêche de réattribuer l'annonce à autrui
+  using (auth.uid() = seller_id and not is_banned())
+  with check (auth.uid() = seller_id and not is_banned());   -- empêche de réattribuer l'annonce à autrui
 
 drop policy if exists "listings: supprimer la sienne" on listings;
 create policy "listings: supprimer la sienne"
   on listings for delete to authenticated
-  using (auth.uid() = seller_id);
+  using (auth.uid() = seller_id and not is_banned());
 
 drop policy if exists "listings: admin modère tout" on listings;
 create policy "listings: admin modère tout"
@@ -194,7 +211,7 @@ alter table reports enable row level security;
 drop policy if exists "reports: créer connecté" on reports;
 create policy "reports: créer connecté"
   on reports for insert to authenticated
-  with check (auth.uid() = reporter_id);
+  with check (auth.uid() = reporter_id and not is_banned());
 
 drop policy if exists "reports: admin lit et gère" on reports;
 create policy "reports: admin lit et gère"
@@ -235,6 +252,25 @@ create policy "admin_events: admin uniquement"
   using (is_admin())
   with check (is_admin());
 
+create table if not exists admin_settings (
+  key        text primary key,
+  value      jsonb not null default '{}'::jsonb,
+  updated_by uuid references auth.users(id) on delete set null,
+  updated_at timestamptz default now()
+);
+
+alter table admin_settings enable row level security;
+
+drop policy if exists "admin_settings: lecture publique" on admin_settings;
+create policy "admin_settings: lecture publique"
+  on admin_settings for select using (true);
+
+drop policy if exists "admin_settings: admin gère tout" on admin_settings;
+create policy "admin_settings: admin gère tout"
+  on admin_settings for all to authenticated
+  using (is_admin())
+  with check (is_admin());
+
 -- ------------------------------------------------------------
 --  MESSAGES  (chat entre acheteur et vendeur)
 -- ------------------------------------------------------------
@@ -258,7 +294,7 @@ create policy "messages: lus par les participants"
 drop policy if exists "messages: envoyés par soi" on messages;
 create policy "messages: envoyés par soi"
   on messages for insert to authenticated
-  with check (auth.uid() = sender_id);
+  with check (auth.uid() = sender_id and not is_banned());
 
 -- Pas de policy UPDATE directe : un message est immuable une fois envoyé.
 -- Marquer "lu" passe par cette fonction, qui ne touche QUE la colonne read

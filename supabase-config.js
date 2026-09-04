@@ -15,6 +15,15 @@ window.SUPABASE_ANON_KEY = "sb_publishable_5fm__ewJT9UVii8lcmeZlQ_aC84_N0q";
  * (données de démo + faux comptes) sans planter. */
 window.db = null;
 (function () {
+  var params = new URLSearchParams(window.location.search || "");
+  var isLocalHost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+  if (isLocalHost && (params.has("local") || params.has("demo"))) {
+    console.info("[Supabase] désactivé pour ce test local.");
+    return;
+  }
+
   var configured =
     window.SUPABASE_URL &&
     window.SUPABASE_URL.indexOf("http") === 0 &&
