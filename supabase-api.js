@@ -284,6 +284,19 @@
       return window.db.auth.signInWithPassword({ email: email, password: password });
     },
 
+    // Valide le code à 6 chiffres reçu par email après signUp() et ouvre
+    // la session si le code est correct. type "signup" = confirmation d'inscription.
+    verifyOtp: async function (email, token) {
+      if (!window.db) return { error: { message: "Supabase non configuré" } };
+      return window.db.auth.verifyOtp({ email: email, token: token, type: "signup" });
+    },
+
+    // Renvoie un nouveau code de confirmation à la même adresse.
+    resendSignupOtp: async function (email) {
+      if (!window.db) return { error: { message: "Supabase non configuré" } };
+      return window.db.auth.resend({ type: "signup", email: email });
+    },
+
     // provider: "google" | tout provider OAuth activé côté Supabase.
     // Redirige le navigateur ; onAuthChange() reprend la main au retour (session
     // détectée automatiquement dans l'URL par supabase-js).
