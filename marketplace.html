@@ -535,6 +535,9 @@
     font-size:17px;color:var(--ink);
   }
   .card .status-tag span{border:2px solid var(--line);background:var(--white);padding:5px 16px;border-radius:8px;transform:rotate(-4deg);}
+  .card.no-media{min-height:230px;padding-top:56px;background:var(--paper);}
+  .card.no-media .body{padding-top:18px;}
+  .detail-grid.no-media{grid-template-columns:minmax(0,760px);justify-content:center;}
 
   /* pinned featured cards */
   .board .card{
@@ -1131,6 +1134,7 @@
     border:1.5px solid var(--line);border-radius:9px;padding:7px;text-align:left;background:var(--white);
   }
   .mini-row img{width:52px;height:42px;object-fit:cover;border-radius:7px;border:1.5px solid var(--line);}
+  .mini-row.no-media{grid-template-columns:1fr auto;}
   .mini-main{border:none;background:transparent;text-align:left;padding:0;min-width:0;}
   .mini-row b{font-size:13px;}
   .mini-row small{color:var(--mute);}
@@ -1527,7 +1531,7 @@
     <div class="dialog-body">
       <form class="form-panel" onsubmit="return createListing(event)">
         <div class="form-grid">
-          <div class="field full">
+          <div class="field full" id="postPhotosField">
             <label data-i18n="photosLabel">Photos</label>
             <div class="upload-box">
               <label class="upload-btn" for="newPhotos">
@@ -1549,24 +1553,24 @@
           </div>
           <div class="field" id="newSubcatField" hidden>
             <label for="newSubcat" data-i18n="subcategoryLabel">Sous-catégorie</label>
-            <select id="newSubcat"></select>
+            <select id="newSubcat" onchange="applyPostFieldProfile()"></select>
           </div>
           <div class="field">
             <label for="newArea" data-i18n="areaLabel">Zone</label>
             <select id="newArea" required></select>
           </div>
-          <div class="field">
+          <div class="field" id="postPriceField">
             <label for="newPrice" data-i18n="price">Prix</label>
             <input id="newPrice" type="number" min="0" required placeholder="250">
           </div>
-          <div class="field">
+          <div class="field" id="postCurrencyField">
             <label for="newCur" data-i18n="currencyLabel">Devise</label>
             <select id="newCur">
               <option value="eur">EUR</option>
               <option value="usd">USD</option>
             </select>
           </div>
-          <div class="field">
+          <div class="field" id="postConditionField">
             <label for="newCond" data-i18n="condition">État</label>
             <select id="newCond" required></select>
           </div>
@@ -1612,7 +1616,7 @@
               </div>
             </div>
           </section>
-          <div class="field">
+          <div class="field" id="postDeliveryField">
             <label for="newDelivery" data-i18n="deliveryLabel">Remise</label>
             <select id="newDelivery">
               <option value="pickup" data-i18n="pickupOnly">Retrait uniquement</option>
@@ -1627,7 +1631,7 @@
               <option value="nl">Sint Maarten</option>
             </select>
           </div>
-          <div class="field">
+          <div class="field" id="postMeetupField">
             <label for="newMeetup" data-i18n="meetupLabel">Lieu préféré</label>
             <select id="newMeetup">
               <option value="public" data-i18n="publicMeetup">Lieu public</option>
@@ -1635,11 +1639,11 @@
               <option value="buyer" data-i18n="buyerPlace">Chez l'acheteur</option>
             </select>
           </div>
-          <div class="field full">
+          <div class="field full" id="postOptionsField">
             <div class="post-options">
-              <label class="post-option"><input id="newNegotiable" type="checkbox" checked> <span data-i18n="negotiableLabel">Prix négociable</span></label>
-              <label class="post-option"><input id="newUrgent" type="checkbox"> <span data-i18n="urgentSaleLabel">Vente urgente</span></label>
-              <label class="post-option"><input id="newSafeMeet" type="checkbox" checked> <span data-i18n="safeMeetLabel">Rendez-vous sécurisé</span></label>
+              <label class="post-option" id="postNegotiableOption"><input id="newNegotiable" type="checkbox" checked> <span data-i18n="negotiableLabel">Prix négociable</span></label>
+              <label class="post-option" id="postUrgentOption"><input id="newUrgent" type="checkbox"> <span data-i18n="urgentSaleLabel">Vente urgente</span></label>
+              <label class="post-option" id="postSafeMeetOption"><input id="newSafeMeet" type="checkbox" checked> <span data-i18n="safeMeetLabel">Rendez-vous sécurisé</span></label>
             </div>
           </div>
           <div class="field full">
@@ -2195,7 +2199,12 @@ const SUBCATS = {
       ]},
       {fr:"Locations", en:"Rentals", items:[
         {id:"rent", fr:"À louer", en:"For rent"},
-        {id:"vacation-rental", fr:"Location de vacances", en:"Vacation rental"},
+        {id:"vacation-rental", fr:"Location saisonnière / courte durée", en:"Short-term rental"},
+        {id:"short-term-studio", fr:"Studio courte durée", en:"Short-term studio"},
+        {id:"short-term-apartment", fr:"Appartement courte durée", en:"Short-term apartment"},
+        {id:"short-term-villa", fr:"Villa courte durée", en:"Short-term villa"},
+        {id:"short-term-house", fr:"Maison courte durée", en:"Short-term house"},
+        {id:"short-term-room", fr:"Chambre courte durée", en:"Short-term room"},
         {id:"rent-apartment", fr:"Appartement", en:"Apartment"},
         {id:"rent-house", fr:"Maison", en:"House"},
         {id:"rent-parking", fr:"Parking", en:"Parking"},
@@ -2401,6 +2410,32 @@ const SUBCATS = {
     ]
   }
 };
+
+const SERVICE_SUBCATS = new Set([
+  "mechanic","dealer-account","scooter-mechanic","marine-service","repairs",
+  "catering","pet-services","hairdresser","nails","makeup","barber",
+  "loan","news","developers"
+]);
+
+function postFieldProfile(cat, sub){
+  const serviceListing = cat === "serv" || cat === "job" || SERVICE_SUBCATS.has(sub);
+  if(serviceListing){
+    return {photos:false, photosRequired:false, price:false, condition:false, delivery:false,
+      meetup:false, negotiable:false, urgent:false, safeMeet:false, vehicle:false};
+  }
+  if(cat === "immo"){
+    return {photos:true, photosRequired:true, price:true, condition:false, delivery:false,
+      meetup:false, negotiable:true, urgent:false, safeMeet:true, vehicle:false};
+  }
+  const condition = !["food","billet"].includes(cat) && !(cat === "pets" && ["dogs","cats"].includes(sub));
+  return {photos:true, photosRequired:true, price:true, condition, delivery:true,
+    meetup:true, negotiable:true, urgent:true, safeMeet:cat !== "food", vehicle:usesVehicleFields(cat, sub)};
+}
+
+function usesVehicleFields(cat, sub){
+  if(cat === "locvoit") return true;
+  return new Set(["car-sale","motorbike-sale","scooter-sale","truck-sale","dealer-inventory","boat-sale","jet-ski-sale"]).has(sub);
+}
 
 const I18N = {
   fr:{searchPh:"Que cherchez-vous ?",searchBtn:"Rechercher",postAd:"Déposer une annonce",postShort:"Déposer",favoris:"Favoris",messages:"Messages",
@@ -3298,7 +3333,7 @@ function vehicleOptionLabel(options, value){
   return (options().find(([id])=>id === value) || [null, value || ""])[1];
 }
 function vehicleDetailsHTML(l){
-  if(!isVehicleCategory(l.cat)) return "";
+  if(!usesVehicleFields(l.cat, l.sub || "")) return "";
   const v = vehicleDataFor(l);
   const specs = [
     [t().vehicleYearLabel, v.year],
@@ -3481,6 +3516,7 @@ function chatHTML(id){
 /* ---------------- RENDER: CARD ---------------- */
 function cardHTML(l, pinned, idx){
   const idParam = jsArg(l.id);
+  const profile = postFieldProfile(l.cat, l.sub || "");
   const gallery = listingGallery(l);
   const media = gallery[0] || mediaFor(l);
   const photoCount = l.photos?.length || l.pics || 1;
@@ -3491,7 +3527,7 @@ function cardHTML(l, pinned, idx){
   if(l.boosted) badges.push(`<span class="badge boosted">${t().boostBadge}</span>`);
   const isFav = state.favs.has(idKey(l.id));
   return `
-    <article class="card" ${pinned?`style="--i:${idx}"`:""} onclick="openListing(${idParam})" tabindex="0" onkeydown="cardKey(event, ${idParam})">
+    <article class="card ${profile.photos ? "" : "no-media"}" ${pinned?`style="--i:${idx}"`:""} onclick="openListing(${idParam})" tabindex="0" onkeydown="cardKey(event, ${idParam})">
       ${pinned?`<span class="pin" aria-hidden="true"></span>`:""}
       <span class="stripe ${l.side}" aria-hidden="true"></span>
       <button type="button" class="fav" aria-pressed="${isFav}"
@@ -3500,21 +3536,20 @@ function cardHTML(l, pinned, idx){
       <button type="button" class="share-card" aria-label="${t().shareLabel}" title="${t().shareLabel}"
         onclick="shareListing(${idParam}, event)"><span aria-hidden="true">&#8599;</span>${t().shareLabel}</button>
       ${isOwnListing(l) && !l.sold ? `<button type="button" class="boost-card-action" onclick="openBoostCheckout(${idParam}, event)" aria-label="${t().boostCta}">${t().boostCardCta}</button>` : ""}
-      <div class="photo">
+      ${profile.photos ? `<div class="photo">
         <img src="${media.img}" alt="${media.alt}" loading="lazy">
         <span class="gallery"><span aria-hidden="true">&#9634;</span> ${photoCount}</span>
-      </div>
+      </div>` : ""}
       ${status?`<div class="status-tag"><span>${status}</span></div>`:""}
       <div class="body">
-        <div class="price">${priceHTML(l)}</div>
+        ${profile.price ? `<div class="price">${priceHTML(l)}</div>` : ""}
         <div class="ttl">${esc(titleFor(l))}</div>
         <div class="badges">${badges.join("")}</div>
         <div class="meta">
           <span class="area"><span class="n ${l.side}"></span>${l.area}</span>
           <span aria-hidden="true">·</span>
           <span>${agoHTML(l.ph)}</span>
-          <span aria-hidden="true">·</span>
-          <span>${condLabel(l.cond)}</span>
+          ${profile.condition && l.cond ? `<span aria-hidden="true">·</span><span>${condLabel(l.cond)}</span>` : ""}
         </div>
       </div>
     </article>`;
@@ -3548,7 +3583,7 @@ function passesFilters(l){
   const pmin = parseFloat(document.getElementById("pmin").value);
   const pmax = parseFloat(document.getElementById("pmax").value);
   const val = state.cur==="eur" ? l.eur : l.usd;
-  if(!l.salary){
+  if(postFieldProfile(l.cat, l.sub || "").price){
     if(!isNaN(pmin) && val < pmin) return false;
     if(!isNaN(pmax) && val > pmax) return false;
   }
@@ -3614,9 +3649,10 @@ function listingMatchesQuery(l, query){
 function sortList(arr){
   const key = state.cur==="eur" ? "eur" : "usd";
   const a = [...arr];
+  const sortablePrice = (listing, fallback)=>postFieldProfile(listing.cat, listing.sub || "").price ? listing[key] : fallback;
   if(state.sort==="recent") a.sort((x,y)=>x.ph-y.ph);
-  else if(state.sort==="pxup") a.sort((x,y)=>(x.salary?1e12:x[key])-(y.salary?1e12:y[key]));
-  else if(state.sort==="pxdn") a.sort((x,y)=>(y.salary?-1:y[key])-(x.salary?-1:x[key]));
+  else if(state.sort==="pxup") a.sort((x,y)=>sortablePrice(x,1e12)-sortablePrice(y,1e12));
+  else if(state.sort==="pxdn") a.sort((x,y)=>sortablePrice(y,-1)-sortablePrice(x,-1));
   else if(state.sort==="near") a.sort((x,y)=>x.area.localeCompare(y.area));
   return a;
 }
@@ -3935,6 +3971,7 @@ function openListing(id, syncUrl = true){
   restoreListingsIfNeeded();
   const l = L.find(x=>String(x.id)===String(id));
   if(!l) return;
+  const profile = postFieldProfile(l.cat, l.sub || "");
   if(syncUrl) syncListingToUrl(l.id);
   const gallery = listingGallery(l);
   const media = gallery[0] || mediaFor(l);
@@ -3948,20 +3985,20 @@ function openListing(id, syncUrl = true){
     </div>` : "";
   document.getElementById("detailTitle").textContent = listingTitle;
   detail.innerHTML = `
-    <div class="detail-grid">
-      <div class="detail-media">
+    <div class="detail-grid ${profile.photos ? "" : "no-media"}">
+      ${profile.photos ? `<div class="detail-media">
         <div class="detail-photo"><img id="mainPhoto-${l.id}" src="${media.img}" alt="${media.alt}"></div>
         ${thumbs}
-      </div>
+      </div>` : ""}
       <div class="detail-meta">
         <div class="listing-primary">
-          <div class="detail-price">${priceHTML(l)}</div>
+          ${profile.price ? `<div class="detail-price">${priceHTML(l)}</div>` : ""}
           <p>${esc(listingTitle)}</p>
         </div>
         <div class="seller-box">
           <b>${esc(sellerName(l))} · ${l.pro ? t().sellerPro : t().sellerLocal}</b>
-          <span>${l.area} · ${side} · ${condLabel(l.cond)} · ${agoHTML(l.ph)}</span>
-          ${l.delivery ? `<br><span>${deliveryLabel(l.delivery)} · ${meetupLabel(l.meetup)}${l.negotiable ? " · " + t().negotiableLabel : ""}</span>` : ""}
+          <span>${l.area} · ${side}${profile.condition && l.cond ? " · " + condLabel(l.cond) : ""} · ${agoHTML(l.ph)}</span>
+          ${profile.delivery && l.delivery ? `<br><span>${deliveryLabel(l.delivery)}${profile.meetup && l.meetup ? " · " + meetupLabel(l.meetup) : ""}${profile.negotiable && l.negotiable ? " · " + t().negotiableLabel : ""}</span>` : ""}
           ${sellerTrustHTML(l)}
         </div>
         ${chatHTML(l.id)}
@@ -4463,13 +4500,14 @@ function proDashboardHTML(user, own, proActive){
 
 function miniListingHTML(l){
   const idParam = jsArg(l.id);
+  const profile = postFieldProfile(l.cat, l.sub || "");
   const media = mediaFor(l);
   const status = l.sold ? t().sold : l.reserved ? t().reserved : state.lang==="fr" ? "Active" : "Active";
   return `
-    <div class="mini-row">
-      <img src="${media.img}" alt="">
+    <div class="mini-row ${profile.photos ? "" : "no-media"}">
+      ${profile.photos ? `<img src="${media.img}" alt="">` : ""}
       <button type="button" class="mini-main" onclick="closeModal('profileModal');openListing(${idParam})">
-        <b>${esc(titleFor(l))}</b><br><small>${esc(l.area)} · ${priceHTML(l).replace(/<[^>]*>/g," ")}</small>
+        <b>${esc(titleFor(l))}</b><br><small>${esc(l.area)}${profile.price ? " · " + priceHTML(l).replace(/<[^>]*>/g," ") : ""}</small>
       </button>
       <div class="mini-actions">
         <small>${status}</small>
@@ -4600,7 +4638,8 @@ async function loadSupabasePublicSettings(){
 }
 
 function adminPrice(l){
-  return l.salary ? (state.lang==="fr" ? "Salaire" : "Salary") : priceHTML(l).replace(/<[^>]*>/g," ").trim();
+  if(!postFieldProfile(l.cat, l.sub || "").price) return state.lang==="fr" ? "Sans prix" : "No price";
+  return priceHTML(l).replace(/<[^>]*>/g," ").trim();
 }
 
 function adminUsers(){
@@ -5305,14 +5344,14 @@ function buildPostForm(){
   document.getElementById("newPhotos").value = "";
   document.getElementById("newCat").innerHTML = CATS.filter(c=>c.id!=="all").map(c=>
     `<option value="${c.id}">${c[state.lang]}</option>`).join("");
+  document.getElementById("newCond").innerHTML = CONDS.map(c=>
+    `<option value="${c.id}">${c[state.lang]}</option>`).join("");
   buildPostSubcats();
   const side = AREAS.nl.includes(state.area) ? "nl" : "fr";
   document.getElementById("newSide").value = side;
   buildPostAreas(side);
-  document.getElementById("newCond").innerHTML = CONDS.map(c=>
-    `<option value="${c.id}">${c[state.lang]}</option>`).join("");
   buildVehicleSelectors();
-  toggleVehicleFields(document.getElementById("newCat").value);
+  applyPostFieldProfile();
 }
 
 function buildPostSubcats(){
@@ -5325,7 +5364,49 @@ function buildPostSubcats(){
   select.innerHTML = data ? data.groups.map(group=>`<optgroup label="${group[state.lang]}">
     ${group.items.map(item=>`<option value="${item.id}">${item[state.lang]}</option>`).join("")}
   </optgroup>`).join("") : "";
-  toggleVehicleFields(cat);
+  applyPostFieldProfile();
+}
+
+function setPostFieldVisibility(fieldId, visible, requiredControlId){
+  const field = document.getElementById(fieldId);
+  if(!field) return;
+  field.hidden = !visible;
+  field.querySelectorAll("input,select,textarea").forEach(control=>{
+    control.disabled = !visible;
+    control.required = visible && control.id === requiredControlId;
+  });
+}
+
+function setPostOptionVisibility(optionId, controlId, visible){
+  const option = document.getElementById(optionId);
+  const control = document.getElementById(controlId);
+  if(option) option.hidden = !visible;
+  if(control) control.disabled = !visible;
+}
+
+function applyPostFieldProfile(){
+  const cat = document.getElementById("newCat")?.value || "";
+  const sub = document.getElementById("newSubcatField")?.hidden ? "" : document.getElementById("newSubcat")?.value || "";
+  const profile = postFieldProfile(cat, sub);
+  setPostFieldVisibility("postPhotosField", profile.photos);
+  setPostFieldVisibility("postPriceField", profile.price, "newPrice");
+  setPostFieldVisibility("postCurrencyField", profile.price);
+  setPostFieldVisibility("postConditionField", profile.condition, "newCond");
+  setPostFieldVisibility("postDeliveryField", profile.delivery);
+  setPostFieldVisibility("postMeetupField", profile.meetup);
+  setPostOptionVisibility("postNegotiableOption", "newNegotiable", profile.negotiable);
+  setPostOptionVisibility("postUrgentOption", "newUrgent", profile.urgent);
+  setPostOptionVisibility("postSafeMeetOption", "newSafeMeet", profile.safeMeet);
+  document.getElementById("postOptionsField").hidden = !(profile.negotiable || profile.urgent || profile.safeMeet);
+  toggleVehicleFields(cat, sub);
+
+  const service = !profile.price;
+  document.getElementById("newTitle").placeholder = service
+    ? (state.lang === "fr" ? "Ex: Plombier disponible à Marigot" : "Ex: Plumber available in Marigot")
+    : t().titlePh;
+  document.getElementById("newDesc").placeholder = service
+    ? (state.lang === "fr" ? "Décrivez le service, vos disponibilités, votre expérience et la zone couverte." : "Describe the service, availability, experience, and area covered.")
+    : t().descPh;
 }
 
 function buildVehicleSelectors(){
@@ -5335,10 +5416,11 @@ function buildVehicleSelectors(){
   if(transmission) transmission.innerHTML = vehicleTransmissionOptions().map(([id,label])=>`<option value="${id}">${label}</option>`).join("");
 }
 
-function toggleVehicleFields(cat){
+function toggleVehicleFields(cat, sub){
   const section = document.getElementById("vehicleFields");
   if(!section) return;
-  const enabled = isVehicleCategory(cat);
+  const enabled = usesVehicleFields(cat, sub);
+  section.hidden = !enabled;
   section.classList.toggle("show", enabled);
   section.querySelectorAll("input,select,textarea").forEach(el=>{
     el.required = enabled && ["newVehicleYear","newVehicleKm","newVehicleColor"].includes(el.id);
@@ -5411,17 +5493,19 @@ async function createListing(e){
     closeModal("postModal");
     return false;
   }
-  if(!selectedPostPhotos.length){
+  const cat = document.getElementById("newCat").value;
+  const sub = document.getElementById("newSubcatField").hidden ? "" : document.getElementById("newSubcat").value;
+  const profile = postFieldProfile(cat, sub);
+  if(profile.photosRequired && !selectedPostPhotos.length){
     showToast(t().photoRequired);
     document.getElementById("newPhotos").focus();
     return false;
   }
-  const cur = document.getElementById("newCur").value;
-  const price = parseFloat(document.getElementById("newPrice").value) || 0;
+  const cur = profile.price ? document.getElementById("newCur").value : (state.cur || "usd");
+  const price = profile.price ? (parseFloat(document.getElementById("newPrice").value) || 0) : 0;
   const area = document.getElementById("newArea").value;
   const side = document.getElementById("newSide").value;
-  const cat = document.getElementById("newCat").value;
-  const vehicle = isVehicleCategory(cat) ? {
+  const vehicle = profile.vehicle ? {
     year:document.getElementById("newVehicleYear").value.trim(),
     km:document.getElementById("newVehicleKm").value.trim(),
     color:document.getElementById("newVehicleColor").value.trim(),
@@ -5437,21 +5521,23 @@ async function createListing(e){
     sellerName:state.user.name,
     t:document.getElementById("newTitle").value.trim(),
     cat, side, area,
-    sub:document.getElementById("newSubcatField").hidden ? "" : document.getElementById("newSubcat").value,
-    cond:document.getElementById("newCond").value,
+    sub,
+    cond:profile.condition ? document.getElementById("newCond").value : "",
     cur, price,
     eur:cur==="eur" ? price : Math.round(price * .92),
     usd:cur==="usd" ? price : Math.round(price * 1.08),
-    delivery:document.getElementById("newDelivery").value,
-    meetup:document.getElementById("newMeetup").value,
-    negotiable:document.getElementById("newNegotiable").checked,
-    safeMeet:document.getElementById("newSafeMeet").checked,
-    ph:0, pics:selectedPostPhotos.length,
-    photos:[...selectedPostPhotos],
+    delivery:profile.delivery ? document.getElementById("newDelivery").value : null,
+    meetup:profile.meetup ? document.getElementById("newMeetup").value : null,
+    negotiable:profile.negotiable && document.getElementById("newNegotiable").checked,
+    safeMeet:profile.safeMeet && document.getElementById("newSafeMeet").checked,
+    noPrice:!profile.price,
+    salary:cat === "job",
+    ph:0, pics:profile.photos ? selectedPostPhotos.length : 0,
+    photos:profile.photos ? [...selectedPostPhotos] : [],
     desc:document.getElementById("newDesc").value.trim(),
     vehicle,
     pro:hasActiveProSubscription(state.user),
-    urgent:document.getElementById("newUrgent").checked, feat:true
+    urgent:profile.urgent && document.getElementById("newUrgent").checked, feat:true
   };
 
   // Supabase : upload des photos dans Storage puis insertion en base.
@@ -5461,7 +5547,7 @@ async function createListing(e){
     const submitBtn = e.target.querySelector("button[type=submit]");
     if(submitBtn){ submitBtn.disabled = true; }
     try {
-      const urls = await SB.uploadPhotos(selectedPostFiles);
+      const urls = profile.photos ? await SB.uploadPhotos(selectedPostFiles) : [];
       if(urls.length) listing.photos = urls;
       published = await SB.insertListing(listing);
     } catch(err){ console.warn("[post] Supabase KO, fallback local:", err); }
