@@ -998,6 +998,8 @@
     padding:9px 10px;text-align:left;font-size:12.5px;font-weight:900;cursor:pointer;
   }
   .auth-pricing-link:hover{background:var(--sun);}
+  .pro-explainer{border-top:1.5px solid rgba(19,42,46,.2);padding-top:12px;display:grid;gap:8px;}
+  .pro-explainer small{color:var(--mute);font-weight:700;line-height:1.4;}
   .plan-picker{display:grid;gap:9px;margin:12px 0;}
   .plan-card{
     border:2px solid var(--line);border-radius:12px;background:var(--white);
@@ -1019,7 +1021,7 @@
     padding:9px 10px;font-size:12px;color:var(--mute);font-weight:700;line-height:1.35;
   }
   .pricing-plans{display:grid;gap:14px;margin-top:16px;}
-  .pricing-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;}
+  .pricing-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
   .pricing-card{
     border:2px solid var(--line);border-radius:12px;background:var(--white);
     padding:14px;display:flex;flex-direction:column;gap:9px;min-height:245px;
@@ -1039,6 +1041,15 @@
     border:2px solid var(--line);border-radius:12px;background:var(--paper);
     padding:13px 14px;font-size:13px;font-weight:800;line-height:1.45;
   }
+  .pricing-context{border-left:5px solid var(--sun);padding:12px 14px;background:var(--white);font-size:13px;line-height:1.5;}
+  .pricing-context strong{font-family:'Space Grotesk',sans-serif;display:block;margin-bottom:3px;}
+  .pricing-extras{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px;}
+  .pricing-info-block{border-top:2px solid var(--line);padding-top:14px;}
+  .pricing-info-block h3{font-size:18px;margin-bottom:5px;}
+  .pricing-info-block>p{font-size:13px;color:var(--mute);line-height:1.45;margin-bottom:10px;}
+  .pricing-list{display:grid;gap:7px;}
+  .pricing-list div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(19,42,46,.15);padding:7px 0;font-size:12.5px;}
+  .pricing-list b{font-variant-numeric:tabular-nums;text-align:right;}
   .account-type-hidden{display:none;}
   .profile-hero{
     border:2px solid var(--line);border-radius:14px;
@@ -1199,7 +1210,7 @@
     .detail-grid{grid-template-columns:1fr;}
     .guide-hero{grid-template-columns:1fr;}
     .guide-grid{grid-template-columns:1fr;}
-    .boost-price-grid,.boost-flow,.pricing-grid{grid-template-columns:1fr;}
+    .boost-price-grid,.boost-flow,.pricing-grid,.pricing-extras{grid-template-columns:1fr;}
     .revenue-grid,.revenue-list{grid-template-columns:1fr;}
     .vehicle-grid,.vehicle-spec-grid{grid-template-columns:1fr 1fr;}
     .guide-note{align-items:flex-start;flex-direction:column;}
@@ -1727,7 +1738,7 @@
               <span data-i18n="proGoogle">Continuer Pro avec Google</span>
             </button>
           </div>
-          <button type="button" class="auth-pricing-link" onclick="closeModal('accountModal');openPricingInfo()" data-i18n="viewProPlans">Voir les abonnements Pro et les prix</button>
+          <div class="pro-explainer"><small data-i18n="proPlansHint">Comparez le nombre d'annonces, les boosts et la visibilité avant de choisir.</small><button type="button" class="auth-pricing-link" onclick="closeModal('accountModal');openPricingInfo()" data-i18n="viewProPlans">Découvrir tous les comptes Pro</button></div>
         </section>
       </div>
       <form class="auth-card login-card email-login-card" onsubmit="return loginAccount(event)">
@@ -1848,61 +1859,36 @@
           </div>
           <div class="pricing-grid">
             <article class="pricing-card free">
-              <span class="pricing-price" data-i18n="planFreeBadge">Gratuit</span>
-              <h4 data-i18n="planPersonalTitle">Personal</h4>
-              <p data-i18n="planPersonalText">For selling your own items from time to time.</p>
-              <ul>
-                <li data-i18n="planPersonal1">Personal listings</li>
-                <li data-i18n="planPersonal2">Chat, saved items, and shareable links</li>
-                <li data-i18n="planPersonal3">Seller ratings after purchase</li>
-              </ul>
+              <span class="pricing-price">Gratuit</span><h4>Particulier</h4><p>Pour vendre vos propres objets de temps en temps.</p>
+              <ul><li>5 annonces actives</li><li>Annonces standards</li><li>Chat, favoris et évaluations</li></ul>
             </article>
             <article class="pricing-card">
-              <span class="pricing-price" data-i18n="planPaidBadge">Paid</span>
-              <h4 data-i18n="planStarterTitle">Pro Starter</h4>
-              <p data-i18n="planStarterText">For a business starting to sell regularly.</p>
-              <ul>
-                <li data-i18n="planStarter1">Business page + Pro badge</li>
-                <li data-i18n="planStarter2">More active listings</li>
-                <li data-i18n="planStarter3">Customer messages in one place</li>
-              </ul>
-              <b class="plan-price" data-i18n="planPriceSoon">Pricing to define</b>
+              <span class="pricing-price">29 €/mois</span><h4>Pro Starter</h4><p>Pour commencer à vendre régulièrement.</p>
+              <ul><li>10 annonces actives</li><li>Page entreprise</li><li>Badge Pro</li></ul>
             </article>
             <article class="pricing-card">
-              <span class="pricing-price" data-i18n="planPaidBadge">Paid</span>
-              <h4 data-i18n="planPlusTitle">Pro Plus</h4>
-              <p data-i18n="planPlusText">For pros who want to sell more and boost products.</p>
-              <ul>
-                <li data-i18n="planPlus1">Everything in Starter</li>
-                <li data-i18n="planPlus2">Monthly boosts included</li>
-                <li data-i18n="planPlus3">Views, saves, and message stats</li>
-              </ul>
-              <b class="plan-price" data-i18n="planPriceSoon">Pricing to define</b>
+              <span class="pricing-price">59 €/mois</span><h4>Pro Business</h4><p>Plus de volume et des résultats mesurables.</p>
+              <ul><li>30 annonces actives</li><li>Statistiques</li><li>2 boosts par mois</li></ul>
             </article>
             <article class="pricing-card featured">
-              <span class="pricing-price" data-i18n="planFrontBadge">Featured</span>
-              <h4 data-i18n="planPremiumTitle">Pro Premium</h4>
-              <p data-i18n="planPremiumText">For businesses that want strong home page visibility.</p>
-              <ul>
-                <li data-i18n="planPremium1">Everything in Pro Plus</li>
-                <li data-i18n="planPremium2">Front page placements</li>
-                <li data-i18n="planPremium3">Priority in sponsored listings</li>
-              </ul>
-              <b class="plan-price" data-i18n="planPriceSoon">Pricing to define</b>
+              <span class="pricing-price">99 €/mois</span><h4>Pro Premium</h4><p>Pour un catalogue actif et plus de contacts.</p>
+              <ul><li>75 annonces actives</li><li>5 boosts par mois</li><li>Remontées automatiques</li><li>WhatsApp et catalogue</li></ul>
             </article>
             <article class="pricing-card">
-              <span class="pricing-price" data-i18n="planDealerBadge">79 €/month</span>
-              <h4 data-i18n="planDealerTitle">Dealer Pro</h4>
-              <p data-i18n="planDealerText">For car, motorcycle, scooter, boat, and jet ski dealers.</p>
-              <ul>
-                <li data-i18n="planDealer1">Dealer page + logo</li>
-                <li data-i18n="planDealer2">Full inventory with priority listings</li>
-                <li data-i18n="planDealer3">WhatsApp, phone, website, and stats</li>
-              </ul>
-              <b class="plan-price" data-i18n="planDealerPrice">79 €/month</b>
+              <span class="pricing-price">149 €/mois</span><h4>Pro Elite</h4><p>Une vraie vitrine pour les entreprises établies.</p>
+              <ul><li>150 annonces actives</li><li>10 boosts par mois</li><li>Vitrine entreprise</li><li>Priorité dans les résultats</li></ul>
+            </article>
+            <article class="pricing-card">
+              <span class="pricing-price">199 €/mois</span><h4>Pro Unlimited</h4><p>Capacité et visibilité maximales.</p>
+              <ul><li>Annonces illimitées</li><li>Vitrine premium</li><li>Promotions et boosts</li><li>Statistiques avancées</li></ul>
             </article>
           </div>
-          <p class="pricing-note" data-i18n="planPaymentNote">Pro plans require a paid subscription before activation. Without confirmed payment, a Pro account cannot publish.</p>
+          <div class="pricing-context"><strong>Un seul système Pro pour toutes les entreprises</strong>Restaurant, boutique de vêtements, garage, agence immobilière, magasin d'électroménager ou vendeur de téléphones: chacun choisit son plan selon le nombre d'annonces et la visibilité recherchée.</div>
+          <div class="pricing-extras">
+            <section class="pricing-info-block"><h3>Catégories compatibles</h3><p>Le même abonnement fonctionne dans toutes les grandes catégories.</p><div class="pricing-list"><div><span>Véhicules</span><b>Autos, motos, bateaux, pièces</b></div><div><span>Immobilier</span><b>Vente, terrain, location</b></div><div><span>Marketplace</span><b>Mode, maison, électronique</b></div><div><span>Emploi & services</span><b>Offres et prestations</b></div><div><span>Business</span><b>Commerces et équipements</b></div></div></section>
+            <section class="pricing-info-block"><h3>Achats à l'unité</h3><p>Ajoutez de la visibilité sans changer immédiatement d'abonnement.</p><div class="pricing-list"><div><span>Remonter l'annonce</span><b>2,99 €</b></div><div><span>À la Une 24 h</span><b>4,99 €</b></div><div><span>À la Une 7 jours</span><b>12,99 €</b></div><div><span>Urgent</span><b>3,99 €</b></div><div><span>Homepage sponsorisée</span><b>19,99 € / 7 j</b></div><div><span>Boutique sponsorisée</span><b>29,99 € / 7 j</b></div><div><span>Badge vérifié</span><b>Inclus Pro ou 9,99 €/mois</b></div><div><span>Promotion spéciale</span><b>9,99 €</b></div></div></section>
+          </div>
+          <p class="pricing-note">Un abonnement Pro doit être payé et confirmé avant son activation. Sans paiement confirmé, le compte professionnel ne peut pas publier.</p>
         </section>
 
         <div class="guide-grid">
@@ -2780,14 +2766,14 @@ Object.assign(I18N.fr, {
   createKicker:"Compte particulier", newAccountTitle:"Créer un compte gratuit", newAccountHelp:"Pour vendre vos propres objets, publier gratuitement et discuter avec les acheteurs.", loginKicker:"Connexion", freeGoogle:"Créer gratuitement avec Google", createWithEmail:"ou créez votre compte avec email",
   proKicker:"Pour les entreprises", proAccountTitle:"Créer un compte Pro", proAccountHelp:"Pour les commerces et vendeurs réguliers qui veulent plus d'annonces, de visibilité et d'outils.",
   proBenefit1:"Page business et badge Pro", proBenefit2:"Plus d'annonces et de visibilité", proBenefit3:"Abonnement requis avant publication Pro",
-  proGoogle:"Continuer Pro avec Google", viewProPlans:"Voir les abonnements Pro et les prix"
+  proGoogle:"Continuer Pro avec Google", proPlansHint:"Comparez le nombre d'annonces, les boosts et la visibilité avant de choisir.", viewProPlans:"Découvrir tous les comptes Pro"
 });
 Object.assign(I18N.en, {
   authFreeTitle:"Choose your account", authFreeText:"A personal account stays free. A Pro account adds business tools with a subscription.", authBadge:"Secure sign-up",
   createKicker:"Personal account", newAccountTitle:"Create a free account", newAccountHelp:"Sell your own items, post for free, and chat with buyers.", loginKicker:"Log in", freeGoogle:"Create free with Google", createWithEmail:"or create your account with email",
   proKicker:"For businesses", proAccountTitle:"Create a Pro account", proAccountHelp:"For businesses and regular sellers who need more listings, visibility, and tools.",
   proBenefit1:"Business page and Pro badge", proBenefit2:"More listings and visibility", proBenefit3:"Subscription required before Pro publishing",
-  proGoogle:"Continue Pro with Google", viewProPlans:"View Pro subscriptions and pricing"
+  proGoogle:"Continue Pro with Google", proPlansHint:"Compare listing limits, boosts, and visibility before choosing.", viewProPlans:"Explore all Pro accounts"
 });
 
 const G = {

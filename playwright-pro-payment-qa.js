@@ -23,7 +23,7 @@ const { chromium } = require("playwright");
   await headerPricing.click();
   await page.locator("#boostModal.open").waitFor();
   const directPricingText = await page.locator("#boostModal").innerText();
-  if (!/Pro Starter/.test(directPricingText) || !/Dealer Pro/.test(directPricingText)) {
+  if (!/Pro Starter/.test(directPricingText) || !/Pro Unlimited/.test(directPricingText)) {
     errors.push("Header Pricing button does not open the pricing plans.");
   }
   await page.keyboard.press("Escape");
@@ -50,10 +50,12 @@ const { chromium } = require("playwright");
   await headerPricing.click();
   await page.locator("#boostModal.open").waitFor();
   const pricingText = await page.locator("#boostModal").innerText();
-  for (const expected of ["Personal", "Pro Starter", "Pro Plus", "Pro Premium", "Dealer Pro"]) {
+  for (const expected of ["Particulier", "Pro Starter", "Pro Business", "Pro Premium", "Pro Elite", "Pro Unlimited"]) {
     if (!pricingText.includes(expected)) errors.push(`Pricing modal is missing ${expected}.`);
   }
-  if (!/79 €\/mois|79 €\/month/.test(pricingText)) errors.push("Dealer Pro price is missing.");
+  for (const price of ["29 €/mois", "59 €/mois", "99 €/mois", "149 €/mois", "199 €/mois"]) {
+    if (!pricingText.includes(price)) errors.push(`Pricing modal is missing ${price}.`);
+  }
   if (!/Créer un compte est gratuit|Creating an account is free/.test(pricingText)) {
     errors.push("Pricing modal does not explain that account creation is free.");
   }
@@ -94,7 +96,7 @@ const { chromium } = require("playwright");
   console.log(JSON.stringify({
     errors,
     loginHasSocial: /Créer gratuitement avec Google|Create free with Google/.test(loginText) && /Continuer Pro avec Google|Continue Pro with Google/.test(loginText),
-    pricingHasPlans: /Pro Starter/.test(pricingText) && /Dealer Pro/.test(pricingText),
+    pricingHasPlans: /Pro Starter/.test(pricingText) && /Pro Unlimited/.test(pricingText),
     emailConfirmationRequired,
     accountType: userAfterSignup?.accountType,
     accountPlan: userAfterSignup?.accountPlan
