@@ -1553,11 +1553,11 @@
           </div>
           <div class="field" id="newSubcatField" hidden>
             <label for="newSubcat" data-i18n="subcategoryLabel">Sous-catégorie</label>
-            <select id="newSubcat" onchange="applyPostFieldProfile()"></select>
+            <select id="newSubcat" onchange="handlePostSubcatChange()"></select>
           </div>
           <div class="field">
             <label for="newArea" data-i18n="areaLabel">Zone</label>
-            <select id="newArea" required></select>
+            <select id="newArea" required onchange="syncPostSideFromArea()"></select>
           </div>
           <div class="field" id="postPriceField">
             <label for="newPrice" data-i18n="price">Prix</label>
@@ -1627,6 +1627,7 @@
           <div class="field">
             <label for="newSide" data-i18n="sideLabel">Côté</label>
             <select id="newSide" onchange="buildPostAreas(this.value)">
+              <option value="" data-i18n="allIsland">Toute l'île</option>
               <option value="fr">Saint-Martin</option>
               <option value="nl">Sint Maarten</option>
             </select>
@@ -5342,16 +5343,26 @@ function buildPostForm(){
   selectedPostPhotos = [];
   document.getElementById("photoPreview").innerHTML = "";
   document.getElementById("newPhotos").value = "";
+  wirePostFormEvents();
   document.getElementById("newCat").innerHTML = CATS.filter(c=>c.id!=="all").map(c=>
     `<option value="${c.id}">${c[state.lang]}</option>`).join("");
   document.getElementById("newCond").innerHTML = CONDS.map(c=>
     `<option value="${c.id}">${c[state.lang]}</option>`).join("");
   buildPostSubcats();
-  const side = AREAS.nl.includes(state.area) ? "nl" : "fr";
+  const side = AREAS.nl.includes(state.area) ? "nl" : AREAS.fr.includes(state.area) ? "fr" : "";
   document.getElementById("newSide").value = side;
   buildPostAreas(side);
   buildVehicleSelectors();
   applyPostFieldProfile();
+}
+
+function wirePostFormEvents(){
+  if(window.__postFormEventsWired) return;
+  window.__postFormEventsWired = true;
+  document.getElementById("newCat")?.addEventListener("change", buildPostSubcats);
+  document.getElementById("newSubcat")?.addEventListener("change", handlePostSubcatChange);
+  document.getElementById("newSide")?.addEventListener("change", e=>buildPostAreas(e.target.value));
+  document.getElementById("newArea")?.addEventListener("change", syncPostSideFromArea);
 }
 
 function buildPostSubcats(){
@@ -5364,6 +5375,16 @@ function buildPostSubcats(){
   select.innerHTML = data ? data.groups.map(group=>`<optgroup label="${group[state.lang]}">
     ${group.items.map(item=>`<option value="${item.id}">${item[state.lang]}</option>`).join("")}
   </optgroup>`).join("") : "";
+  const nextProfile = postFieldProfile(cat, data ? select.value : "");
+  buildPostAreas(document.getElementById("newSide")?.value || "", !nextProfile.price);
+  applyPostFieldProfile();
+}
+
+function handlePostSubcatChange(){
+  const cat = document.getElementById("newCat")?.value || "";
+  const sub = document.getElementById("newSubcat")?.value || "";
+  const profile = postFieldProfile(cat, sub);
+  buildPostAreas(document.getElementById("newSide")?.value || "", !profile.price);
   applyPostFieldProfile();
 }
 
@@ -5388,6 +5409,7 @@ function applyPostFieldProfile(){
   const cat = document.getElementById("newCat")?.value || "";
   const sub = document.getElementById("newSubcatField")?.hidden ? "" : document.getElementById("newSubcat")?.value || "";
   const profile = postFieldProfile(cat, sub);
+  refreshPostAreasForProfile(profile);
   setPostFieldVisibility("postPhotosField", profile.photos);
   setPostFieldVisibility("postPriceField", profile.price, "newPrice");
   setPostFieldVisibility("postCurrencyField", profile.price);
@@ -5409,6 +5431,20 @@ function applyPostFieldProfile(){
     : t().descPh;
 }
 
+function refreshPostAreasForProfile(profile){
+  const area = document.getElementById("newArea");
+  if(!area) return;
+  const wholeIsland = state.lang === "fr" ? "Toute l'île" : "Whole island";
+  const hasWholeIsland = [...area.options].some(option=>option.value === wholeIsland);
+  if((profile.price && !hasWholeIsland) || (!profile.price && hasWholeIsland)) return;
+  const current = area.value;
+  area.innerHTML = postAreaOptions();
+  const validValues = [...area.options].map(option=>option.value);
+  if(validValues.includes(current)) area.value = current;
+  else if(!profile.price) area.value = wholeIsland;
+  syncPostSideFromArea();
+}
+
 function buildVehicleSelectors(){
   const fuel = document.getElementById("newVehicleFuel");
   const transmission = document.getElementById("newVehicleTransmission");
@@ -5428,11 +5464,41 @@ function toggleVehicleFields(cat, sub){
   });
 }
 
-function buildPostAreas(side){
+function postAreaOptions(){
+  const cat = document.getElementById("newCat")?.value || "";
+  const sub = document.getElementById("newSubcatField")?.hidden ? "" : document.getElementById("newSubcat")?.value || "";
+  const profile = postFieldProfile(cat, sub);
+  const wholeIsland = state.lang === "fr" ? "Toute l'île" : "Whole island";
+  return `${profile.price ? "" : `<option value="${wholeIsland}">${wholeIsland}</option>`}
+    <optgroup label="${t().frSide}">${AREAS.fr.map(a=>`<option value="${a}">${a}</option>`).join("")}</optgroup>
+    <optgroup label="${t().nlSide}">${AREAS.nl.map(a=>`<option value="${a}">${a}</option>`).join("")}</optgroup>`;
+}
+
+function syncPostSideFromArea(){
+  const area = document.getElementById("newArea")?.value || "";
+  const side = document.getElementById("newSide");
+  if(!side) return;
+  if(AREAS.fr.includes(area)) side.value = "fr";
+  else if(AREAS.nl.includes(area)) side.value = "nl";
+  else side.value = "";
+}
+
+function buildPostAreas(side, preferWholeIsland = false){
   const area = document.getElementById("newArea");
   const current = area.value;
-  area.innerHTML = AREAS[side].map(a=>`<option value="${a}">${a}</option>`).join("");
-  if(AREAS[side].includes(current)) area.value = current;
+  area.innerHTML = postAreaOptions();
+  const allAreas = [...AREAS.fr, ...AREAS.nl];
+  const profile = postFieldProfile(document.getElementById("newCat")?.value || "", document.getElementById("newSubcat")?.value || "");
+  if(preferWholeIsland && !profile.price){
+    area.value = state.lang === "fr" ? "Toute l'île" : "Whole island";
+  } else if(current && (allAreas.includes(current) || current === "Toute l'île" || current === "Whole island")){
+    area.value = current;
+  } else if(side && AREAS[side]?.length){
+    area.value = AREAS[side][0];
+  } else if(!profile.price){
+    area.value = state.lang === "fr" ? "Toute l'île" : "Whole island";
+  }
+  syncPostSideFromArea();
 }
 
 function deliveryLabel(v){

@@ -32,6 +32,8 @@ const cases = [
       const state = await page.evaluate(({ visible=[], hidden=[] }) => ({
         visible:Object.fromEntries(visible.map(id => [id, !document.getElementById(id).hidden])),
         hidden:Object.fromEntries(hidden.map(id => [id, document.getElementById(id).hidden])),
+        areaValue:document.getElementById("newArea").value,
+        hasDutchArea:[...document.getElementById("newArea").options].some(option => option.value === "Philipsburg"),
         priceRequired:document.getElementById("newPrice").required,
         photoRequired:postFieldProfile(document.getElementById("newCat").value, document.getElementById("newSubcat").value).photosRequired
       }), testCase);
@@ -39,6 +41,8 @@ const cases = [
       Object.entries(state.hidden).forEach(([id, ok]) => { if(!ok) errors.push(`${path} ${testCase.cat}/${testCase.sub}: ${id} should be hidden`); });
       const expectsPrice = (testCase.visible || []).includes("postPriceField");
       if(state.priceRequired !== expectsPrice) errors.push(`${path} ${testCase.cat}/${testCase.sub}: incorrect price requirement`);
+      if(!state.hasDutchArea) errors.push(`${path} ${testCase.cat}/${testCase.sub}: missing Dutch side areas`);
+      if(!expectsPrice && !["Toute l'île","Whole island"].includes(state.areaValue)) errors.push(`${path} ${testCase.cat}/${testCase.sub}: service area should default to whole island`);
       results.push({ path, category:testCase.cat, subcategory:testCase.sub, ...state });
     }
     await page.close();
