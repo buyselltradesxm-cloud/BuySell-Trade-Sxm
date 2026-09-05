@@ -1320,7 +1320,7 @@
       <button type="button" class="icon-btn" onclick="openMessages()">
         <span aria-hidden="true">&#9993;</span>
         <span class="label" data-i18n="messages">Messages</span>
-        <span class="n" id="msgCount">3</span>
+        <span class="n" id="msgCount" hidden>0</span>
       </button>
       <button type="button" class="icon-btn" id="profileBtn" onclick="openProfile()">
         <span class="avatar-dot" id="profileInitials">?</span>
@@ -3038,17 +3038,26 @@ let pendingSelectedProPlan = null;
 let pendingBoostListingId = null;
 let pendingBoostDays = 7;
 
-const chatThreads = {
-  4:{seller:"Maya", updated:"12 min", messages:[
-    {who:"seller", fr:"Bonjour, l'iPhone est toujours disponible à Grand Case.", en:"Hi, the iPhone is still available in Grand Case.", at:"12 min"}
-  ]},
-  1:{seller:"Jules", updated:"1 h", messages:[
-    {who:"seller", fr:"Le scooter est révisé et prêt à voir demain matin.", en:"The scooter is serviced and ready to view tomorrow morning.", at:"1 h"}
-  ]},
-  5:{seller:"Nadia", updated:"3 h", messages:[
-    {who:"seller", fr:"Oui, je peux organiser une livraison à Cole Bay.", en:"Yes, I can arrange delivery in Cole Bay.", at:"3 h"}
-  ]}
-};
+const chatThreads = {};
+let unreadMessageCount = 0;
+
+function setUnreadMessageCount(count){
+  unreadMessageCount = Math.max(0, Number(count) || 0);
+  const badge = document.getElementById("msgCount");
+  if(!badge) return;
+  badge.textContent = String(unreadMessageCount);
+  badge.hidden = unreadMessageCount === 0;
+}
+
+async function refreshMessageBadge(inbox){
+  if(!(window.SB && SB.enabled()) || !state.user || state.user.provider !== "supabase"){
+    setUnreadMessageCount(0);
+    return;
+  }
+  const conversations = inbox || await SB.fetchInbox();
+  if(!conversations) return;
+  setUnreadMessageCount(conversations.reduce((total, conversation)=>total + (Number(conversation.unread) || 0), 0));
+}
 
 function loadLocalState(){
   try{
@@ -3066,7 +3075,7 @@ function loadLocalState(){
     if(data.adminReports) adminReports = data.adminReports;
     if(data.adminBanned) adminBanned = data.adminBanned;
     if(data.adminCategoryStatus) adminCategoryStatus = data.adminCategoryStatus;
-    if(data.chatThreads){
+    if(data.chatThreads && isLocalDevHost()){
       Object.keys(chatThreads).forEach(k=>delete chatThreads[k]);
       Object.assign(chatThreads, data.chatThreads);
     }
@@ -3637,7 +3646,7 @@ function render(){
     `${t().results(list.length)} <small>${state.cat==="all" ? "" : "· " + CATS.find(c=>c.id===state.cat)[state.lang]}</small>`;
 
   document.getElementById("favCount").textContent = state.favs.size;
-  document.getElementById("msgCount").textContent = Object.keys(chatThreads).length;
+  setUnreadMessageCount(unreadMessageCount);
   document.getElementById("profileInitials").textContent = state.user ? state.user.avatar : "?";
   const profileLabel = state.user ? t().profileLabel : t().loginLabel;
   const profileBtnLabel = document.getElementById("profileBtnLabel");
@@ -4182,6 +4191,7 @@ async function openMessages(){
   if(window.SB && SB.enabled() && state.user.provider === "supabase"){
     const inbox = await SB.fetchInbox();
     if(inbox){
+      refreshMessageBadge(inbox);
       const seen = new Set(threads.map(x=>String(x.id)));
       inbox.forEach(conv=>{
         const listing = L.find(x=>String(x.id) === String(conv.listingId));
@@ -5618,6 +5628,7 @@ if (window.SB && SB.enabled()) {
       if (user) {
         applySupabaseUser(user).then(function () {
           render();
+          refreshMessageBadge();
           continuePendingProGoogle();
           continueSelectedProPlan();
           openAdminFromUrl();
@@ -5626,6 +5637,7 @@ if (window.SB && SB.enabled()) {
         });
       } else if (state.user && state.user.provider === "supabase") {
         state.user = null;
+        setUnreadMessageCount(0);
         persistState();
         render();
       }
@@ -5649,8 +5661,7 @@ if (window.SB && SB.enabled()) {
         scrollChatToBottom(id);
       }
     }
-    var badge = document.getElementById("msgCount");
-    if (badge) badge.textContent = String((parseInt(badge.textContent, 10) || 0) + 1);
+    setUnreadMessageCount(unreadMessageCount + 1);
     showToast(state.lang === "fr" ? "Nouveau message" : "New message");
   });
 }
