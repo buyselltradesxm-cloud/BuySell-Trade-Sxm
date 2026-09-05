@@ -34,6 +34,7 @@ const { chromium } = require("playwright");
   const loginText = await page.locator("#accountModal").innerText();
   if (!/Créer gratuitement avec Google|Create free with Google/.test(loginText)) errors.push("Free Google account button is missing.");
   if (!/Continuer Pro avec Google|Continue Pro with Google/.test(loginText)) errors.push("Pro Google account button is missing.");
+  if (!(await page.locator("#accountModal .email-login-card .social-btn.google").isVisible())) errors.push("Existing-account Google login button is missing.");
   const removedSocialProvider = "Face" + "book";
   if (loginText.includes(removedSocialProvider)) errors.push("Removed social login button should not be shown.");
   if (/Pro Starter|Pro Plus|Pro Premium|Dealer Pro/.test(loginText)) {
