@@ -1870,7 +1870,7 @@
           <div class="pricing-grid">
             <article class="pricing-card free">
               <span class="pricing-price">Gratuit</span><h4>Particulier</h4><p>Pour vendre vos propres objets de temps en temps.</p>
-              <ul><li>5 annonces actives</li><li>Annonces standards</li><li>Chat, favoris et évaluations</li></ul>
+              <ul><li>5 annonces gratuites par mois</li><li>Annonces standards</li><li>Chat, favoris et évaluations</li></ul>
             </article>
             <button type="button" class="pricing-card" onclick="chooseProPlan('pro-starter')">
               <span class="pricing-price">$29/month</span><h4>Pro Starter</h4><p>Pour commencer à vendre régulièrement.</p>
@@ -3264,6 +3264,29 @@ function userListingCount(){
 }
 function activeUserListingCount(){
   return L.filter(l=>l.ownerId && state.user && l.ownerId === state.user.id && !l.sold && l.status !== "sold").length;
+}
+function monthlyUserListingCount(){
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
+  return L.filter(l=>{
+    if(!l.ownerId || !state.user || l.ownerId !== state.user.id) return false;
+    const created = l.createdAt ? new Date(l.createdAt).getTime() : Number(l.id) || 0;
+    return created >= start && created < end;
+  }).length;
+}
+function publicationUsageCountFor(user=state.user){
+  return user?.accountType === "business" ? activeUserListingCount() : monthlyUserListingCount();
+}
+function publicationLimitMessage(limit, blocked=false){
+  if(state.user?.accountType === "business"){
+    return state.lang === "fr"
+      ? `${blocked ? "Publication bloquée: " : "Limite atteinte: "}votre plan autorise ${limit} annonces actives.`
+      : `${blocked ? "Publishing blocked: " : "Limit reached: "}your plan allows ${limit} active listings.`;
+  }
+  return state.lang === "fr"
+    ? `${blocked ? "Publication bloquée: " : "Limite atteinte: "}le compte particulier autorise ${limit} annonces gratuites par mois.`
+    : `${blocked ? "Publishing blocked: " : "Limit reached: "}a personal account allows ${limit} free listings per month.`;
 }
 function isOwnListing(l){
   return !!(state.user && l?.ownerId && l.ownerId === state.user.id);
@@ -4936,8 +4959,8 @@ function openPostModal(){
     return;
   }
   const limit = listingLimitFor(state.user);
-  if(Number.isFinite(limit) && activeUserListingCount() >= limit){
-    showToast(state.lang === "fr" ? `Limite atteinte: votre plan autorise ${limit} annonces actives.` : `Limit reached: your plan allows ${limit} active listings.`);
+  if(Number.isFinite(limit) && publicationUsageCountFor(state.user) >= limit){
+    showToast(publicationLimitMessage(limit));
     if(state.user.accountType === "business") openPricingInfo();
     return;
   }
@@ -5528,8 +5551,8 @@ function removePostPhoto(index){
 async function createListing(e){
   e.preventDefault();
   const listingLimit = listingLimitFor(state.user);
-  if(Number.isFinite(listingLimit) && activeUserListingCount() >= listingLimit){
-    showToast(state.lang === "fr" ? `Publication bloquée: limite de ${listingLimit} annonces actives atteinte.` : `Publishing blocked: ${listingLimit} active listing limit reached.`);
+  if(Number.isFinite(listingLimit) && publicationUsageCountFor(state.user) >= listingLimit){
+    showToast(publicationLimitMessage(listingLimit, true));
     closeModal("postModal");
     return false;
   }
@@ -5557,6 +5580,7 @@ async function createListing(e){
   } : null;
   const listing = {
     id:Date.now(),
+    createdAt:new Date().toISOString(),
     ownerId:state.user.id,
     sellerName:state.user.name,
     t:document.getElementById("newTitle").value.trim(),

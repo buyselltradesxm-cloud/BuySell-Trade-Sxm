@@ -26,25 +26,32 @@ as $$
 declare
   user_profile public.profiles;
   listing_limit integer;
-  active_count integer;
+  used_count integer;
 begin
   select * into user_profile from public.profiles where id = user_id;
   if user_profile.id is null then return false; end if;
 
-  if user_profile.account_type = 'business'
-     and coalesce(user_profile.subscription_status, 'inactive') <> 'active' then
-    return false;
-  end if;
-
   listing_limit := public.account_listing_limit(user_profile.account_plan);
   if listing_limit is null then return true; end if;
 
-  select count(*) into active_count
-    from public.listings
-   where seller_id = user_id
-     and coalesce(status, 'active') <> 'sold';
+  if user_profile.account_type = 'business' then
+    if coalesce(user_profile.subscription_status, 'inactive') <> 'active' then
+      return false;
+    end if;
 
-  return active_count < listing_limit;
+    select count(*) into used_count
+      from public.listings
+     where seller_id = user_id
+       and coalesce(status, 'active') <> 'sold';
+  else
+    select count(*) into used_count
+      from public.listings
+     where seller_id = user_id
+       and created_at >= date_trunc('month', now())
+       and created_at < date_trunc('month', now()) + interval '1 month';
+  end if;
+
+  return used_count < listing_limit;
 end;
 $$;
 

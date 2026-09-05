@@ -47,6 +47,7 @@
       } : null,
       reserved: r.status === "reserved",
       sold: r.status === "sold",
+      createdAt: r.created_at || null,
       sellerId: r.seller_id || null,
       // l'app filtre "mes annonces" sur `ownerId` : on aligne les deux noms
       ownerId: r.seller_id || null,

@@ -14,6 +14,7 @@
     "test:live-admin": "node live-admin-access-qa.js",
     "test:admin-visibility": "node playwright-admin-visibility-qa.js",
     "test:category-form": "node playwright-category-form-qa.js",
+    "test:personal-monthly-limit": "node playwright-personal-monthly-limit-qa.js",
     "supabase:enable-google-auth": "node scripts/enable-google-auth.js",
     "supabase:enable-google-auth-local": "node scripts/enable-google-auth.js --local-only",
     "supabase:enable-smtp": "node scripts/enable-supabase-smtp.js",
