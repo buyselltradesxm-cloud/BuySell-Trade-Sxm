@@ -976,6 +976,12 @@
   .auth-card::before{content:"";position:absolute;inset:0 0 auto;height:5px;background:var(--sea);}
   .auth-card.login-card{background:linear-gradient(180deg,#fff,#f7fbfb);}
   .auth-card.login-card::before{background:var(--sun);}
+  .auth-card.pro-card{background:linear-gradient(180deg,#fff9df,#fff);}
+  .auth-card.pro-card::before{background:var(--sun);}
+  .auth-card.pro-card .auth-free-list span::before{content:"+";color:var(--ink);}
+  .email-login-card{margin-top:12px;display:grid;grid-template-columns:minmax(220px,.75fr) 1.25fr;align-items:center;gap:18px;}
+  .email-login-card .login-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .email-login-card .detail-actions{margin-top:0;align-self:end;}
   .auth-kicker{font-size:11px;font-weight:900;color:var(--mute);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;}
   .auth-card h3{font-size:21px;line-height:1.1;text-wrap:balance;}
   .auth-card p{font-size:13.5px;color:var(--mute);line-height:1.45;max-width:48ch;}
@@ -1199,6 +1205,8 @@
     .guide-note{align-items:flex-start;flex-direction:column;}
     .auth-grid{grid-template-columns:1fr;}
     .auth-intro{grid-template-columns:1fr;align-items:start;}
+    .email-login-card{grid-template-columns:1fr;}
+    .email-login-card .login-fields{grid-template-columns:1fr;}
     .auth-badge{width:max-content;}
     .profile-stats{grid-template-columns:repeat(2,1fr);}
     .profile-tools{grid-template-columns:1fr;}
@@ -1658,6 +1666,13 @@
               <span data-i18n="freePersonalSelling">Vendre vos objets personnels est gratuit.</span>
             </div>
           </div>
+          <div class="social-auth">
+            <button type="button" class="social-btn google" onclick="socialAuth('google')">
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+              <span data-i18n="freeGoogle">Créer gratuitement avec Google</span>
+            </button>
+          </div>
+          <div class="social-divider"><span data-i18n="createWithEmail">ou créez votre compte avec email</span></div>
           <input id="accountType" class="account-type-hidden" type="hidden" value="personal">
           <input id="accountPlan" class="account-type-hidden" type="hidden" value="personal-free">
           <div class="form-grid" id="signupFields">
@@ -1695,20 +1710,34 @@
             </div>
           </div>
         </form>
-        <form class="auth-card login-card" onsubmit="return loginAccount(event)">
+        <section class="auth-card pro-card">
           <div>
-            <div class="auth-kicker" data-i18n="loginKicker">Connexion rapide</div>
-            <h3 data-i18n="loginTitle">J'ai déjà un compte</h3>
-            <p data-i18n="loginHelp">Connectez-vous pour reprendre vos annonces, vos favoris et vos conversations.</p>
+            <div class="auth-kicker" data-i18n="proKicker">Pour les entreprises</div>
+            <h3 data-i18n="proAccountTitle">Créer un compte Pro</h3>
+            <p data-i18n="proAccountHelp">Pour les commerces et vendeurs réguliers qui veulent plus d'annonces, de visibilité et d'outils.</p>
+            <div class="auth-free-list">
+              <span data-i18n="proBenefit1">Page business et badge Pro</span>
+              <span data-i18n="proBenefit2">Plus d'annonces et de visibilité</span>
+              <span data-i18n="proBenefit3">Abonnement requis avant publication Pro</span>
+            </div>
           </div>
           <div class="social-auth">
-            <button type="button" class="social-btn google" onclick="socialAuth('google')">
+            <button type="button" class="social-btn google" onclick="startProGoogleAuth()">
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
-              <span data-i18n="socialGoogle">Continuer avec Google</span>
+              <span data-i18n="proGoogle">Continuer Pro avec Google</span>
             </button>
           </div>
-          <div class="social-divider"><span data-i18n="loginWithEmail">ou connectez-vous avec email</span></div>
-          <div class="form-grid">
+          <button type="button" class="auth-pricing-link" onclick="closeModal('accountModal');openPricingInfo()" data-i18n="viewProPlans">Voir les abonnements Pro et les prix</button>
+        </section>
+      </div>
+      <form class="auth-card login-card email-login-card" onsubmit="return loginAccount(event)">
+        <div>
+          <div class="auth-kicker" data-i18n="loginKicker">Connexion</div>
+          <h3 data-i18n="loginTitle">J'ai déjà un compte</h3>
+          <p data-i18n="loginHelp">Connectez-vous avec votre email pour reprendre vos annonces et vos messages.</p>
+        </div>
+        <div>
+          <div class="login-fields">
             <div class="field">
               <label for="loginEmail" data-i18n="accountEmail">Email</label>
               <input id="loginEmail" type="email" required placeholder="vous@email.com">
@@ -1723,8 +1752,8 @@
             <button type="submit" class="primary-btn" data-i18n="loginSubmit">Se connecter</button>
             <button type="button" class="secondary-btn" onclick="closeModal('accountModal')" data-i18n="cancelLabel">Annuler</button>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -2744,6 +2773,21 @@ Object.assign(I18N.en, {
   vehicleBodyTitle:"Interior / exterior",
   vehicleMechanicalTitle:"Mechanics & maintenance",
   vehicleDocsTitle:"Paperwork & availability"
+});
+
+Object.assign(I18N.fr, {
+  authFreeTitle:"Choisissez votre compte", authFreeText:"Un compte particulier reste gratuit. Un compte Pro ajoute des outils business avec un abonnement.", authBadge:"Inscription sécurisée",
+  createKicker:"Compte particulier", newAccountTitle:"Créer un compte gratuit", newAccountHelp:"Pour vendre vos propres objets, publier gratuitement et discuter avec les acheteurs.", loginKicker:"Connexion", freeGoogle:"Créer gratuitement avec Google", createWithEmail:"ou créez votre compte avec email",
+  proKicker:"Pour les entreprises", proAccountTitle:"Créer un compte Pro", proAccountHelp:"Pour les commerces et vendeurs réguliers qui veulent plus d'annonces, de visibilité et d'outils.",
+  proBenefit1:"Page business et badge Pro", proBenefit2:"Plus d'annonces et de visibilité", proBenefit3:"Abonnement requis avant publication Pro",
+  proGoogle:"Continuer Pro avec Google", viewProPlans:"Voir les abonnements Pro et les prix"
+});
+Object.assign(I18N.en, {
+  authFreeTitle:"Choose your account", authFreeText:"A personal account stays free. A Pro account adds business tools with a subscription.", authBadge:"Secure sign-up",
+  createKicker:"Personal account", newAccountTitle:"Create a free account", newAccountHelp:"Sell your own items, post for free, and chat with buyers.", loginKicker:"Log in", freeGoogle:"Create free with Google", createWithEmail:"or create your account with email",
+  proKicker:"For businesses", proAccountTitle:"Create a Pro account", proAccountHelp:"For businesses and regular sellers who need more listings, visibility, and tools.",
+  proBenefit1:"Business page and Pro badge", proBenefit2:"More listings and visibility", proBenefit3:"Subscription required before Pro publishing",
+  proGoogle:"Continue Pro with Google", viewProPlans:"View Pro subscriptions and pricing"
 });
 
 const G = {
@@ -5092,6 +5136,19 @@ async function socialAuth(provider){
   // succès: Supabase redirige vers ce même onglet; onAuthChange() reprend la main au retour.
 }
 
+function startProGoogleAuth(){
+  sessionStorage.setItem("bst-auth-intent", "pro");
+  socialAuth("google");
+}
+
+function continuePendingProGoogle(){
+  if(sessionStorage.getItem("bst-auth-intent") !== "pro") return;
+  sessionStorage.removeItem("bst-auth-intent");
+  closeModal("accountModal");
+  openPricingInfo();
+  showToast(state.lang === "fr" ? "Compte Google connecté. Choisissez maintenant votre abonnement Pro." : "Google account connected. Now choose your Pro subscription.");
+}
+
 async function confirmSignupCode(){
   if(!pendingSignupOtp) return;
   const code = document.getElementById("signupOtpCode").value.trim();
@@ -5500,6 +5557,7 @@ if (window.SB && SB.enabled()) {
       if (user) {
         applySupabaseUser(user).then(function () {
           render();
+          continuePendingProGoogle();
           openAdminFromUrl();
           var pm = document.getElementById("profileModal");
           if (pm && pm.classList.contains("open") && typeof renderProfile === "function") renderProfile();

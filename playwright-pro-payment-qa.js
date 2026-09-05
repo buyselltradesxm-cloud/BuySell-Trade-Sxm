@@ -32,7 +32,8 @@ const { chromium } = require("playwright");
   await page.locator("#accountModal.open").waitFor();
 
   const loginText = await page.locator("#accountModal").innerText();
-  if (!/Continuer avec Google|Continue with Google/.test(loginText)) errors.push("Google login button is missing.");
+  if (!/Créer gratuitement avec Google|Create free with Google/.test(loginText)) errors.push("Free Google account button is missing.");
+  if (!/Continuer Pro avec Google|Continue Pro with Google/.test(loginText)) errors.push("Pro Google account button is missing.");
   const removedSocialProvider = "Face" + "book";
   if (loginText.includes(removedSocialProvider)) errors.push("Removed social login button should not be shown.");
   if (/Pro Starter|Pro Plus|Pro Premium|Dealer Pro/.test(loginText)) {
@@ -92,7 +93,7 @@ const { chromium } = require("playwright");
 
   console.log(JSON.stringify({
     errors,
-    loginHasSocial: /Continuer avec Google|Continue with Google/.test(loginText),
+    loginHasSocial: /Créer gratuitement avec Google|Create free with Google/.test(loginText) && /Continuer Pro avec Google|Continue Pro with Google/.test(loginText),
     pricingHasPlans: /Pro Starter/.test(pricingText) && /Dealer Pro/.test(pricingText),
     emailConfirmationRequired,
     accountType: userAfterSignup?.accountType,
