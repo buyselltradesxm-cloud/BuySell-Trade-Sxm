@@ -182,7 +182,6 @@ select
 from auth.users
 where lower(email) in (
   'rxmarketing09@gmail.com',
-  'buyselltradesxm@gmail.com',
   'admin@buyselltradesxm.com',
   'admin@bstsxm.com'
 )
@@ -199,7 +198,6 @@ from auth.users u
 left join public.profiles p on p.id = u.id
 where lower(u.email) in (
   'rxmarketing09@gmail.com',
-  'buyselltradesxm@gmail.com',
   'admin@buyselltradesxm.com',
   'admin@bstsxm.com'
 )

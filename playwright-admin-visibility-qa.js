@@ -43,7 +43,7 @@ const fileUrl = `file://${path.resolve(__dirname, "index.html").replace(/\\/g, "
     window.__bstState.user = {
       id: "admin-user",
       provider: "supabase",
-      email: "buyselltradesxm@gmail.com",
+      email: "rxmarketing09@gmail.com",
       name: "Buy Sell Trade SXM",
       avatar: "BS",
       role: "admin"

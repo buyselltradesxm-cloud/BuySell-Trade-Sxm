@@ -3027,7 +3027,7 @@ function isLocalDevHost(){
   return location.hostname === "localhost" || location.hostname === "127.0.0.1";
 }
 
-function createLocalAdminUser(email="buyselltradesxm@gmail.com"){
+function createLocalAdminUser(email="rxmarketing09@gmail.com"){
   const name = email.split("@")[0] || "Admin Test";
   return normalizeUser({
     id:`admin-${name}`,
@@ -3044,7 +3044,7 @@ function createLocalAdminUser(email="buyselltradesxm@gmail.com"){
 function applyLocalAdminTestMode(){
   const params = new URLSearchParams(location.search || "");
   if(!isLocalDevHost() || !params.has("local") || !params.has("admin")) return;
-  const user = createLocalAdminUser(params.get("email") || "buyselltradesxm@gmail.com");
+  const user = createLocalAdminUser(params.get("email") || "rxmarketing09@gmail.com");
   state.user = user;
   usersByEmail[user.email.toLowerCase()] = user;
 }
@@ -3108,7 +3108,7 @@ function normalizeUser(user){
     trusted:user.trusted !== false
   };
 }
-const ADMIN_EMAILS = new Set(["admin@buyselltradesxm.com","admin@bstsxm.com","buyselltradesxm@gmail.com","rxmarketing09@gmail.com"]);
+const ADMIN_EMAILS = new Set(["admin@buyselltradesxm.com","admin@bstsxm.com","rxmarketing09@gmail.com"]);
 function isAdminUser(user=state.user){
   const email = (user?.email || "").toLowerCase();
   if(!user) return false;
