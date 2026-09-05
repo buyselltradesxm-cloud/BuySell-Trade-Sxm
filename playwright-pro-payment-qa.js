@@ -92,6 +92,32 @@ const { chromium } = require("playwright");
   if (!emailConfirmationRequired) {
     if (userAfterSignup?.accountType !== "personal") errors.push("Free signup did not create a personal account.");
     if (userAfterSignup?.accountPlan !== "personal-free") errors.push("Free signup did not use the Personal Free plan.");
+
+    await page.evaluate(() => {
+      closeModal("postModal");
+      openPricingInfo();
+    });
+    await page.getByRole("button", { name: /Pro Business/i }).click();
+    await page.locator("#paymentModal.open").waitFor();
+    const paymentPlan = await page.locator("#paymentPlanName").innerText();
+    const paymentPrice = await page.locator("#paymentPlanPrice").innerText();
+    if (paymentPlan !== "Pro Business") errors.push(`Selected payment plan is incorrect: ${paymentPlan}.`);
+    if (paymentPrice !== "59 €/mois") errors.push(`Selected payment price is incorrect: ${paymentPrice}.`);
+    await page.getByRole("button", { name: /Confirmer le paiement test|Confirm demo payment/i }).click();
+    const proState = await page.evaluate(() => ({
+      type: window.__bstState.user?.accountType,
+      plan: window.__bstState.user?.accountPlan,
+      status: window.__bstState.user?.subscriptionStatus,
+      limit: listingLimitFor(window.__bstState.user)
+    }));
+    if (proState.type !== "business" || proState.plan !== "pro-business" || proState.status !== "active") {
+      errors.push(`Pro payment did not activate the selected plan: ${JSON.stringify(proState)}.`);
+    }
+    if (proState.limit !== 30) errors.push(`Pro Business should allow 30 active listings, got ${proState.limit}.`);
+    await page.evaluate(() => openProfile());
+    if (!/Compte Pro certifié|Certified Pro account/.test(await page.locator("#profileModal").innerText())) {
+      errors.push("Certified Pro badge is missing after payment confirmation.");
+    }
   }
 
   console.log(JSON.stringify({

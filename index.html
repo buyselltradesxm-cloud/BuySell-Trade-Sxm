@@ -1024,8 +1024,12 @@
   .pricing-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
   .pricing-card{
     border:2px solid var(--line);border-radius:12px;background:var(--white);
-    padding:14px;display:flex;flex-direction:column;gap:9px;min-height:245px;
+    padding:14px;display:flex;flex-direction:column;gap:9px;min-height:245px;text-align:left;
   }
+  button.pricing-card{font:inherit;color:inherit;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease;}
+  button.pricing-card:hover{transform:translateY(-3px);box-shadow:5px 5px 0 var(--line);}
+  button.pricing-card:active{transform:translateY(1px);box-shadow:2px 2px 0 var(--line);}
+  button.pricing-card:focus-visible{outline:3px solid var(--sun);outline-offset:3px;}
   .pricing-card.free{background:var(--sea);color:var(--white);box-shadow:5px 5px 0 var(--line);}
   .pricing-card.featured{background:linear-gradient(180deg,#fff8d8,#fff);box-shadow:5px 5px 0 var(--line);}
   .pricing-card h4{font-family:'Space Grotesk',sans-serif;font-size:17px;}
@@ -1033,6 +1037,7 @@
   .pricing-card.free p,.pricing-card.free li{color:rgba(255,255,255,.88);}
   .pricing-card ul{display:grid;gap:5px;padding-left:18px;margin-top:auto;}
   .pricing-card li{font-size:12px;color:var(--mute);line-height:1.35;}
+  .pricing-cta{margin-top:auto;border-top:1.5px solid rgba(19,42,46,.18);padding-top:9px;font-weight:900;color:var(--sea);}
   .pricing-price{
     display:inline-flex;align-self:flex-start;border:1.5px solid var(--line);border-radius:8px;
     background:var(--sun);color:var(--ink);padding:4px 8px;font-size:12px;font-weight:900;
@@ -1790,7 +1795,7 @@
           <p id="paymentPlanText" class="upload-help">Votre boutique sera activée après paiement confirmé.</p>
           <div class="payment-line">
             <span data-i18n="paymentAmountLabel">Montant</span>
-            <b data-i18n="planPriceSoon">Prix à définir</b>
+            <b id="paymentPlanPrice">29 €/mois</b>
           </div>
           <div class="payment-line">
             <span data-i18n="paymentStatusLabel">Statut</span>
@@ -1869,26 +1874,26 @@
               <span class="pricing-price">Gratuit</span><h4>Particulier</h4><p>Pour vendre vos propres objets de temps en temps.</p>
               <ul><li>5 annonces actives</li><li>Annonces standards</li><li>Chat, favoris et évaluations</li></ul>
             </article>
-            <article class="pricing-card">
+            <button type="button" class="pricing-card" onclick="chooseProPlan('pro-starter')">
               <span class="pricing-price">29 €/mois</span><h4>Pro Starter</h4><p>Pour commencer à vendre régulièrement.</p>
-              <ul><li>10 annonces actives</li><li>Page entreprise</li><li>Badge Pro</li></ul>
-            </article>
-            <article class="pricing-card">
+              <ul><li>10 annonces actives</li><li>Page entreprise</li><li>Badge Pro</li></ul><span class="pricing-cta">Choisir Pro Starter</span>
+            </button>
+            <button type="button" class="pricing-card" onclick="chooseProPlan('pro-business')">
               <span class="pricing-price">59 €/mois</span><h4>Pro Business</h4><p>Plus de volume et des résultats mesurables.</p>
-              <ul><li>30 annonces actives</li><li>Statistiques</li><li>2 boosts par mois</li></ul>
-            </article>
-            <article class="pricing-card featured">
+              <ul><li>30 annonces actives</li><li>Statistiques</li><li>2 boosts par mois</li></ul><span class="pricing-cta">Choisir Pro Business</span>
+            </button>
+            <button type="button" class="pricing-card featured" onclick="chooseProPlan('pro-premium')">
               <span class="pricing-price">99 €/mois</span><h4>Pro Premium</h4><p>Pour un catalogue actif et plus de contacts.</p>
-              <ul><li>75 annonces actives</li><li>5 boosts par mois</li><li>Remontées automatiques</li><li>WhatsApp et catalogue</li></ul>
-            </article>
-            <article class="pricing-card">
+              <ul><li>75 annonces actives</li><li>5 boosts par mois</li><li>Remontées automatiques</li><li>WhatsApp et catalogue</li></ul><span class="pricing-cta">Choisir Pro Premium</span>
+            </button>
+            <button type="button" class="pricing-card" onclick="chooseProPlan('pro-elite')">
               <span class="pricing-price">149 €/mois</span><h4>Pro Elite</h4><p>Une vraie vitrine pour les entreprises établies.</p>
-              <ul><li>150 annonces actives</li><li>10 boosts par mois</li><li>Vitrine entreprise</li><li>Priorité dans les résultats</li></ul>
-            </article>
-            <article class="pricing-card">
+              <ul><li>150 annonces actives</li><li>10 boosts par mois</li><li>Vitrine entreprise</li><li>Priorité dans les résultats</li></ul><span class="pricing-cta">Choisir Pro Elite</span>
+            </button>
+            <button type="button" class="pricing-card" onclick="chooseProPlan('pro-unlimited')">
               <span class="pricing-price">199 €/mois</span><h4>Pro Unlimited</h4><p>Capacité et visibilité maximales.</p>
-              <ul><li>Annonces illimitées</li><li>Vitrine premium</li><li>Promotions et boosts</li><li>Statistiques avancées</li></ul>
-            </article>
+              <ul><li>Annonces illimitées</li><li>Vitrine premium</li><li>Promotions et boosts</li><li>Statistiques avancées</li></ul><span class="pricing-cta">Choisir Pro Unlimited</span>
+            </button>
           </div>
           <div class="pricing-context"><strong>Un seul système Pro pour toutes les entreprises</strong>Restaurant, boutique de vêtements, garage, agence immobilière, magasin d'électroménager ou vendeur de téléphones: chacun choisit son plan selon le nombre d'annonces et la visibilité recherchée.</div>
           <div class="pricing-extras">
@@ -3027,6 +3032,7 @@ let pendingProSignup = null;
 let pendingSignupOtp = null; // { email, name, accountType, accountPlan } en attente du code de confirmation
 let pendingPaymentExistingUser = false;
 let pendingAfterPayment = null;
+let pendingSelectedProPlan = null;
 let pendingBoostListingId = null;
 let pendingBoostDays = 7;
 
@@ -3216,6 +3222,9 @@ function vehicleDataFor(l){
 function userListingCount(){
   return L.filter(l=>l.ownerId && state.user && l.ownerId === state.user.id).length;
 }
+function activeUserListingCount(){
+  return L.filter(l=>l.ownerId && state.user && l.ownerId === state.user.id && !l.sold && l.status !== "sold").length;
+}
 function isOwnListing(l){
   return !!(state.user && l?.ownerId && l.ownerId === state.user.id);
 }
@@ -3233,15 +3242,19 @@ function hasActiveProSubscription(user = state.user){
 function isPaidPlan(plan){
   return plan && plan !== "personal-free";
 }
+const ACCOUNT_PLANS = {
+  "personal-free":{fr:"Particulier",en:"Personal",price:"Gratuit",limit:5},
+  "pro-starter":{fr:"Pro Starter",en:"Pro Starter",price:"29 €/mois",limit:10},
+  "pro-business":{fr:"Pro Business",en:"Pro Business",price:"59 €/mois",limit:30},
+  "pro-premium":{fr:"Pro Premium",en:"Pro Premium",price:"99 €/mois",limit:75},
+  "pro-elite":{fr:"Pro Elite",en:"Pro Elite",price:"149 €/mois",limit:150},
+  "pro-unlimited":{fr:"Pro Unlimited",en:"Pro Unlimited",price:"199 €/mois",limit:Infinity}
+};
+function accountPlan(plan){ return ACCOUNT_PLANS[plan] || ACCOUNT_PLANS["personal-free"]; }
+function listingLimitFor(user=state.user){ return accountPlan(user?.accountPlan || "personal-free").limit; }
 function planLabel(plan){
-  const labels = {
-    "personal-free":t().planPersonalTitle,
-    "pro-starter":t().planStarterTitle,
-    "pro-plus":t().planPlusTitle,
-    "pro-premium":t().planPremiumTitle,
-    "dealer-pro":t().planDealerTitle
-  };
-  return labels[plan] || t().planStarterTitle;
+  const selected = accountPlan(plan);
+  return selected[state.lang] || selected.fr;
 }
 function sellerTrustHTML(l){
   const rating = l.rating || (l.pro ? 4.9 : 4.8);
@@ -4284,15 +4297,31 @@ function openPaymentModal({existingUser=false, plan=null, after=null} = {}){
   pendingPaymentExistingUser = existingUser;
   pendingAfterPayment = after;
   const selectedPlan = plan || pendingProSignup?.accountPlan || state.user?.accountPlan || "pro-starter";
+  pendingSelectedProPlan = selectedPlan;
   document.getElementById("paymentPlanName").textContent = planLabel(selectedPlan);
+  document.getElementById("paymentPlanPrice").textContent = accountPlan(selectedPlan).price;
   document.getElementById("paymentPlanText").textContent = t().paymentPlanText;
   openModal("paymentModal");
+}
+
+function chooseProPlan(plan){
+  if(!ACCOUNT_PLANS[plan] || plan === "personal-free") return;
+  closeModal("boostModal");
+  sessionStorage.setItem("bst-selected-pro-plan", plan);
+  if(!state.user){
+    requireAccount(`pro-plan:${plan}`);
+    showToast(state.lang === "fr" ? "Connectez-vous pour continuer avec ce plan." : "Log in to continue with this plan.");
+    return;
+  }
+  sessionStorage.removeItem("bst-selected-pro-plan");
+  openPaymentModal({existingUser:true, plan});
 }
 
 function cancelPaymentFlow(){
   pendingProSignup = null;
   pendingPaymentExistingUser = false;
   pendingAfterPayment = null;
+  pendingSelectedProPlan = null;
   closeModal("paymentModal");
 }
 
@@ -4336,6 +4365,7 @@ function renderProfile(){
       <h3>${state.lang==="fr" ? "Confiance" : "Trust"}</h3>
       <div class="trust-badges">
         <span>${t().verifiedEmail}</span>
+        ${proActive ? `<span>${state.lang === "fr" ? "Compte Pro certifié" : "Certified Pro account"}</span>` : ""}
         <span>${t().trustedMember}</span>
         <span>${t().fastReply}</span>
       </div>
@@ -4380,13 +4410,16 @@ function renderProfile(){
 }
 
 function proDashboardHTML(user, own, proActive){
+  const activeOwn = own.filter(l=>!l.sold && l.status !== "sold").length;
+  const planLimit = listingLimitFor(user);
+  const quota = Number.isFinite(planLimit) ? `${activeOwn} / ${planLimit}` : `${activeOwn} / ∞`;
   return `
     <section class="profile-section">
       <h3>${t().proDashboardTitle}</h3>
       <div class="pro-status">
         <span class="${proActive ? "active" : "pending"}">${proActive ? t().proActive : t().proInactive}</span>
         <span>${t().proPlan}: ${planLabel(user.accountPlan)}</span>
-        <span>${own.length} ${t().activeListings}</span>
+        <span>${quota} ${t().activeListings}</span>
       </div>
       <div class="pro-dashboard">
         <article class="pro-panel">
@@ -4466,6 +4499,7 @@ function completeAuth(){
   else if(action === "messages") openMessages();
   else if(action === "boost") startBoostFlow();
   else if(action === "admin") openAdmin();
+  else if(action?.startsWith("pro-plan:")) openPaymentModal({existingUser:true, plan:action.slice("pro-plan:".length)});
   else if(action?.startsWith("listing:")) openListing(action.slice("listing:".length));
 }
 
@@ -4516,6 +4550,7 @@ function profileFromRow(row){
     name:row.name || row.business_name || "Supabase user",
     accountType:row.account_type || "personal",
     accountPlan:row.account_plan || "personal-free",
+    subscriptionStatus:row.subscription_status || (row.account_type === "business" ? "inactive" : "free"),
     businessName:row.business_name || "",
     businessPhone:row.business_phone || row.phone || "",
     role:row.role || "user"
@@ -4855,6 +4890,12 @@ function openPostModal(){
     openPaymentModal({existingUser:true, plan:state.user.accountPlan, after:"post"});
     return;
   }
+  const limit = listingLimitFor(state.user);
+  if(Number.isFinite(limit) && activeUserListingCount() >= limit){
+    showToast(state.lang === "fr" ? `Limite atteinte: votre plan autorise ${limit} annonces actives.` : `Limit reached: your plan allows ${limit} active listings.`);
+    if(state.user.accountType === "business") openPricingInfo();
+    return;
+  }
   buildPostForm();
   openModal("postModal");
 }
@@ -4915,6 +4956,7 @@ async function applySupabaseUser(sbUser){
     name: (profile && profile.name) || meta.name || (sbUser.email || "").split("@")[0],
     accountType,
     accountPlan: (profile && profile.account_plan) || (accountType === "business" ? "pro-starter" : "personal-free"),
+    subscriptionStatus: (profile && profile.subscription_status) || (accountType === "business" ? "inactive" : "free"),
     businessName: (profile && profile.business_name) || "",
     businessPhone: (profile && profile.phone) || "",
     role: (profile && profile.role) || "user"
@@ -5093,8 +5135,18 @@ async function confirmDemoPayment(e){
   }
   if(pendingPaymentExistingUser && state.user){
     state.user = normalizeUser(state.user);
+    state.user.accountType = "business";
+    state.user.accountPlan = pendingSelectedProPlan || state.user.accountPlan || "pro-starter";
     state.user.subscriptionStatus = "active";
     state.user.subscriptionStarted = new Date().toISOString();
+    if(window.SB && SB.enabled() && state.user.provider === "supabase"){
+      await SB.upsertProfile({
+        account_type:"business",
+        account_plan:state.user.accountPlan,
+        subscription_status:"active",
+        subscription_started:state.user.subscriptionStarted
+      });
+    }
     usersByEmail[state.user.email.toLowerCase()] = state.user;
     persistState();
     showToast(t().paymentSuccess);
@@ -5102,6 +5154,7 @@ async function confirmDemoPayment(e){
     const next = pendingAfterPayment;
     pendingPaymentExistingUser = false;
     pendingAfterPayment = null;
+    pendingSelectedProPlan = null;
     render();
     if(next === "post") openPostModal();
   }
@@ -5140,6 +5193,13 @@ function continuePendingProGoogle(){
   closeModal("accountModal");
   openPricingInfo();
   showToast(state.lang === "fr" ? "Compte Google connecté. Choisissez maintenant votre abonnement Pro." : "Google account connected. Now choose your Pro subscription.");
+}
+
+function continueSelectedProPlan(){
+  const plan = sessionStorage.getItem("bst-selected-pro-plan");
+  if(!plan || !ACCOUNT_PLANS[plan]) return;
+  sessionStorage.removeItem("bst-selected-pro-plan");
+  openPaymentModal({existingUser:true, plan});
 }
 
 async function confirmSignupCode(){
@@ -5333,6 +5393,12 @@ function removePostPhoto(index){
 
 async function createListing(e){
   e.preventDefault();
+  const listingLimit = listingLimitFor(state.user);
+  if(Number.isFinite(listingLimit) && activeUserListingCount() >= listingLimit){
+    showToast(state.lang === "fr" ? `Publication bloquée: limite de ${listingLimit} annonces actives atteinte.` : `Publishing blocked: ${listingLimit} active listing limit reached.`);
+    closeModal("postModal");
+    return false;
+  }
   if(!selectedPostPhotos.length){
     showToast(t().photoRequired);
     document.getElementById("newPhotos").focus();
@@ -5372,7 +5438,7 @@ async function createListing(e){
     photos:[...selectedPostPhotos],
     desc:document.getElementById("newDesc").value.trim(),
     vehicle,
-    pro:state.user.accountType === "business",
+    pro:hasActiveProSubscription(state.user),
     urgent:document.getElementById("newUrgent").checked, feat:true
   };
 
@@ -5551,6 +5617,7 @@ if (window.SB && SB.enabled()) {
         applySupabaseUser(user).then(function () {
           render();
           continuePendingProGoogle();
+          continueSelectedProPlan();
           openAdminFromUrl();
           var pm = document.getElementById("profileModal");
           if (pm && pm.classList.contains("open") && typeof renderProfile === "function") renderProfile();
