@@ -181,9 +181,7 @@ select
   'admin'
 from auth.users
 where lower(email) in (
-  'rxmarketing09@gmail.com',
-  'admin@buyselltradesxm.com',
-  'admin@bstsxm.com'
+  'rxmarketing09@gmail.com'
 )
 on conflict (id) do update
 set role = 'admin',
@@ -197,8 +195,6 @@ select
 from auth.users u
 left join public.profiles p on p.id = u.id
 where lower(u.email) in (
-  'rxmarketing09@gmail.com',
-  'admin@buyselltradesxm.com',
-  'admin@bstsxm.com'
+  'rxmarketing09@gmail.com'
 )
 order by u.email;

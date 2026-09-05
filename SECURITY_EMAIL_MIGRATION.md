@@ -2,7 +2,7 @@
 
 Ancien email compromis:
 
-`buyselltradesxm@gmail.com`
+`rxmarketing09@gmail.com`
 
 ## Objectif
 
@@ -39,7 +39,7 @@ Il faut enlever cet email de tous les endroits ou il peut controler le projet.
 ### 4. Google Cloud
 
 - Ajoute un nouveau compte securise comme Owner du projet.
-- Retire `buyselltradesxm@gmail.com` des permissions IAM.
+- Utilise `rxmarketing09@gmail.com` comme compte principal securise.
 - Verifie OAuth consent screen et OAuth clients.
 - Regenere les secrets OAuth si tu penses que l'ancien email a pu les voir.
 
@@ -67,7 +67,8 @@ Dans Supabase SQL Editor, lance ce bloc pour retirer le role admin a l'ancien em
 ```sql
 update public.profiles
 set role = 'user'
-where lower(email) = 'buyselltradesxm@gmail.com';
+where lower(email) <> 'rxmarketing09@gmail.com'
+and role = 'admin';
 ```
 
 Puis verifie:
@@ -75,7 +76,7 @@ Puis verifie:
 ```sql
 select id, email, role
 from public.profiles
-where lower(email) = 'buyselltradesxm@gmail.com';
+where role = 'admin';
 ```
 
 ## Nouveaux emails conseilles
@@ -84,6 +85,6 @@ Pour le futur, evite d'utiliser un Gmail personnel comme compte proprietaire uni
 
 Utilise plutot:
 
-- `admin@buyselltradesxm.com` pour l'admin public/business
+- `rxmarketing09@gmail.com` pour l'admin principal
 - un Gmail personnel securise avec 2FA comme recovery
 - au moins deux comptes owner/admin differents pour ne jamais etre bloque

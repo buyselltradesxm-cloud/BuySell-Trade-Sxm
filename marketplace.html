@@ -3108,7 +3108,7 @@ function normalizeUser(user){
     trusted:user.trusted !== false
   };
 }
-const ADMIN_EMAILS = new Set(["admin@buyselltradesxm.com","admin@bstsxm.com","rxmarketing09@gmail.com"]);
+const ADMIN_EMAILS = new Set(["rxmarketing09@gmail.com"]);
 function isAdminUser(user=state.user){
   const email = (user?.email || "").toLowerCase();
   if(!user) return false;
