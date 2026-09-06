@@ -709,48 +709,55 @@
   }
   .dialog.small{width:min(460px,100%);}
   .dialog.auth{width:min(1120px,100%);}
-  .dialog.messenger{width:min(880px,100%);max-height:min(680px,92dvh);display:flex;flex-direction:column;overflow:hidden;}
-  .messenger-body{flex:1;display:grid;grid-template-columns:270px 1fr;min-height:0;}
-  .msgr-rail{border-right:2px solid var(--line);overflow-y:auto;background:var(--white);display:flex;flex-direction:column;}
-  .msgr-rail-empty,.msgr-log-empty{padding:20px 16px;color:var(--mute);font-size:13px;}
+  .dialog.messenger{width:min(1120px,100%);height:min(740px,92dvh);max-height:92dvh;display:flex;flex-direction:column;overflow:hidden;}
+  .messenger-body{flex:1;display:grid;grid-template-columns:minmax(300px,34%) 1fr;min-height:0;background:var(--paper);}
+  .msgr-sidebar{border-right:2px solid var(--line);background:var(--white);display:flex;flex-direction:column;min-width:0;min-height:0;}
+  .msgr-tools{padding:12px;border-bottom:2px solid var(--line);display:grid;gap:8px;background:var(--paper);}
+  .msgr-count{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:12px;font-weight:900;color:var(--mute);}
+  .msgr-count b{font-family:'Space Grotesk',sans-serif;color:var(--ink);}
+  .msgr-search{width:100%;border:2px solid var(--line);border-radius:10px;background:var(--white);padding:10px 11px;font:inherit;font-size:13px;}
+  .msgr-search:focus{outline:3px solid rgba(242,183,5,.45);outline-offset:1px;}
+  .msgr-rail{overflow-y:auto;display:flex;flex-direction:column;min-height:0;}
+  .msgr-rail-empty,.msgr-log-empty{padding:20px 16px;color:var(--mute);font-size:13px;line-height:1.4;}
   .msgr-item{
-    display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:start;
-    text-align:left;padding:11px 12px;border-bottom:1.5px solid rgba(19,42,46,.12);cursor:pointer;background:var(--white);
+    display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;
+    text-align:left;padding:13px 12px;border:0;border-bottom:1.5px solid rgba(19,42,46,.12);cursor:pointer;background:var(--white);
+    transition:background .16s ease,box-shadow .16s ease;
   }
   .msgr-item:hover{background:var(--paper);}
-  .msgr-item.active{background:var(--paper-deep);}
+  .msgr-item.active{background:var(--paper-deep);box-shadow:inset 5px 0 0 var(--sea);}
   .msgr-ava{
-    width:34px;height:34px;border-radius:50%;border:2px solid var(--line);
+    width:38px;height:38px;border-radius:12px;border:2px solid var(--line);
     display:grid;place-content:center;font-weight:800;font-size:12px;background:var(--paper);
   }
-  .msgr-item-main{min-width:0;display:flex;flex-direction:column;gap:1px;}
-  .msgr-item-main b{font-size:13px;display:flex;align-items:center;gap:6px;}
-  .msgr-item-main small{font-size:11px;color:var(--sea-deep);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .msgr-item-main span{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .msgr-item-main{min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .msgr-item-main b{font-size:13.5px;display:flex;align-items:center;gap:6px;}
+  .msgr-item-main small{font-size:11.5px;color:var(--sea-deep);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .msgr-item-main span{font-size:12.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;}
   .msgr-item-time{font-size:10.5px;color:var(--mute);white-space:nowrap;}
   .msgr-dot{width:8px;height:8px;border-radius:50%;background:var(--coral);display:inline-block;}
   .msgr-pane{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--paper);}
-  .msgr-empty{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;color:var(--mute);font-size:13px;text-align:center;}
+  .msgr-empty{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;color:var(--mute);font-size:14px;text-align:center;line-height:1.45;}
   .msgr-thread{flex:1;display:flex;flex-direction:column;min-height:0;}
   .msgr-thread-head{
-    display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:2px solid var(--line);background:var(--white);
+    display:flex;align-items:center;gap:10px;padding:13px 15px;border-bottom:2px solid var(--line);background:var(--white);
   }
   .msgr-thread-who{flex:1;min-width:0;display:flex;flex-direction:column;}
-  .msgr-thread-who b{font-size:14px;}
-  .msgr-thread-who small{font-size:11.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .msgr-thread-who b{font-size:16px;font-family:'Space Grotesk',sans-serif;}
+  .msgr-thread-who small{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .msgr-back{display:none;border:1.5px solid var(--line);border-radius:8px;background:var(--white);font-size:16px;font-weight:800;width:30px;height:30px;line-height:1;}
-  .msgr-open{border:1.5px solid var(--line);border-radius:8px;background:var(--white);font-weight:700;font-size:11.5px;padding:6px 9px;white-space:nowrap;}
+  .msgr-open{border:1.5px solid var(--line);border-radius:8px;background:var(--white);font-weight:800;font-size:12px;padding:7px 10px;white-space:nowrap;}
   .msgr-open:hover{background:var(--paper-deep);}
-  .msgr-log{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--paper);}
-  .msgr-compose{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 12px;border-top:2px solid var(--line);background:var(--white);}
-  .msgr-compose input{border:2px solid var(--line);border-radius:9px;padding:9px 11px;min-width:0;font:inherit;}
-  .msgr-compose button{border:2px solid var(--line);border-radius:9px;background:var(--sun);font-weight:800;padding:9px 14px;cursor:pointer;}
+  .msgr-log{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:9px;background:linear-gradient(180deg,#f8f3ea,#f6fbfa);}
+  .msgr-compose{display:grid;grid-template-columns:1fr auto;gap:9px;padding:12px;border-top:2px solid var(--line);background:var(--white);}
+  .msgr-compose input{border:2px solid var(--line);border-radius:10px;padding:11px 12px;min-width:0;font:inherit;}
+  .msgr-compose button{border:2px solid var(--line);border-radius:10px;background:var(--sun);font-weight:900;padding:10px 16px;cursor:pointer;}
   .msgr-compose button:hover{background:#e0a800;}
   @media (max-width:640px){
     .dialog.messenger{width:100%;max-height:92dvh;}
     .messenger-body{grid-template-columns:1fr;}
     .messenger-body .msgr-pane{display:none;}
-    .messenger-body.show-thread .msgr-rail{display:none;}
+    .messenger-body.show-thread .msgr-sidebar{display:none;}
     .messenger-body.show-thread .msgr-pane{display:flex;}
     .msgr-back{display:block;}
   }
@@ -1901,7 +1908,16 @@
       <button type="button" class="close-btn" onclick="closeModal('messagesModal')" aria-label="Fermer">x</button>
     </div>
     <div class="messenger-body" id="messengerBody">
-      <div class="msgr-rail" id="msgrRail"></div>
+      <aside class="msgr-sidebar">
+        <div class="msgr-tools">
+          <div class="msgr-count">
+            <b id="msgrCount">0 conversations</b>
+            <span id="msgrUnread">0 non lus</span>
+          </div>
+          <input class="msgr-search" id="msgrSearch" type="search" placeholder="Rechercher une conversation" oninput="filterInbox()" autocomplete="off">
+        </div>
+        <div class="msgr-rail" id="msgrRail"></div>
+      </aside>
       <div class="msgr-pane">
         <div class="msgr-empty" id="msgrEmpty" data-i18n="inboxPick">Choisissez une conversation pour répondre.</div>
         <div class="msgr-thread" id="msgrThread" hidden>
@@ -4454,11 +4470,13 @@ function sellerReply(l){
 /* ================= BOÎTE DE RÉCEPTION (deux volets) ================= */
 let inboxConvs = [];
 let activeConvKey = null;
+let inboxSearchTerm = "";
 
 async function openMessages(){
   if(!state.user){ requireAccount("messages"); return; }
   openModal("messagesModal");
-  document.getElementById("messengerBody")?.classList.remove("show-thread");
+  const search = document.getElementById("msgrSearch");
+  if(search) search.value = inboxSearchTerm;
   await loadInbox();
 }
 
@@ -4509,19 +4527,48 @@ async function loadInbox(){
   });
   inboxConvs = convs;
   renderInboxRail();
-  if(activeConvKey && convs.some(c=>c.key === activeConvKey)) openInboxThread(activeConvKey);
+  const visible = filteredInboxConvs();
+  if(activeConvKey && visible.some(c=>c.key === activeConvKey)) openInboxThread(activeConvKey);
+  else if(visible.length && window.matchMedia("(min-width: 641px)").matches) openInboxThread(visible[0].key);
   else inboxBack();
+}
+
+function filteredInboxConvs(){
+  const term = inboxSearchTerm.trim().toLowerCase();
+  if(!term) return inboxConvs;
+  return inboxConvs.filter(c=>
+    [c.who, c.title, c.preview].some(value=>String(value || "").toLowerCase().includes(term))
+  );
+}
+
+function filterInbox(){
+  const search = document.getElementById("msgrSearch");
+  inboxSearchTerm = search ? search.value : "";
+  const visible = filteredInboxConvs();
+  if(activeConvKey && !visible.some(c=>c.key === activeConvKey)) inboxBack();
+  renderInboxRail();
+  if(visible.length && !activeConvKey && window.matchMedia("(min-width: 641px)").matches) openInboxThread(visible[0].key);
 }
 
 function renderInboxRail(){
   const rail = document.getElementById("msgrRail");
   if(!rail) return;
+  const visible = filteredInboxConvs();
+  const count = document.getElementById("msgrCount");
+  const unread = document.getElementById("msgrUnread");
+  const unreadTotal = inboxConvs.reduce((sum,c)=>sum + (Number(c.unread) || 0), 0);
+  if(count) count.textContent = `${inboxConvs.length} ${state.lang==="fr" ? "conversation" : "conversation"}${inboxConvs.length > 1 ? "s" : ""}`;
+  if(unread) unread.textContent = `${unreadTotal} ${state.lang==="fr" ? "non lus" : "unread"}`;
   if(!inboxConvs.length){
-    rail.innerHTML = `<p class="msgr-rail-empty">${state.lang==="fr" ? "Aucune conversation pour l'instant." : "No conversations yet."}</p>`;
+    rail.innerHTML = `<p class="msgr-rail-empty">${state.lang==="fr" ? "Aucune conversation pour l'instant. Quand un acheteur vous écrit, le message apparaît ici." : "No conversations yet. When a buyer messages you, it appears here."}</p>`;
     return;
   }
-  rail.innerHTML = inboxConvs.map(c=>`
-    <button type="button" class="msgr-item ${c.key === activeConvKey ? "active" : ""}" onclick="openInboxThread(${jsString(c.key)})">
+  if(!visible.length){
+    rail.innerHTML = `<p class="msgr-rail-empty">${state.lang==="fr" ? "Aucune conversation trouvée." : "No conversation found."}</p>`;
+    return;
+  }
+  rail.innerHTML = visible.map(c=>`
+    <button type="button" class="msgr-item ${c.key === activeConvKey ? "active" : ""}" data-key="${esc(c.key)}" onclick="openInboxThread(this.dataset.key)">
       <span class="msgr-ava">${esc(inboxAvatar(c.who))}</span>
       <span class="msgr-item-main">
         <b>${esc(c.who)}${c.unread ? `<span class="msgr-dot" aria-label="${c.unread} ${state.lang==="fr" ? "non lus" : "unread"}"></span>` : ""}</b>
@@ -4615,7 +4662,7 @@ async function sendInboxMessage(e){
   return false;
 }
 
-Object.assign(window, { openInboxThread, sendInboxMessage, inboxBack });
+Object.assign(window, { openInboxThread, sendInboxMessage, inboxBack, filterInbox });
 
 function openProfile(){
   if(!state.user){
