@@ -788,6 +788,10 @@
     border:2px solid var(--line);border-radius:12px;background:var(--white);
     padding:15px;display:grid;gap:8px;
   }
+  button.guide-card{font:inherit;text-align:left;color:inherit;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease;}
+  button.guide-card:hover{background:var(--paper);transform:translateY(-2px);box-shadow:4px 4px 0 var(--line);}
+  button.guide-card:active{transform:translateY(1px);box-shadow:2px 2px 0 var(--line);}
+  button.guide-card:focus-visible{outline:3px solid var(--sun);outline-offset:3px;}
   .guide-card strong{font-family:'Space Grotesk',sans-serif;font-size:15px;}
   .guide-card p,.guide-card li{font-size:13px;color:var(--mute);line-height:1.45;}
   .guide-card ul{padding-left:18px;display:grid;gap:4px;}
@@ -803,6 +807,9 @@
     border:2px solid var(--line);border-radius:12px;background:var(--white);
     padding:14px;display:grid;gap:7px;align-content:start;
   }
+  button.boost-price-card{font:inherit;color:inherit;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease;}
+  button.boost-price-card:hover{background:var(--white);transform:translateY(-2px);box-shadow:4px 4px 0 var(--line);}
+  button.boost-price-card:active{transform:translateY(1px);box-shadow:2px 2px 0 var(--line);}
   .boost-price-card.featured{background:var(--sea);color:var(--white);box-shadow:4px 4px 0 var(--line);}
   .boost-price-card.featured p,.boost-price-card.featured small{color:rgba(255,255,255,.86);}
   .boost-price-card strong{font-family:'Space Grotesk',sans-serif;font-size:16px;}
@@ -1086,6 +1093,9 @@
     border:2px solid var(--line);border-radius:10px;background:var(--paper);
     padding:11px;text-align:center;
   }
+  button.profile-stat{font:inherit;color:inherit;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease;}
+  button.profile-stat:hover{background:var(--white);transform:translateY(-2px);box-shadow:4px 4px 0 var(--line);}
+  button.profile-stat:active{transform:translateY(1px);box-shadow:2px 2px 0 var(--line);}
   .profile-stat b{display:block;font-family:'Space Grotesk',sans-serif;font-size:18px;}
   .profile-stat span{font-size:11.5px;color:var(--mute);font-weight:700;}
   .profile-section{
@@ -1096,8 +1106,11 @@
   .profile-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;}
   .profile-tool{
     border:2px solid var(--line);border-radius:11px;background:var(--paper);
-    padding:12px;text-align:left;display:grid;gap:4px;
+    padding:12px;text-align:left;display:grid;gap:4px;cursor:pointer;
+    transition:transform .16s ease,box-shadow .16s ease,background .16s ease;
   }
+  .profile-tool:hover{background:var(--white);transform:translateY(-2px);box-shadow:4px 4px 0 var(--line);}
+  .profile-tool:active{transform:translateY(1px);box-shadow:2px 2px 0 var(--line);}
   .profile-tool b{font-family:'Space Grotesk',sans-serif;font-size:13px;}
   .profile-tool span{font-size:12px;color:var(--mute);line-height:1.35;}
   .pro-dashboard{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
@@ -1141,7 +1154,9 @@
   .mini-actions{display:grid;justify-items:end;gap:5px;}
   .mini-actions .secondary-btn{padding:6px 8px;font-size:12px;border-radius:8px;}
   .trust-badges{display:flex;flex-wrap:wrap;gap:8px;}
-  .trust-badges span{border:1.5px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:800;background:var(--paper);}
+  .trust-badges span,.trust-badges button{border:1.5px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:800;background:var(--paper);font:inherit;color:inherit;}
+  .trust-badges button{cursor:pointer;}
+  .trust-badges button:hover{background:var(--sun);}
   .drawer-list{display:flex;flex-direction:column;gap:10px;}
   .thread{
     border:2px solid var(--line);border-radius:12px;background:var(--white);
@@ -1868,10 +1883,10 @@
             <p data-i18n="pricingFreeNote">Personal Free permet de publier gratuitement vos annonces personnelles. Les abonnements Pro ajoutent des outils business, des boosts et plus de visibilité.</p>
           </div>
           <div class="pricing-grid">
-            <article class="pricing-card free">
+            <button type="button" class="pricing-card free" onclick="closeModal('boostModal');openPostModal()">
               <span class="pricing-price">Gratuit</span><h4>Particulier</h4><p>Pour vendre vos propres objets de temps en temps.</p>
-              <ul><li>5 annonces gratuites par mois</li><li>Annonces standards</li><li>Chat, favoris et évaluations</li></ul>
-            </article>
+              <ul><li>5 annonces gratuites par mois</li><li>Annonces standards</li><li>Chat, favoris et évaluations</li></ul><span class="pricing-cta">Publier gratuitement</span>
+            </button>
             <button type="button" class="pricing-card" onclick="chooseProPlan('pro-starter')">
               <span class="pricing-price">$29/month</span><h4>Pro Starter</h4><p>Pour commencer à vendre régulièrement.</p>
               <ul><li>10 annonces actives</li><li>Page entreprise</li><li>Badge Pro</li></ul><span class="pricing-cta">Choisir Pro Starter</span>
@@ -1902,30 +1917,30 @@
         </section>
 
         <div class="guide-grid">
-          <article class="guide-card">
+          <button type="button" class="guide-card" onclick="closeModal('boostModal');openPostModal()">
             <strong data-i18n="boostFreeTitle">Annonce gratuite</strong>
             <p data-i18n="boostFreeText">Pour vendre un objet occasionnellement: photos, prix, quartier, chat avec l'acheteur et partage du lien.</p>
-          </article>
-          <article class="guide-card">
+          </button>
+          <button type="button" class="guide-card" onclick="startBoostFlow()">
             <strong data-i18n="boostPaidTitle">Boost payant</strong>
             <p data-i18n="boostPaidText">Le vendeur choisit une annonce, sélectionne une durée de mise en avant, paie, puis l'annonce reçoit le badge Sponsorisé et apparaît plus haut sur la page.</p>
-          </article>
-          <article class="guide-card">
+          </button>
+          <button type="button" class="guide-card" onclick="chooseProPlan('pro-business')">
             <strong data-i18n="boostProTitle">Compte Pro business</strong>
             <p data-i18n="boostProText">Pour les commerces: page business, badge Pro, plus d'annonces, statistiques, messages centralisés et options de visibilité régulières.</p>
-          </article>
-          <article class="guide-card">
+          </button>
+          <button type="button" class="guide-card" onclick="chooseProPlan('pro-premium')">
             <strong data-i18n="dealerGuideTitle">Dealer Pro</strong>
             <p data-i18n="dealerGuideText">Pour les concessionnaires: logo, page professionnelle, inventaire complet, WhatsApp, téléphone, site web, statistiques et annonces prioritaires.</p>
-          </article>
-          <article class="guide-card">
+          </button>
+          <button type="button" class="guide-card" onclick="openCategoryPost('job')">
             <strong data-i18n="jobsGuideTitle">Jobs & employeurs</strong>
             <p data-i18n="jobsGuideText">Publier un CV ou chercher un emploi reste gratuit. Les entreprises paient par offre ou via abonnement employeur.</p>
-          </article>
-          <article class="guide-card">
+          </button>
+          <button type="button" class="guide-card" onclick="openCategoryPost('serv')">
             <strong data-i18n="servicesGuideTitle">Services vérifiés</strong>
             <p data-i18n="servicesGuideText">Cleaning, plomberie, électricité, mécanique, beauté, photo, jardinage, construction, déménagement et Web / IT peuvent obtenir des badges Verified Pro ou Top Service Provider.</p>
-          </article>
+          </button>
         </div>
 
         <section class="boost-pricing">
@@ -1934,21 +1949,21 @@
             <p data-i18n="boostPricingText">Un vendeur particulier peut payer seulement pour mettre une annonce en avant. Aucun abonnement Pro n'est nécessaire.</p>
           </div>
           <div class="boost-price-grid">
-            <article class="boost-price-card">
+            <button type="button" class="boost-price-card" onclick="startBoostFlow()">
               <strong data-i18n="boost3Title">Boost 3 jours</strong>
               <b class="boost-price" data-i18n="boost3Price">$6</b>
               <p data-i18n="boost3Text">Pour une vente rapide ou un objet à petit prix.</p>
-            </article>
-            <article class="boost-price-card featured">
+            </button>
+            <button type="button" class="boost-price-card featured" onclick="startBoostFlow()">
               <strong data-i18n="boost7Title">Boost 7 jours</strong>
               <b class="boost-price" data-i18n="boost7Price">$11</b>
               <p data-i18n="boost7Text">Le meilleur choix pour la plupart des annonces.</p>
-            </article>
-            <article class="boost-price-card">
+            </button>
+            <button type="button" class="boost-price-card" onclick="startBoostFlow()">
               <strong data-i18n="boost14Title">Boost 14 jours</strong>
               <b class="boost-price" data-i18n="boost14Price">$20</b>
               <p data-i18n="boost14Text">Pour voitures, bateaux, immobilier ou objets plus chers.</p>
-            </article>
+            </button>
           </div>
           <div class="boost-flow">
             <span data-i18n="boostFlow1">Publier une annonce</span>
@@ -3850,7 +3865,55 @@ function toggleFav(id, btn){
 }
 function scrollFavs(){
   const first = [...document.querySelectorAll(".fav[aria-pressed=true]")][0];
-  if(first) first.closest(".card").scrollIntoView({behavior:"smooth", block:"center"});
+  if(first){
+    first.closest(".card").scrollIntoView({behavior:"smooth", block:"center"});
+    showToast(state.lang==="fr" ? "Favoris affichés." : "Saved items shown.");
+  } else {
+    showToast(state.lang==="fr" ? "Aucun favori pour l'instant." : "No saved items yet.");
+  }
+}
+function openMyListings(){
+  if(!state.user){
+    requireAccount("profile");
+    return;
+  }
+  const own = L.find(l=>isOwnListing(l));
+  closeModal("profileModal");
+  if(own){
+    openListing(own.id);
+  } else {
+    showToast(t().profileNoListings);
+    openPostModal();
+  }
+}
+function showTrustInfo(type){
+  const messages = {
+    email: state.lang==="fr" ? "Email vérifié: ce compte peut recevoir les messages importants." : "Verified email: this account can receive important messages.",
+    pro: state.lang==="fr" ? "Compte Pro certifié: abonnement business actif ou validé." : "Certified Pro account: business subscription active or approved.",
+    member: state.lang==="fr" ? "Membre de confiance: profil avec activité normale et historique positif." : "Trusted member: normal activity and positive history.",
+    reply: state.lang==="fr" ? "Réponse rapide: le vendeur répond généralement vite aux acheteurs." : "Fast reply: the seller usually replies quickly."
+  };
+  showToast(messages[type] || t().comingSoon);
+}
+function openProfileStat(type){
+  if(type === "listings") return openMyListings();
+  if(type === "saved"){
+    closeModal("profileModal");
+    scrollFavs();
+    return;
+  }
+  if(type === "messages"){
+    closeModal("profileModal");
+    openMessages();
+    return;
+  }
+  if(type === "rating") showTrustInfo("member");
+}
+function openCategoryPost(category){
+  closeModal("boostModal");
+  state.cat = category || "all";
+  state.subcat = "";
+  openPostModal();
 }
 function saveSearch(){
   const btn = document.getElementById("saveBtn");
@@ -4032,7 +4095,7 @@ function openListing(id, syncUrl = true){
           </div>
           <div class="share-row">
             <input id="shareUrl-${l.id}" value="${esc(shareUrl)}" readonly onclick="this.select()" aria-label="${t().shareTitle}">
-            <button type="button" class="secondary-btn" onclick="copyListingLink(${l.id}, event)">${t().copyLink}</button>
+            <button type="button" class="secondary-btn" onclick="copyListingLink(${jsArg(l.id)}, event)">${t().copyLink}</button>
           </div>
         </div>
         ${(descriptionFor(l) || vehicleDetailsHTML(l)) ? `
@@ -4081,7 +4144,12 @@ async function copyText(text){
   helper.style.left = "-9999px";
   document.body.appendChild(helper);
   helper.select();
-  const ok = document.execCommand("copy");
+  let ok = false;
+  try{
+    ok = document.execCommand("copy");
+  }catch(e){
+    ok = false;
+  }
   helper.remove();
   return ok;
 }
@@ -4091,8 +4159,8 @@ async function copyListingLink(id, e){
   const input = document.getElementById(`shareUrl-${id}`);
   const url = input?.value || listingUrl(id);
   if(input) input.select();
-  await copyText(url);
-  showToast(t().linkCopied);
+  const ok = await copyText(url);
+  showToast(ok ? t().linkCopied : (state.lang==="fr" ? "Lien prêt à copier." : "Link ready to copy."));
 }
 
 async function shareListing(id, e){
@@ -4197,7 +4265,21 @@ async function quickChatAction(id, type){
   const input = document.getElementById(`chatInput-${id}`);
   if(type === "location" && input) input.value = t().locationDraft;
   if(type === "offer" && input) input.value = `${t().offerDraft}${state.cur === "eur" ? "€" : "$"}`;
-  if(type === "photo") showToast(t().photoSent);
+  if(type === "photo"){
+    const thread = threadFor(id);
+    const text = state.lang==="fr"
+      ? "Je souhaite envoyer une photo dans cette conversation."
+      : "I want to send a photo in this conversation.";
+    thread.messages.push({who:"buyer", fr:text, en:text, at:state.lang==="fr" ? "maintenant" : "now"});
+    thread.updated = state.lang==="fr" ? "maintenant" : "now";
+    const log = document.getElementById(`chatLog-${id}`);
+    if(log){
+      log.insertAdjacentHTML("beforeend", bubbleRowHTML(thread.messages[thread.messages.length - 1], thread.seller));
+      scrollChatToBottom(id);
+    }
+    persistState();
+    showToast(state.lang==="fr" ? "Photo: upload réel à brancher avec Supabase Storage." : "Photo: real upload will be connected with Supabase Storage.");
+  }
   if(type === "report"){
     if(window.SB && SB.enabled() && state.user?.provider === "supabase" && SB.createReport){
       const l = L.find(item=>String(item.id) === String(id));
@@ -4215,7 +4297,7 @@ async function quickChatAction(id, type){
     }
     showToast(t().reportSent);
   }
-  if(type === "block") showToast(t().sellerBlocked);
+  if(type === "block") showToast(state.lang==="fr" ? "Vendeur bloqué pour cette session." : "Seller blocked for this session.");
   if(input && (type === "location" || type === "offer")) input.focus();
 }
 
@@ -4422,18 +4504,18 @@ function renderProfile(){
       </div>
     </section>
     <div class="profile-stats">
-      <div class="profile-stat"><b>${own.length}</b><span>${t().activeListings}</span></div>
-      <div class="profile-stat"><b>${state.favs.size}</b><span>${t().savedItems}</span></div>
-      <div class="profile-stat"><b>${Object.keys(chatThreads).length}</b><span>${t().conversations}</span></div>
-      <div class="profile-stat"><b>${Number(user.rating).toFixed(1)}</b><span>${t().ratingLabel}</span></div>
+      <button type="button" class="profile-stat" onclick="openProfileStat('listings')"><b>${own.length}</b><span>${t().activeListings}</span></button>
+      <button type="button" class="profile-stat" onclick="openProfileStat('saved')"><b>${state.favs.size}</b><span>${t().savedItems}</span></button>
+      <button type="button" class="profile-stat" onclick="openProfileStat('messages')"><b>${Object.keys(chatThreads).length}</b><span>${t().conversations}</span></button>
+      <button type="button" class="profile-stat" onclick="openProfileStat('rating')"><b>${Number(user.rating).toFixed(1)}</b><span>${t().ratingLabel}</span></button>
     </div>
     <section class="profile-section">
       <h3>${state.lang==="fr" ? "Confiance" : "Trust"}</h3>
       <div class="trust-badges">
-        <span>${t().verifiedEmail}</span>
-        ${proActive ? `<span>${state.lang === "fr" ? "Compte Pro certifié" : "Certified Pro account"}</span>` : ""}
-        <span>${t().trustedMember}</span>
-        <span>${t().fastReply}</span>
+        <button type="button" onclick="showTrustInfo('email')">${t().verifiedEmail}</button>
+        ${proActive ? `<button type="button" onclick="showTrustInfo('pro')">${state.lang === "fr" ? "Compte Pro certifié" : "Certified Pro account"}</button>` : ""}
+        <button type="button" onclick="showTrustInfo('member')">${t().trustedMember}</button>
+        <button type="button" onclick="showTrustInfo('reply')">${t().fastReply}</button>
       </div>
     </section>
     <section class="profile-section">
