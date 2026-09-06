@@ -45,7 +45,7 @@ const { chromium } = require("playwright");
       openListing("qa-edit-listing");
     });
 
-    await page.locator("#detailModal.open .detail-actions .secondary-btn", { hasText: /Modifier|Edit/i }).click();
+    await page.locator("#detailModal.open .owner-btn", { hasText: /Modifier|Edit/i }).click();
     await page.locator("#postModal.open").waitFor({ timeout: 3000 });
 
     const submitLabel = await page.locator("#postSubmitBtn").innerText();

@@ -1,17 +1,17 @@
 const { chromium } = require("playwright");
 
 const cases = [
-  { cat:"serv", sub:"plumber", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postDeliveryField","postMeetupField","postOptionsField","vehicleFields"] },
-  { cat:"job", sub:"hiring", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postDeliveryField","postMeetupField","postOptionsField","vehicleFields"] },
-  { cat:"voit", sub:"car-sale", visible:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postDeliveryField","postMeetupField","postOptionsField","vehicleFields"] },
-  { cat:"voit", sub:"auto-parts", visible:["postPhotosField","postPriceField","postConditionField","postDeliveryField"], hidden:["vehicleFields"] },
-  { cat:"immo", sub:"sale-house", visible:["postPhotosField","postPriceField","postCurrencyField","postOptionsField"], hidden:["postConditionField","postDeliveryField","postMeetupField","vehicleFields"] },
-  { cat:"beauty", sub:"hairdresser", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postDeliveryField","postMeetupField","postOptionsField"] },
-  { cat:"beauty", sub:"beauty-products", visible:["postPhotosField","postPriceField","postConditionField","postDeliveryField"] },
-  { cat:"food", sub:"catering", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postDeliveryField","postMeetupField","postOptionsField"] },
-  { cat:"food", sub:"prepared-food", visible:["postPhotosField","postPriceField","postDeliveryField"], hidden:["postConditionField"] },
-  { cat:"pets", sub:"pet-services", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postDeliveryField","postMeetupField","postOptionsField"] },
-  { cat:"pets", sub:"pet-supplies", visible:["postPhotosField","postPriceField","postConditionField","postDeliveryField"] }
+  { cat:"serv", sub:"plumber", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField","vehicleFields"] },
+  { cat:"job", sub:"hiring", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField","vehicleFields"] },
+  { cat:"voit", sub:"car-sale", visible:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField","vehicleFields"] },
+  { cat:"voit", sub:"auto-parts", visible:["postPhotosField","postPriceField","postConditionField"], hidden:["vehicleFields"] },
+  { cat:"immo", sub:"sale-house", visible:["postPhotosField","postPriceField","postCurrencyField","postOptionsField"], hidden:["postConditionField","vehicleFields"] },
+  { cat:"beauty", sub:"hairdresser", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField"] },
+  { cat:"beauty", sub:"beauty-products", visible:["postPhotosField","postPriceField","postConditionField"] },
+  { cat:"food", sub:"catering", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField"] },
+  { cat:"food", sub:"prepared-food", visible:["postPhotosField","postPriceField"], hidden:["postConditionField"] },
+  { cat:"pets", sub:"pet-services", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField"] },
+  { cat:"pets", sub:"pet-supplies", visible:["postPhotosField","postPriceField","postConditionField"] }
 ];
 
 (async () => {
@@ -35,6 +35,7 @@ const cases = [
         hasVisibleSideField:[...document.querySelectorAll("label")].some(label => label.getAttribute("for") === "newSide" && label.offsetParent !== null),
         hasDutchArea:[...document.getElementById("newArea").options].some(option => option.value === "Philipsburg"),
         hasFrenchArea:[...document.getElementById("newArea").options].some(option => option.value === "Marigot"),
+        removedFieldsMissing:["postDeliveryField","postMeetupField","newDelivery","newMeetup","newVehicleBody","newVehicleMechanical","newVehicleDocs"].every(id => !document.getElementById(id)),
         priceRequired:document.getElementById("newPrice").required,
         photoRequired:postFieldProfile(document.getElementById("newCat").value, document.getElementById("newSubcat").value).photosRequired
       }), testCase);
@@ -43,6 +44,7 @@ const cases = [
       const expectsPrice = (testCase.visible || []).includes("postPriceField");
       if(state.priceRequired !== expectsPrice) errors.push(`${path} ${testCase.cat}/${testCase.sub}: incorrect price requirement`);
       if(state.hasVisibleSideField) errors.push(`${path} ${testCase.cat}/${testCase.sub}: side field should not be visible`);
+      if(!state.removedFieldsMissing) errors.push(`${path} ${testCase.cat}/${testCase.sub}: removed fields should not exist`);
       if(!state.hasFrenchArea) errors.push(`${path} ${testCase.cat}/${testCase.sub}: missing French side areas`);
       if(!state.hasDutchArea) errors.push(`${path} ${testCase.cat}/${testCase.sub}: missing Dutch side areas`);
       results.push({ path, category:testCase.cat, subcategory:testCase.sub, ...state });
