@@ -560,21 +560,41 @@
       return window.db.rpc("mark_message_read", { msg_id: msgId });
     },
 
-    // envoie un message ; renvoie la ligne créée ou null
+    // marque lus tous les messages non lus d'une conversation (ceux qui me sont
+    // adressés). `messages` = le tableau conv.messages renvoyé par fetchInbox.
+    markConversationRead: async function (messages) {
+      if (!window.db || !Array.isArray(messages)) return 0;
+      var user = await SB.currentUser();
+      if (!user) return 0;
+      var unread = messages.filter(function (m) {
+        return m && !m.read && m.recipient_id === user.id;
+      });
+      for (var i = 0; i < unread.length; i++) {
+        try { await window.db.rpc("mark_message_read", { msg_id: unread[i].id }); }
+        catch (e) { /* ignore : RLS ou message déjà lu */ }
+      }
+      return unread.length;
+    },
+
+    // envoie un message ; renvoie la ligne créée ou null.
+    // `sender_name` est dénormalisé pour afficher le nom dans la boîte de
+    // réception sans lire la table profiles (RLS = profil privé). Si la colonne
+    // n'existe pas encore, on renvoie l'insert sans elle.
     sendMessage: async function (opts) {
       if (!window.db) return null;
       var user = await SB.currentUser();
       if (!user || !opts || !opts.recipientId || !opts.body) return null;
-      var res = await window.db
-        .from("messages")
-        .insert({
-          listing_id: opts.listingId || null,
-          sender_id: user.id,
-          recipient_id: opts.recipientId,
-          body: opts.body
-        })
-        .select()
-        .single();
+      var base = {
+        listing_id: opts.listingId || null,
+        sender_id: user.id,
+        recipient_id: opts.recipientId,
+        body: opts.body
+      };
+      var row = Object.assign({}, base, { sender_name: opts.senderName || null });
+      var res = await window.db.from("messages").insert(row).select().single();
+      if (res.error && /sender_name|column/i.test(res.error.message || "")) {
+        res = await window.db.from("messages").insert(base).select().single();
+      }
       if (res.error) {
         console.warn("[SB] sendMessage:", res.error.message);
         return null;
@@ -613,14 +633,23 @@
             key: key,
             listingId: m.listing_id || null,
             otherId: otherId,
+            otherName: "",
+            lastBody: "",
+            lastAt: null,
             messages: [],
             unread: 0
           };
         }
-        threads[key].messages.push(m);
-        if (!m.read && m.recipient_id === user.id) threads[key].unread++;
+        var t = threads[key];
+        t.messages.push(m);
+        t.lastBody = m.body;
+        t.lastAt = m.created_at;
+        if (m.sender_id === otherId && m.sender_name) t.otherName = m.sender_name;
+        if (!m.read && m.recipient_id === user.id) t.unread++;
       });
-      return Object.keys(threads).map(function (k) { return threads[k]; });
+      return Object.keys(threads)
+        .map(function (k) { return threads[k]; })
+        .sort(function (a, b) { return String(b.lastAt || "").localeCompare(String(a.lastAt || "")); });
     },
 
     // abonnement realtime : cb(message) à chaque nouveau message reçu.
