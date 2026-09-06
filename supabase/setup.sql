@@ -38,6 +38,10 @@ alter table profiles add column if not exists business_website      text;
 alter table profiles add column if not exists business_logo         text;
 alter table profiles add column if not exists subscription_status   text;
 alter table profiles add column if not exists subscription_started  timestamptz;
+alter table profiles add column if not exists stripe_customer_id    text;
+alter table profiles add column if not exists stripe_subscription_id text;
+alter table profiles add column if not exists subscription_current_period_end timestamptz;
+alter table profiles add column if not exists subscription_cancel_at_period_end boolean default false;
 alter table profiles add column if not exists role                  text default 'user';
 
 create or replace function is_admin()

@@ -8,6 +8,8 @@ Quand quelqu'un cree un compte avec email + password, Supabase doit envoyer un e
 
 Le SMTP par defaut de Supabase est seulement pour tester. En production, il peut bloquer les emails, surtout pour les emails qui ne sont pas dans ton equipe Supabase. Donc pour un vrai site public, il faut brancher un SMTP pro.
 
+Projet Supabase actuel: `npjkbhkmyfppmosforls`.
+
 ## Le choix recommande
 
 Pour ce projet, le plus simple est Resend.
@@ -46,13 +48,24 @@ npm run supabase:enable-smtp
 Optionnel, si tu veux changer les valeurs par defaut:
 
 ```powershell
-$env:SUPABASE_PROJECT_REF="ujykgiitlcuqiiepsyiz"
+$env:SUPABASE_PROJECT_REF="npjkbhkmyfppmosforls"
 $env:SMTP_HOST="smtp.resend.com"
 $env:SMTP_PORT="465"
 $env:SMTP_USER="resend"
 $env:SMTP_SENDER_NAME="Buy Sell Trade SXM"
 $env:SMTP_MAX_FREQUENCY="30"
 ```
+
+## Emails pro a prevoir
+
+Ces emails pourront etre envoyes quand Stripe et les webhooks seront branches:
+
+- Paiement reussi: le compte Pro est active.
+- Paiement echoue: le compte Pro reste bloque ou repasse inactif.
+- Abonnement bientot renouvele: rappel avant la prochaine date de paiement.
+- Abonnement annule: l'utilisateur garde l'acces jusqu'a la fin de la periode payee.
+- Abonnement expire: le compte repasse en mode non actif et ne peut plus publier en Pro.
+- Boost active: l'annonce est mise en avant apres paiement confirme.
 
 ## Test apres activation
 

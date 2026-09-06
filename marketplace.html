@@ -3303,6 +3303,10 @@ function createUserProfile({name, email, accountType="personal", accountPlan="pe
     rating:5,
     reviews:0,
     subscriptionStatus:accountType === "business" ? "inactive" : "free",
+    subscriptionStarted:null,
+    subscriptionCurrentPeriodEnd:null,
+    subscriptionCancelAtPeriodEnd:false,
+    stripeCustomerId:null,
     role:"user",
     verifiedEmail:true,
     trusted:true
@@ -3320,6 +3324,10 @@ function normalizeUser(user){
     role:user.role || "user",
     accountPlan:user.accountPlan || (user.accountType === "business" ? "pro-starter" : "personal-free"),
     subscriptionStatus:user.subscriptionStatus || (user.accountType === "business" ? "inactive" : "free"),
+    subscriptionStarted:user.subscriptionStarted || null,
+    subscriptionCurrentPeriodEnd:user.subscriptionCurrentPeriodEnd || null,
+    subscriptionCancelAtPeriodEnd:!!user.subscriptionCancelAtPeriodEnd,
+    stripeCustomerId:user.stripeCustomerId || null,
     verifiedEmail:user.verifiedEmail !== false,
     trusted:user.trusted !== false
   };
@@ -3420,6 +3428,44 @@ function listingLimitFor(user=state.user){ return accountPlan(user?.accountPlan 
 function planLabel(plan){
   const selected = accountPlan(plan);
   return selected[state.lang] || selected.fr;
+}
+function formatProfileDate(value){
+  if(!value) return state.lang === "fr" ? "Non configuré" : "Not configured";
+  const date = new Date(value);
+  if(Number.isNaN(date.getTime())) return state.lang === "fr" ? "Non configuré" : "Not configured";
+  return date.toLocaleDateString(state.lang === "fr" ? "fr-FR" : "en-US", {day:"2-digit", month:"short", year:"numeric"});
+}
+function subscriptionPeriodEndFor(user){
+  if(user?.subscriptionCurrentPeriodEnd) return user.subscriptionCurrentPeriodEnd;
+  if(!hasActiveProSubscription(user) || !user?.subscriptionStarted) return null;
+  const started = new Date(user.subscriptionStarted);
+  if(Number.isNaN(started.getTime())) return null;
+  const end = new Date(started);
+  end.setMonth(end.getMonth() + 1);
+  return end.toISOString();
+}
+function subscriptionStatusLabel(user){
+  if(user?.accountType !== "business") return state.lang === "fr" ? "Compte gratuit" : "Free account";
+  if(user.subscriptionCancelAtPeriodEnd) return state.lang === "fr" ? "Annulation programmée" : "Cancellation scheduled";
+  return hasActiveProSubscription(user) ? t().proActive : t().proInactive;
+}
+function manageSubscription(){
+  const user = normalizeUser(state.user);
+  if(!user) return;
+  if(user.accountType !== "business"){
+    closeModal("profileModal");
+    openPricingInfo();
+    return;
+  }
+  if(user.stripeCustomerId){
+    showToast(state.lang === "fr"
+      ? "Le portail Stripe sera branché à l'étape Stripe."
+      : "Stripe portal will be connected in the Stripe step.");
+    return;
+  }
+  showToast(state.lang === "fr"
+    ? "Gestion et annulation arrivent avec Stripe Billing."
+    : "Manage and cancel arrives with Stripe Billing.");
 }
 function sellerTrustHTML(l){
   const rating = l.rating || (l.pro ? 4.9 : 4.8);
@@ -4728,6 +4774,7 @@ function renderProfile(){
       <button type="button" class="profile-stat" onclick="openProfileStat('messages')"><b>${Object.keys(chatThreads).length}</b><span>${t().conversations}</span></button>
       <button type="button" class="profile-stat" onclick="openProfileStat('rating')"><b>${Number(user.rating).toFixed(1)}</b><span>${t().ratingLabel}</span></button>
     </div>
+    ${subscriptionDashboardHTML(user, own)}
     <section class="profile-section">
       <h3>${state.lang==="fr" ? "Confiance" : "Trust"}</h3>
       <div class="trust-badges">
@@ -4774,6 +4821,48 @@ function renderProfile(){
       <button type="button" class="secondary-btn" onclick="logoutUser()">${t().logoutLabel}</button>
     </div>`;
   persistState();
+}
+
+function subscriptionDashboardHTML(user, own){
+  const plan = accountPlan(user.accountPlan);
+  const isBusiness = user.accountType === "business";
+  const proActive = hasActiveProSubscription(user);
+  const limit = listingLimitFor(user);
+  const used = publicationUsageCountFor(user);
+  const quota = Number.isFinite(limit) ? `${used} / ${limit}` : `${used} / ${state.lang === "fr" ? "Illimité" : "Unlimited"}`;
+  const periodEnd = subscriptionPeriodEndFor(user);
+  const renewal = isBusiness
+    ? (periodEnd ? formatProfileDate(periodEnd) : (state.lang === "fr" ? "Après connexion Stripe" : "After Stripe setup"))
+    : (state.lang === "fr" ? "Le 1er du mois" : "1st of the month");
+  const statusClass = proActive || !isBusiness ? "active" : "pending";
+  const statusText = subscriptionStatusLabel(user);
+  const paymentText = isBusiness
+    ? (proActive
+      ? (state.lang === "fr" ? "Votre compte Pro peut publier selon sa limite actuelle." : "Your Pro account can publish within its current limit.")
+      : (state.lang === "fr" ? "Paiement requis avant publication Pro." : "Payment is required before Pro publishing."))
+    : (state.lang === "fr" ? "Créer un compte et vendre vos objets personnels reste gratuit." : "Creating an account and selling personal items stays free.");
+  return `
+    <section class="subscription-card">
+      <div class="subscription-summary">
+        <h3>${state.lang === "fr" ? "Mon abonnement" : "My subscription"}</h3>
+        <div class="subscription-badges">
+          <span class="${statusClass}">${esc(statusText)}</span>
+          <span>${esc(planLabel(user.accountPlan))}</span>
+          <span>${esc(plan.price)}</span>
+        </div>
+        <p>${paymentText}</p>
+        <div class="subscription-actions">
+          <button type="button" class="primary-btn" onclick="closeModal('profileModal');openPricingInfo()">${state.lang === "fr" ? "Changer de plan" : "Change plan"}</button>
+          <button type="button" class="secondary-btn" onclick="manageSubscription()">${state.lang === "fr" ? "Gérer / annuler" : "Manage / cancel"}</button>
+        </div>
+      </div>
+      <div class="subscription-metrics">
+        <div class="subscription-metric"><span>${isBusiness ? (state.lang === "fr" ? "Annonces actives" : "Active listings") : (state.lang === "fr" ? "Annonces ce mois" : "Listings this month")}</span><b>${quota}</b></div>
+        <div class="subscription-metric"><span>${state.lang === "fr" ? "Renouvellement" : "Renewal"}</span><b>${esc(renewal)}</b></div>
+        <div class="subscription-metric"><span>${state.lang === "fr" ? "Statut paiement" : "Payment status"}</span><b>${esc(statusText)}</b></div>
+        <div class="subscription-metric"><span>${state.lang === "fr" ? "Type" : "Type"}</span><b>${isBusiness ? "Pro" : (state.lang === "fr" ? "Particulier" : "Personal")}</b></div>
+      </div>
+    </section>`;
 }
 
 function proDashboardHTML(user, own, proActive){
@@ -5423,6 +5512,10 @@ async function applySupabaseUser(sbUser){
     accountType,
     accountPlan: (profile && profile.account_plan) || (accountType === "business" ? "pro-starter" : "personal-free"),
     subscriptionStatus: (profile && profile.subscription_status) || (accountType === "business" ? "inactive" : "free"),
+    subscriptionStarted: profile && profile.subscription_started,
+    subscriptionCurrentPeriodEnd: profile && profile.subscription_current_period_end,
+    subscriptionCancelAtPeriodEnd: profile && profile.subscription_cancel_at_period_end,
+    stripeCustomerId: profile && profile.stripe_customer_id,
     businessName: (profile && profile.business_name) || "",
     businessPhone: (profile && profile.phone) || "",
     role: (profile && profile.role) || "user"

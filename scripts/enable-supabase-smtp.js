@@ -1,4 +1,4 @@
-const projectRef = process.env.SUPABASE_PROJECT_REF || "ujykgiitlcuqiiepsyiz";
+const projectRef = process.env.SUPABASE_PROJECT_REF || "npjkbhkmyfppmosforls";
 const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
 
 const smtpHost = process.env.SMTP_HOST || "smtp.resend.com";
