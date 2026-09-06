@@ -126,6 +126,43 @@
     display:inline-flex;align-items:center;justify-content:center;padding:0 4px;
   }
   .icon-btn.on .heart{color:var(--coral);}
+  /* Notification bell + dropdown */
+  .notif-wrap{position:relative;display:inline-flex;}
+  #notifBtn .n{background:var(--coral);}
+  .notif-panel{
+    position:absolute;top:calc(100% + 8px);right:0;z-index:60;
+    width:min(340px,86vw);max-height:min(440px,70vh);overflow:hidden;
+    display:flex;flex-direction:column;
+    background:var(--white);border:2px solid var(--line);border-radius:14px;
+    box-shadow:0 18px 50px rgba(19,42,46,.24);
+  }
+  .notif-panel-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:11px 13px;border-bottom:2px solid var(--line);background:var(--paper);
+  }
+  .notif-panel-head b{font-size:13px;}
+  .notif-clear{font-size:11.5px;font-weight:700;color:var(--sea-deep);text-decoration:underline;text-underline-offset:2px;cursor:pointer;}
+  .notif-list{overflow-y:auto;display:flex;flex-direction:column;}
+  .notif-empty{padding:22px 14px;color:var(--mute);font-size:13px;text-align:center;}
+  .notif-item{
+    display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;
+    text-align:left;padding:11px 13px;border-bottom:1.5px solid rgba(19,42,46,.1);
+    background:var(--white);cursor:pointer;width:100%;
+  }
+  .notif-item:last-child{border-bottom:none;}
+  .notif-item:hover{background:var(--paper);}
+  .notif-item.unseen{background:var(--paper-deep);}
+  .notif-ico{
+    width:28px;height:28px;border-radius:8px;border:1.5px solid var(--line);
+    display:grid;place-content:center;font-size:14px;background:var(--paper);
+  }
+  .notif-item-main{min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .notif-item-main b{font-size:12.5px;}
+  .notif-item-main span{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .notif-time{font-size:10.5px;color:var(--mute);white-space:nowrap;}
+  @media (max-width:640px){
+    .notif-panel{position:fixed;top:auto;bottom:10px;left:10px;right:10px;width:auto;max-height:60vh;}
+  }
   .avatar-dot{
     width:24px;height:24px;border-radius:50%;
     background:var(--ink);color:var(--white);
@@ -1444,6 +1481,20 @@
         <span class="label" data-i18n="messages">Messages</span>
         <span class="n" id="msgCount" hidden>0</span>
       </button>
+      <span class="notif-wrap">
+        <button type="button" class="icon-btn" id="notifBtn" onclick="toggleNotifPanel(event)" aria-expanded="false" aria-haspopup="true">
+          <span aria-hidden="true">&#128276;</span>
+          <span class="label" data-i18n="notifLabel">Alertes</span>
+          <span class="n" id="notifCount" hidden>0</span>
+        </button>
+        <div class="notif-panel" id="notifPanel" hidden role="menu" aria-label="Notifications">
+          <div class="notif-panel-head">
+            <b data-i18n="notifTitle">Notifications</b>
+            <button type="button" class="notif-clear" onclick="clearNotifications()" data-i18n="notifClear">Tout effacer</button>
+          </div>
+          <div class="notif-list" id="notifList"></div>
+        </div>
+      </span>
       <button type="button" class="icon-btn" id="profileBtn" onclick="openProfile()">
         <span class="avatar-dot" id="profileInitials">?</span>
         <span class="label" id="profileBtnLabel" data-i18n="profileLabel">Profil</span>
@@ -2550,6 +2601,7 @@ const I18N = {
   fr:{searchPh:"Que cherchez-vous ?",searchBtn:"Rechercher",postAd:"Déposer une annonce",postShort:"Déposer",favoris:"Favoris",messages:"Messages",
   socialGoogle:"Continuer avec Google",socialOr:"ou",
   inboxPick:"Choisissez une conversation pour répondre.",inboxSend:"Envoyer",inboxViewListing:"Voir l'annonce",inboxWrite:"Écrivez votre réponse…",
+  notifLabel:"Alertes",notifTitle:"Notifications",notifClear:"Tout effacer",
       pricingLabel:"Pricing",loginLabel:"Login",pricingKicker:"Gratuit pour vendre, payant pour les pros",pricingTitle:"Pricing",pricingIntro:"Créer un compte est gratuit. Publier et vendre vos objets personnels est gratuit. Les plans payants sont des abonnements pour les pros qui veulent plus de visibilité.",pricingPlansTitle:"Types de compte",pricingFreeNote:"Personal Free permet de publier gratuitement vos annonces personnelles. Les abonnements Pro ajoutent des outils business, des boosts et plus de visibilité.",authFreeTitle:"Créer un compte gratuit",authFreeText:"Publier une annonce personnelle reste gratuit. Les options Pro sont séparées dans Pricing.",authBadge:"Gratuit",createKicker:"Nouveau compte",loginKicker:"Connexion rapide",
   otpSentText:"Nous avons envoyé un code à votre email. Entrez-le ci-dessous pour activer votre compte.",otpCodeLabel:"Code de confirmation",otpConfirm:"Confirmer le code",otpResend:"Renvoyer le code",otpInvalid:"Code invalide ou expiré.",otpConfirmed:"Compte confirmé - bienvenue.",otpResent:"Nouveau code envoyé.",freeCreateAccount:"Créer un compte est gratuit.",freePostListing:"Publier quelque chose à vendre est gratuit.",freePersonalSelling:"Vendre vos objets personnels est gratuit.",loginWithEmail:"ou connectez-vous avec email",
       filters:"Filtres",filtersHint:"Trouvez plus vite l'annonce qui vous convient.",price:"Prix",side:"Côté de l'île",condition:"État",subcategoryLabel:"Sous-catégorie",allSubcategories:"Toutes les sous-catégories",sellerTypeLabel:"Type de vendeur",availabilityLabel:"Disponibilité",handoverFilterLabel:"Remise du produit",moreCriteria:"Autres critères",allSellers:"Tous les vendeurs",individualSeller:"Particuliers",professionalSeller:"Professionnels",allStatuses:"Tous les statuts",availableOnly:"Disponible maintenant",reservedOnly:"Réservé",soldOnly:"Vendu",allHandovers:"Tous les modes",urgentOnly:"Ventes urgentes",negotiableOnly:"Prix négociables",deliveryOnly:"Livraison disponible",resetFilters:"Tout effacer",activeFilters:n=>`${n} actif${n>1?"s":""}`,showResults:n=>`Voir ${n} annonce${n===1?"":"s"}`,filterSearch:"Rechercher",
@@ -2577,6 +2629,7 @@ const I18N = {
   en:{searchPh:"What are you looking for?",searchBtn:"Search",postAd:"Post an ad",postShort:"Post",favoris:"Saved",messages:"Messages",
   socialGoogle:"Continue with Google",socialOr:"or",
   inboxPick:"Pick a conversation to reply.",inboxSend:"Send",inboxViewListing:"View listing",inboxWrite:"Write your reply…",
+  notifLabel:"Alerts",notifTitle:"Notifications",notifClear:"Clear all",
       pricingLabel:"Pricing",loginLabel:"Login",pricingKicker:"Free to sell, paid for pros",pricingTitle:"Pricing",pricingIntro:"Creating an account is free. Posting and selling your personal items is free. Paid plans are subscriptions for pros who want more visibility.",pricingPlansTitle:"Account types",pricingFreeNote:"Personal Free lets you publish personal listings for free. Pro subscriptions add business tools, boosts, and more visibility.",authFreeTitle:"Create a free account",authFreeText:"Posting a personal listing stays free. Pro options live separately in Pricing.",authBadge:"Free",createKicker:"New account",loginKicker:"Fast login",
   otpSentText:"We sent a code to your email. Enter it below to activate your account.",otpCodeLabel:"Confirmation code",otpConfirm:"Confirm code",otpResend:"Resend code",otpInvalid:"Invalid or expired code.",otpConfirmed:"Account confirmed - welcome.",otpResent:"New code sent.",freeCreateAccount:"Creating an account is free.",freePostListing:"Posting something for sale is free.",freePersonalSelling:"Selling your personal items is free.",loginWithEmail:"or log in with email",
       filters:"Filters",filtersHint:"Find the right listing faster.",price:"Price",side:"Side of the island",condition:"Condition",subcategoryLabel:"Subcategory",allSubcategories:"All subcategories",sellerTypeLabel:"Seller type",availabilityLabel:"Availability",handoverFilterLabel:"Item handover",moreCriteria:"More criteria",allSellers:"All sellers",individualSeller:"Individuals",professionalSeller:"Businesses",allStatuses:"All statuses",availableOnly:"Available now",reservedOnly:"Reserved",soldOnly:"Sold",allHandovers:"All handover options",urgentOnly:"Urgent listings",negotiableOnly:"Negotiable prices",deliveryOnly:"Delivery available",resetFilters:"Clear all",activeFilters:n=>`${n} active`,showResults:n=>`Show ${n} listing${n!==1?"s":""}`,filterSearch:"Search",
@@ -3188,6 +3241,129 @@ let editingListingId = null;
 const chatThreads = {};
 let unreadMessageCount = 0;
 
+/* ================= NOTIFICATIONS (cloche + panneau) ================= */
+let notifications = [];          // { id, kind, title, text, at, seen, listingId, convKey }
+let notifPanelOpen = false;
+
+function notifIcon(kind){
+  return kind === "message" ? "✉️"
+    : kind === "listing_expiring" ? "⏳"
+    : kind === "listing_flagged" ? "⚠️"
+    : kind === "report" ? "✅"
+    : "🔔";
+}
+
+function unseenNotifCount(){
+  return notifications.filter(n=>!n.seen).length;
+}
+
+function refreshNotifBadge(){
+  const badge = document.getElementById("notifCount");
+  if(!badge) return;
+  const n = unseenNotifCount();
+  badge.textContent = String(n);
+  badge.hidden = n === 0;
+}
+
+function pushNotification(note){
+  const entry = {
+    id: note.id || ("n-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6)),
+    kind: note.kind || "generic",
+    title: note.title || "",
+    text: note.text || "",
+    at: note.at || new Date().toISOString(),
+    seen: false,
+    listingId: note.listingId ?? null,
+    convKey: note.convKey ?? null
+  };
+  if(entry.convKey && notifications.some(n=>!n.seen && n.convKey === entry.convKey && n.kind === entry.kind)){
+    // regroupe les messages non lus d'une même conversation
+    const prev = notifications.find(n=>!n.seen && n.convKey === entry.convKey && n.kind === entry.kind);
+    prev.text = entry.text; prev.at = entry.at;
+  }else{
+    notifications.unshift(entry);
+  }
+  notifications = notifications.slice(0, 40);
+  refreshNotifBadge();
+  if(notifPanelOpen) renderNotifPanel();
+}
+
+function renderNotifPanel(){
+  const list = document.getElementById("notifList");
+  if(!list) return;
+  if(!notifications.length){
+    list.innerHTML = `<p class="notif-empty">${state.lang==="fr" ? "Aucune notification." : "No notifications."}</p>`;
+    return;
+  }
+  list.innerHTML = notifications.map(n=>`
+    <button type="button" class="notif-item ${n.seen ? "" : "unseen"}" onclick="openNotification(${jsString(n.id)})">
+      <span class="notif-ico">${notifIcon(n.kind)}</span>
+      <span class="notif-item-main">
+        <b>${esc(n.title)}</b>
+        <span>${esc(n.text)}</span>
+      </span>
+      <span class="notif-time">${notifWhen(n.at)}</span>
+    </button>`).join("");
+}
+
+function notifWhen(at){
+  const d = new Date(at);
+  if(isNaN(d)) return "";
+  const mins = Math.round((Date.now() - d.getTime()) / 60000);
+  if(mins < 1) return state.lang==="fr" ? "à l'instant" : "now";
+  if(mins < 60) return mins + " min";
+  const hrs = Math.round(mins / 60);
+  if(hrs < 24) return hrs + " h";
+  return d.toLocaleDateString(state.lang==="fr" ? "fr-FR" : "en-US", {day:"2-digit", month:"2-digit"});
+}
+
+function toggleNotifPanel(e){
+  if(e) e.stopPropagation();
+  notifPanelOpen = !notifPanelOpen;
+  const panel = document.getElementById("notifPanel");
+  const btn = document.getElementById("notifBtn");
+  if(panel) panel.hidden = !notifPanelOpen;
+  if(btn) btn.setAttribute("aria-expanded", String(notifPanelOpen));
+  if(notifPanelOpen){
+    renderNotifPanel();
+    notifications.forEach(n=>{ n.seen = true; });
+    refreshNotifBadge();
+  }
+}
+
+function closeNotifPanel(){
+  if(!notifPanelOpen) return;
+  notifPanelOpen = false;
+  const panel = document.getElementById("notifPanel");
+  const btn = document.getElementById("notifBtn");
+  if(panel) panel.hidden = true;
+  if(btn) btn.setAttribute("aria-expanded", "false");
+}
+
+function clearNotifications(){
+  notifications = [];
+  refreshNotifBadge();
+  renderNotifPanel();
+}
+
+function openNotification(id){
+  const n = notifications.find(x=>x.id === id);
+  closeNotifPanel();
+  if(!n) return;
+  if(n.kind === "message"){
+    openMessages().then(()=>{ if(n.convKey && typeof openInboxThread === "function") openInboxThread(n.convKey); });
+  }else if(n.listingId){
+    openListing(n.listingId);
+  }
+}
+
+document.addEventListener("click", (e)=>{
+  if(notifPanelOpen && !e.target.closest(".notif-wrap")) closeNotifPanel();
+});
+document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeNotifPanel(); });
+
+Object.assign(window, { toggleNotifPanel, clearNotifications, openNotification });
+
 function setUnreadMessageCount(count){
   unreadMessageCount = Math.max(0, Number(count) || 0);
   const badge = document.getElementById("msgCount");
@@ -3204,6 +3380,28 @@ async function refreshMessageBadge(inbox){
   const conversations = inbox || await SB.fetchInbox();
   if(!conversations) return;
   setUnreadMessageCount(conversations.reduce((total, conversation)=>total + (Number(conversation.unread) || 0), 0));
+  seedMessageNotifications(conversations);
+}
+
+/* Une notification "message" par conversation ayant des messages non lus. */
+function seedMessageNotifications(conversations){
+  if(typeof pushNotification !== "function") return;
+  conversations.forEach(conv=>{
+    if(!conv.unread) return;
+    if(notifications.some(n=>n.convKey === conv.key && n.kind === "message")) return;
+    const last = conv.messages[conv.messages.length - 1];
+    const l = L.find(x=>String(x.id) === String(conv.listingId));
+    const fromName = conv.otherName || (l ? sellerName(l) : (state.lang==="fr" ? "un utilisateur" : "a user"));
+    pushNotification({
+      id: "seed-" + conv.key,
+      kind: "message",
+      title: (state.lang==="fr" ? "Message de " : "Message from ") + fromName,
+      text: last ? last.body : "",
+      at: conv.lastAt || new Date().toISOString(),
+      listingId: l ? l.id : conv.listingId,
+      convKey: conv.key
+    });
+  });
 }
 
 function loadLocalState(){
@@ -6418,9 +6616,19 @@ if (window.SB && SB.enabled()) {
       loadInbox();
     }
     setUnreadMessageCount(unreadMessageCount + 1);
-    showToast(state.lang === "fr"
-      ? "Nouveau message de " + (m.sender_name || (l ? sellerName(l) : "un utilisateur"))
-      : "New message from " + (m.sender_name || (l ? sellerName(l) : "a user")));
+    var fromName = m.sender_name || (l ? sellerName(l) : (state.lang === "fr" ? "un utilisateur" : "a user"));
+    var alreadyReading = activeConvKey === convKey && document.querySelector("#messagesModal.open");
+    if (!alreadyReading && typeof pushNotification === "function") {
+      pushNotification({
+        kind: "message",
+        title: (state.lang === "fr" ? "Nouveau message de " : "New message from ") + fromName,
+        text: m.body,
+        at: m.created_at,
+        listingId: l ? l.id : m.listing_id,
+        convKey: convKey
+      });
+    }
+    showToast((state.lang === "fr" ? "Nouveau message de " : "New message from ") + fromName);
   });
 }
 </script>
