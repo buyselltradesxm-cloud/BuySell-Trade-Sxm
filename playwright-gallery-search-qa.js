@@ -53,7 +53,16 @@ const { chromium } = require("playwright");
     if (after.main === before.main) errors.push(`${path}: clicking a thumbnail did not change the main image`);
     if (after.activeIndex !== 2) errors.push(`${path}: clicked thumbnail did not become active`);
     if (!after.mainLoaded) errors.push(`${path}: selected main image did not load`);
-    if (search.cards !== 5) errors.push(`${path}: car search returned ${search.cards} cards instead of 5`);
+    const expectedTitles = [
+      "Suzuki Jimny 2019, clim, 62 000 km",
+      "Renault Clio IV 2016, CT OK, 1re main",
+      "Hyundai i10 automatique à louer - journée ou semaine",
+      "Jantes 17\" + pneus été 205/45, jeu de 4"
+    ];
+    if (search.cards < expectedTitles.length) errors.push(`${path}: car search returned too few cards: ${search.cards}`);
+    for (const expectedTitle of expectedTitles) {
+      if (!search.titles.includes(expectedTitle)) errors.push(`${path}: car search missing "${expectedTitle}"`);
+    }
     if (!search.allImagesLoaded) errors.push(`${path}: car search has unloaded images`);
 
     results.push({ path, gallery: before, selected: after, search });

@@ -7,7 +7,7 @@ const { chromium } = require("playwright");
   for (const path of ["/", "/marketplace.html"]) {
     const page = await browser.newPage({ viewport:{ width:1280, height:900 } });
     page.on("pageerror", error => errors.push(`${path}: ${error.message}`));
-    await page.goto(`http://localhost:5173${path}?local=1&admin=1`, { waitUntil:"domcontentloaded" });
+    await page.goto(`http://localhost:5173${path}?local=1`, { waitUntil:"domcontentloaded" });
 
     await page.evaluate(() => {
       state.user = normalizeUser({

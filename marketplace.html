@@ -505,8 +505,8 @@
   @keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.35);}100%{transform:scale(1);}}
 
   .card .body{padding:11px 12px 13px;display:flex;flex-direction:column;gap:5px;flex:1;}
-  .card .price{font-weight:600;font-size:16px;display:flex;align-items:baseline;gap:7px;font-variant-numeric:tabular-nums;}
-  .card .price .alt{font-size:12.5px;font-weight:400;color:var(--mute);}
+  .card .price{font-weight:700;font-size:16px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-variant-numeric:tabular-nums;}
+  .card .price .alt{font-size:12px;font-weight:800;color:var(--sea-deep);background:var(--paper);border:1.5px solid rgba(19,42,46,.18);border-radius:999px;padding:2px 7px;}
   .card .price .drop{
     font-size:12px;font-weight:700;color:var(--white);background:var(--coral);
     width:17px;height:17px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
@@ -703,7 +703,9 @@
   .detail-photo img{width:100%;height:100%;min-height:300px;object-fit:cover;display:block;}
   .detail-media{align-self:start;}
   .detail-meta{display:flex;flex-direction:column;gap:12px;}
-  .detail-price{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;}
+  .detail-price{font-family:'Space Grotesk',sans-serif;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-variant-numeric:tabular-nums;}
+  .detail-price .amt{font-size:30px;font-weight:800;line-height:1;}
+  .detail-price .alt{font-size:15px;font-weight:800;color:var(--sea-deep);background:var(--paper);border:1.5px solid rgba(19,42,46,.18);border-radius:999px;padding:5px 10px;}
   .listing-primary{border-bottom:1.5px solid rgba(19,42,46,.18);padding-bottom:10px;}
   .listing-primary p{margin-top:4px;}
   .listing-extra{
@@ -1544,7 +1546,7 @@
       <button type="button" class="close-btn" onclick="closeModal('postModal')" aria-label="Fermer">x</button>
     </div>
     <div class="dialog-body">
-      <form class="form-panel" onsubmit="return createListing(event)">
+      <form class="form-panel" id="postForm" onsubmit="return createListing(event)">
         <div class="form-grid">
           <div class="field full" id="postPhotosField">
             <label data-i18n="photosLabel">Photos</label>
@@ -1661,7 +1663,7 @@
           </div>
         </div>
         <div class="detail-actions">
-          <button type="submit" class="primary-btn" data-i18n="postSubmit">Publier l'annonce</button>
+          <button type="submit" class="primary-btn" id="postSubmitBtn" data-i18n="postSubmit">Publier l'annonce</button>
           <button type="button" class="secondary-btn" onclick="closeModal('postModal')" data-i18n="cancelLabel">Annuler</button>
         </div>
       </form>
@@ -3081,6 +3083,7 @@ let pendingAfterPayment = null;
 let pendingSelectedProPlan = null;
 let pendingBoostListingId = null;
 let pendingBoostDays = 7;
+let editingListingId = null;
 
 const chatThreads = {};
 let unreadMessageCount = 0;
@@ -3180,7 +3183,7 @@ function applyLocalAdminTestMode(){
 
 /* ---------------- HELPERS ---------------- */
 const t = () => I18N[state.lang];
-const money = (n, c) => (c==="eur"?"€":"$") + n.toLocaleString(state.lang==="en"?"en-US":"fr-FR");
+const money = (n, c) => (c==="eur"?"€":"$") + Number(n || 0).toLocaleString("en-US");
 function esc(s){
   return String(s ?? "").replace(/[&<>"']/g, ch => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
@@ -3441,7 +3444,7 @@ function priceHTML(l){
   const secondary = listingCur==="eur" ? usd : eur;
   const dropLbl = state.lang==="en"?"price dropped":"prix en baisse";
   const drop = l.drop ? `<span class="drop" title="${dropLbl}" aria-label="${dropLbl}">&#8595;</span>` : "";
-  return `<span class="amt">${primary}</span><span class="alt">${secondary}</span>${drop}`;
+  return `<span class="amt">${primary}</span><span class="alt">≈ ${secondary}</span>${drop}`;
 }
 
 function agoHTML(h){
@@ -4084,6 +4087,7 @@ function openListing(id, syncUrl = true){
         ${chatHTML(l.id)}
         <div class="detail-actions">
           ${state.user ? "" : `<button type="button" class="primary-btn" onclick="requestListingLogin(${jsArg(l.id)})">${state.lang==="fr"?"Se connecter pour discuter":"Log in to chat"}</button>`}
+          ${isOwnListing(l) ? `<button type="button" class="secondary-btn" onclick="openEditListing(${jsArg(l.id)}, event)">${state.lang==="fr" ? "Modifier" : "Edit"}</button>` : ""}
           ${isOwnListing(l) && !l.sold ? `<button type="button" class="primary-btn" onclick="openBoostCheckout(${jsArg(l.id)}, event)">${t().boostCta}</button>` : ""}
           <button type="button" class="primary-btn" onclick="shareListing(${jsArg(l.id)}, event)">${t().shareLabel}</button>
           <button type="button" class="secondary-btn" onclick="toggleFavFromDetail(${jsArg(l.id)})">${state.favs.has(idKey(id))?t().savedLabel:t().saveLabel}</button>
@@ -5046,7 +5050,36 @@ function openPostModal(){
     if(state.user.accountType === "business") openPricingInfo();
     return;
   }
+  editingListingId = null;
   buildPostForm();
+  openModal("postModal");
+}
+
+function setPostModalMode(isEditing){
+  const title = document.getElementById("postTitle");
+  const submit = document.getElementById("postSubmitBtn");
+  if(title){
+    title.textContent = isEditing
+      ? (state.lang==="fr" ? "Modifier l'annonce" : "Edit listing")
+      : (state.lang==="fr" ? "Déposer une annonce" : "Post an ad");
+  }
+  if(submit){
+    submit.textContent = isEditing
+      ? (state.lang==="fr" ? "Enregistrer les modifications" : "Save changes")
+      : t().postSubmit;
+  }
+}
+
+function openEditListing(id, e){
+  if(e) e.stopPropagation();
+  const listing = L.find(item=>idKey(item.id)===idKey(id));
+  if(!listing || !isOwnListing(listing)){
+    showToast(state.lang==="fr" ? "Vous ne pouvez modifier que vos propres annonces." : "You can only edit your own listings.");
+    return;
+  }
+  editingListingId = listing.id;
+  closeModal("detailModal");
+  buildPostForm(listing);
   openModal("postModal");
 }
 
@@ -5437,8 +5470,11 @@ async function loginAccount(e){
   return false;
 }
 
-function buildPostForm(){
-  selectedPostPhotos = [];
+function buildPostForm(listing=null){
+  const form = document.getElementById("postForm");
+  if(form) form.reset();
+  selectedPostPhotos = listing?.photos ? [...listing.photos] : [];
+  selectedPostFiles = [];
   document.getElementById("photoPreview").innerHTML = "";
   document.getElementById("newPhotos").value = "";
   wirePostFormEvents();
@@ -5449,7 +5485,40 @@ function buildPostForm(){
   buildPostSubcats();
   buildPostAreas();
   buildVehicleSelectors();
+  if(listing) fillPostForm(listing);
   applyPostFieldProfile();
+  renderPhotoPreview();
+  setPostModalMode(!!listing);
+}
+
+function fillPostForm(l){
+  document.getElementById("newTitle").value = l.t || "";
+  document.getElementById("newCat").value = l.cat || "autres";
+  buildPostSubcats();
+  if(l.sub && !document.getElementById("newSubcatField").hidden) document.getElementById("newSubcat").value = l.sub;
+  buildPostAreas();
+  if(l.area) document.getElementById("newArea").value = l.area;
+  syncPostSideFromArea();
+  applyPostFieldProfile();
+  if(document.getElementById("newPrice")) document.getElementById("newPrice").value = l.price || (l.cur === "usd" ? l.usd : l.eur) || "";
+  if(document.getElementById("newCur")) document.getElementById("newCur").value = l.cur || (l.side === "nl" ? "usd" : "eur");
+  if(l.cond && document.getElementById("newCond")) document.getElementById("newCond").value = l.cond;
+  if(l.delivery && document.getElementById("newDelivery")) document.getElementById("newDelivery").value = l.delivery;
+  if(l.meetup && document.getElementById("newMeetup")) document.getElementById("newMeetup").value = l.meetup;
+  document.getElementById("newNegotiable").checked = !!l.negotiable;
+  document.getElementById("newUrgent").checked = !!l.urgent;
+  document.getElementById("newSafeMeet").checked = l.safeMeet !== false;
+  document.getElementById("newDesc").value = l.desc || "";
+  if(l.vehicle){
+    document.getElementById("newVehicleYear").value = l.vehicle.year || "";
+    document.getElementById("newVehicleKm").value = l.vehicle.km || "";
+    document.getElementById("newVehicleColor").value = l.vehicle.color || "";
+    document.getElementById("newVehicleFuel").value = l.vehicle.fuel || "gas";
+    document.getElementById("newVehicleTransmission").value = l.vehicle.transmission || "automatic";
+    document.getElementById("newVehicleBody").value = l.vehicle.body || "";
+    document.getElementById("newVehicleMechanical").value = l.vehicle.mechanical || "";
+    document.getElementById("newVehicleDocs").value = l.vehicle.docs || "";
+  }
 }
 
 function wirePostFormEvents(){
@@ -5632,8 +5701,13 @@ function removePostPhoto(index){
 
 async function createListing(e){
   e.preventDefault();
+  const editing = editingListingId ? L.find(item=>idKey(item.id)===idKey(editingListingId)) : null;
+  if(editingListingId && (!editing || !isOwnListing(editing))){
+    showToast(state.lang==="fr" ? "Modification impossible." : "Could not edit this listing.");
+    return false;
+  }
   const listingLimit = listingLimitFor(state.user);
-  if(Number.isFinite(listingLimit) && publicationUsageCountFor(state.user) >= listingLimit){
+  if(!editing && Number.isFinite(listingLimit) && publicationUsageCountFor(state.user) >= listingLimit){
     showToast(publicationLimitMessage(listingLimit, true));
     closeModal("postModal");
     return false;
@@ -5661,10 +5735,12 @@ async function createListing(e){
     docs:document.getElementById("newVehicleDocs").value.trim()
   } : null;
   const listing = {
-    id:Date.now(),
-    createdAt:new Date().toISOString(),
-    ownerId:state.user.id,
-    sellerName:state.user.name,
+    ...(editing || {}),
+    id:editing ? editing.id : Date.now(),
+    createdAt:editing?.createdAt || new Date().toISOString(),
+    ownerId:editing?.ownerId || state.user.id,
+    sellerId:editing?.sellerId || (state.user.provider === "supabase" ? state.user.id : undefined),
+    sellerName:editing?.sellerName || state.user.name,
     t:document.getElementById("newTitle").value.trim(),
     cat, side, area,
     sub,
@@ -5682,8 +5758,9 @@ async function createListing(e){
     photos:profile.photos ? [...selectedPostPhotos] : [],
     desc:document.getElementById("newDesc").value.trim(),
     vehicle,
-    pro:hasActiveProSubscription(state.user),
-    urgent:profile.urgent && document.getElementById("newUrgent").checked, feat:true
+    pro:editing?.pro ?? hasActiveProSubscription(state.user),
+    urgent:profile.urgent && document.getElementById("newUrgent").checked,
+    feat:editing?.feat ?? true
   };
 
   // Supabase : upload des photos dans Storage puis insertion en base.
@@ -5693,26 +5770,39 @@ async function createListing(e){
     const submitBtn = e.target.querySelector("button[type=submit]");
     if(submitBtn){ submitBtn.disabled = true; }
     try {
-      const urls = profile.photos ? await SB.uploadPhotos(selectedPostFiles) : [];
+      const urls = profile.photos && selectedPostFiles.length ? await SB.uploadPhotos(selectedPostFiles) : [];
       if(urls.length) listing.photos = urls;
-      published = await SB.insertListing(listing);
+      published = editing ? await SB.updateListing(listing) : await SB.insertListing(listing);
     } catch(err){ console.warn("[post] Supabase KO, fallback local:", err); }
     if(submitBtn){ submitBtn.disabled = false; }
+    if(editing && !published){
+      showToast(state.lang==="fr" ? "Annonce non modifiée. Réessayez." : "Listing not updated. Please try again.");
+      return false;
+    }
   }
 
   const finalListing = published || listing;
-  if(!published){
+  if(editing){
+    const lIndex = L.findIndex(item=>idKey(item.id)===idKey(editing.id));
+    if(lIndex >= 0) L[lIndex] = finalListing;
+    const uIndex = userListings.findIndex(item=>idKey(item.id)===idKey(editing.id));
+    if(uIndex >= 0) userListings[uIndex] = finalListing;
+    else if(!published) userListings.unshift(finalListing);
+    persistState();
+  } else if(!published){
     userListings.unshift(finalListing);
     persistState();
+    L.unshift(finalListing);
   }
-  L.unshift(finalListing);
   e.target.reset();
   selectedPostPhotos = [];
   selectedPostFiles = [];
+  editingListingId = null;
+  setPostModalMode(false);
   document.getElementById("photoPreview").innerHTML = "";
   closeModal("postModal");
   render();
-  showToast(t().listingPublished);
+  showToast(editing ? (state.lang==="fr" ? "Annonce modifiée" : "Listing updated") : t().listingPublished);
   setTimeout(()=>openListing(finalListing.id), 250);
   return false;
 }
