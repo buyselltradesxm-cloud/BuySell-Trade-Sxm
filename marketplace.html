@@ -899,8 +899,6 @@
   .vehicle-fields h3{font-size:16px;font-family:'Space Grotesk',sans-serif;}
   .vehicle-fields p{font-size:12.5px;color:var(--mute);font-weight:700;line-height:1.4;}
   .vehicle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-  .vehicle-description-grid{display:grid;grid-template-columns:1fr;gap:12px;}
-  .vehicle-description-grid textarea{min-height:78px;}
   .business-extra{display:none;grid-column:1/-1;grid-template-columns:repeat(2,1fr);gap:12px;}
   .business-extra.show{display:grid;}
   .upload-box{
@@ -1594,7 +1592,7 @@
           <section class="vehicle-fields" id="vehicleFields" aria-live="polite">
             <div>
               <h3 data-i18n="vehicleInfoTitle">Informations véhicule</h3>
-              <p data-i18n="vehicleInfoHelp">Ajoutez les détails qui rassurent les acheteurs: année, kilométrage, couleur, moteur, transmission, état, mécanique et papiers.</p>
+              <p data-i18n="vehicleInfoHelp">Ajoutez les détails essentiels: année, kilométrage, couleur, motorisation et transmission.</p>
             </div>
             <div class="vehicle-grid">
               <div class="field">
@@ -1618,38 +1616,8 @@
                 <select id="newVehicleTransmission"></select>
               </div>
             </div>
-            <div class="vehicle-description-grid">
-              <div class="field">
-                <label for="newVehicleBody" data-i18n="vehicleBodyLabel">État intérieur / extérieur</label>
-                <textarea id="newVehicleBody" data-i18n-ph="vehicleBodyPh" placeholder="Carrosserie, intérieur, pneus, rayures, entretien visible"></textarea>
-              </div>
-              <div class="field">
-                <label for="newVehicleMechanical" data-i18n="vehicleMechanicalLabel">Mécanique & entretien</label>
-                <textarea id="newVehicleMechanical" data-i18n-ph="vehicleMechanicalPh" placeholder="Moteur, batterie, freins, dernières réparations, carnet d'entretien"></textarea>
-              </div>
-              <div class="field">
-                <label for="newVehicleDocs" data-i18n="vehicleDocsLabel">Papiers & disponibilité</label>
-                <textarea id="newVehicleDocs" data-i18n-ph="vehicleDocsPh" placeholder="Carte grise, assurance, contrôle technique, import, essai possible"></textarea>
-              </div>
-            </div>
           </section>
-          <div class="field" id="postDeliveryField">
-            <label for="newDelivery" data-i18n="deliveryLabel">Remise</label>
-            <select id="newDelivery">
-              <option value="pickup" data-i18n="pickupOnly">Retrait uniquement</option>
-              <option value="delivery" data-i18n="deliveryPossible">Livraison possible</option>
-              <option value="meetup" data-i18n="meetupPossible">Rendez-vous possible</option>
-            </select>
-          </div>
           <input id="newSide" type="hidden" value="fr">
-          <div class="field" id="postMeetupField">
-            <label for="newMeetup" data-i18n="meetupLabel">Lieu préféré</label>
-            <select id="newMeetup">
-              <option value="public" data-i18n="publicMeetup">Lieu public</option>
-              <option value="seller" data-i18n="sellerPlace">Chez le vendeur</option>
-              <option value="buyer" data-i18n="buyerPlace">Chez l'acheteur</option>
-            </select>
-          </div>
           <div class="field full" id="postOptionsField">
             <div class="post-options">
               <label class="post-option" id="postNegotiableOption"><input id="newNegotiable" type="checkbox" checked> <span data-i18n="negotiableLabel">Prix négociable</span></label>
@@ -5503,8 +5471,6 @@ function fillPostForm(l){
   if(document.getElementById("newPrice")) document.getElementById("newPrice").value = l.price || (l.cur === "usd" ? l.usd : l.eur) || "";
   if(document.getElementById("newCur")) document.getElementById("newCur").value = l.cur || (l.side === "nl" ? "usd" : "eur");
   if(l.cond && document.getElementById("newCond")) document.getElementById("newCond").value = l.cond;
-  if(l.delivery && document.getElementById("newDelivery")) document.getElementById("newDelivery").value = l.delivery;
-  if(l.meetup && document.getElementById("newMeetup")) document.getElementById("newMeetup").value = l.meetup;
   document.getElementById("newNegotiable").checked = !!l.negotiable;
   document.getElementById("newUrgent").checked = !!l.urgent;
   document.getElementById("newSafeMeet").checked = l.safeMeet !== false;
@@ -5515,9 +5481,6 @@ function fillPostForm(l){
     document.getElementById("newVehicleColor").value = l.vehicle.color || "";
     document.getElementById("newVehicleFuel").value = l.vehicle.fuel || "gas";
     document.getElementById("newVehicleTransmission").value = l.vehicle.transmission || "automatic";
-    document.getElementById("newVehicleBody").value = l.vehicle.body || "";
-    document.getElementById("newVehicleMechanical").value = l.vehicle.mechanical || "";
-    document.getElementById("newVehicleDocs").value = l.vehicle.docs || "";
   }
 }
 
@@ -5574,8 +5537,6 @@ function applyPostFieldProfile(){
   setPostFieldVisibility("postPriceField", profile.price, "newPrice");
   setPostFieldVisibility("postCurrencyField", profile.price);
   setPostFieldVisibility("postConditionField", profile.condition, "newCond");
-  setPostFieldVisibility("postDeliveryField", profile.delivery);
-  setPostFieldVisibility("postMeetupField", profile.meetup);
   setPostOptionVisibility("postNegotiableOption", "newNegotiable", profile.negotiable);
   setPostOptionVisibility("postUrgentOption", "newUrgent", profile.urgent);
   setPostOptionVisibility("postSafeMeetOption", "newSafeMeet", profile.safeMeet);
@@ -5730,9 +5691,9 @@ async function createListing(e){
     color:document.getElementById("newVehicleColor").value.trim(),
     fuel:document.getElementById("newVehicleFuel").value,
     transmission:document.getElementById("newVehicleTransmission").value,
-    body:document.getElementById("newVehicleBody").value.trim(),
-    mechanical:document.getElementById("newVehicleMechanical").value.trim(),
-    docs:document.getElementById("newVehicleDocs").value.trim()
+    body:"",
+    mechanical:"",
+    docs:""
   } : null;
   const listing = {
     ...(editing || {}),
@@ -5748,8 +5709,8 @@ async function createListing(e){
     cur, price,
     eur:cur==="eur" ? price : Math.round(price * .92),
     usd:cur==="usd" ? price : Math.round(price * 1.08),
-    delivery:profile.delivery ? document.getElementById("newDelivery").value : null,
-    meetup:profile.meetup ? document.getElementById("newMeetup").value : null,
+    delivery:null,
+    meetup:null,
     negotiable:profile.negotiable && document.getElementById("newNegotiable").checked,
     safeMeet:profile.safeMeet && document.getElementById("newSafeMeet").checked,
     noPrice:!profile.price,
