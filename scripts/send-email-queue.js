@@ -55,6 +55,7 @@ function listingRenewalEmail(row, siteUrl) {
 <html lang="fr">
   <body style="font-family:Arial,sans-serif;color:#092126;background:#f8f3ea;padding:24px;">
     <main style="max-width:620px;margin:auto;background:#fff;border:2px solid #092126;border-radius:12px;padding:24px;">
+      <p style="font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#0f7c8a;font-weight:700;margin:0 0 10px;">Buy Sell Trade SXM</p>
       <h1 style="font-size:24px;margin:0 0 12px;">Votre annonce est-elle encore disponible ?</h1>
       <p style="font-size:16px;line-height:1.5;">L'annonce <strong>${safeTitle}</strong> a atteint 30 jours sur Buy Sell Trade SXM.</p>
       <p style="font-size:16px;line-height:1.5;">Choisissez une action pour garder la marketplace propre et eviter les annonces qui ne sont plus disponibles.</p>
@@ -64,12 +65,22 @@ function listingRenewalEmail(row, siteUrl) {
         <a href="${deleteUrl}" style="display:inline-block;background:#ffe0dd;color:#092126;border:2px solid #092126;border-radius:10px;padding:12px 16px;font-weight:700;text-decoration:none;margin:0 8px 8px 0;">Supprimer</a>
       </p>
       <p style="font-size:14px;color:#526366;">Sans reponse, l'annonce pourra etre cachee automatiquement apres quelques jours.</p>
+      <hr style="border:0;border-top:1px solid #d8dedc;margin:28px 0;">
+      <h2 style="font-size:22px;margin:0 0 12px;">Is your listing still available?</h2>
+      <p style="font-size:16px;line-height:1.5;">The listing <strong>${safeTitle}</strong> has reached 30 days on Buy Sell Trade SXM.</p>
+      <p style="font-size:16px;line-height:1.5;">Please choose an action so buyers do not see items that are no longer available.</p>
+      <p style="margin:24px 0;">
+        <a href="${keepUrl}" style="display:inline-block;background:#ffc400;color:#092126;border:2px solid #092126;border-radius:10px;padding:12px 16px;font-weight:700;text-decoration:none;margin:0 8px 8px 0;">Yes, keep the listing</a>
+        <a href="${soldUrl}" style="display:inline-block;background:#0f7c8a;color:#fff;border:2px solid #092126;border-radius:10px;padding:12px 16px;font-weight:700;text-decoration:none;margin:0 8px 8px 0;">Mark as sold</a>
+        <a href="${deleteUrl}" style="display:inline-block;background:#ffe0dd;color:#092126;border:2px solid #092126;border-radius:10px;padding:12px 16px;font-weight:700;text-decoration:none;margin:0 8px 8px 0;">Delete</a>
+      </p>
+      <p style="font-size:14px;color:#526366;">Without a response, the listing may be hidden automatically after a few days.</p>
     </main>
   </body>
 </html>`;
 
   return {
-    subject: row.subject || "Votre annonce est-elle encore disponible ?",
+    subject: "Votre annonce est-elle encore disponible ? / Is your listing still available?",
     html,
     text: textOnly(html)
   };
