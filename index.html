@@ -1200,6 +1200,29 @@
   }
   .pro-status .active{background:var(--sea);color:var(--white);}
   .pro-status .pending{background:var(--sun);color:var(--ink);}
+  .subscription-card{
+    display:grid;grid-template-columns:1.1fr .9fr;gap:12px;align-items:stretch;
+    border:2px solid var(--line);border-radius:12px;background:var(--paper);
+    padding:13px;margin-top:12px;
+  }
+  .subscription-summary{display:grid;gap:7px;}
+  .subscription-summary h3{font-size:16px;margin:0;}
+  .subscription-summary p{font-size:13px;color:var(--mute);line-height:1.45;}
+  .subscription-badges{display:flex;flex-wrap:wrap;gap:7px;}
+  .subscription-badges span{
+    border:1.5px solid var(--line);border-radius:8px;background:var(--white);
+    padding:6px 8px;font-size:12px;font-weight:900;
+  }
+  .subscription-badges .active{background:var(--sea);color:var(--white);}
+  .subscription-badges .pending{background:var(--sun);color:var(--ink);}
+  .subscription-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+  .subscription-metric{
+    border:1.5px solid var(--line);border-radius:9px;background:var(--white);
+    padding:10px;display:grid;gap:2px;
+  }
+  .subscription-metric span{font-size:11.5px;color:var(--mute);font-weight:800;}
+  .subscription-metric b{font-family:'Space Grotesk',sans-serif;font-size:15px;}
+  .subscription-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
   .payment-summary{
     border:2px solid var(--line);border-radius:13px;background:var(--white);
     padding:15px;display:grid;gap:10px;margin-bottom:14px;
@@ -1317,6 +1340,7 @@
     .auth-badge{width:max-content;}
     .profile-stats{grid-template-columns:repeat(2,1fr);}
     .profile-tools{grid-template-columns:1fr;}
+    .subscription-card,.subscription-metrics{grid-template-columns:1fr;}
     .pro-dashboard{grid-template-columns:1fr;}
     .admin-metrics,.admin-grid{grid-template-columns:1fr;}
     .admin-row,.admin-row.no-img{grid-template-columns:1fr;}
@@ -2509,6 +2533,7 @@ function usesVehicleFields(cat, sub){
 const I18N = {
   fr:{searchPh:"Que cherchez-vous ?",searchBtn:"Rechercher",postAd:"Déposer une annonce",postShort:"Déposer",favoris:"Favoris",messages:"Messages",
   socialGoogle:"Continuer avec Google",socialOr:"ou",
+  inboxPick:"Choisissez une conversation pour répondre.",inboxSend:"Envoyer",inboxViewListing:"Voir l'annonce",inboxWrite:"Écrivez votre réponse…",
       pricingLabel:"Pricing",loginLabel:"Login",pricingKicker:"Gratuit pour vendre, payant pour les pros",pricingTitle:"Pricing",pricingIntro:"Créer un compte est gratuit. Publier et vendre vos objets personnels est gratuit. Les plans payants sont des abonnements pour les pros qui veulent plus de visibilité.",pricingPlansTitle:"Types de compte",pricingFreeNote:"Personal Free permet de publier gratuitement vos annonces personnelles. Les abonnements Pro ajoutent des outils business, des boosts et plus de visibilité.",authFreeTitle:"Créer un compte gratuit",authFreeText:"Publier une annonce personnelle reste gratuit. Les options Pro sont séparées dans Pricing.",authBadge:"Gratuit",createKicker:"Nouveau compte",loginKicker:"Connexion rapide",otpSentText:"Nous avons envoyé un code à votre email. Entrez-le ci-dessous pour activer votre compte.",otpCodeLabel:"Code de confirmation",otpConfirm:"Confirmer le code",otpResend:"Renvoyer le code",otpInvalid:"Code invalide ou expiré.",otpConfirmed:"Compte confirmé - bienvenue.",otpResent:"Nouveau code envoyé.",freeCreateAccount:"Créer un compte est gratuit.",freePostListing:"Publier quelque chose à vendre est gratuit.",freePersonalSelling:"Vendre vos objets personnels est gratuit.",loginWithEmail:"ou connectez-vous avec email",
       filters:"Filtres",filtersHint:"Trouvez plus vite l'annonce qui vous convient.",price:"Prix",side:"Côté de l'île",condition:"État",subcategoryLabel:"Sous-catégorie",allSubcategories:"Toutes les sous-catégories",sellerTypeLabel:"Type de vendeur",availabilityLabel:"Disponibilité",handoverFilterLabel:"Remise du produit",moreCriteria:"Autres critères",allSellers:"Tous les vendeurs",individualSeller:"Particuliers",professionalSeller:"Professionnels",allStatuses:"Tous les statuts",availableOnly:"Disponible maintenant",reservedOnly:"Réservé",soldOnly:"Vendu",allHandovers:"Tous les modes",urgentOnly:"Ventes urgentes",negotiableOnly:"Prix négociables",deliveryOnly:"Livraison disponible",resetFilters:"Tout effacer",activeFilters:n=>`${n} actif${n>1?"s":""}`,showResults:n=>`Voir ${n} annonce${n===1?"":"s"}`,filterSearch:"Rechercher",
       allIsland:"Toute l'île",browseLabel:"Parcourir",listingLabel:"Annonce",titleLabel:"Titre",titlePh:"Ex: Scooter 125 en bon état",categoryLabel:"Catégorie",areaLabel:"Zone",currencyLabel:"Devise",photosLabel:"Photos",uploadPhotos:"Ajouter des photos",photosHelp:"Ajoutez jusqu'à 8 photos réelles de l'objet. La première photo sera utilisée comme image principale.",deliveryLabel:"Remise",pickupOnly:"Retrait uniquement",deliveryPossible:"Livraison possible",meetupPossible:"Rendez-vous possible",meetupLabel:"Lieu préféré",publicMeetup:"Lieu public",sellerPlace:"Chez le vendeur",buyerPlace:"Chez l'acheteur",negotiableLabel:"Prix négociable",urgentSaleLabel:"Vente urgente",safeMeetLabel:"Rendez-vous sécurisé",photoRequired:"Ajoutez au moins une photo réelle pour publier.",tooManyPhotos:"Maximum 8 photos par annonce.",sideLabel:"Côté",descLabel:"Description",descPh:"Ajoutez les détails utiles: état, quantité, livraison et point de rendez-vous",postSubmit:"Publier l'annonce",cancelLabel:"Annuler",sellerPro:"Vendeur pro",sellerLocal:"Vendeur local",quickMessage:"Chat avec le vendeur",chatOnline:"Réponse instantanée",chatPlaceholder:"Écrivez votre message au vendeur",chatSend:"Envoyer",sellerTyping:"Le vendeur répond...",instantReply:"Oui, c'est disponible. On peut s'organiser ici dans le chat.",loginToChat:"Connectez-vous pour envoyer un message au vendeur.",shareLabel:"Partager",shareTitle:"Partager cette annonce",shareHelp:"Copiez le lien ou envoyez-le directement pour que quelqu'un ouvre cette annonce.",copyLink:"Copier le lien",linkCopied:"Lien copié",shareText:"Regarde cette annonce sur Buy Sell Trade Sxm",shareFailed:"Impossible de partager. Le lien a été copié.",savedLabel:"Enregistré",saveLabel:"Enregistrer",removedToast:"Retiré",savedToast:"Enregistré",messageReady:"Message envoyé",listingPublished:"Annonce publiée",defaultMessage:"Bonjour, votre annonce est-elle toujours disponible ?",subcatHint:"Affinez sans perdre le fil.",footerMarket:"Marketplace",footerTrust:"Confiance & sécurité",footerLang:"Français et anglais",profileLabel:"Profil",profileTitle:"Mon profil",profileRequired:"Connectez-vous pour voir votre profil.",memberSince:"Membre depuis",verifiedEmail:"Email vérifié",trustedMember:"Membre de confiance",fastReply:"Réponse rapide",profileListings:"Mes annonces",profileNoListings:"Vous n'avez pas encore publié d'annonce.",activeListings:"Annonces",savedItems:"Favoris",conversations:"Messages",ratingLabel:"Note",editProfile:"Modifier le profil",logoutLabel:"Se déconnecter",boostPageTitle:"Boost & Pro",boostKicker:"Visibilité payante",boostHeroTitle:"Faites voir vos annonces aux bons acheteurs",boostHeroText:"Les annonces classiques restent gratuites pour les particuliers. Les boosts et comptes Pro sont des options payantes pour vendre plus vite, afficher plus d'annonces et obtenir plus de contacts.",boostFreeTitle:"Annonce gratuite",boostFreeText:"Pour vendre un objet occasionnellement: photos, prix, quartier, chat avec l'acheteur et partage du lien.",boostPaidTitle:"Boost payant",boostPaidText:"Le vendeur choisit une annonce, sélectionne une durée de mise en avant, paie, puis l'annonce reçoit le badge Sponsorisé et apparaît plus haut sur la page.",boostProTitle:"Compte Pro business",boostProText:"Pour les commerces: page business, badge Pro, plus d'annonces, statistiques, messages centralisés et options de visibilité régulières.",boostStepsTitle:"Comment ça marche",boostStep1:"Choisir l'annonce à promouvoir.",boostStep2:"Choisir la durée: 3, 7 ou 14 jours.",boostStep3:"Payer avant l'activation.",boostStep4:"Suivre les vues, favoris et messages.",boostPaymentTitle:"Paiement requis",boostPaymentText:"Aucune annonce n'est mise en avant sans paiement confirmé. Les prix seront ajoutés avant le lancement officiel.",boostTrustTitle:"Confiance vendeur",boostTrustText:"Après une discussion ou une vente, les acheteurs pourront noter le vendeur. Les profils sérieux seront plus rassurants pour les prochains acheteurs.",boostPriceSoon:"Prix à définir",boostPriceText:"On peut déjà construire le parcours paiement avec des prix temporaires masqués, puis brancher Stripe quand les tarifs sont validés.",accountTitle:"Compte requis",newAccountTitle:"Nouveau sur Buy Sell Trade Sxm",newAccountHelp:"Créez un compte particulier ou professionnel pour publier, gérer vos messages et protéger la communauté.",loginTitle:"J'ai déjà un compte",loginHelp:"Connectez-vous pour reprendre vos annonces, vos favoris et vos conversations.",passwordLabel:"Mot de passe",confirmPasswordLabel:"Confirmer le mot de passe",accountTypeLabel:"Type de compte",personalAccount:"Particulier",businessAccount:"Professionnel",businessNameLabel:"Nom du commerce",passwordMismatch:"Les mots de passe ne correspondent pas.",emailExists:"Un compte existe déjà avec cet email.",invalidLogin:"Email ou mot de passe incorrect.",loginSubmit:"Se connecter",loginToast:"Connexion réussie",accountName:"Nom",accountEmail:"Email",accountHelp:"Un compte est obligatoire pour déposer une annonce, contacter un vendeur et protéger la communauté.",accountSubmit:"Créer mon compte",comingSoon:"Bientôt disponible",safetyBanner:"Objets illégaux interdits: armes, drogues, contrefaçons et articles dangereux. Toute violation peut entraîner un bannissement définitif.",illegalPolicy:"Les objets illégaux, armes, drogues, contrefaçons, produits volés et articles dangereux sont strictement interdits. Les comptes en infraction peuvent être supprimés et bannis définitivement.",
@@ -2534,6 +2559,7 @@ const I18N = {
       dlOn:"Télécharger sur",getOn:"Disponible sur"},
   en:{searchPh:"What are you looking for?",searchBtn:"Search",postAd:"Post an ad",postShort:"Post",favoris:"Saved",messages:"Messages",
   socialGoogle:"Continue with Google",socialOr:"or",
+  inboxPick:"Pick a conversation to reply.",inboxSend:"Send",inboxViewListing:"View listing",inboxWrite:"Write your reply…",
       pricingLabel:"Pricing",loginLabel:"Login",pricingKicker:"Free to sell, paid for pros",pricingTitle:"Pricing",pricingIntro:"Creating an account is free. Posting and selling your personal items is free. Paid plans are subscriptions for pros who want more visibility.",pricingPlansTitle:"Account types",pricingFreeNote:"Personal Free lets you publish personal listings for free. Pro subscriptions add business tools, boosts, and more visibility.",authFreeTitle:"Create a free account",authFreeText:"Posting a personal listing stays free. Pro options live separately in Pricing.",authBadge:"Free",createKicker:"New account",loginKicker:"Fast login",otpSentText:"We sent a code to your email. Enter it below to activate your account.",otpCodeLabel:"Confirmation code",otpConfirm:"Confirm code",otpResend:"Resend code",otpInvalid:"Invalid or expired code.",otpConfirmed:"Account confirmed - welcome.",otpResent:"New code sent.",freeCreateAccount:"Creating an account is free.",freePostListing:"Posting something for sale is free.",freePersonalSelling:"Selling your personal items is free.",loginWithEmail:"or log in with email",
       filters:"Filters",filtersHint:"Find the right listing faster.",price:"Price",side:"Side of the island",condition:"Condition",subcategoryLabel:"Subcategory",allSubcategories:"All subcategories",sellerTypeLabel:"Seller type",availabilityLabel:"Availability",handoverFilterLabel:"Item handover",moreCriteria:"More criteria",allSellers:"All sellers",individualSeller:"Individuals",professionalSeller:"Businesses",allStatuses:"All statuses",availableOnly:"Available now",reservedOnly:"Reserved",soldOnly:"Sold",allHandovers:"All handover options",urgentOnly:"Urgent listings",negotiableOnly:"Negotiable prices",deliveryOnly:"Delivery available",resetFilters:"Clear all",activeFilters:n=>`${n} active`,showResults:n=>`Show ${n} listing${n!==1?"s":""}`,filterSearch:"Search",
       allIsland:"Whole island",browseLabel:"Browse",listingLabel:"Listing",titleLabel:"Title",titlePh:"Ex: 125cc scooter in good condition",categoryLabel:"Category",areaLabel:"Area",currencyLabel:"Currency",photosLabel:"Photos",uploadPhotos:"Add photos",photosHelp:"Add up to 8 real photos of the item. The first photo becomes the main listing image.",deliveryLabel:"Handover",pickupOnly:"Pickup only",deliveryPossible:"Delivery possible",meetupPossible:"Meetup possible",meetupLabel:"Preferred place",publicMeetup:"Public place",sellerPlace:"Seller's place",buyerPlace:"Buyer's place",negotiableLabel:"Negotiable price",urgentSaleLabel:"Urgent sale",safeMeetLabel:"Safe meetup",photoRequired:"Add at least one real photo before publishing.",tooManyPhotos:"Maximum 8 photos per listing.",sideLabel:"Side",descLabel:"Description",descPh:"Add useful details: condition, quantity, delivery, and meeting point",postSubmit:"Publish listing",cancelLabel:"Cancel",sellerPro:"Professional seller",sellerLocal:"Local seller",quickMessage:"Chat with seller",chatOnline:"Instant reply",chatPlaceholder:"Write your message to the seller",chatSend:"Send",sellerTyping:"Seller is replying...",instantReply:"Yes, it is available. We can arrange everything here in the chat.",loginToChat:"Log in to message the seller.",shareLabel:"Share",shareTitle:"Share this listing",shareHelp:"Copy the link or send it directly so someone can open this listing.",copyLink:"Copy link",linkCopied:"Link copied",shareText:"Look at this listing on Buy Sell Trade Sxm",shareFailed:"Sharing was not available. The link was copied.",savedLabel:"Saved",saveLabel:"Save",removedToast:"Removed",savedToast:"Saved",messageReady:"Message sent",listingPublished:"Listing published",defaultMessage:"Hi, is this listing still available?",subcatHint:"Refine the search without losing your place.",footerMarket:"Marketplace",footerTrust:"Trust & safety",footerLang:"French and English",profileLabel:"Profile",profileTitle:"My profile",profileRequired:"Log in to view your profile.",memberSince:"Member since",verifiedEmail:"Verified email",trustedMember:"Trusted member",fastReply:"Fast reply",profileListings:"My listings",profileNoListings:"You have not posted a listing yet.",activeListings:"Listings",savedItems:"Saved",conversations:"Messages",ratingLabel:"Rating",editProfile:"Edit profile",logoutLabel:"Log out",boostPageTitle:"Boost & Pro",boostKicker:"Paid visibility",boostHeroTitle:"Put your listings in front of the right buyers",boostHeroText:"Regular listings stay free for individuals. Boosts and Pro accounts are paid options to sell faster, publish more listings, and get more contacts.",boostFreeTitle:"Free listing",boostFreeText:"For occasional selling: photos, price, area, buyer chat, and shareable listing link.",boostPaidTitle:"Paid boost",boostPaidText:"The seller chooses a listing, selects a promotion duration, pays, then the listing gets a Sponsored badge and appears higher on the page.",boostProTitle:"Pro business account",boostProText:"For local businesses: business page, Pro badge, more listings, analytics, centralized messages, and regular visibility options.",boostStepsTitle:"How it works",boostStep1:"Choose the listing to promote.",boostStep2:"Choose the duration: 3, 7, or 14 days.",boostStep3:"Pay before activation.",boostStep4:"Track views, saves, and messages.",boostPaymentTitle:"Payment required",boostPaymentText:"No listing is featured until payment is confirmed. Prices will be added before the official launch.",boostTrustTitle:"Seller trust",boostTrustText:"After a chat or sale, buyers can rate the seller. Serious profiles will feel safer for the next buyers.",boostPriceSoon:"Pricing to define",boostPriceText:"We can already build the payment flow with hidden temporary prices, then connect Stripe once pricing is approved.",accountTitle:"Account required",newAccountTitle:"New to Buy Sell Trade Sxm",newAccountHelp:"Create a personal or business account to post, manage messages, and protect the community.",loginTitle:"I already have an account",loginHelp:"Log in to continue with your listings, saved items, and conversations.",passwordLabel:"Password",confirmPasswordLabel:"Confirm password",accountTypeLabel:"Account type",personalAccount:"Personal",businessAccount:"Business",businessNameLabel:"Business name",passwordMismatch:"Passwords do not match.",emailExists:"An account already exists with this email.",invalidLogin:"Incorrect email or password.",loginSubmit:"Log in",loginToast:"Logged in",accountName:"Name",accountEmail:"Email",accountHelp:"An account is required to post a listing, contact a seller, and protect the community.",accountSubmit:"Create my account",comingSoon:"Coming soon",safetyBanner:"Illegal items are prohibited: weapons, drugs, counterfeit goods, and dangerous items. Violations may result in a permanent ban.",illegalPolicy:"Illegal items, weapons, drugs, counterfeit goods, stolen products, and dangerous items are strictly prohibited. Accounts that break these rules may be removed and permanently banned.",
@@ -3275,6 +3301,10 @@ function createUserProfile({name, email, accountType="personal", accountPlan="pe
     rating:5,
     reviews:0,
     subscriptionStatus:accountType === "business" ? "inactive" : "free",
+    subscriptionStarted:null,
+    subscriptionCurrentPeriodEnd:null,
+    subscriptionCancelAtPeriodEnd:false,
+    stripeCustomerId:null,
     role:"user",
     verifiedEmail:true,
     trusted:true
@@ -3292,6 +3322,10 @@ function normalizeUser(user){
     role:user.role || "user",
     accountPlan:user.accountPlan || (user.accountType === "business" ? "pro-starter" : "personal-free"),
     subscriptionStatus:user.subscriptionStatus || (user.accountType === "business" ? "inactive" : "free"),
+    subscriptionStarted:user.subscriptionStarted || null,
+    subscriptionCurrentPeriodEnd:user.subscriptionCurrentPeriodEnd || null,
+    subscriptionCancelAtPeriodEnd:!!user.subscriptionCancelAtPeriodEnd,
+    stripeCustomerId:user.stripeCustomerId || null,
     verifiedEmail:user.verifiedEmail !== false,
     trusted:user.trusted !== false
   };
@@ -4377,50 +4411,171 @@ function sellerReply(l){
   return {fr:t().instantReply, en:I18N.en.instantReply};
 }
 
-async function openMessages(){
-  if(!state.user){
-    requireAccount("messages");
-    return;
-  }
-  const list = document.getElementById("threadList") || document.getElementById("msgrRail");
-  if(!list){
-    openModal("messagesModal");
-    return;
-  }
-  const threads = Object.entries(chatThreads).map(([id, thread])=>{
-    const l = L.find(x=>idKey(x.id)===idKey(id));
-    const last = thread.messages[thread.messages.length - 1];
-    return {id, thread, listing:l, last};
-  }).filter(x=>x.listing);
+/* ================= BOÎTE DE RÉCEPTION (deux volets) ================= */
+let inboxConvs = [];
+let activeConvKey = null;
 
-  // Conversations réelles depuis Supabase (fusionnées, sans doublon avec le local).
+async function openMessages(){
+  if(!state.user){ requireAccount("messages"); return; }
+  openModal("messagesModal");
+  document.getElementById("messengerBody")?.classList.remove("show-thread");
+  await loadInbox();
+}
+
+function inboxAvatar(name){
+  const parts = String(name || "?").trim().split(/\s+/).filter(Boolean);
+  const letters = parts.map(w=>w[0]).join("").slice(0,2);
+  return (letters || "?").toUpperCase();
+}
+
+function inboxOtherLabel(conv, listing){
+  if(conv.otherName) return conv.otherName;
+  if(listing && conv.otherId && listing.sellerId && conv.otherId === listing.sellerId) return sellerName(listing);
+  if(conv.otherId && state.user && listing && listing.sellerId === state.user.id){
+    return (state.lang==="fr" ? "Acheteur" : "Buyer") + " #" + String(conv.otherId).slice(0, 4);
+  }
+  return listing ? sellerName(listing) : (state.lang==="fr" ? "Contact" : "Contact");
+}
+
+async function loadInbox(){
+  const convs = [];
   if(window.SB && SB.enabled() && state.user.provider === "supabase"){
     const inbox = await SB.fetchInbox();
     if(inbox){
       refreshMessageBadge(inbox);
-      const seen = new Set(threads.map(x=>String(x.id)));
       inbox.forEach(conv=>{
-        const listing = L.find(x=>String(x.id) === String(conv.listingId));
-        if(!listing || seen.has(String(listing.id))) return;
-        const m = conv.messages[conv.messages.length - 1];
-        threads.push({
-          id: listing.id, listing,
-          thread:{ seller: sellerName(listing),
-                   updated: m ? new Date(m.created_at).toLocaleDateString(state.lang==="fr"?"fr-FR":"en-US") : "" },
-          last:{ [state.lang]: m ? m.body : "", en:m?m.body:"", fr:m?m.body:"", at:"" }
+        const l = L.find(x=>String(x.id) === String(conv.listingId));
+        convs.push({
+          key: conv.key, listingId: conv.listingId, otherId: conv.otherId,
+          who: inboxOtherLabel(conv, l),
+          title: l ? titleFor(l) : (state.lang==="fr" ? "Annonce" : "Listing"),
+          preview: conv.lastBody || "", at: conv.lastAt || null,
+          unread: Number(conv.unread) || 0, messages: conv.messages.slice(), real: true
         });
       });
     }
   }
-
-  list.innerHTML = threads.length ? threads.map(({id, thread, listing, last})=>`
-    <button type="button" class="thread" onclick="closeModal('messagesModal');openListing(${jsArg(id)})">
-      <b>${esc(thread.seller)}</b>
-      <small>${esc(titleFor(listing))} · ${esc(thread.updated || last.at)}</small>
-      <span>${esc(last[state.lang] || last.en || last.fr || last.text)}</span>
-    </button>`).join("") : `<p class="thread">${state.lang==="fr"?"Aucune conversation pour l'instant.":"No conversations yet."}</p>`;
-  openModal("messagesModal");
+  Object.entries(chatThreads).forEach(([id, thread])=>{
+    if(convs.some(c=>String(c.listingId) === String(id))) return;
+    const l = L.find(x=>idKey(x.id) === idKey(id));
+    if(!l) return;
+    const last = thread.messages[thread.messages.length - 1];
+    convs.push({
+      key: "local:" + id, listingId: id, otherId: null,
+      who: thread.seller || sellerName(l), title: titleFor(l),
+      preview: last ? (last[state.lang] || last.en || last.fr || last.text || "") : "",
+      at: null, unread: 0, messages: thread.messages, real: false, local: true
+    });
+  });
+  inboxConvs = convs;
+  renderInboxRail();
+  if(activeConvKey && convs.some(c=>c.key === activeConvKey)) openInboxThread(activeConvKey);
+  else inboxBack();
 }
+
+function renderInboxRail(){
+  const rail = document.getElementById("msgrRail");
+  if(!rail) return;
+  if(!inboxConvs.length){
+    rail.innerHTML = `<p class="msgr-rail-empty">${state.lang==="fr" ? "Aucune conversation pour l'instant." : "No conversations yet."}</p>`;
+    return;
+  }
+  rail.innerHTML = inboxConvs.map(c=>`
+    <button type="button" class="msgr-item ${c.key === activeConvKey ? "active" : ""}" onclick="openInboxThread(${jsString(c.key)})">
+      <span class="msgr-ava">${esc(inboxAvatar(c.who))}</span>
+      <span class="msgr-item-main">
+        <b>${esc(c.who)}${c.unread ? `<span class="msgr-dot" aria-label="${c.unread} ${state.lang==="fr" ? "non lus" : "unread"}"></span>` : ""}</b>
+        <small>${esc(c.title)}</small>
+        <span>${esc(c.preview)}</span>
+      </span>
+      <span class="msgr-item-time">${c.at ? new Date(c.at).toLocaleDateString(state.lang==="fr" ? "fr-FR" : "en-US", {day:"2-digit", month:"2-digit"}) : ""}</span>
+    </button>`).join("");
+}
+
+function renderInboxLog(conv){
+  const log = document.getElementById("msgrLog");
+  if(!log) return;
+  const rows = conv.real
+    ? conv.messages.map(m=>bubbleRowHTML(sbMsgToBubble(m), conv.who)).join("")
+    : conv.messages.map(m=>bubbleRowHTML(m, conv.who)).join("");
+  log.innerHTML = rows || `<p class="msgr-log-empty">${state.lang==="fr" ? "Pas encore de message." : "No messages yet."}</p>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+async function openInboxThread(key){
+  const conv = inboxConvs.find(x=>x.key === key);
+  if(!conv) return;
+  activeConvKey = key;
+  document.getElementById("msgrEmpty").hidden = true;
+  document.getElementById("msgrThread").hidden = false;
+  document.getElementById("messengerBody")?.classList.add("show-thread");
+  document.getElementById("msgrOther").textContent = conv.who;
+  document.getElementById("msgrListing").textContent = conv.title;
+  const openBtn = document.getElementById("msgrOpenListing");
+  if(openBtn){
+    const hasListing = conv.listingId && String(conv.listingId) !== "0";
+    openBtn.hidden = !hasListing;
+    openBtn.onclick = hasListing ? ()=>{ closeModal("messagesModal"); openListing(conv.listingId); } : null;
+  }
+  renderInboxLog(conv);
+  renderInboxRail();
+  if(conv.real && conv.unread && window.SB && SB.markConversationRead){
+    const done = await SB.markConversationRead(conv.messages);
+    if(done){
+      setUnreadMessageCount(Math.max(0, unreadMessageCount - done));
+      conv.unread = 0;
+      conv.messages.forEach(m=>{ if(m.recipient_id === state.user.id) m.read = true; });
+      renderInboxRail();
+    }
+  }
+  const input = document.getElementById("msgrInput");
+  if(input){ input.disabled = false; input.focus(); }
+}
+
+function inboxBack(){
+  activeConvKey = null;
+  document.getElementById("messengerBody")?.classList.remove("show-thread");
+  const thread = document.getElementById("msgrThread");
+  const empty = document.getElementById("msgrEmpty");
+  if(thread) thread.hidden = true;
+  if(empty) empty.hidden = false;
+  renderInboxRail();
+}
+
+async function sendInboxMessage(e){
+  if(e) e.preventDefault();
+  const conv = inboxConvs.find(x=>x.key === activeConvKey);
+  const input = document.getElementById("msgrInput");
+  if(!conv || !input) return false;
+  const text = input.value.trim();
+  if(!text) return false;
+  input.value = "";
+  if(conv.real && window.SB && SB.enabled() && state.user.provider === "supabase" && conv.otherId){
+    const sent = await SB.sendMessage({ listingId: conv.listingId, recipientId: conv.otherId, body: text, senderName: state.user.name });
+    if(!sent){
+      input.value = text;
+      showToast(state.lang==="fr" ? "Message non envoyé" : "Message not sent");
+      return false;
+    }
+    conv.messages.push(sent);
+    conv.preview = text;
+    conv.at = sent.created_at;
+    const rt = chatThreads[conv.listingId];
+    if(rt){ rt.messages.push(sbMsgToBubble(sent)); rt.updated = state.lang==="fr" ? "maintenant" : "now"; }
+  }else{
+    const rt = threadFor(conv.listingId);
+    rt.messages.push({ who:"buyer", fr:text, en:text, at:state.lang==="fr" ? "maintenant" : "now" });
+    rt.updated = state.lang==="fr" ? "maintenant" : "now";
+    conv.messages = rt.messages;
+    conv.preview = text;
+    persistState();
+  }
+  renderInboxLog(conv);
+  renderInboxRail();
+  return false;
+}
+
+Object.assign(window, { openInboxThread, sendInboxMessage, inboxBack });
 
 function openProfile(){
   if(!state.user){
@@ -6110,8 +6265,28 @@ if (window.SB && SB.enabled()) {
         scrollChatToBottom(id);
       }
     }
+    // Boîte de réception ouverte : on met à jour le volet en direct.
+    var convKey = (m.listing_id || "0") + ":" + m.sender_id;
+    var conv = inboxConvs.find(function (c) { return c.key === convKey; });
+    if (conv) {
+      conv.messages.push(m);
+      conv.preview = m.body;
+      conv.at = m.created_at;
+      if (activeConvKey === convKey && document.querySelector("#messagesModal.open")) {
+        m.read = true;
+        if (SB.markMessageRead) SB.markMessageRead(m.id);
+        renderInboxLog(conv);
+      } else {
+        conv.unread = (conv.unread || 0) + 1;
+      }
+      if (document.querySelector("#messagesModal.open")) renderInboxRail();
+    } else if (document.querySelector("#messagesModal.open") && typeof loadInbox === "function") {
+      loadInbox();
+    }
     setUnreadMessageCount(unreadMessageCount + 1);
-    showToast(state.lang === "fr" ? "Nouveau message" : "New message");
+    showToast(state.lang === "fr"
+      ? "Nouveau message de " + (m.sender_name || (l ? sellerName(l) : "un utilisateur"))
+      : "New message from " + (m.sender_name || (l ? sellerName(l) : "a user")));
   });
 }
 </script>

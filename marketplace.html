@@ -1200,6 +1200,29 @@
   }
   .pro-status .active{background:var(--sea);color:var(--white);}
   .pro-status .pending{background:var(--sun);color:var(--ink);}
+  .subscription-card{
+    display:grid;grid-template-columns:1.1fr .9fr;gap:12px;align-items:stretch;
+    border:2px solid var(--line);border-radius:12px;background:var(--paper);
+    padding:13px;margin-top:12px;
+  }
+  .subscription-summary{display:grid;gap:7px;}
+  .subscription-summary h3{font-size:16px;margin:0;}
+  .subscription-summary p{font-size:13px;color:var(--mute);line-height:1.45;}
+  .subscription-badges{display:flex;flex-wrap:wrap;gap:7px;}
+  .subscription-badges span{
+    border:1.5px solid var(--line);border-radius:8px;background:var(--white);
+    padding:6px 8px;font-size:12px;font-weight:900;
+  }
+  .subscription-badges .active{background:var(--sea);color:var(--white);}
+  .subscription-badges .pending{background:var(--sun);color:var(--ink);}
+  .subscription-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+  .subscription-metric{
+    border:1.5px solid var(--line);border-radius:9px;background:var(--white);
+    padding:10px;display:grid;gap:2px;
+  }
+  .subscription-metric span{font-size:11.5px;color:var(--mute);font-weight:800;}
+  .subscription-metric b{font-family:'Space Grotesk',sans-serif;font-size:15px;}
+  .subscription-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
   .payment-summary{
     border:2px solid var(--line);border-radius:13px;background:var(--white);
     padding:15px;display:grid;gap:10px;margin-bottom:14px;
@@ -1317,6 +1340,7 @@
     .auth-badge{width:max-content;}
     .profile-stats{grid-template-columns:repeat(2,1fr);}
     .profile-tools{grid-template-columns:1fr;}
+    .subscription-card,.subscription-metrics{grid-template-columns:1fr;}
     .pro-dashboard{grid-template-columns:1fr;}
     .admin-metrics,.admin-grid{grid-template-columns:1fr;}
     .admin-row,.admin-row.no-img{grid-template-columns:1fr;}
@@ -2509,6 +2533,7 @@ function usesVehicleFields(cat, sub){
 const I18N = {
   fr:{searchPh:"Que cherchez-vous ?",searchBtn:"Rechercher",postAd:"Déposer une annonce",postShort:"Déposer",favoris:"Favoris",messages:"Messages",
   socialGoogle:"Continuer avec Google",socialOr:"ou",
+  inboxPick:"Choisissez une conversation pour répondre.",inboxSend:"Envoyer",inboxViewListing:"Voir l'annonce",inboxWrite:"Écrivez votre réponse…",
       pricingLabel:"Pricing",loginLabel:"Login",pricingKicker:"Gratuit pour vendre, payant pour les pros",pricingTitle:"Pricing",pricingIntro:"Créer un compte est gratuit. Publier et vendre vos objets personnels est gratuit. Les plans payants sont des abonnements pour les pros qui veulent plus de visibilité.",pricingPlansTitle:"Types de compte",pricingFreeNote:"Personal Free permet de publier gratuitement vos annonces personnelles. Les abonnements Pro ajoutent des outils business, des boosts et plus de visibilité.",authFreeTitle:"Créer un compte gratuit",authFreeText:"Publier une annonce personnelle reste gratuit. Les options Pro sont séparées dans Pricing.",authBadge:"Gratuit",createKicker:"Nouveau compte",loginKicker:"Connexion rapide",
   otpSentText:"Nous avons envoyé un code à votre email. Entrez-le ci-dessous pour activer votre compte.",otpCodeLabel:"Code de confirmation",otpConfirm:"Confirmer le code",otpResend:"Renvoyer le code",otpInvalid:"Code invalide ou expiré.",otpConfirmed:"Compte confirmé - bienvenue.",otpResent:"Nouveau code envoyé.",freeCreateAccount:"Créer un compte est gratuit.",freePostListing:"Publier quelque chose à vendre est gratuit.",freePersonalSelling:"Vendre vos objets personnels est gratuit.",loginWithEmail:"ou connectez-vous avec email",
       filters:"Filtres",filtersHint:"Trouvez plus vite l'annonce qui vous convient.",price:"Prix",side:"Côté de l'île",condition:"État",subcategoryLabel:"Sous-catégorie",allSubcategories:"Toutes les sous-catégories",sellerTypeLabel:"Type de vendeur",availabilityLabel:"Disponibilité",handoverFilterLabel:"Remise du produit",moreCriteria:"Autres critères",allSellers:"Tous les vendeurs",individualSeller:"Particuliers",professionalSeller:"Professionnels",allStatuses:"Tous les statuts",availableOnly:"Disponible maintenant",reservedOnly:"Réservé",soldOnly:"Vendu",allHandovers:"Tous les modes",urgentOnly:"Ventes urgentes",negotiableOnly:"Prix négociables",deliveryOnly:"Livraison disponible",resetFilters:"Tout effacer",activeFilters:n=>`${n} actif${n>1?"s":""}`,showResults:n=>`Voir ${n} annonce${n===1?"":"s"}`,filterSearch:"Rechercher",
@@ -2535,6 +2560,7 @@ const I18N = {
       dlOn:"Télécharger sur",getOn:"Disponible sur"},
   en:{searchPh:"What are you looking for?",searchBtn:"Search",postAd:"Post an ad",postShort:"Post",favoris:"Saved",messages:"Messages",
   socialGoogle:"Continue with Google",socialOr:"or",
+  inboxPick:"Pick a conversation to reply.",inboxSend:"Send",inboxViewListing:"View listing",inboxWrite:"Write your reply…",
       pricingLabel:"Pricing",loginLabel:"Login",pricingKicker:"Free to sell, paid for pros",pricingTitle:"Pricing",pricingIntro:"Creating an account is free. Posting and selling your personal items is free. Paid plans are subscriptions for pros who want more visibility.",pricingPlansTitle:"Account types",pricingFreeNote:"Personal Free lets you publish personal listings for free. Pro subscriptions add business tools, boosts, and more visibility.",authFreeTitle:"Create a free account",authFreeText:"Posting a personal listing stays free. Pro options live separately in Pricing.",authBadge:"Free",createKicker:"New account",loginKicker:"Fast login",
   otpSentText:"We sent a code to your email. Enter it below to activate your account.",otpCodeLabel:"Confirmation code",otpConfirm:"Confirm code",otpResend:"Resend code",otpInvalid:"Invalid or expired code.",otpConfirmed:"Account confirmed - welcome.",otpResent:"New code sent.",freeCreateAccount:"Creating an account is free.",freePostListing:"Posting something for sale is free.",freePersonalSelling:"Selling your personal items is free.",loginWithEmail:"or log in with email",
       filters:"Filters",filtersHint:"Find the right listing faster.",price:"Price",side:"Side of the island",condition:"Condition",subcategoryLabel:"Subcategory",allSubcategories:"All subcategories",sellerTypeLabel:"Seller type",availabilityLabel:"Availability",handoverFilterLabel:"Item handover",moreCriteria:"More criteria",allSellers:"All sellers",individualSeller:"Individuals",professionalSeller:"Businesses",allStatuses:"All statuses",availableOnly:"Available now",reservedOnly:"Reserved",soldOnly:"Sold",allHandovers:"All handover options",urgentOnly:"Urgent listings",negotiableOnly:"Negotiable prices",deliveryOnly:"Delivery available",resetFilters:"Clear all",activeFilters:n=>`${n} active`,showResults:n=>`Show ${n} listing${n!==1?"s":""}`,filterSearch:"Search",
@@ -4379,50 +4405,171 @@ function sellerReply(l){
   return {fr:t().instantReply, en:I18N.en.instantReply};
 }
 
-async function openMessages(){
-  if(!state.user){
-    requireAccount("messages");
-    return;
-  }
-  const list = document.getElementById("threadList") || document.getElementById("msgrRail");
-  if(!list){
-    openModal("messagesModal");
-    return;
-  }
-  const threads = Object.entries(chatThreads).map(([id, thread])=>{
-    const l = L.find(x=>idKey(x.id)===idKey(id));
-    const last = thread.messages[thread.messages.length - 1];
-    return {id, thread, listing:l, last};
-  }).filter(x=>x.listing);
+/* ================= BOÎTE DE RÉCEPTION (deux volets) ================= */
+let inboxConvs = [];
+let activeConvKey = null;
 
-  // Conversations réelles depuis Supabase (fusionnées, sans doublon avec le local).
+async function openMessages(){
+  if(!state.user){ requireAccount("messages"); return; }
+  openModal("messagesModal");
+  document.getElementById("messengerBody")?.classList.remove("show-thread");
+  await loadInbox();
+}
+
+function inboxAvatar(name){
+  const parts = String(name || "?").trim().split(/\s+/).filter(Boolean);
+  const letters = parts.map(w=>w[0]).join("").slice(0,2);
+  return (letters || "?").toUpperCase();
+}
+
+function inboxOtherLabel(conv, listing){
+  if(conv.otherName) return conv.otherName;
+  if(listing && conv.otherId && listing.sellerId && conv.otherId === listing.sellerId) return sellerName(listing);
+  if(conv.otherId && state.user && listing && listing.sellerId === state.user.id){
+    return (state.lang==="fr" ? "Acheteur" : "Buyer") + " #" + String(conv.otherId).slice(0, 4);
+  }
+  return listing ? sellerName(listing) : (state.lang==="fr" ? "Contact" : "Contact");
+}
+
+async function loadInbox(){
+  const convs = [];
   if(window.SB && SB.enabled() && state.user.provider === "supabase"){
     const inbox = await SB.fetchInbox();
     if(inbox){
       refreshMessageBadge(inbox);
-      const seen = new Set(threads.map(x=>String(x.id)));
       inbox.forEach(conv=>{
-        const listing = L.find(x=>String(x.id) === String(conv.listingId));
-        if(!listing || seen.has(String(listing.id))) return;
-        const m = conv.messages[conv.messages.length - 1];
-        threads.push({
-          id: listing.id, listing,
-          thread:{ seller: sellerName(listing),
-                   updated: m ? new Date(m.created_at).toLocaleDateString(state.lang==="fr"?"fr-FR":"en-US") : "" },
-          last:{ [state.lang]: m ? m.body : "", en:m?m.body:"", fr:m?m.body:"", at:"" }
+        const l = L.find(x=>String(x.id) === String(conv.listingId));
+        convs.push({
+          key: conv.key, listingId: conv.listingId, otherId: conv.otherId,
+          who: inboxOtherLabel(conv, l),
+          title: l ? titleFor(l) : (state.lang==="fr" ? "Annonce" : "Listing"),
+          preview: conv.lastBody || "", at: conv.lastAt || null,
+          unread: Number(conv.unread) || 0, messages: conv.messages.slice(), real: true
         });
       });
     }
   }
-
-  list.innerHTML = threads.length ? threads.map(({id, thread, listing, last})=>`
-    <button type="button" class="thread" onclick="closeModal('messagesModal');openListing(${jsArg(id)})">
-      <b>${esc(thread.seller)}</b>
-      <small>${esc(titleFor(listing))} · ${esc(thread.updated || last.at)}</small>
-      <span>${esc(last[state.lang] || last.en || last.fr || last.text)}</span>
-    </button>`).join("") : `<p class="thread">${state.lang==="fr"?"Aucune conversation pour l'instant.":"No conversations yet."}</p>`;
-  openModal("messagesModal");
+  Object.entries(chatThreads).forEach(([id, thread])=>{
+    if(convs.some(c=>String(c.listingId) === String(id))) return;
+    const l = L.find(x=>idKey(x.id) === idKey(id));
+    if(!l) return;
+    const last = thread.messages[thread.messages.length - 1];
+    convs.push({
+      key: "local:" + id, listingId: id, otherId: null,
+      who: thread.seller || sellerName(l), title: titleFor(l),
+      preview: last ? (last[state.lang] || last.en || last.fr || last.text || "") : "",
+      at: null, unread: 0, messages: thread.messages, real: false, local: true
+    });
+  });
+  inboxConvs = convs;
+  renderInboxRail();
+  if(activeConvKey && convs.some(c=>c.key === activeConvKey)) openInboxThread(activeConvKey);
+  else inboxBack();
 }
+
+function renderInboxRail(){
+  const rail = document.getElementById("msgrRail");
+  if(!rail) return;
+  if(!inboxConvs.length){
+    rail.innerHTML = `<p class="msgr-rail-empty">${state.lang==="fr" ? "Aucune conversation pour l'instant." : "No conversations yet."}</p>`;
+    return;
+  }
+  rail.innerHTML = inboxConvs.map(c=>`
+    <button type="button" class="msgr-item ${c.key === activeConvKey ? "active" : ""}" onclick="openInboxThread(${jsString(c.key)})">
+      <span class="msgr-ava">${esc(inboxAvatar(c.who))}</span>
+      <span class="msgr-item-main">
+        <b>${esc(c.who)}${c.unread ? `<span class="msgr-dot" aria-label="${c.unread} ${state.lang==="fr" ? "non lus" : "unread"}"></span>` : ""}</b>
+        <small>${esc(c.title)}</small>
+        <span>${esc(c.preview)}</span>
+      </span>
+      <span class="msgr-item-time">${c.at ? new Date(c.at).toLocaleDateString(state.lang==="fr" ? "fr-FR" : "en-US", {day:"2-digit", month:"2-digit"}) : ""}</span>
+    </button>`).join("");
+}
+
+function renderInboxLog(conv){
+  const log = document.getElementById("msgrLog");
+  if(!log) return;
+  const rows = conv.real
+    ? conv.messages.map(m=>bubbleRowHTML(sbMsgToBubble(m), conv.who)).join("")
+    : conv.messages.map(m=>bubbleRowHTML(m, conv.who)).join("");
+  log.innerHTML = rows || `<p class="msgr-log-empty">${state.lang==="fr" ? "Pas encore de message." : "No messages yet."}</p>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+async function openInboxThread(key){
+  const conv = inboxConvs.find(x=>x.key === key);
+  if(!conv) return;
+  activeConvKey = key;
+  document.getElementById("msgrEmpty").hidden = true;
+  document.getElementById("msgrThread").hidden = false;
+  document.getElementById("messengerBody")?.classList.add("show-thread");
+  document.getElementById("msgrOther").textContent = conv.who;
+  document.getElementById("msgrListing").textContent = conv.title;
+  const openBtn = document.getElementById("msgrOpenListing");
+  if(openBtn){
+    const hasListing = conv.listingId && String(conv.listingId) !== "0";
+    openBtn.hidden = !hasListing;
+    openBtn.onclick = hasListing ? ()=>{ closeModal("messagesModal"); openListing(conv.listingId); } : null;
+  }
+  renderInboxLog(conv);
+  renderInboxRail();
+  if(conv.real && conv.unread && window.SB && SB.markConversationRead){
+    const done = await SB.markConversationRead(conv.messages);
+    if(done){
+      setUnreadMessageCount(Math.max(0, unreadMessageCount - done));
+      conv.unread = 0;
+      conv.messages.forEach(m=>{ if(m.recipient_id === state.user.id) m.read = true; });
+      renderInboxRail();
+    }
+  }
+  const input = document.getElementById("msgrInput");
+  if(input){ input.disabled = false; input.focus(); }
+}
+
+function inboxBack(){
+  activeConvKey = null;
+  document.getElementById("messengerBody")?.classList.remove("show-thread");
+  const thread = document.getElementById("msgrThread");
+  const empty = document.getElementById("msgrEmpty");
+  if(thread) thread.hidden = true;
+  if(empty) empty.hidden = false;
+  renderInboxRail();
+}
+
+async function sendInboxMessage(e){
+  if(e) e.preventDefault();
+  const conv = inboxConvs.find(x=>x.key === activeConvKey);
+  const input = document.getElementById("msgrInput");
+  if(!conv || !input) return false;
+  const text = input.value.trim();
+  if(!text) return false;
+  input.value = "";
+  if(conv.real && window.SB && SB.enabled() && state.user.provider === "supabase" && conv.otherId){
+    const sent = await SB.sendMessage({ listingId: conv.listingId, recipientId: conv.otherId, body: text, senderName: state.user.name });
+    if(!sent){
+      input.value = text;
+      showToast(state.lang==="fr" ? "Message non envoyé" : "Message not sent");
+      return false;
+    }
+    conv.messages.push(sent);
+    conv.preview = text;
+    conv.at = sent.created_at;
+    const rt = chatThreads[conv.listingId];
+    if(rt){ rt.messages.push(sbMsgToBubble(sent)); rt.updated = state.lang==="fr" ? "maintenant" : "now"; }
+  }else{
+    const rt = threadFor(conv.listingId);
+    rt.messages.push({ who:"buyer", fr:text, en:text, at:state.lang==="fr" ? "maintenant" : "now" });
+    rt.updated = state.lang==="fr" ? "maintenant" : "now";
+    conv.messages = rt.messages;
+    conv.preview = text;
+    persistState();
+  }
+  renderInboxLog(conv);
+  renderInboxRail();
+  return false;
+}
+
+Object.assign(window, { openInboxThread, sendInboxMessage, inboxBack });
 
 function openProfile(){
   if(!state.user){
@@ -6112,8 +6259,28 @@ if (window.SB && SB.enabled()) {
         scrollChatToBottom(id);
       }
     }
+    // Boîte de réception ouverte : on met à jour le volet en direct.
+    var convKey = (m.listing_id || "0") + ":" + m.sender_id;
+    var conv = inboxConvs.find(function (c) { return c.key === convKey; });
+    if (conv) {
+      conv.messages.push(m);
+      conv.preview = m.body;
+      conv.at = m.created_at;
+      if (activeConvKey === convKey && document.querySelector("#messagesModal.open")) {
+        m.read = true;
+        if (SB.markMessageRead) SB.markMessageRead(m.id);
+        renderInboxLog(conv);
+      } else {
+        conv.unread = (conv.unread || 0) + 1;
+      }
+      if (document.querySelector("#messagesModal.open")) renderInboxRail();
+    } else if (document.querySelector("#messagesModal.open") && typeof loadInbox === "function") {
+      loadInbox();
+    }
     setUnreadMessageCount(unreadMessageCount + 1);
-    showToast(state.lang === "fr" ? "Nouveau message" : "New message");
+    showToast(state.lang === "fr"
+      ? "Nouveau message de " + (m.sender_name || (l ? sellerName(l) : "un utilisateur"))
+      : "New message from " + (m.sender_name || (l ? sellerName(l) : "a user")));
   });
 }
 </script>
