@@ -6,9 +6,9 @@
  *  La clé "anon public" EST faite pour être dans le code frontend.
  *  Ne mets JAMAIS la clé "service_role" ici.
  * ============================================================ */
-window.SUPABASE_URL = "https://ujykgiitlcuqiiepsyiz.supabase.co";
+window.SUPABASE_URL = "https://npjkbhkmyfppmosforls.supabase.co";
 // Clé "publishable" (nouveau format) — sûre pour le navigateur si la RLS est activée.
-window.SUPABASE_ANON_KEY = "sb_publishable_5fm__ewJT9UVii8lcmeZlQ_aC84_N0q";
+window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wamtiaGtteWZwcG1vc2ZvcmxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MTY3NDYsImV4cCI6MjA5NjA5Mjc0Nn0.mEyxqUNtrB3u7GHSrFb2pAoRMbKgjUeTk6Z8WI9xMW4";
 
 /* OAuth social login.
  * Mets un provider a true seulement APRES l'avoir active dans:

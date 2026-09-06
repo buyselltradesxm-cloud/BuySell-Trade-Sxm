@@ -18,6 +18,12 @@ create table if not exists profiles (
 
 -- Colonnes ajoutees apres coup : "add column if not exists" pour que la
 -- re-execution sur une base existante les cree sans erreur.
+alter table profiles add column if not exists name                  text;
+alter table profiles add column if not exists account_type          text default 'personal';
+alter table profiles add column if not exists account_plan          text default 'personal-free';
+alter table profiles add column if not exists business_name         text;
+alter table profiles add column if not exists phone                 text;
+alter table profiles add column if not exists created_at            timestamptz default now();
 alter table profiles add column if not exists business_phone        text;
 alter table profiles add column if not exists business_whatsapp     text;
 alter table profiles add column if not exists business_website      text;
@@ -102,8 +108,18 @@ create policy "profiles: admin gère tout"
 create or replace function handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles (id, name)
-  values (new.id, new.raw_user_meta_data->>'name');
+  insert into public.profiles (id, name, role)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+    case when lower(new.email) = 'rxmarketing09@gmail.com' then 'admin' else 'user' end
+  )
+  on conflict (id) do update
+  set name = coalesce(public.profiles.name, excluded.name),
+      role = case
+        when lower(new.email) = 'rxmarketing09@gmail.com' then 'admin'
+        else public.profiles.role
+      end;
   return new;
 end;
 $$;

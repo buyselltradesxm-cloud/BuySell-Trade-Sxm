@@ -97,7 +97,7 @@ const { chromium } = require("playwright");
       closeModal("postModal");
       openPricingInfo();
     });
-    await page.getByRole("button", { name: /Pro Business/i }).click();
+    await page.locator("button.pricing-card", { hasText: "Pro Business" }).click();
     await page.locator("#paymentModal.open").waitFor();
     const paymentPlan = await page.locator("#paymentPlanName").innerText();
     const paymentPrice = await page.locator("#paymentPlanPrice").innerText();
