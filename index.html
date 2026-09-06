@@ -539,6 +539,33 @@
   .card.no-media .body{padding-top:18px;}
   .detail-grid.no-media{grid-template-columns:minmax(0,760px);justify-content:center;}
 
+  /* Owner action bar (seller manages their own listing) */
+  .card.is-sold .photo img{filter:grayscale(1);opacity:.72;}
+  .owner-bar{
+    position:relative;z-index:6;margin-top:8px;
+    display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+    border-top:1.5px dashed rgba(19,42,46,.28);padding-top:9px;
+  }
+  .owner-bar-tag{
+    font-size:10.5px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;
+    color:var(--sea-deep);margin-right:2px;
+  }
+  .owner-btn{
+    border:1.5px solid var(--line);border-radius:8px;background:var(--white);
+    font-weight:700;font-size:11.5px;padding:5px 9px;cursor:pointer;line-height:1.2;
+  }
+  .owner-btn:hover{background:var(--paper-deep);}
+  .owner-btn.sold{background:var(--sea);color:var(--white);border-color:var(--sea);}
+  .owner-btn.sold:hover{background:var(--sea-deep);}
+  .owner-btn.danger{color:var(--coral);border-color:rgba(214,69,65,.55);}
+  .owner-btn.danger:hover{background:rgba(214,69,65,.1);}
+  .detail-meta .owner-bar{border-top:none;border:2px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:4px;background:var(--paper);}
+  .detail-meta .owner-btn{font-size:12.5px;padding:8px 12px;}
+  .sold-notice{
+    border:2px solid var(--line);border-radius:12px;background:var(--paper);
+    padding:12px;font-size:13px;font-weight:700;color:var(--ink);text-align:center;
+  }
+
   /* pinned featured cards */
   .board .card{
     box-shadow:4px 5px 0 rgba(19,42,46,.9);
@@ -3528,7 +3555,7 @@ function cardHTML(l, pinned, idx){
   if(l.boosted) badges.push(`<span class="badge boosted">${t().boostBadge}</span>`);
   const isFav = state.favs.has(idKey(l.id));
   return `
-    <article class="card ${profile.photos ? "" : "no-media"}" ${pinned?`style="--i:${idx}"`:""} onclick="openListing(${idParam})" tabindex="0" onkeydown="cardKey(event, ${idParam})">
+    <article class="card ${profile.photos ? "" : "no-media"} ${listingIsSold(l) ? "is-sold" : ""}" ${pinned?`style="--i:${idx}"`:""} onclick="openListing(${idParam})" tabindex="0" onkeydown="cardKey(event, ${idParam})">
       ${pinned?`<span class="pin" aria-hidden="true"></span>`:""}
       <span class="stripe ${l.side}" aria-hidden="true"></span>
       <button type="button" class="fav" aria-pressed="${isFav}"
@@ -3552,6 +3579,7 @@ function cardHTML(l, pinned, idx){
           <span>${agoHTML(l.ph)}</span>
           ${profile.condition && l.cond ? `<span aria-hidden="true">·</span><span>${condLabel(l.cond)}</span>` : ""}
         </div>
+        ${ownerActionBarHTML(l)}
       </div>
     </article>`;
 }
@@ -3575,6 +3603,9 @@ function mobileAdHTML(slot){
 
 /* ---------------- RENDER: FILTER + LOGIC ---------------- */
 function passesFilters(l){
+  // Les annonces vendues sortent du fil principal, sauf pour leur propre vendeur
+  // (qui doit pouvoir les retrouver pour les remettre en vente).
+  if(listingIsSold(l) && !isOwnListing(l)) return false;
   if(state.cat!=="all" && l.cat!==state.cat) return false;
   if(state.subcat && l.sub !== state.subcat) return false;
   if(state.q){
@@ -4040,6 +4071,7 @@ function openListing(id, syncUrl = true){
         ${thumbs}
       </div>` : ""}
       <div class="detail-meta">
+        ${ownerActionBarHTML(l)}
         <div class="listing-primary">
           ${profile.price ? `<div class="detail-price">${priceHTML(l)}</div>` : ""}
           <p>${esc(listingTitle)}</p>
@@ -4050,11 +4082,12 @@ function openListing(id, syncUrl = true){
           ${profile.delivery && l.delivery ? `<br><span>${deliveryLabel(l.delivery)}${profile.meetup && l.meetup ? " · " + meetupLabel(l.meetup) : ""}${profile.negotiable && l.negotiable ? " · " + t().negotiableLabel : ""}</span>` : ""}
           ${sellerTrustHTML(l)}
         </div>
-        ${chatHTML(l.id)}
+        ${listingIsSold(l) && !isOwnListing(l)
+          ? `<div class="sold-notice">${state.lang==="fr" ? "Cette annonce est vendue. La messagerie est fermée." : "This listing is sold. Messaging is closed."}</div>`
+          : chatHTML(l.id)}
         <div class="detail-actions">
-          ${state.user ? "" : `<button type="button" class="primary-btn" onclick="requestListingLogin(${jsArg(l.id)})">${state.lang==="fr"?"Se connecter pour discuter":"Log in to chat"}</button>`}
-          ${isOwnListing(l) ? `<button type="button" class="secondary-btn" onclick="openEditListing(${jsArg(l.id)}, event)">${state.lang==="fr" ? "Modifier" : "Edit"}</button>` : ""}
-          ${isOwnListing(l) && !l.sold ? `<button type="button" class="primary-btn" onclick="openBoostCheckout(${jsArg(l.id)}, event)">${t().boostCta}</button>` : ""}
+          ${state.user || listingIsSold(l) ? "" : `<button type="button" class="primary-btn" onclick="requestListingLogin(${jsArg(l.id)})">${state.lang==="fr"?"Se connecter pour discuter":"Log in to chat"}</button>`}
+          ${isOwnListing(l) && !listingIsSold(l) ? `<button type="button" class="primary-btn" onclick="openBoostCheckout(${jsArg(l.id)}, event)">${t().boostCta}</button>` : ""}
           <button type="button" class="primary-btn" onclick="shareListing(${jsArg(l.id)}, event)">${t().shareLabel}</button>
           <button type="button" class="secondary-btn" onclick="toggleFavFromDetail(${jsArg(l.id)})">${state.favs.has(idKey(id))?t().savedLabel:t().saveLabel}</button>
         </div>
@@ -5048,6 +5081,74 @@ function openEditListing(id, e){
   buildPostForm(listing);
   openModal("postModal");
 }
+
+/* ---- Cycle de vie d'une annonce, côté vendeur (pas admin) ---- */
+function listingIsSold(l){
+  return !!(l && (l.sold || l.status === "sold"));
+}
+
+async function setOwnListingSold(id, sold, e){
+  if(e) e.stopPropagation();
+  const l = L.find(x=>idKey(x.id)===idKey(id));
+  if(!l || !isOwnListing(l)) return;
+  l.sold = !!sold;
+  l.reserved = false;
+  l.status = sold ? "sold" : "active";
+  const u = userListings.find(x=>idKey(x.id)===idKey(id));
+  if(u){ u.sold = l.sold; u.reserved = false; u.status = l.status; }
+  try{
+    if(window.SB && SB.enabled() && state.user?.provider === "supabase" && SB.updateListing) await SB.updateListing(l);
+  }catch(err){ console.warn("[sold]", err); }
+  persistState();
+  render();
+  if(document.querySelector("#detailModal.open")) openListing(l.id, false);
+  if(sold){
+    const limit = listingLimitFor(state.user);
+    const left = Number.isFinite(limit) ? Math.max(0, limit - activeUserListingCount()) : null;
+    showToast(left === null
+      ? (state.lang==="fr" ? "Marqué comme vendu." : "Marked as sold.")
+      : (state.lang==="fr" ? `Vendu ! Il vous reste ${left} annonce(s).` : `Sold! You have ${left} listing(s) left.`));
+  }else{
+    showToast(state.lang==="fr" ? "Remis en vente." : "Relisted.");
+  }
+}
+
+async function deleteOwnListing(id, e){
+  if(e) e.stopPropagation();
+  const l = L.find(x=>idKey(x.id)===idKey(id));
+  if(!l || !isOwnListing(l)) return;
+  const ok = window.confirm(state.lang==="fr"
+    ? "Supprimer définitivement cette annonce ? Pour une vente terminée, préférez « Marquer comme vendu »."
+    : "Permanently delete this listing? For a completed sale, use “Mark as sold” instead.");
+  if(!ok) return;
+  const idx = L.findIndex(x=>idKey(x.id)===idKey(id));
+  if(idx >= 0) L.splice(idx, 1);
+  userListings = userListings.filter(x=>idKey(x.id)!==idKey(id));
+  state.favs.delete(idKey(id));
+  try{
+    if(window.SB && SB.enabled() && state.user?.provider === "supabase" && SB.deleteListing) await SB.deleteListing(id);
+  }catch(err){ console.warn("[delete listing]", err); }
+  persistState();
+  closeModal("detailModal");
+  render();
+  showToast(state.lang==="fr" ? "Annonce supprimée." : "Listing deleted.");
+}
+
+function ownerActionBarHTML(l){
+  if(!isOwnListing(l)) return "";
+  const p = jsArg(l.id);
+  const sold = listingIsSold(l);
+  return `<div class="owner-bar" onclick="event.stopPropagation()">
+    <span class="owner-bar-tag">${state.lang==="fr" ? "Votre annonce" : "Your listing"}</span>
+    ${sold
+      ? `<button type="button" class="owner-btn" onclick="setOwnListingSold(${p}, false, event)">${state.lang==="fr" ? "Remettre en vente" : "Relist"}</button>`
+      : `<button type="button" class="owner-btn sold" onclick="setOwnListingSold(${p}, true, event)">${state.lang==="fr" ? "Marquer comme vendu" : "Mark as sold"}</button>`}
+    <button type="button" class="owner-btn" onclick="openEditListing(${p}, event)">${state.lang==="fr" ? "Modifier" : "Edit"}</button>
+    <button type="button" class="owner-btn danger" onclick="deleteOwnListing(${p}, event)">${state.lang==="fr" ? "Supprimer" : "Delete"}</button>
+  </div>`;
+}
+
+Object.assign(window, { setOwnListingSold, deleteOwnListing });
 
 function selectAccountPlan(plan, btn){
   const type = plan === "personal-free" ? "personal" : "business";
