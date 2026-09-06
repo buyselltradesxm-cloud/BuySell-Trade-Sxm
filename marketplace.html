@@ -145,13 +145,16 @@
   .notif-list{overflow-y:auto;display:flex;flex-direction:column;}
   .notif-empty{padding:22px 14px;color:var(--mute);font-size:13px;text-align:center;}
   .notif-item{
-    display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;
-    text-align:left;padding:11px 13px;border-bottom:1.5px solid rgba(19,42,46,.1);
+    display:block;text-align:left;padding:11px 13px;border-bottom:1.5px solid rgba(19,42,46,.1);
     background:var(--white);cursor:pointer;width:100%;
   }
   .notif-item:last-child{border-bottom:none;}
   .notif-item:hover{background:var(--paper);}
   .notif-item.unseen{background:var(--paper-deep);}
+  .notif-open{
+    display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;
+    text-align:left;width:100%;cursor:pointer;
+  }
   .notif-ico{
     width:28px;height:28px;border-radius:8px;border:1.5px solid var(--line);
     display:grid;place-content:center;font-size:14px;background:var(--paper);
@@ -160,6 +163,14 @@
   .notif-item-main b{font-size:12.5px;}
   .notif-item-main span{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .notif-time{font-size:10.5px;color:var(--mute);white-space:nowrap;}
+  .notif-actions{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0 0 38px;}
+  .notif-action{
+    border:1.5px solid var(--line);border-radius:9px;background:var(--white);
+    padding:6px 8px;font-size:11px;font-weight:800;cursor:pointer;
+  }
+  .notif-action.keep{background:var(--sun);}
+  .notif-action.sold{background:var(--sea);color:var(--white);}
+  .notif-action.delete{background:var(--danger-soft);}
   @media (max-width:640px){
     .notif-panel{position:fixed;top:auto;bottom:10px;left:10px;right:10px;width:auto;max-height:60vh;}
   }
@@ -3277,7 +3288,9 @@ function pushNotification(note){
     at: note.at || new Date().toISOString(),
     seen: false,
     listingId: note.listingId ?? null,
-    convKey: note.convKey ?? null
+    convKey: note.convKey ?? null,
+    actionRequired: !!note.actionRequired,
+    backendId: note.backendId ?? null
   };
   if(dismissedNotificationIds.has(entry.id)) return;
   const existing = notifications.find(n=>n.id === entry.id);
@@ -3308,14 +3321,26 @@ function renderNotifPanel(){
     return;
   }
   list.innerHTML = notifications.map(n=>`
-    <button type="button" class="notif-item ${n.seen ? "" : "unseen"}" data-notif-id="${esc(n.id)}" onclick="openNotification(this.dataset.notifId)">
+    <div class="notif-item ${n.seen ? "" : "unseen"}">
+    <button type="button" class="notif-open" data-notif-id="${esc(n.id)}" onclick="openNotification(this.dataset.notifId)">
       <span class="notif-ico">${notifIcon(n.kind)}</span>
       <span class="notif-item-main">
         <b>${esc(n.title)}</b>
         <span>${esc(n.text)}</span>
       </span>
       <span class="notif-time">${notifWhen(n.at)}</span>
-    </button>`).join("");
+    </button>
+    ${notificationActionsHTML(n)}</div>`).join("");
+}
+
+function notificationActionsHTML(n){
+  if(n.kind !== "listing_expiring" || !n.listingId) return "";
+  const p = jsArg(n.listingId);
+  return `<div class="notif-actions">
+    <button type="button" class="notif-action keep" onclick="confirmListingAvailable(${p}, event)">${state.lang==="fr" ? "Oui, garder" : "Keep listing"}</button>
+    <button type="button" class="notif-action sold" onclick="setOwnListingSold(${p}, true, event)">${state.lang==="fr" ? "Vendu" : "Sold"}</button>
+    <button type="button" class="notif-action delete" onclick="deleteOwnListing(${p}, event)">${state.lang==="fr" ? "Supprimer" : "Delete"}</button>
+  </div>`;
 }
 
 function notifWhen(at){
@@ -3338,7 +3363,10 @@ function toggleNotifPanel(e){
   if(btn) btn.setAttribute("aria-expanded", String(notifPanelOpen));
   if(notifPanelOpen){
     renderNotifPanel();
-    notifications.forEach(n=>{ n.seen = true; });
+    notifications.forEach(n=>{
+      if(!n.seen && n.backendId && window.SB && SB.markNotificationRead) SB.markNotificationRead(n.backendId);
+      n.seen = true;
+    });
     persistState();
     refreshNotifBadge();
   }
@@ -3428,9 +3456,10 @@ function listingCreatedAtMs(l){
 }
 
 function listingExpiryInfo(l){
+  const explicit = l?.expiresAt ? new Date(l.expiresAt).getTime() : NaN;
   const created = listingCreatedAtMs(l);
-  if(!Number.isFinite(created)) return null;
-  const expiresAt = created + LISTING_ACTIVE_DAYS * 86400000;
+  if(!Number.isFinite(explicit) && !Number.isFinite(created)) return null;
+  const expiresAt = Number.isFinite(explicit) ? explicit : created + LISTING_ACTIVE_DAYS * 86400000;
   const daysLeft = Math.ceil((expiresAt - Date.now()) / 86400000);
   return {
     daysLeft,
@@ -3459,7 +3488,31 @@ function seedListingExpiryNotifications(){
       title,
       text: `${titleFor(l)} ${timing}. ${action}`,
       at: new Date().toISOString(),
-      listingId: l.id
+      listingId: l.id,
+      actionRequired: true
+    });
+  });
+}
+
+function removeListingExpiryNotifications(id){
+  notifications = notifications.filter(n=>!(n.kind === "listing_expiring" && idKey(n.listingId) === idKey(id)));
+}
+
+async function refreshBackendNotifications(){
+  if(!(window.SB && SB.enabled() && SB.fetchNotifications) || !state.user || state.user.provider !== "supabase") return;
+  const rows = await SB.fetchNotifications();
+  if(!Array.isArray(rows)) return;
+  rows.forEach(row=>{
+    const kind = row.kind === "listing_renewal_required" ? "listing_expiring" : row.kind;
+    pushNotification({
+      id: `db-${row.id}`,
+      backendId: row.id,
+      kind,
+      title: row.title,
+      text: row.body,
+      at: row.created_at,
+      listingId: row.listing_id,
+      actionRequired: row.action_required
     });
   });
 }
@@ -3651,7 +3704,7 @@ function userListingCount(){
   return L.filter(l=>l.ownerId && state.user && l.ownerId === state.user.id).length;
 }
 function activeUserListingCount(){
-  return L.filter(l=>l.ownerId && state.user && l.ownerId === state.user.id && !l.sold && l.status !== "sold").length;
+  return L.filter(l=>l.ownerId && state.user && l.ownerId === state.user.id && !l.sold && l.status !== "sold" && l.status !== "expired").length;
 }
 function monthlyUserListingCount(){
   const now = new Date();
@@ -4018,9 +4071,10 @@ function mobileAdHTML(slot){
 
 /* ---------------- RENDER: FILTER + LOGIC ---------------- */
 function passesFilters(l){
-  // Les annonces vendues sortent du fil principal, sauf pour leur propre vendeur
+  // Les annonces vendues/expirees sortent du fil principal, sauf pour leur propre vendeur
   // (qui doit pouvoir les retrouver pour les remettre en vente).
   if(listingIsSold(l) && !isOwnListing(l)) return false;
+  if(listingIsExpired(l) && !isOwnListing(l)) return false;
   if(state.cat!=="all" && l.cat!==state.cat) return false;
   if(state.subcat && l.sub !== state.subcat) return false;
   if(state.q){
@@ -5703,6 +5757,49 @@ function listingIsSold(l){
   return !!(l && (l.sold || l.status === "sold"));
 }
 
+function listingIsExpired(l){
+  return !!(l && l.status === "expired");
+}
+
+function syncOwnListingPatch(id, patch){
+  const l = L.find(x=>idKey(x.id)===idKey(id));
+  if(l) Object.assign(l, patch);
+  const u = userListings.find(x=>idKey(x.id)===idKey(id));
+  if(u) Object.assign(u, patch);
+  removeListingExpiryNotifications(id);
+  return l;
+}
+
+async function confirmListingAvailable(id, e){
+  if(e) e.stopPropagation();
+  const l = L.find(x=>idKey(x.id)===idKey(id));
+  if(!l || !isOwnListing(l)) return;
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + LISTING_ACTIVE_DAYS * 86400000).toISOString();
+  const patch = {
+    sold:false,
+    reserved:false,
+    status:"active",
+    expiresAt,
+    renewalRequestedAt:null,
+    renewalResponseAt:now.toISOString(),
+    expiredAt:null
+  };
+  syncOwnListingPatch(id, patch);
+  try{
+    if(window.SB && SB.enabled() && state.user?.provider === "supabase"){
+      const updated = SB.confirmListingAvailable
+        ? await SB.confirmListingAvailable(id)
+        : (SB.updateListing ? await SB.updateListing({...l, ...patch}) : null);
+      if(updated) syncOwnListingPatch(id, updated);
+    }
+  }catch(err){ console.warn("[confirm available]", err); }
+  persistState();
+  render();
+  closeNotifPanel();
+  showToast(state.lang==="fr" ? "Annonce gardée en ligne pour 30 jours." : "Listing kept online for 30 days.");
+}
+
 async function setOwnListingSold(id, sold, e){
   if(e) e.stopPropagation();
   const l = L.find(x=>idKey(x.id)===idKey(id));
@@ -5712,6 +5809,7 @@ async function setOwnListingSold(id, sold, e){
   l.status = sold ? "sold" : "active";
   const u = userListings.find(x=>idKey(x.id)===idKey(id));
   if(u){ u.sold = l.sold; u.reserved = false; u.status = l.status; }
+  removeListingExpiryNotifications(id);
   try{
     if(window.SB && SB.enabled() && state.user?.provider === "supabase" && SB.updateListing) await SB.updateListing(l);
   }catch(err){ console.warn("[sold]", err); }
@@ -5741,6 +5839,7 @@ async function deleteOwnListing(id, e){
   if(idx >= 0) L.splice(idx, 1);
   userListings = userListings.filter(x=>idKey(x.id)!==idKey(id));
   state.favs.delete(idKey(id));
+  removeListingExpiryNotifications(id);
   try{
     if(window.SB && SB.enabled() && state.user?.provider === "supabase" && SB.deleteListing) await SB.deleteListing(id);
   }catch(err){ console.warn("[delete listing]", err); }
@@ -5764,7 +5863,7 @@ function ownerActionBarHTML(l){
   </div>`;
 }
 
-Object.assign(window, { setOwnListingSold, deleteOwnListing });
+Object.assign(window, { confirmListingAvailable, setOwnListingSold, deleteOwnListing });
 
 function selectAccountPlan(plan, btn){
   const type = plan === "personal-free" ? "personal" : "business";
@@ -6631,6 +6730,7 @@ if (window.SB && SB.enabled()) {
         applySupabaseUser(user).then(function () {
           render();
           refreshMessageBadge();
+          refreshBackendNotifications();
           continuePendingProGoogle();
           continueSelectedProPlan();
           openAdminFromUrl();

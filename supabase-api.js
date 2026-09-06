@@ -29,6 +29,10 @@
       pics: photos.length,
       photos: photos,
       desc: r.description || "",
+      expiresAt: r.expires_at || null,
+      renewalRequestedAt: r.renewal_requested_at || null,
+      renewalResponseAt: r.renewal_response_at || null,
+      expiredAt: r.expired_at || null,
       vehicle: r.vehicle || null,
       delivery: r.delivery || undefined,
       negotiable: !!r.negotiable,
@@ -82,8 +86,12 @@
       boost_price_usd: o.boost && o.boost.usd ? o.boost.usd : null,
       boost_started_at: o.boost && o.boost.startedAt ? o.boost.startedAt : null,
       photos: o.photos || [],
-      status: o.sold ? "sold" : o.reserved ? "reserved" : "active"
+      status: o.sold ? "sold" : o.reserved ? "reserved" : (o.status || "active")
     };
+    if (o.expiresAt) row.expires_at = o.expiresAt;
+    if (o.renewalRequestedAt !== undefined) row.renewal_requested_at = o.renewalRequestedAt;
+    if (o.renewalResponseAt !== undefined) row.renewal_response_at = o.renewalResponseAt;
+    if (o.expiredAt !== undefined) row.expired_at = o.expiredAt;
     row.seller_name = o.sellerName || null;
     return row;
   }
@@ -224,6 +232,17 @@
         return null;
       }
       return rowToListing(res.data);
+    },
+
+    // confirme qu'une annonce est toujours disponible et repousse son
+    // expiration de 30 jours. Si la RPC n'est pas encore installée, l'app
+    // retombe sur updateListing().
+    confirmListingAvailable: async function (id) {
+      if (!window.db || !id) return null;
+      var rpc = await window.db.rpc("confirm_listing_available", { listing_id: id });
+      if (!rpc.error && rpc.data) return rowToListing(rpc.data);
+      console.warn("[SB] confirmListingAvailable:", rpc.error && rpc.error.message);
+      return null;
     },
 
     // supprime une annonce. Côté base, réservé au propriétaire ou à un admin.
@@ -484,6 +503,34 @@
         return null;
       }
       return res.data || [];
+    },
+
+    fetchNotifications: async function () {
+      if (!window.db) return null;
+      var res = await window.db
+        .from("app_notifications")
+        .select("*")
+        .is("read_at", null)
+        .order("created_at", { ascending: false })
+        .limit(40);
+      if (res.error) {
+        console.warn("[SB] fetchNotifications:", res.error.message);
+        return null;
+      }
+      return res.data || [];
+    },
+
+    markNotificationRead: async function (notificationId) {
+      if (!window.db || !notificationId) return false;
+      var res = await window.db
+        .from("app_notifications")
+        .update({ read_at: new Date().toISOString() })
+        .eq("id", notificationId);
+      if (res.error) {
+        console.warn("[SB] markNotificationRead:", res.error.message);
+        return false;
+      }
+      return true;
     },
 
     updateUserRole: async function (userId, role) {

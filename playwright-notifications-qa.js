@@ -56,12 +56,24 @@ const { chromium } = require("playwright");
       errors.push(`${path}: notification panel did not show listing expiry alert`);
     }
 
-    await page.locator("#notifPanel .notif-item").first().click();
+    await page.locator("#notifPanel .notif-open").first().click();
     const detailOpen = await page.locator("#detailModal.open").count();
     const detailText = detailOpen ? await page.locator("#detailModal.open").innerText() : "";
     if (!detailOpen || !/Annonce bientot expiree QA/.test(detailText)) {
       errors.push(`${path}: clicking expiry notification did not open the listing`);
     }
+    await page.evaluate(() => closeModal("detailModal"));
+
+    await page.locator("#notifBtn").click();
+    await page.locator("#notifPanel .notif-action.keep").first().click();
+    const renewed = await page.evaluate(() => {
+      const l = L.find(item => idKey(item.id) === "qa-expiring-listing");
+      const count = notifications.filter(n => n.kind === "listing_expiring").length;
+      const days = Math.round((new Date(l.expiresAt).getTime() - Date.now()) / 86400000);
+      return { count, days };
+    });
+    if (renewed.count !== 0) errors.push(`${path}: keep action did not clear expiry notification`);
+    if (renewed.days < 29) errors.push(`${path}: keep action did not renew listing for 30 days`);
 
     await page.close();
   }
