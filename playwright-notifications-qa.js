@@ -76,6 +76,53 @@ const { chromium } = require("playwright");
     if (renewed.days < 29) errors.push(`${path}: keep action did not renew listing for 30 days`);
 
     await page.close();
+
+    const emailLinkPage = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    emailLinkPage.on("pageerror", error => errors.push(`${path} email link: ${error.message}`));
+    await emailLinkPage.addInitScript(() => {
+      const user = {
+        id: "qa-email-renew-user",
+        name: "QA Email Renew",
+        email: "qa-email-renew@example.com",
+        accountType: "personal",
+        accountPlan: "personal-free",
+        subscriptionStatus: "free"
+      };
+      localStorage.setItem("bstsxm-state", JSON.stringify({
+        lang: "fr",
+        cur: "usd",
+        user,
+        favs: [],
+        saved: [],
+        userListings: [{
+          id: "qa-email-renew",
+          ownerId: user.id,
+          sellerId: user.id,
+          sellerName: user.name,
+          t: "Annonce lien email QA",
+          cat: "elec",
+          area: "Marigot",
+          side: "fr",
+          cond: "tbe",
+          cur: "usd",
+          eur: 100,
+          usd: 108,
+          ph: 1,
+          status: "active",
+          sold: false,
+          createdAt: new Date(Date.now() - 31 * 86400000).toISOString()
+        }]
+      }));
+    });
+    await emailLinkPage.goto(`http://localhost:5173${path}?local=1&listing=qa-email-renew&renew=keep`, { waitUntil: "domcontentloaded" });
+    const emailRenewed = await emailLinkPage.evaluate(() => {
+      const l = L.find(item => idKey(item.id) === "qa-email-renew");
+      const days = Math.round((new Date(l.expiresAt).getTime() - Date.now()) / 86400000);
+      return { days, url: location.href };
+    });
+    if (emailRenewed.days < 29) errors.push(`${path}: email keep link did not renew listing`);
+    if (/renew=keep/.test(emailRenewed.url)) errors.push(`${path}: email keep link did not clean renew parameter`);
+    await emailLinkPage.close();
   }
 
   console.log(JSON.stringify({ errors }, null, 2));

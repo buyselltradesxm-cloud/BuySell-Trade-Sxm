@@ -1,0 +1,34 @@
+name: Email queue worker
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  send-email-queue:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: https://npjkbhkmyfppmosforls.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      EMAIL_FROM: "Buy Sell Trade SXM <noreply@buyselltradesxm.com>"
+      SITE_URL: https://buyselltradesxm.com
+      EMAIL_QUEUE_LIMIT: "25"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Send queued emails
+        if: env.SUPABASE_SERVICE_ROLE_KEY != '' && env.RESEND_API_KEY != ''
+        run: npm run emails:send-queue
+
+      - name: Skip until secrets exist
+        if: env.SUPABASE_SERVICE_ROLE_KEY == '' || env.RESEND_API_KEY == ''
+        run: echo "Missing SUPABASE_SERVICE_ROLE_KEY or RESEND_API_KEY. Add them in GitHub repository secrets."

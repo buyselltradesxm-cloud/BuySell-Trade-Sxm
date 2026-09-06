@@ -4357,6 +4357,44 @@ function openMyListings(){
     openPostModal();
   }
 }
+
+function renewalActionFromUrl(){
+  const params = new URLSearchParams(location.search);
+  const action = params.get("renew");
+  const listingId = params.get("listing");
+  if(!listingId || !["keep", "sold", "delete"].includes(action || "")) return null;
+  return { listingId, action };
+}
+
+function clearRenewalActionFromUrl(){
+  const url = new URL(location.href);
+  url.searchParams.delete("renew");
+  history.replaceState(null, "", url.pathname + url.search + url.hash);
+}
+
+async function handleListingRenewalActionFromUrl(){
+  const pending = renewalActionFromUrl();
+  if(!pending) return;
+  if(!state.user){
+    requireAccount("profile");
+    showToast(state.lang==="fr" ? "Connectez-vous pour gérer cette annonce." : "Log in to manage this listing.");
+    return;
+  }
+  const l = L.find(item=>idKey(item.id) === idKey(pending.listingId));
+  if(!l){
+    showToast(state.lang==="fr" ? "Annonce introuvable." : "Listing not found.");
+    return;
+  }
+  if(!isOwnListing(l)){
+    showToast(state.lang==="fr" ? "Cette action est réservée au vendeur." : "This action is for the seller only.");
+    return;
+  }
+  if(pending.action === "keep") await confirmListingAvailable(l.id);
+  if(pending.action === "sold") await setOwnListingSold(l.id, true);
+  if(pending.action === "delete") await deleteOwnListing(l.id);
+  clearRenewalActionFromUrl();
+}
+
 function showTrustInfo(type){
   const messages = {
     email: state.lang==="fr" ? "Email vérifié: ce compte peut recevoir les messages importants." : "Verified email: this account can receive important messages.",
@@ -6711,7 +6749,7 @@ Object.assign(window, {
 window.__bstState = state;
 
 /* ---------------- INIT ---------------- */
-loadLocalState(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(); openAdminFromUrl();
+loadLocalState(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(); openAdminFromUrl(); handleListingRenewalActionFromUrl();
 
 /* Supabase : si configuré, remplace les annonces de démo par celles de la base. */
 if (window.SB && SB.enabled()) {
@@ -6731,6 +6769,7 @@ if (window.SB && SB.enabled()) {
           render();
           refreshMessageBadge();
           refreshBackendNotifications();
+          handleListingRenewalActionFromUrl();
           continuePendingProGoogle();
           continueSelectedProPlan();
           openAdminFromUrl();

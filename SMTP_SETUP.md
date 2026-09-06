@@ -67,6 +67,51 @@ Ces emails pourront etre envoyes quand Stripe et les webhooks seront branches:
 - Abonnement expire: le compte repasse en mode non actif et ne peut plus publier en Pro.
 - Boost active: l'annonce est mise en avant apres paiement confirme.
 
+## Worker email_queue
+
+Le site cree maintenant des emails dans `email_queue`, par exemple quand une annonce arrive a 30 jours.
+
+Pour envoyer ces emails réellement avec Resend:
+
+```powershell
+$env:SUPABASE_URL="https://npjkbhkmyfppmosforls.supabase.co"
+$env:SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+$env:RESEND_API_KEY="your-resend-api-key"
+$env:EMAIL_FROM="Buy Sell Trade SXM <noreply@buyselltradesxm.com>"
+$env:SITE_URL="https://buyselltradesxm.com"
+npm run emails:send-queue
+```
+
+Pour tester sans envoyer de vrai email:
+
+```powershell
+$env:EMAIL_DRY_RUN="1"
+npm run emails:send-queue:dry
+```
+
+Important: `SUPABASE_SERVICE_ROLE_KEY` et `RESEND_API_KEY` ne doivent jamais etre mis dans GitHub.
+
+Le worker:
+
+- prend les emails `pending` dans `email_queue`
+- les passe en `processing`
+- envoie via Resend
+- marque `sent` si tout va bien
+- marque `failed` ou `dead` si l'envoi echoue trop souvent
+
+## Automatisation GitHub
+
+Le fichier `.github/workflows/email-queue-worker.yml` lance le worker toutes les 15 minutes.
+
+Pour l'activer, ajoute ces secrets dans GitHub:
+
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `RESEND_API_KEY`
+
+GitHub > repository `BuySell-Trade-Sxm` > Settings > Secrets and variables > Actions > New repository secret.
+
+Sans ces secrets, l'action se lance mais n'envoie rien.
+
 ## Test apres activation
 
 1. Va sur `https://buyselltradesxm.com`.
