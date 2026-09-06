@@ -112,6 +112,32 @@ GitHub > repository `BuySell-Trade-Sxm` > Settings > Secrets and variables > Act
 
 Sans ces secrets, l'action se lance mais n'envoie rien.
 
+## Automatisation Supabase Edge Function
+
+Option plus propre que GitHub Actions:
+
+1. Cree une API key Resend.
+2. Ajoute les secrets dans Supabase:
+
+```powershell
+supabase secrets set RESEND_API_KEY="your-resend-api-key"
+supabase secrets set EMAIL_FROM="Buy Sell Trade SXM <noreply@buyselltradesxm.com>"
+supabase secrets set SITE_URL="https://buyselltradesxm.com"
+npm run emails:create-secret
+```
+
+3. Copie la commande `supabase secrets set EMAIL_QUEUE_SECRET=...` affichee par le script.
+4. Copie aussi le `select vault.create_secret(...)` affiche par le script et lance-le dans Supabase.
+5. Deploie la fonction:
+
+```powershell
+supabase functions deploy send-email-queue --no-verify-jwt --use-api
+```
+
+6. Lance `supabase/email-edge-cron.sql` apres avoir mis le secret dans Vault.
+
+La fonction refuse les appels sans `x-email-worker-secret`, donc elle peut etre appelee par cron sans ouvrir l'envoi d'email au public.
+
 ## Test apres activation
 
 1. Va sur `https://buyselltradesxm.com`.
