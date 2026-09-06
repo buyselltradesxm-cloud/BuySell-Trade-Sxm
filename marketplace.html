@@ -3242,7 +3242,10 @@ const chatThreads = {};
 let unreadMessageCount = 0;
 
 /* ================= NOTIFICATIONS (cloche + panneau) ================= */
+const LISTING_ACTIVE_DAYS = 30;
+const LISTING_EXPIRY_WARNING_DAYS = 3;
 let notifications = [];          // { id, kind, title, text, at, seen, listingId, convKey }
+let dismissedNotificationIds = new Set();
 let notifPanelOpen = false;
 
 function notifIcon(kind){
@@ -3276,7 +3279,15 @@ function pushNotification(note){
     listingId: note.listingId ?? null,
     convKey: note.convKey ?? null
   };
-  if(entry.convKey && notifications.some(n=>!n.seen && n.convKey === entry.convKey && n.kind === entry.kind)){
+  if(dismissedNotificationIds.has(entry.id)) return;
+  const existing = notifications.find(n=>n.id === entry.id);
+  if(existing){
+    existing.title = entry.title;
+    existing.text = entry.text;
+    existing.at = entry.at;
+    existing.listingId = entry.listingId;
+    existing.convKey = entry.convKey;
+  }else if(entry.convKey && notifications.some(n=>!n.seen && n.convKey === entry.convKey && n.kind === entry.kind)){
     // regroupe les messages non lus d'une même conversation
     const prev = notifications.find(n=>!n.seen && n.convKey === entry.convKey && n.kind === entry.kind);
     prev.text = entry.text; prev.at = entry.at;
@@ -3284,6 +3295,7 @@ function pushNotification(note){
     notifications.unshift(entry);
   }
   notifications = notifications.slice(0, 40);
+  persistState();
   refreshNotifBadge();
   if(notifPanelOpen) renderNotifPanel();
 }
@@ -3296,7 +3308,7 @@ function renderNotifPanel(){
     return;
   }
   list.innerHTML = notifications.map(n=>`
-    <button type="button" class="notif-item ${n.seen ? "" : "unseen"}" onclick="openNotification(${jsString(n.id)})">
+    <button type="button" class="notif-item ${n.seen ? "" : "unseen"}" data-notif-id="${esc(n.id)}" onclick="openNotification(this.dataset.notifId)">
       <span class="notif-ico">${notifIcon(n.kind)}</span>
       <span class="notif-item-main">
         <b>${esc(n.title)}</b>
@@ -3327,6 +3339,7 @@ function toggleNotifPanel(e){
   if(notifPanelOpen){
     renderNotifPanel();
     notifications.forEach(n=>{ n.seen = true; });
+    persistState();
     refreshNotifBadge();
   }
 }
@@ -3341,7 +3354,9 @@ function closeNotifPanel(){
 }
 
 function clearNotifications(){
+  notifications.forEach(n=>dismissedNotificationIds.add(n.id));
   notifications = [];
+  persistState();
   refreshNotifBadge();
   renderNotifPanel();
 }
@@ -3404,6 +3419,51 @@ function seedMessageNotifications(conversations){
   });
 }
 
+function listingCreatedAtMs(l){
+  const raw = l?.createdAt || l?.created_at;
+  const parsed = raw ? new Date(raw).getTime() : NaN;
+  if(Number.isFinite(parsed)) return parsed;
+  const numericId = Number(l?.id);
+  return Number.isFinite(numericId) ? numericId : NaN;
+}
+
+function listingExpiryInfo(l){
+  const created = listingCreatedAtMs(l);
+  if(!Number.isFinite(created)) return null;
+  const expiresAt = created + LISTING_ACTIVE_DAYS * 86400000;
+  const daysLeft = Math.ceil((expiresAt - Date.now()) / 86400000);
+  return {
+    daysLeft,
+    expired: daysLeft <= 0,
+    expiringSoon: daysLeft > 0 && daysLeft <= LISTING_EXPIRY_WARNING_DAYS
+  };
+}
+
+function seedListingExpiryNotifications(){
+  if(!state.user || typeof pushNotification !== "function") return;
+  L.forEach(l=>{
+    if(!isOwnListing(l) || l.sold || l.status === "sold") return;
+    const info = listingExpiryInfo(l);
+    if(!info || (!info.expired && !info.expiringSoon)) return;
+    const expired = info.expired;
+    const title = state.lang === "fr"
+      ? (expired ? "Annonce expirée" : "Annonce bientôt expirée")
+      : (expired ? "Listing expired" : "Listing expiring soon");
+    const timing = state.lang === "fr"
+      ? (expired ? "est expirée" : `expire dans ${info.daysLeft} jour${info.daysLeft > 1 ? "s" : ""}`)
+      : (expired ? "has expired" : `expires in ${info.daysLeft} day${info.daysLeft > 1 ? "s" : ""}`);
+    const action = state.lang === "fr" ? "Modifiez ou republiez si besoin." : "Edit or renew it if needed.";
+    pushNotification({
+      id: `listing-expiry-${idKey(l.id)}-${expired ? "expired" : "soon"}`,
+      kind: "listing_expiring",
+      title,
+      text: `${titleFor(l)} ${timing}. ${action}`,
+      at: new Date().toISOString(),
+      listingId: l.id
+    });
+  });
+}
+
 function loadLocalState(){
   try{
     const raw = localStorage.getItem("bstsxm-state");
@@ -3420,6 +3480,8 @@ function loadLocalState(){
     if(data.adminReports) adminReports = data.adminReports;
     if(data.adminBanned) adminBanned = data.adminBanned;
     if(data.adminCategoryStatus) adminCategoryStatus = data.adminCategoryStatus;
+    if(Array.isArray(data.notifications)) notifications = data.notifications.slice(0, 40);
+    if(Array.isArray(data.dismissedNotificationIds)) dismissedNotificationIds = new Set(data.dismissedNotificationIds);
     if(data.chatThreads && isLocalDevHost()){
       Object.keys(chatThreads).forEach(k=>delete chatThreads[k]);
       Object.assign(chatThreads, data.chatThreads);
@@ -3449,7 +3511,9 @@ function persistState(){
     userListings,
     adminReports,
     adminBanned,
-    adminCategoryStatus
+    adminCategoryStatus,
+    notifications,
+    dismissedNotificationIds:[...dismissedNotificationIds]
   }));
 }
 
@@ -4076,6 +4140,8 @@ function render(){
   document.getElementById("favBtn").classList.toggle("on", state.favs.size>0);
   const activeCount = activeFilterTotal();
   document.getElementById("activeFilterCount").textContent = activeCount ? t().activeFilters(activeCount) : "";
+  seedListingExpiryNotifications();
+  refreshNotifBadge();
   
   renderSavedSearches();
 }

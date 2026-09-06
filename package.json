@@ -19,10 +19,11 @@
     "test:edit-listing": "node playwright-edit-listing-qa.js",
     "test:subscription-profile": "node playwright-subscription-profile-qa.js",
     "test:messenger-inbox": "node playwright-messenger-inbox-qa.js",
+    "test:notifications": "node playwright-notifications-qa.js",
     "supabase:enable-google-auth": "node scripts/enable-google-auth.js",
     "supabase:enable-google-auth-local": "node scripts/enable-google-auth.js --local-only",
     "supabase:enable-smtp": "node scripts/enable-supabase-smtp.js",
-    "test:qa": "npm run test:share && npm run test:gallery-search && npm run test:pro-payment && npm run test:social-auth && npm run test:uuid-listing && npm run test:backend && npm run test:admin-visibility && npm run test:category-form && npm run test:personal-monthly-limit && npm run test:clickable-sections && npm run test:edit-listing && npm run test:subscription-profile && npm run test:messenger-inbox && npm run test:live-admin",
+    "test:qa": "npm run test:share && npm run test:gallery-search && npm run test:pro-payment && npm run test:social-auth && npm run test:uuid-listing && npm run test:backend && npm run test:admin-visibility && npm run test:category-form && npm run test:personal-monthly-limit && npm run test:clickable-sections && npm run test:edit-listing && npm run test:subscription-profile && npm run test:messenger-inbox && npm run test:notifications && npm run test:live-admin",
     "playwright:install": "playwright install chromium"
   },
   "repository": {
