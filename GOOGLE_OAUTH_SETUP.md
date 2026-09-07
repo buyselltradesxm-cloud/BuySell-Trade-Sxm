@@ -26,7 +26,7 @@ https://buyselltradesxm.com
 
 ```text
 Authorized redirect URIs:
-https://ujykgiitlcuqiiepsyiz.supabase.co/auth/v1/callback
+https://szhaxlmronirhnntlwyb.supabase.co/auth/v1/callback
 ```
 
 Copy the generated:
@@ -38,10 +38,10 @@ GOOGLE_CLIENT_SECRET
 
 ## Supabase
 
-Create a Supabase access token from the account that owns project:
+Create a Supabase access token from the `tchalaplus` / `tchalaplus1` account that owns project:
 
 ```text
-ujykgiitlcuqiiepsyiz
+szhaxlmronirhnntlwyb
 ```
 
 The token needs auth config write permissions.

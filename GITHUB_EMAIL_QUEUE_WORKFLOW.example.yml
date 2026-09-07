@@ -9,7 +9,7 @@ jobs:
   send-email-queue:
     runs-on: ubuntu-latest
     env:
-      SUPABASE_URL: https://npjkbhkmyfppmosforls.supabase.co
+      SUPABASE_URL: https://szhaxlmronirhnntlwyb.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
       EMAIL_FROM: "Buy Sell Trade SXM <noreply@buyselltradesxm.com>"

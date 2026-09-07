@@ -37,16 +37,28 @@ create table if not exists public.app_notifications (
   title text not null,
   body text not null,
   action_required boolean default false,
+  read boolean default false,
   read_at timestamptz,
   created_at timestamptz default now(),
   metadata jsonb default '{}'::jsonb
 );
+
+alter table public.app_notifications add column if not exists read boolean default false;
+alter table public.app_notifications add column if not exists read_at timestamptz;
 
 create unique index if not exists app_notifications_listing_kind_unique
   on public.app_notifications (user_id, listing_id, kind)
   where listing_id is not null;
 
 alter table public.app_notifications enable row level security;
+
+drop index if exists public.app_notifications_listing_kind_unique;
+create unique index app_notifications_listing_kind_unique
+  on public.app_notifications (user_id, listing_id, kind)
+  where read_at is null;
+
+grant select, insert, update, delete on public.app_notifications to authenticated;
+grant select, insert, update, delete on public.email_queue to authenticated;
 
 drop policy if exists "app_notifications: lecture propriétaire" on public.app_notifications;
 create policy "app_notifications: lecture propriétaire"
@@ -237,7 +249,7 @@ begin
    where id = listing_id
    returning * into updated_listing;
 
-  insert into public.admin_events(actor_id, action, target_type, target_id, details)
+  insert into public.admin_events(admin_id, action, target_type, target_id, metadata)
   values (auth.uid(), 'admin_set_listing_status', 'listing', listing_id::text, jsonb_build_object('status', new_status));
 
   return updated_listing;

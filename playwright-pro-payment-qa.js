@@ -14,7 +14,7 @@ const { chromium } = require("playwright");
   await page.reload({ waitUntil: "domcontentloaded" });
 
   const headerLogin = page.locator("#profileBtn");
-  const headerPricing = page.locator(".bar-actions").getByRole("button", { name: /^Pricing$/i });
+  const headerPricing = page.locator(".bar-actions").getByRole("button", { name: /^(Pricing|Tarifs)$/i });
   if (!(await headerLogin.isVisible())) errors.push("Login/Profile button is missing from the header.");
   if (!(await headerPricing.isVisible())) errors.push("Pricing button is missing from the header.");
   const headerLoginText = await headerLogin.innerText();
@@ -43,7 +43,7 @@ const { chromium } = require("playwright");
   if (!/Créer un compte est gratuit|Creating an account is free/.test(loginText)) {
     errors.push("Free account message is missing from the login modal.");
   }
-  if (await page.locator("#accountModal .auth-intro").getByRole("button", { name: /^Pricing$/i }).count()) {
+  if (await page.locator("#accountModal .auth-intro").getByRole("button", { name: /^(Pricing|Tarifs)$/i }).count()) {
     errors.push("Pricing button should not be inside the login modal.");
   }
 
@@ -51,7 +51,7 @@ const { chromium } = require("playwright");
   await headerPricing.click();
   await page.locator("#boostModal.open").waitFor();
   const pricingText = await page.locator("#boostModal").innerText();
-  for (const expected of ["Particulier", "Pro Starter", "Pro Business", "Pro Premium", "Pro Elite", "Pro Unlimited"]) {
+  for (const expected of ["Particulier", "Pro Starter", "Pro Business", "Premium", "Elite", "Unlimited"]) {
     if (!pricingText.includes(expected)) errors.push(`Pricing modal is missing ${expected}.`);
   }
   for (const price of ["$29/month", "$59/month", "$99/month", "$149/month", "$199/month"]) {
@@ -123,7 +123,7 @@ const { chromium } = require("playwright");
   console.log(JSON.stringify({
     errors,
     loginHasSocial: /Créer gratuitement avec Google|Create free with Google/.test(loginText) && /Continuer Pro avec Google|Continue Pro with Google/.test(loginText),
-    pricingHasPlans: /Pro Starter/.test(pricingText) && /Pro Unlimited/.test(pricingText),
+    pricingHasPlans: /Pro Starter/.test(pricingText) && /Unlimited/.test(pricingText),
     emailConfirmationRequired,
     accountType: userAfterSignup?.accountType,
     accountPlan: userAfterSignup?.accountPlan

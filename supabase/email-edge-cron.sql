@@ -25,7 +25,7 @@ select cron.schedule(
   '*/15 * * * *',
   $$
   select net.http_post(
-    url := 'https://npjkbhkmyfppmosforls.supabase.co/functions/v1/send-email-queue',
+    url := 'https://szhaxlmronirhnntlwyb.supabase.co/functions/v1/send-email-queue',
     headers := jsonb_build_object(
       'content-type', 'application/json',
       'x-email-worker-secret', (

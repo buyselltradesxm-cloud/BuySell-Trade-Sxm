@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Buy Sell Trade Sxm</title>
 <meta name="description" content="Achetez et vendez d'occasion sur toute l'île : Saint-Martin et Sint Maarten, en euros ou en dollars, en français ou en anglais.">
@@ -10,7 +11,17 @@
 <meta property="og:type" content="website">
 <meta property="og:image" content="BuySellTradeSxm.Logo.png">
 <meta name="twitter:card" content="summary">
-<link rel="icon" href="data:,">
+<!-- PWA -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#FBF7EF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BST Sxm">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<script src="/pwa.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -334,7 +345,28 @@
     padding:20px 24px;
     display:flex;justify-content:flex-end;
   }
-  .leaderboard-link{font-weight:900;color:var(--sea-deep);}
+  .leaderboard-link{
+    font-weight:900;color:var(--sea-deep);
+    display:inline-flex;align-items:center;gap:7px;
+    animation:leaderboardCtaMove 1.8s cubic-bezier(0.77,0,0.175,1) infinite;
+    will-change:transform;
+  }
+  .leaderboard-link::after{
+    content:"›";
+    font-size:1.25em;line-height:1;
+    transform:translateX(0);
+    animation:leaderboardCtaArrow 1.8s cubic-bezier(0.23,1,0.32,1) infinite;
+  }
+  .leaderboard-link:hover{animation-play-state:paused;text-decoration:underline;text-underline-offset:3px;}
+  .leaderboard-link:hover::after{animation-play-state:paused;}
+  @keyframes leaderboardCtaMove{
+    0%,100%{transform:translateX(0);}
+    45%{transform:translateX(5px);}
+  }
+  @keyframes leaderboardCtaArrow{
+    0%,100%{transform:translateX(0);opacity:.7;}
+    45%{transform:translateX(4px);opacity:1;}
+  }
   .sponsored-card{
     min-height:128px;border:2px solid var(--line);border-radius:16px;
     padding:22px;
@@ -372,7 +404,8 @@
     font-size:10px;text-transform:uppercase;
   }
   .mobile-sticky-ad{
-    position:fixed;left:10px;right:10px;bottom:calc(74px + env(safe-area-inset-bottom));
+    position:fixed;left:14px;right:14px;bottom:calc(86px + env(safe-area-inset-bottom));
+    max-width:520px;margin:0 auto;
     z-index:64;
     box-shadow:0 12px 34px rgba(19,42,46,.18);
   }
@@ -481,7 +514,7 @@
     background-repeat:no-repeat;background-position:right 11px center;
   }
   .view-toggle{display:flex;border:2px solid var(--line);border-radius:8px;overflow:hidden;}
-  .view-toggle button{padding:7px 9px;color:var(--mute);display:flex;}
+  .view-toggle button{min-width:40px;min-height:40px;padding:7px 9px;color:var(--mute);display:flex;align-items:center;justify-content:center;}
   .view-toggle button[aria-pressed=true]{background:var(--ink);color:var(--white);}
 
   .grid{
@@ -1329,6 +1362,7 @@
   .mobile-nav-inner{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
   .mobile-nav button,.mobile-nav a{
     display:flex;flex-direction:column;align-items:center;gap:2px;
+    min-height:48px;
     border-radius:9px;padding:7px 4px;font-size:11px;font-weight:700;color:var(--mute);
   }
   .mobile-nav .hot{background:var(--sun);color:var(--ink);border:2px solid var(--line);}
@@ -1403,7 +1437,8 @@
     .admin-actions{justify-content:flex-start;}
     .mobile-nav{display:block;}
     .mobile-ad-slot{display:block;}
-    body{padding-bottom:146px;}
+    .mobile-sticky-ad{display:none;}
+    body{padding-bottom:96px;}
   }
   @media (max-width:620px){
     .bar-inner{padding:10px 14px;gap:10px;}
@@ -1424,7 +1459,7 @@
     .hero h1{font-size:24px;}
     .search{display:grid;grid-template-columns:minmax(0,1fr) auto;width:100%;}
     .search .divide,.search select,.cur-toggle{display:none;}
-    .search .go{border-left:2px solid var(--line);padding:0;width:48px;font-size:0;display:grid;place-content:center;}
+    .search .go{border-left:2px solid var(--line);padding:0;width:56px;min-height:40px;font-size:0;display:grid;place-content:center;}
     .search .go::after{content:"Go";font-size:13px;font-weight:800;}
     .photo-preview{grid-template-columns:repeat(3,1fr);}
     .post-options{grid-template-columns:1fr;}
@@ -1436,7 +1471,293 @@
     .mobile-nav .hot span:last-child{font-size:10px;}
     .filter-fab{display:none;}
     .catrail-shell{grid-template-columns:34px 1fr 34px;}
-    .cat-arrow{width:28px;height:28px;}
+    .cat-arrow{width:36px;height:36px;}
+    .fav,.share-card{min-width:40px;min-height:40px;}
+  }
+
+  @media (max-width:620px){
+    body{
+      background:#fffdf8;
+      font-size:16px;
+      padding-bottom:96px;
+    }
+    .topbar{
+      background:rgba(251,247,239,.98);
+      border-bottom:1.5px solid rgba(19,42,46,.18);
+      box-shadow:0 8px 26px rgba(19,42,46,.12);
+    }
+    .bar-inner{
+      grid-template-columns:minmax(0,1fr) auto;
+      grid-template-areas:"logo actions" "search search";
+      padding:12px 14px 14px;
+      gap:12px;
+    }
+    .logo-img{width:48px;height:48px;}
+    .logo .mark{font-size:22px;line-height:1;}
+    .logo .sub{font-size:12px;max-width:none;}
+    .bar-actions{
+      grid-area:actions;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .bar-actions .lang{
+      display:flex;
+      margin:0;
+      border-radius:12px;
+      background:var(--white);
+    }
+    .lang button{
+      min-width:44px;
+      min-height:40px;
+      padding:7px 8px;
+      font-size:13px;
+    }
+    .bar-actions .icon-btn{display:none;}
+    .bar-actions #profileBtn{display:none;}
+    .search{
+      grid-area:search;
+      min-height:58px;
+      border-radius:16px;
+      box-shadow:0 6px 0 rgba(19,42,46,.08);
+    }
+    .search input[type=text]{
+      padding:0 18px;
+      font-size:17px;
+    }
+    .search .go{
+      width:64px;
+      min-height:56px;
+      font-size:0;
+    }
+    .search .go::after{font-size:16px;}
+    .safety-marquee{
+      overflow:visible;
+      white-space:normal;
+    }
+    .safety-track{
+      display:block;
+      padding:10px 14px;
+      animation:none;
+      font-size:13px;
+      line-height:1.35;
+      letter-spacing:0;
+    }
+    .safety-track span{
+      display:block;
+      margin:0;
+    }
+    .safety-track span + span{display:none;}
+    .site-flow{
+      display:flex;
+      flex-direction:column;
+    }
+    .hero{display:none;}
+    .hero-inner{
+      padding:18px 16px 16px;
+    }
+    .hero h1{
+      max-width:17ch;
+      font-size:25px;
+      line-height:1.12;
+      letter-spacing:0;
+      text-wrap:balance;
+    }
+    .hero p{
+      margin-top:10px;
+      font-size:16px;
+      line-height:1.55;
+      max-width:34ch;
+    }
+    .hero-props{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:8px;
+      margin-top:14px;
+    }
+    .prop{
+      min-height:48px;
+      border-radius:14px;
+      padding:8px 12px;
+      font-size:14px;
+    }
+    .sponsored-strip,.strip,.getapp{display:none;}
+    .catrail{
+      order:2;
+      top:132px;
+      background:#fffdf8;
+      border-top:1.5px solid rgba(19,42,46,.14);
+      border-bottom:1.5px solid rgba(19,42,46,.18);
+    }
+    .catrail-shell{
+      grid-template-columns:42px minmax(0,1fr) 42px;
+      padding:8px 10px;
+    }
+    .catrail-inner{
+      gap:8px;
+      padding:0 4px;
+    }
+    .cat-arrow{
+      width:38px;
+      height:38px;
+      border-radius:12px;
+      background:var(--white);
+    }
+    .cat{
+      min-height:48px;
+      padding:9px 12px;
+      border:1.5px solid rgba(19,42,46,.18);
+      border-radius:14px;
+      background:var(--white);
+      color:var(--ink);
+      font-size:14px;
+      font-weight:700;
+    }
+    .cat img{width:30px;height:30px;border-radius:9px;}
+    .cat[aria-pressed=true]{
+      background:var(--ink);
+      color:var(--white);
+      border-color:var(--ink);
+    }
+    .cat[aria-pressed=true]::after{display:none;}
+    .subcat-panel{order:3;}
+    .subcat-inner{
+      padding:12px 14px;
+      gap:10px;
+    }
+    .subcat-head{
+      display:grid;
+      gap:2px;
+    }
+    .subcat-head b{font-size:16px;}
+    .subcat-head span{font-size:13px;}
+    .subcat-groups{gap:10px;}
+    .subcat-group{
+      border-radius:14px;
+      padding:12px;
+    }
+    .subcat-chip{
+      min-height:40px;
+      padding:9px 10px;
+      font-size:13px;
+    }
+    .layout{
+      order:4;
+      padding:16px 14px 42px;
+      gap:16px;
+    }
+    .mobile-top-ad{
+      order:5;
+      margin:10px 14px 22px;
+    }
+    .board-head h2,.results-head .count{
+      font-size:18px;
+      line-height:1.2;
+    }
+    .results-head{
+      align-items:flex-start;
+      gap:10px;
+    }
+    .controls select{
+      min-height:42px;
+      font-size:14px;
+    }
+    .view-toggle button{
+      min-width:44px;
+      min-height:42px;
+    }
+    .grid{
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+    .card{
+      border-radius:16px;
+    }
+    .card .photo{
+      aspect-ratio:16/11;
+    }
+    .card .body{
+      padding:14px 14px 16px;
+      gap:7px;
+    }
+    .card .price{
+      font-size:20px;
+    }
+    .card .ttl{
+      min-height:0;
+      font-size:16px;
+      line-height:1.35;
+    }
+    .card .meta{
+      font-size:13px;
+      line-height:1.35;
+    }
+    .fav{
+      width:44px;
+      height:44px;
+      right:10px;
+      top:10px;
+      font-size:18px;
+    }
+    .share-card{
+      top:62px;
+      right:10px;
+      min-width:92px;
+      height:40px;
+      font-size:13px;
+    }
+    .boost-card-action{
+      top:108px;
+      right:10px;
+      min-width:92px;
+      height:40px;
+      font-size:13px;
+    }
+    .mobile-nav{
+      background:rgba(255,253,248,.98);
+      border-top:1.5px solid rgba(19,42,46,.2);
+      box-shadow:0 -10px 28px rgba(19,42,46,.14);
+      padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    }
+    .mobile-nav-inner{
+      gap:4px;
+    }
+    .mobile-nav button,.mobile-nav a{
+      min-height:58px;
+      border-radius:14px;
+      font-size:12px;
+      color:var(--ink);
+    }
+    .mobile-nav .hot{
+      min-height:64px;
+      border-radius:16px;
+      transform:translateY(-8px);
+      box-shadow:0 8px 0 rgba(19,42,46,.12);
+    }
+    .filters{
+      width:340px;
+      max-width:92vw;
+      background:#fffdf8;
+    }
+    .filter-select,.price-row input,.primary-btn,.secondary-btn{
+      min-height:44px;
+      font-size:15px;
+    }
+    .modal{
+      padding:0;
+    }
+    .dialog{
+      width:100%;
+      max-height:92dvh;
+      border-radius:18px 18px 0 0;
+      border-width:2px 0 0;
+    }
+    .toast{
+      left:14px;
+      right:14px;
+      bottom:calc(86px + env(safe-area-inset-bottom));
+      text-align:center;
+    }
   }
   @media (max-width:400px){
     .grid{grid-template-columns:1fr;}
@@ -1445,6 +1766,7 @@
   @media (prefers-reduced-motion:reduce){
     .board .card{animation:none;}
     .fav.pop{animation:none;}
+    .leaderboard-link,.leaderboard-link::after{animation:none;}
     .safety-track{animation:none;}
     *{scroll-behavior:auto;}
   }
@@ -2051,23 +2373,23 @@
             </button>
             <button type="button" class="pricing-card" onclick="chooseProPlan('pro-starter')">
               <span class="pricing-price">$29/month</span><h4>Pro Starter</h4><p>Pour commencer à vendre régulièrement.</p>
-              <ul><li>10 annonces actives</li><li>Page entreprise</li><li>Badge Pro</li></ul><span class="pricing-cta">Choisir Pro Starter</span>
+              <ul><li>10 annonces actives</li><li>Page entreprise</li><li>Badge Pro</li><li>1 boost automatique par mois</li></ul><span class="pricing-cta">Choisir Starter</span>
             </button>
             <button type="button" class="pricing-card" onclick="chooseProPlan('pro-business')">
               <span class="pricing-price">$59/month</span><h4>Pro Business</h4><p>Plus de volume et des résultats mesurables.</p>
-              <ul><li>30 annonces actives</li><li>Statistiques</li><li>2 boosts par mois</li></ul><span class="pricing-cta">Choisir Pro Business</span>
+              <ul><li>30 annonces actives</li><li>Statistiques</li><li>2 boosts automatiques par mois</li></ul><span class="pricing-cta">Choisir Pro Business</span>
             </button>
             <button type="button" class="pricing-card featured" onclick="chooseProPlan('pro-premium')">
-              <span class="pricing-price">$99/month</span><h4>Pro Premium</h4><p>Pour un catalogue actif et plus de contacts.</p>
-              <ul><li>75 annonces actives</li><li>5 boosts par mois</li><li>Remontées automatiques</li><li>WhatsApp et catalogue</li></ul><span class="pricing-cta">Choisir Pro Premium</span>
+              <span class="pricing-price">$99/month</span><h4>Premium</h4><p>Pour un catalogue actif et plus de contacts.</p>
+              <ul><li>75 annonces actives</li><li>5 boosts automatiques par mois</li><li>Remontées automatiques</li><li>WhatsApp et catalogue</li></ul><span class="pricing-cta">Choisir Premium</span>
             </button>
             <button type="button" class="pricing-card" onclick="chooseProPlan('pro-elite')">
-              <span class="pricing-price">$149/month</span><h4>Pro Elite</h4><p>Une vraie vitrine pour les entreprises établies.</p>
-              <ul><li>150 annonces actives</li><li>10 boosts par mois</li><li>Vitrine entreprise</li><li>Priorité dans les résultats</li></ul><span class="pricing-cta">Choisir Pro Elite</span>
+              <span class="pricing-price">$149/month</span><h4>Elite</h4><p>Une vraie vitrine pour les entreprises établies.</p>
+              <ul><li>150 annonces actives</li><li>10 boosts automatiques par mois</li><li>Vitrine entreprise</li><li>Priorité dans les résultats</li></ul><span class="pricing-cta">Choisir Elite</span>
             </button>
             <button type="button" class="pricing-card" onclick="chooseProPlan('pro-unlimited')">
-              <span class="pricing-price">$199/month</span><h4>Pro Unlimited</h4><p>Capacité et visibilité maximales.</p>
-              <ul><li>Annonces illimitées</li><li>Vitrine premium</li><li>Promotions et boosts</li><li>Statistiques avancées</li></ul><span class="pricing-cta">Choisir Pro Unlimited</span>
+              <span class="pricing-price">$199/month</span><h4>Unlimited</h4><p>Capacité et visibilité maximales.</p>
+              <ul><li>Annonces illimitées</li><li>Vitrine premium</li><li>20 boosts automatiques par mois</li><li>Statistiques avancées</li></ul><span class="pricing-cta">Choisir Pro Unlimited</span>
             </button>
           </div>
           <div class="pricing-context"><strong>Un seul système Pro pour toutes les entreprises</strong>Restaurant, boutique de vêtements, garage, agence immobilière, magasin d'électroménager ou vendeur de téléphones: chacun choisit son plan selon le nombre d'annonces et la visibilité recherchée.</div>
@@ -2260,8 +2582,8 @@
     <h2 data-i18n="getH">Déposez votre première annonce aujourd'hui</h2>
     <p data-i18n="getP">C'est gratuit, c'est local, et votre voisin cherche sans doute déjà ce que vous vendez.</p>
     <div class="stores">
-      <button type="button" class="store" disabled><span class="sm" data-i18n="comingSoon">Bientôt disponible</span><span class="big">App&nbsp;Store</span></button>
-      <button type="button" class="store" disabled><span class="sm" data-i18n="comingSoon">Bientôt disponible</span><span class="big">Google&nbsp;Play</span></button>
+      <button type="button" class="store" disabled><span class="sm" data-i18n="storeAvailable">Disponible</span><span class="big">App&nbsp;Store</span></button>
+      <button type="button" class="store" disabled><span class="sm" data-i18n="storeAvailable">Disponible</span><span class="big">Google&nbsp;Play</span></button>
     </div>
   </div>
 </section>
@@ -2309,9 +2631,10 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.74.0/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.74.0/dist/umd/supabase.min.js" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="supabase-config.js"></script>
 <script src="supabase-api.js"></script>
+<script src="img-utils.js"></script>
 
 <script>
 /* ---------------- DATA ---------------- */
@@ -2613,9 +2936,9 @@ const I18N = {
   socialGoogle:"Continuer avec Google",socialOr:"ou",
   inboxPick:"Choisissez une conversation pour répondre.",inboxSend:"Envoyer",inboxViewListing:"Voir l'annonce",inboxWrite:"Écrivez votre réponse…",
   notifLabel:"Alertes",notifTitle:"Notifications",notifClear:"Tout effacer",
-      pricingLabel:"Pricing",loginLabel:"Login",pricingKicker:"Gratuit pour vendre, payant pour les pros",pricingTitle:"Pricing",pricingIntro:"Créer un compte est gratuit. Publier et vendre vos objets personnels est gratuit. Les plans payants sont des abonnements pour les pros qui veulent plus de visibilité.",pricingPlansTitle:"Types de compte",pricingFreeNote:"Personal Free permet de publier gratuitement vos annonces personnelles. Les abonnements Pro ajoutent des outils business, des boosts et plus de visibilité.",authFreeTitle:"Créer un compte gratuit",authFreeText:"Publier une annonce personnelle reste gratuit. Les options Pro sont séparées dans Pricing.",authBadge:"Gratuit",createKicker:"Nouveau compte",loginKicker:"Connexion rapide",otpSentText:"Nous avons envoyé un code à votre email. Entrez-le ci-dessous pour activer votre compte.",otpCodeLabel:"Code de confirmation",otpConfirm:"Confirmer le code",otpResend:"Renvoyer le code",otpInvalid:"Code invalide ou expiré.",otpConfirmed:"Compte confirmé - bienvenue.",otpResent:"Nouveau code envoyé.",freeCreateAccount:"Créer un compte est gratuit.",freePostListing:"Publier quelque chose à vendre est gratuit.",freePersonalSelling:"Vendre vos objets personnels est gratuit.",loginWithEmail:"ou connectez-vous avec email",
+      pricingLabel:"Tarifs",loginLabel:"Login",pricingKicker:"Gratuit pour vendre, payant pour les pros",pricingTitle:"Tarifs",pricingIntro:"Créer un compte est gratuit. Publier et vendre vos objets personnels est gratuit. Les plans payants sont des abonnements pour les pros qui veulent plus de visibilité.",pricingPlansTitle:"Types de compte",pricingFreeNote:"Personal Free permet de publier gratuitement vos annonces personnelles. Les abonnements Pro ajoutent des outils business, des boosts et plus de visibilité.",authFreeTitle:"Créer un compte gratuit",authFreeText:"Publier une annonce personnelle reste gratuit. Les options Pro sont séparées dans Tarifs.",authBadge:"Gratuit",createKicker:"Nouveau compte",loginKicker:"Connexion rapide",otpSentText:"Nous avons envoyé un code à votre email. Entrez-le ci-dessous pour activer votre compte.",otpCodeLabel:"Code de confirmation",otpConfirm:"Confirmer le code",otpResend:"Renvoyer le code",otpInvalid:"Code invalide ou expiré.",otpConfirmed:"Compte confirmé - bienvenue.",otpResent:"Nouveau code envoyé.",freeCreateAccount:"Créer un compte est gratuit.",freePostListing:"Publier quelque chose à vendre est gratuit.",freePersonalSelling:"Vendre vos objets personnels est gratuit.",loginWithEmail:"ou connectez-vous avec email",
       filters:"Filtres",filtersHint:"Trouvez plus vite l'annonce qui vous convient.",price:"Prix",side:"Côté de l'île",condition:"État",subcategoryLabel:"Sous-catégorie",allSubcategories:"Toutes les sous-catégories",sellerTypeLabel:"Type de vendeur",availabilityLabel:"Disponibilité",handoverFilterLabel:"Remise du produit",moreCriteria:"Autres critères",allSellers:"Tous les vendeurs",individualSeller:"Particuliers",professionalSeller:"Professionnels",allStatuses:"Tous les statuts",availableOnly:"Disponible maintenant",reservedOnly:"Réservé",soldOnly:"Vendu",allHandovers:"Tous les modes",urgentOnly:"Ventes urgentes",negotiableOnly:"Prix négociables",deliveryOnly:"Livraison disponible",resetFilters:"Tout effacer",activeFilters:n=>`${n} actif${n>1?"s":""}`,showResults:n=>`Voir ${n} annonce${n===1?"":"s"}`,filterSearch:"Rechercher",
-      allIsland:"Toute l'île",browseLabel:"Parcourir",listingLabel:"Annonce",titleLabel:"Titre",titlePh:"Ex: Scooter 125 en bon état",categoryLabel:"Catégorie",areaLabel:"Zone",currencyLabel:"Devise",photosLabel:"Photos",uploadPhotos:"Ajouter des photos",photosHelp:"Ajoutez jusqu'à 8 photos réelles de l'objet. La première photo sera utilisée comme image principale.",deliveryLabel:"Remise",pickupOnly:"Retrait uniquement",deliveryPossible:"Livraison possible",meetupPossible:"Rendez-vous possible",meetupLabel:"Lieu préféré",publicMeetup:"Lieu public",sellerPlace:"Chez le vendeur",buyerPlace:"Chez l'acheteur",negotiableLabel:"Prix négociable",urgentSaleLabel:"Vente urgente",safeMeetLabel:"Rendez-vous sécurisé",photoRequired:"Ajoutez au moins une photo réelle pour publier.",tooManyPhotos:"Maximum 8 photos par annonce.",sideLabel:"Côté",descLabel:"Description",descPh:"Ajoutez les détails utiles: état, quantité, livraison et point de rendez-vous",postSubmit:"Publier l'annonce",cancelLabel:"Annuler",sellerPro:"Vendeur pro",sellerLocal:"Vendeur local",quickMessage:"Chat avec le vendeur",chatOnline:"Réponse instantanée",chatPlaceholder:"Écrivez votre message au vendeur",chatSend:"Envoyer",sellerTyping:"Le vendeur répond...",instantReply:"Oui, c'est disponible. On peut s'organiser ici dans le chat.",loginToChat:"Connectez-vous pour envoyer un message au vendeur.",shareLabel:"Partager",shareTitle:"Partager cette annonce",shareHelp:"Copiez le lien ou envoyez-le directement pour que quelqu'un ouvre cette annonce.",copyLink:"Copier le lien",linkCopied:"Lien copié",shareText:"Regarde cette annonce sur Buy Sell Trade Sxm",shareFailed:"Impossible de partager. Le lien a été copié.",savedLabel:"Enregistré",saveLabel:"Enregistrer",removedToast:"Retiré",savedToast:"Enregistré",messageReady:"Message envoyé",listingPublished:"Annonce publiée",defaultMessage:"Bonjour, votre annonce est-elle toujours disponible ?",subcatHint:"Affinez sans perdre le fil.",footerMarket:"Marketplace",footerTrust:"Confiance & sécurité",footerLang:"Français et anglais",profileLabel:"Profil",profileTitle:"Mon profil",profileRequired:"Connectez-vous pour voir votre profil.",memberSince:"Membre depuis",verifiedEmail:"Email vérifié",trustedMember:"Membre de confiance",fastReply:"Réponse rapide",profileListings:"Mes annonces",profileNoListings:"Vous n'avez pas encore publié d'annonce.",activeListings:"Annonces",savedItems:"Favoris",conversations:"Messages",ratingLabel:"Note",editProfile:"Modifier le profil",logoutLabel:"Se déconnecter",boostPageTitle:"Boost & Pro",boostKicker:"Visibilité payante",boostHeroTitle:"Faites voir vos annonces aux bons acheteurs",boostHeroText:"Les annonces classiques restent gratuites pour les particuliers. Les boosts et comptes Pro sont des options payantes pour vendre plus vite, afficher plus d'annonces et obtenir plus de contacts.",boostFreeTitle:"Annonce gratuite",boostFreeText:"Pour vendre un objet occasionnellement: photos, prix, quartier, chat avec l'acheteur et partage du lien.",boostPaidTitle:"Boost payant",boostPaidText:"Le vendeur choisit une annonce, sélectionne une durée de mise en avant, paie, puis l'annonce reçoit le badge Sponsorisé et apparaît plus haut sur la page.",boostProTitle:"Compte Pro business",boostProText:"Pour les commerces: page business, badge Pro, plus d'annonces, statistiques, messages centralisés et options de visibilité régulières.",boostStepsTitle:"Comment ça marche",boostStep1:"Choisir l'annonce à promouvoir.",boostStep2:"Choisir la durée: 3, 7 ou 14 jours.",boostStep3:"Payer avant l'activation.",boostStep4:"Suivre les vues, favoris et messages.",boostPaymentTitle:"Paiement requis",boostPaymentText:"Aucune annonce n'est mise en avant sans paiement confirmé. Les prix seront ajoutés avant le lancement officiel.",boostTrustTitle:"Confiance vendeur",boostTrustText:"Après une discussion ou une vente, les acheteurs pourront noter le vendeur. Les profils sérieux seront plus rassurants pour les prochains acheteurs.",boostPriceSoon:"Prix à définir",boostPriceText:"On peut déjà construire le parcours paiement avec des prix temporaires masqués, puis brancher Stripe quand les tarifs sont validés.",accountTitle:"Compte requis",newAccountTitle:"Nouveau sur Buy Sell Trade Sxm",newAccountHelp:"Créez un compte particulier ou professionnel pour publier, gérer vos messages et protéger la communauté.",loginTitle:"J'ai déjà un compte",loginHelp:"Connectez-vous pour reprendre vos annonces, vos favoris et vos conversations.",passwordLabel:"Mot de passe",confirmPasswordLabel:"Confirmer le mot de passe",accountTypeLabel:"Type de compte",personalAccount:"Particulier",businessAccount:"Professionnel",businessNameLabel:"Nom du commerce",passwordMismatch:"Les mots de passe ne correspondent pas.",emailExists:"Un compte existe déjà avec cet email.",invalidLogin:"Email ou mot de passe incorrect.",loginSubmit:"Se connecter",loginToast:"Connexion réussie",accountName:"Nom",accountEmail:"Email",accountHelp:"Un compte est obligatoire pour déposer une annonce, contacter un vendeur et protéger la communauté.",accountSubmit:"Créer mon compte",comingSoon:"Bientôt disponible",safetyBanner:"Objets illégaux interdits: armes, drogues, contrefaçons et articles dangereux. Toute violation peut entraîner un bannissement définitif.",illegalPolicy:"Les objets illégaux, armes, drogues, contrefaçons, produits volés et articles dangereux sont strictement interdits. Les comptes en infraction peuvent être supprimés et bannis définitivement.",
+      allIsland:"Toute l'île",browseLabel:"Parcourir",listingLabel:"Annonce",titleLabel:"Titre",titlePh:"Ex: Scooter 125 en bon état",categoryLabel:"Catégorie",areaLabel:"Zone",currencyLabel:"Devise",photosLabel:"Photos",uploadPhotos:"Ajouter des photos",photosHelp:"Ajoutez jusqu'à 8 photos réelles de l'objet. La première photo sera utilisée comme image principale.",deliveryLabel:"Remise",pickupOnly:"Retrait uniquement",deliveryPossible:"Livraison possible",meetupPossible:"Rendez-vous possible",meetupLabel:"Lieu préféré",publicMeetup:"Lieu public",sellerPlace:"Chez le vendeur",buyerPlace:"Chez l'acheteur",negotiableLabel:"Prix négociable",urgentSaleLabel:"Vente urgente",safeMeetLabel:"Rendez-vous sécurisé",photoRequired:"Ajoutez au moins une photo réelle pour publier.",tooManyPhotos:"Maximum 8 photos par annonce.",sideLabel:"Côté",descLabel:"Description",descPh:"Ajoutez les détails utiles: état, quantité, livraison et point de rendez-vous",postSubmit:"Publier l'annonce",cancelLabel:"Annuler",sellerPro:"Vendeur pro",sellerLocal:"Vendeur local",quickMessage:"Chat avec le vendeur",chatOnline:"Réponse instantanée",chatPlaceholder:"Écrivez votre message au vendeur",chatSend:"Envoyer",sellerTyping:"Le vendeur répond...",instantReply:"Oui, c'est disponible. On peut s'organiser ici dans le chat.",loginToChat:"Connectez-vous pour envoyer un message au vendeur.",shareLabel:"Partager",shareTitle:"Partager cette annonce",shareHelp:"Copiez le lien ou envoyez-le directement pour que quelqu'un ouvre cette annonce.",copyLink:"Copier le lien",linkCopied:"Lien copié",shareText:"Regarde cette annonce sur Buy Sell Trade Sxm",shareFailed:"Impossible de partager. Le lien a été copié.",savedLabel:"Enregistré",saveLabel:"Enregistrer",removedToast:"Retiré",savedToast:"Enregistré",messageReady:"Message envoyé",listingPublished:"Annonce publiée",defaultMessage:"Bonjour, votre annonce est-elle toujours disponible ?",subcatHint:"Affinez sans perdre le fil.",footerMarket:"Marketplace",footerTrust:"Confiance & sécurité",footerLang:"Français et anglais",profileLabel:"Profil",profileTitle:"Mon profil",profileRequired:"Connectez-vous pour voir votre profil.",memberSince:"Membre depuis",verifiedEmail:"Email vérifié",trustedMember:"Membre de confiance",fastReply:"Réponse rapide",profileListings:"Mes annonces",profileNoListings:"Vous n'avez pas encore publié d'annonce.",activeListings:"Annonces",savedItems:"Favoris",conversations:"Messages",ratingLabel:"Note",editProfile:"Modifier le profil",logoutLabel:"Se déconnecter",boostPageTitle:"Boost & Pro",boostKicker:"Visibilité payante",boostHeroTitle:"Faites voir vos annonces aux bons acheteurs",boostHeroText:"Les annonces classiques restent gratuites pour les particuliers. Les boosts et comptes Pro sont des options payantes pour vendre plus vite, afficher plus d'annonces et obtenir plus de contacts.",boostFreeTitle:"Annonce gratuite",boostFreeText:"Pour vendre un objet occasionnellement: photos, prix, quartier, chat avec l'acheteur et partage du lien.",boostPaidTitle:"Boost payant",boostPaidText:"Le vendeur choisit une annonce, sélectionne une durée de mise en avant, paie, puis l'annonce reçoit le badge Sponsorisé et apparaît plus haut sur la page.",boostProTitle:"Compte Pro business",boostProText:"Pour les commerces: page business, badge Pro, plus d'annonces, statistiques, messages centralisés et options de visibilité régulières.",boostStepsTitle:"Comment ça marche",boostStep1:"Choisir l'annonce à promouvoir.",boostStep2:"Choisir la durée: 3, 7 ou 14 jours.",boostStep3:"Payer avant l'activation.",boostStep4:"Suivre les vues, favoris et messages.",boostPaymentTitle:"Paiement requis",boostPaymentText:"Aucune annonce n'est mise en avant sans paiement confirmé. Les prix seront ajoutés avant le lancement officiel.",boostTrustTitle:"Confiance vendeur",boostTrustText:"Après une discussion ou une vente, les acheteurs pourront noter le vendeur. Les profils sérieux seront plus rassurants pour les prochains acheteurs.",boostPriceSoon:"Prix à définir",boostPriceText:"On peut déjà construire le parcours paiement avec des prix temporaires masqués, puis brancher Stripe quand les tarifs sont validés.",accountTitle:"Compte requis",newAccountTitle:"Nouveau sur Buy Sell Trade Sxm",newAccountHelp:"Créez un compte particulier ou professionnel pour publier, gérer vos messages et protéger la communauté.",loginTitle:"J'ai déjà un compte",loginHelp:"Connectez-vous pour reprendre vos annonces, vos favoris et vos conversations.",passwordLabel:"Mot de passe",confirmPasswordLabel:"Confirmer le mot de passe",accountTypeLabel:"Type de compte",personalAccount:"Particulier",businessAccount:"Professionnel",businessNameLabel:"Nom du commerce",passwordMismatch:"Les mots de passe ne correspondent pas.",emailExists:"Un compte existe déjà avec cet email.",invalidLogin:"Email ou mot de passe incorrect.",loginSubmit:"Se connecter",loginToast:"Connexion réussie",accountName:"Nom",accountEmail:"Email",accountHelp:"Un compte est obligatoire pour déposer une annonce, contacter un vendeur et protéger la communauté.",accountSubmit:"Créer mon compte",comingSoon:"Bientôt disponible",storeAvailable:"Disponible",safetyBanner:"Objets illégaux interdits: armes, drogues, contrefaçons et articles dangereux. Toute violation peut entraîner un bannissement définitif.",illegalPolicy:"Les objets illégaux, armes, drogues, contrefaçons, produits volés et articles dangereux sont strictement interdits. Les comptes en infraction peuvent être supprimés et bannis définitivement.",
       saveSearch:"Enregistrer cette recherche",featured:"À la une sur l'île",sortBy:"Trier par",
       footNote:"Petites annonces locales pour Saint-Martin et Sint Maarten.",frSide:"Côté français · Marigot",nlSide:"Côté Sint Maarten · Philipsburg",
       sort_recent:"Plus récentes",sort_pxup:"Prix croissant",sort_pxdn:"Prix décroissant",sort_near:"Au plus près",
@@ -2642,7 +2965,7 @@ const I18N = {
   notifLabel:"Alerts",notifTitle:"Notifications",notifClear:"Clear all",
       pricingLabel:"Pricing",loginLabel:"Login",pricingKicker:"Free to sell, paid for pros",pricingTitle:"Pricing",pricingIntro:"Creating an account is free. Posting and selling your personal items is free. Paid plans are subscriptions for pros who want more visibility.",pricingPlansTitle:"Account types",pricingFreeNote:"Personal Free lets you publish personal listings for free. Pro subscriptions add business tools, boosts, and more visibility.",authFreeTitle:"Create a free account",authFreeText:"Posting a personal listing stays free. Pro options live separately in Pricing.",authBadge:"Free",createKicker:"New account",loginKicker:"Fast login",otpSentText:"We sent a code to your email. Enter it below to activate your account.",otpCodeLabel:"Confirmation code",otpConfirm:"Confirm code",otpResend:"Resend code",otpInvalid:"Invalid or expired code.",otpConfirmed:"Account confirmed - welcome.",otpResent:"New code sent.",freeCreateAccount:"Creating an account is free.",freePostListing:"Posting something for sale is free.",freePersonalSelling:"Selling your personal items is free.",loginWithEmail:"or log in with email",
       filters:"Filters",filtersHint:"Find the right listing faster.",price:"Price",side:"Side of the island",condition:"Condition",subcategoryLabel:"Subcategory",allSubcategories:"All subcategories",sellerTypeLabel:"Seller type",availabilityLabel:"Availability",handoverFilterLabel:"Item handover",moreCriteria:"More criteria",allSellers:"All sellers",individualSeller:"Individuals",professionalSeller:"Businesses",allStatuses:"All statuses",availableOnly:"Available now",reservedOnly:"Reserved",soldOnly:"Sold",allHandovers:"All handover options",urgentOnly:"Urgent listings",negotiableOnly:"Negotiable prices",deliveryOnly:"Delivery available",resetFilters:"Clear all",activeFilters:n=>`${n} active`,showResults:n=>`Show ${n} listing${n!==1?"s":""}`,filterSearch:"Search",
-      allIsland:"Whole island",browseLabel:"Browse",listingLabel:"Listing",titleLabel:"Title",titlePh:"Ex: 125cc scooter in good condition",categoryLabel:"Category",areaLabel:"Area",currencyLabel:"Currency",photosLabel:"Photos",uploadPhotos:"Add photos",photosHelp:"Add up to 8 real photos of the item. The first photo becomes the main listing image.",deliveryLabel:"Handover",pickupOnly:"Pickup only",deliveryPossible:"Delivery possible",meetupPossible:"Meetup possible",meetupLabel:"Preferred place",publicMeetup:"Public place",sellerPlace:"Seller's place",buyerPlace:"Buyer's place",negotiableLabel:"Negotiable price",urgentSaleLabel:"Urgent sale",safeMeetLabel:"Safe meetup",photoRequired:"Add at least one real photo before publishing.",tooManyPhotos:"Maximum 8 photos per listing.",sideLabel:"Side",descLabel:"Description",descPh:"Add useful details: condition, quantity, delivery, and meeting point",postSubmit:"Publish listing",cancelLabel:"Cancel",sellerPro:"Professional seller",sellerLocal:"Local seller",quickMessage:"Chat with seller",chatOnline:"Instant reply",chatPlaceholder:"Write your message to the seller",chatSend:"Send",sellerTyping:"Seller is replying...",instantReply:"Yes, it is available. We can arrange everything here in the chat.",loginToChat:"Log in to message the seller.",shareLabel:"Share",shareTitle:"Share this listing",shareHelp:"Copy the link or send it directly so someone can open this listing.",copyLink:"Copy link",linkCopied:"Link copied",shareText:"Look at this listing on Buy Sell Trade Sxm",shareFailed:"Sharing was not available. The link was copied.",savedLabel:"Saved",saveLabel:"Save",removedToast:"Removed",savedToast:"Saved",messageReady:"Message sent",listingPublished:"Listing published",defaultMessage:"Hi, is this listing still available?",subcatHint:"Refine the search without losing your place.",footerMarket:"Marketplace",footerTrust:"Trust & safety",footerLang:"French and English",profileLabel:"Profile",profileTitle:"My profile",profileRequired:"Log in to view your profile.",memberSince:"Member since",verifiedEmail:"Verified email",trustedMember:"Trusted member",fastReply:"Fast reply",profileListings:"My listings",profileNoListings:"You have not posted a listing yet.",activeListings:"Listings",savedItems:"Saved",conversations:"Messages",ratingLabel:"Rating",editProfile:"Edit profile",logoutLabel:"Log out",boostPageTitle:"Boost & Pro",boostKicker:"Paid visibility",boostHeroTitle:"Put your listings in front of the right buyers",boostHeroText:"Regular listings stay free for individuals. Boosts and Pro accounts are paid options to sell faster, publish more listings, and get more contacts.",boostFreeTitle:"Free listing",boostFreeText:"For occasional selling: photos, price, area, buyer chat, and shareable listing link.",boostPaidTitle:"Paid boost",boostPaidText:"The seller chooses a listing, selects a promotion duration, pays, then the listing gets a Sponsored badge and appears higher on the page.",boostProTitle:"Pro business account",boostProText:"For local businesses: business page, Pro badge, more listings, analytics, centralized messages, and regular visibility options.",boostStepsTitle:"How it works",boostStep1:"Choose the listing to promote.",boostStep2:"Choose the duration: 3, 7, or 14 days.",boostStep3:"Pay before activation.",boostStep4:"Track views, saves, and messages.",boostPaymentTitle:"Payment required",boostPaymentText:"No listing is featured until payment is confirmed. Prices will be added before the official launch.",boostTrustTitle:"Seller trust",boostTrustText:"After a chat or sale, buyers can rate the seller. Serious profiles will feel safer for the next buyers.",boostPriceSoon:"Pricing to define",boostPriceText:"We can already build the payment flow with hidden temporary prices, then connect Stripe once pricing is approved.",accountTitle:"Account required",newAccountTitle:"New to Buy Sell Trade Sxm",newAccountHelp:"Create a personal or business account to post, manage messages, and protect the community.",loginTitle:"I already have an account",loginHelp:"Log in to continue with your listings, saved items, and conversations.",passwordLabel:"Password",confirmPasswordLabel:"Confirm password",accountTypeLabel:"Account type",personalAccount:"Personal",businessAccount:"Business",businessNameLabel:"Business name",passwordMismatch:"Passwords do not match.",emailExists:"An account already exists with this email.",invalidLogin:"Incorrect email or password.",loginSubmit:"Log in",loginToast:"Logged in",accountName:"Name",accountEmail:"Email",accountHelp:"An account is required to post a listing, contact a seller, and protect the community.",accountSubmit:"Create my account",comingSoon:"Coming soon",safetyBanner:"Illegal items are prohibited: weapons, drugs, counterfeit goods, and dangerous items. Violations may result in a permanent ban.",illegalPolicy:"Illegal items, weapons, drugs, counterfeit goods, stolen products, and dangerous items are strictly prohibited. Accounts that break these rules may be removed and permanently banned.",
+      allIsland:"Whole island",browseLabel:"Browse",listingLabel:"Listing",titleLabel:"Title",titlePh:"Ex: 125cc scooter in good condition",categoryLabel:"Category",areaLabel:"Area",currencyLabel:"Currency",photosLabel:"Photos",uploadPhotos:"Add photos",photosHelp:"Add up to 8 real photos of the item. The first photo becomes the main listing image.",deliveryLabel:"Handover",pickupOnly:"Pickup only",deliveryPossible:"Delivery possible",meetupPossible:"Meetup possible",meetupLabel:"Preferred place",publicMeetup:"Public place",sellerPlace:"Seller's place",buyerPlace:"Buyer's place",negotiableLabel:"Negotiable price",urgentSaleLabel:"Urgent sale",safeMeetLabel:"Safe meetup",photoRequired:"Add at least one real photo before publishing.",tooManyPhotos:"Maximum 8 photos per listing.",sideLabel:"Side",descLabel:"Description",descPh:"Add useful details: condition, quantity, delivery, and meeting point",postSubmit:"Publish listing",cancelLabel:"Cancel",sellerPro:"Professional seller",sellerLocal:"Local seller",quickMessage:"Chat with seller",chatOnline:"Instant reply",chatPlaceholder:"Write your message to the seller",chatSend:"Send",sellerTyping:"Seller is replying...",instantReply:"Yes, it is available. We can arrange everything here in the chat.",loginToChat:"Log in to message the seller.",shareLabel:"Share",shareTitle:"Share this listing",shareHelp:"Copy the link or send it directly so someone can open this listing.",copyLink:"Copy link",linkCopied:"Link copied",shareText:"Look at this listing on Buy Sell Trade Sxm",shareFailed:"Sharing was not available. The link was copied.",savedLabel:"Saved",saveLabel:"Save",removedToast:"Removed",savedToast:"Saved",messageReady:"Message sent",listingPublished:"Listing published",defaultMessage:"Hi, is this listing still available?",subcatHint:"Refine the search without losing your place.",footerMarket:"Marketplace",footerTrust:"Trust & safety",footerLang:"French and English",profileLabel:"Profile",profileTitle:"My profile",profileRequired:"Log in to view your profile.",memberSince:"Member since",verifiedEmail:"Verified email",trustedMember:"Trusted member",fastReply:"Fast reply",profileListings:"My listings",profileNoListings:"You have not posted a listing yet.",activeListings:"Listings",savedItems:"Saved",conversations:"Messages",ratingLabel:"Rating",editProfile:"Edit profile",logoutLabel:"Log out",boostPageTitle:"Boost & Pro",boostKicker:"Paid visibility",boostHeroTitle:"Put your listings in front of the right buyers",boostHeroText:"Regular listings stay free for individuals. Boosts and Pro accounts are paid options to sell faster, publish more listings, and get more contacts.",boostFreeTitle:"Free listing",boostFreeText:"For occasional selling: photos, price, area, buyer chat, and shareable listing link.",boostPaidTitle:"Paid boost",boostPaidText:"The seller chooses a listing, selects a promotion duration, pays, then the listing gets a Sponsored badge and appears higher on the page.",boostProTitle:"Pro business account",boostProText:"For local businesses: business page, Pro badge, more listings, analytics, centralized messages, and regular visibility options.",boostStepsTitle:"How it works",boostStep1:"Choose the listing to promote.",boostStep2:"Choose the duration: 3, 7, or 14 days.",boostStep3:"Pay before activation.",boostStep4:"Track views, saves, and messages.",boostPaymentTitle:"Payment required",boostPaymentText:"No listing is featured until payment is confirmed. Prices will be added before the official launch.",boostTrustTitle:"Seller trust",boostTrustText:"After a chat or sale, buyers can rate the seller. Serious profiles will feel safer for the next buyers.",boostPriceSoon:"Pricing to define",boostPriceText:"We can already build the payment flow with hidden temporary prices, then connect Stripe once pricing is approved.",accountTitle:"Account required",newAccountTitle:"New to Buy Sell Trade Sxm",newAccountHelp:"Create a personal or business account to post, manage messages, and protect the community.",loginTitle:"I already have an account",loginHelp:"Log in to continue with your listings, saved items, and conversations.",passwordLabel:"Password",confirmPasswordLabel:"Confirm password",accountTypeLabel:"Account type",personalAccount:"Personal",businessAccount:"Business",businessNameLabel:"Business name",passwordMismatch:"Passwords do not match.",emailExists:"An account already exists with this email.",invalidLogin:"Incorrect email or password.",loginSubmit:"Log in",loginToast:"Logged in",accountName:"Name",accountEmail:"Email",accountHelp:"An account is required to post a listing, contact a seller, and protect the community.",accountSubmit:"Create my account",comingSoon:"Coming soon",storeAvailable:"Available",safetyBanner:"Illegal items are prohibited: weapons, drugs, counterfeit goods, and dangerous items. Violations may result in a permanent ban.",illegalPolicy:"Illegal items, weapons, drugs, counterfeit goods, stolen products, and dangerous items are strictly prohibited. Accounts that break these rules may be removed and permanently banned.",
       saveSearch:"Save this search",featured:"Featured on the island",sortBy:"Sort by",
       footNote:"Local classifieds for Saint-Martin and Sint Maarten.",frSide:"French side · Marigot",nlSide:"Sint Maarten side · Philipsburg",
       sort_recent:"Most recent",sort_pxup:"Price low to high",sort_pxdn:"Price high to low",sort_near:"Nearest",
@@ -2684,7 +3007,7 @@ Object.assign(I18N.fr, {
   planPlus1:"Tout Starter",
   planPlus2:"Boosts mensuels inclus",
   planPlus3:"Statistiques vues, favoris, messages",
-  planPremiumTitle:"Pro Premium",
+  planPremiumTitle:"Premium",
   planPremiumText:"Pour les businesses qui veulent une présence forte sur la page d'accueil.",
   planPremium1:"Tout Pro Plus",
   planPremium2:"Emplacements front page",
@@ -2843,7 +3166,7 @@ Object.assign(I18N.en, {
   planPlus1:"Everything in Starter",
   planPlus2:"Monthly boosts included",
   planPlus3:"Views, saves, and message stats",
-  planPremiumTitle:"Pro Premium",
+  planPremiumTitle:"Premium",
   planPremiumText:"For businesses that want strong home page visibility.",
   planPremium1:"Everything in Pro Plus",
   planPremium2:"Front page placements",
@@ -3613,6 +3936,80 @@ function initials(name, email){
   if(parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase();
   return base.slice(0,2).toUpperCase();
 }
+// Contenu du cercle avatar : la vraie photo si l'utilisateur en a une
+// (upload perso ou récupérée depuis Google/Apple), sinon ses initiales.
+function avatarHTML(user){
+  if(user && user.avatarUrl) return `<img src="${esc(user.avatarUrl)}" alt="">`;
+  return esc(user ? user.avatar : "?");
+}
+// Recadre l'image choisie en carré et la réencode en JPEG côté client avant
+// upload : évite les photos de plusieurs Mo et donne un avatar de taille
+// cohérente partout sur le site.
+function resizeImageToSquareJpeg(file, size){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("read failed"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("decode failed"));
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2, sy = (img.height - side) / 2;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("toBlob failed")), "image/jpeg", 0.88);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function blobToDataURL(blob){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("read failed"));
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
+}
+// Gère le choix d'un fichier sur l'input de la photo de profil : recadrage,
+// upload Supabase (ou data URL en mode démo local sans Supabase), puis
+// rafraîchit l'avatar affiché partout (header + carte profil).
+async function handleAvatarChange(input){
+  const file = input.files && input.files[0];
+  input.value = "";
+  if(!file || !state.user) return;
+  if(!file.type || !file.type.startsWith("image/")){
+    showToast(state.lang==="fr" ? "Choisissez une image." : "Please choose an image.");
+    return;
+  }
+  try {
+    const blob = await resizeImageToSquareJpeg(file, 512);
+    if(window.SB && SB.enabled()){
+      const url = await SB.uploadAvatar(blob);
+      if(!url){
+        showToast(state.lang==="fr" ? "Échec de l'envoi de la photo." : "Photo upload failed.");
+        return;
+      }
+      await SB.upsertProfile({ avatar_url: url });
+      state.user.avatarUrl = url;
+    } else {
+      const dataUrl = await blobToDataURL(blob);
+      state.user.avatarUrl = dataUrl;
+      const key = (state.user.email || "").toLowerCase();
+      if(key) usersByEmail[key] = state.user;
+    }
+    persistState();
+    renderProfile();
+    render();
+    showToast(state.lang==="fr" ? "Photo de profil mise à jour." : "Profile photo updated.");
+  } catch(e){
+    showToast(state.lang==="fr" ? "Échec de l'envoi de la photo." : "Photo upload failed.");
+  }
+}
 function createUserProfile({name, email, accountType="personal", accountPlan="personal-free", businessName="", businessPhone="", businessWhatsapp="", businessWebsite="", businessLogo=""}){
   return {
     id:"user-" + Date.now(),
@@ -3627,6 +4024,7 @@ function createUserProfile({name, email, accountType="personal", accountPlan="pe
     businessLogo,
     area:state.area || "SXM",
     avatar:initials(name, email),
+    avatarUrl:null,
     memberSince:new Date().toISOString(),
     rating:5,
     reviews:0,
@@ -3646,6 +4044,7 @@ function normalizeUser(user){
     ...createUserProfile({name:user.name || "", email:user.email || ""}),
     ...user,
     avatar:user.avatar || initials(user.name, user.email),
+    avatarUrl:user.avatarUrl || null,
     memberSince:user.memberSince || new Date().toISOString(),
     rating:user.rating || 5,
     reviews:user.reviews || 0,
@@ -3744,15 +4143,89 @@ function isPaidPlan(plan){
   return plan && plan !== "personal-free";
 }
 const ACCOUNT_PLANS = {
-  "personal-free":{fr:"Particulier",en:"Personal",price:"Gratuit",limit:5},
-  "pro-starter":{fr:"Pro Starter",en:"Pro Starter",price:"$29/month",limit:10},
-  "pro-business":{fr:"Pro Business",en:"Pro Business",price:"$59/month",limit:30},
-  "pro-premium":{fr:"Pro Premium",en:"Pro Premium",price:"$99/month",limit:75},
-  "pro-elite":{fr:"Pro Elite",en:"Pro Elite",price:"$149/month",limit:150},
-  "pro-unlimited":{fr:"Pro Unlimited",en:"Pro Unlimited",price:"$199/month",limit:Infinity}
+  "personal-free":{fr:"Particulier",en:"Personal",price:"Gratuit",limit:5,includedBoosts:0},
+  "pro-starter":{fr:"Pro Starter",en:"Pro Starter",price:"$29/month",limit:10,includedBoosts:1},
+  "pro-business":{fr:"Pro Business",en:"Pro Business",price:"$59/month",limit:30,includedBoosts:2},
+  "pro-premium":{fr:"Premium",en:"Premium",price:"$99/month",limit:75,includedBoosts:5},
+  "pro-elite":{fr:"Elite",en:"Elite",price:"$149/month",limit:150,includedBoosts:10},
+  "pro-unlimited":{fr:"Unlimited",en:"Unlimited",price:"$199/month",limit:Infinity,includedBoosts:20}
 };
 function accountPlan(plan){ return ACCOUNT_PLANS[plan] || ACCOUNT_PLANS["personal-free"]; }
 function listingLimitFor(user=state.user){ return accountPlan(user?.accountPlan || "personal-free").limit; }
+function includedBoostLimitFor(user=state.user){ return accountPlan(user?.accountPlan || "personal-free").includedBoosts || 0; }
+function monthKey(value=new Date()){
+  const d = value instanceof Date ? value : new Date(value);
+  const valid = !Number.isNaN(d.getTime()) ? d : new Date();
+  return `${valid.getFullYear()}-${String(valid.getMonth() + 1).padStart(2, "0")}`;
+}
+function listingBoostMonth(l){
+  return l?.boost?.month || (l?.boost?.startedAt ? monthKey(l.boost.startedAt) : null);
+}
+function isIncludedAutoBoost(l){
+  return !!(l?.boosted && l?.boost?.auto && l.boost.included);
+}
+function autoBoostUsedCountFor(user=state.user){
+  if(!hasActiveProSubscription(user)) return 0;
+  const currentMonth = monthKey();
+  return L.filter(l=>
+    l.ownerId === user.id &&
+    isIncludedAutoBoost(l) &&
+    listingBoostMonth(l) === currentMonth
+  ).length;
+}
+function autoBoostEligibleListings(user=state.user){
+  if(!hasActiveProSubscription(user)) return [];
+  const currentMonth = monthKey();
+  return L.filter(l=>
+    l.ownerId === user.id &&
+    !listingIsSold(l) &&
+    l.status !== "expired" &&
+    !l.boosted &&
+    listingBoostMonth(l) !== currentMonth
+  ).sort((a,b)=>new Date(b.createdAt || Number(b.id) || 0) - new Date(a.createdAt || Number(a.id) || 0));
+}
+function applyIncludedBoostToListing(l, user=state.user){
+  l.boosted = true;
+  l.feat = true;
+  l.pro = true;
+  l.boost = {
+    days:30,
+    eur:0,
+    usd:0,
+    paid:false,
+    auto:true,
+    included:true,
+    month:monthKey(),
+    plan:user?.accountPlan || "personal-free",
+    startedAt:new Date().toISOString()
+  };
+  return l;
+}
+async function applyAutomaticIncludedBoosts({silent=false} = {}){
+  if(!hasActiveProSubscription(state.user)) return 0;
+  const limit = includedBoostLimitFor(state.user);
+  if(!limit) return 0;
+  const remaining = limit - autoBoostUsedCountFor(state.user);
+  if(remaining <= 0) return 0;
+  const selected = autoBoostEligibleListings(state.user).slice(0, remaining);
+  if(!selected.length) return 0;
+  for(const listing of selected){
+    applyIncludedBoostToListing(listing, state.user);
+    if(window.SB && SB.enabled() && state.user.provider === "supabase" && typeof SB.updateListing === "function"){
+      try {
+        const updated = await SB.updateListing(listing);
+        if(updated) Object.assign(listing, updated);
+      } catch(e){}
+    }
+  }
+  persistState();
+  if(!silent){
+    showToast(state.lang === "fr"
+      ? `${selected.length} boost${selected.length > 1 ? "s" : ""} inclus activé${selected.length > 1 ? "s" : ""} automatiquement.`
+      : `${selected.length} included boost${selected.length > 1 ? "s" : ""} activated automatically.`);
+  }
+  return selected.length;
+}
 function planLabel(plan){
   const selected = accountPlan(plan);
   return selected[state.lang] || selected.fr;
@@ -4028,7 +4501,7 @@ function cardHTML(l, pinned, idx){
         onclick="toggleFav(${idParam}, this, event)">${isFav?"&#9829;":"&#9825;"}</button>
       <button type="button" class="share-card" aria-label="${t().shareLabel}" title="${t().shareLabel}"
         onclick="shareListing(${idParam}, event)"><span aria-hidden="true">&#8599;</span>${t().shareLabel}</button>
-      ${isOwnListing(l) && !l.sold ? `<button type="button" class="boost-card-action" onclick="openBoostCheckout(${idParam}, event)" aria-label="${t().boostCta}">${t().boostCardCta}</button>` : ""}
+      ${isOwnListing(l) && !l.sold && !hasActiveProSubscription(state.user) ? `<button type="button" class="boost-card-action" onclick="openBoostCheckout(${idParam}, event)" aria-label="${t().boostCta}">${t().boostCardCta}</button>` : ""}
       ${profile.photos ? `<div class="photo">
         <img src="${media.img}" alt="${media.alt}" loading="lazy">
         <span class="gallery"><span aria-hidden="true">&#9634;</span> ${photoCount}</span>
@@ -4181,7 +4654,14 @@ function render(){
 
   document.getElementById("favCount").textContent = state.favs.size;
   setUnreadMessageCount(unreadMessageCount);
-  document.getElementById("profileInitials").textContent = state.user ? state.user.avatar : "?";
+  const headerAvatarEl = document.getElementById("profileInitials");
+  if(state.user && state.user.avatarUrl){
+    headerAvatarEl.style.backgroundImage = `url('${state.user.avatarUrl}')`;
+    headerAvatarEl.textContent = "";
+  } else {
+    headerAvatarEl.style.backgroundImage = "";
+    headerAvatarEl.textContent = state.user ? state.user.avatar : "?";
+  }
   const profileLabel = state.user ? t().profileLabel : t().loginLabel;
   const profileBtnLabel = document.getElementById("profileBtnLabel");
   const mobileProfileLabel = document.getElementById("mobileProfileLabel");
@@ -4593,7 +5073,7 @@ function openListing(id, syncUrl = true){
           : chatHTML(l.id)}
         <div class="detail-actions">
           ${state.user || listingIsSold(l) ? "" : `<button type="button" class="primary-btn" onclick="requestListingLogin(${jsArg(l.id)})">${state.lang==="fr"?"Se connecter pour discuter":"Log in to chat"}</button>`}
-          ${isOwnListing(l) && !listingIsSold(l) ? `<button type="button" class="primary-btn" onclick="openBoostCheckout(${jsArg(l.id)}, event)">${t().boostCta}</button>` : ""}
+          ${isOwnListing(l) && !listingIsSold(l) && !hasActiveProSubscription(state.user) ? `<button type="button" class="primary-btn" onclick="openBoostCheckout(${jsArg(l.id)}, event)">${t().boostCta}</button>` : ""}
           <button type="button" class="primary-btn" onclick="shareListing(${jsArg(l.id)}, event)">${t().shareLabel}</button>
           <button type="button" class="secondary-btn" onclick="toggleFavFromDetail(${jsArg(l.id)})">${state.favs.has(idKey(id))?t().savedLabel:t().saveLabel}</button>
         </div>
@@ -5035,11 +5515,21 @@ function openPricingInfo(){
   openBoostInfo();
 }
 
-function startBoostFlow(){
+async function startBoostFlow(){
   closeModal("boostModal");
   if(!state.user){
     requireAccount("boost");
     showToast(t().boostLoginRequired);
+    return;
+  }
+  if(hasActiveProSubscription(state.user)){
+    const applied = await applyAutomaticIncludedBoosts();
+    if(!applied){
+      showToast(state.lang === "fr"
+        ? `Vos boosts inclus sont automatiques (${autoBoostUsedCountFor(state.user)} / ${includedBoostLimitFor(state.user)} ce mois).`
+        : `Your included boosts are automatic (${autoBoostUsedCountFor(state.user)} / ${includedBoostLimitFor(state.user)} this month).`);
+    }
+    render();
     return;
   }
   if(!userListingCount()){
@@ -5063,6 +5553,17 @@ function openBoostCheckout(id, event){
   if(!state.user || !isOwnListing(l)){
     requireAccount("boost");
     showToast(t().boostLoginRequired);
+    return;
+  }
+  if(hasActiveProSubscription(state.user)){
+    applyAutomaticIncludedBoosts().then(applied=>{
+      if(!applied){
+        showToast(state.lang === "fr"
+          ? `Vos boosts inclus sont automatiques (${autoBoostUsedCountFor(state.user)} / ${includedBoostLimitFor(state.user)} ce mois).`
+          : `Your included boosts are automatic (${autoBoostUsedCountFor(state.user)} / ${includedBoostLimitFor(state.user)} this month).`);
+      }
+      render();
+    });
     return;
   }
   pendingBoostListingId = id;
@@ -5157,7 +5658,11 @@ function renderProfile(){
       : (state.lang==="fr" ? "Prêt à vendre sur l'île ? Ajoutez une vraie photo, un prix clair, et votre annonce peut partir aujourd'hui." : "Ready to sell on the island? Add a real photo, a clear price, and your listing can move today.");
   body.innerHTML = `
     <section class="profile-hero">
-      <div class="profile-avatar">${esc(user.avatar)}</div>
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar">${avatarHTML(user)}</div>
+        <button type="button" class="avatar-edit-btn" onclick="document.getElementById('avatarFileInput').click()" aria-label="${t().changePhoto}" title="${t().changePhoto}">📷</button>
+        <input type="file" id="avatarFileInput" accept="image/*" hidden onchange="handleAvatarChange(this)">
+      </div>
       <div>
         <span class="profile-kicker">${profileType}</span>
         <h3>${esc(displayName)}</h3>
@@ -5203,6 +5708,10 @@ function renderProfile(){
           <b>${state.lang==="fr" ? "Suivre mes favoris" : "Watch saved items"}</b>
           <span>${state.lang==="fr" ? "Gardez les bons plans sous la main." : "Keep good deals close."}</span>
         </button>
+        ${(!window.matchMedia || !window.matchMedia('(display-mode: standalone)').matches) ? `<button type="button" class="profile-tool" onclick="if(!(window.bstPromptInstall&&bstPromptInstall()))showToast('${state.lang==="fr" ? "Ouvrez le menu de votre navigateur puis « Ajouter à l\\'écran d\\'accueil »." : "Open your browser menu, then \\'Add to Home Screen\\'."}')">
+          <b>${state.lang==="fr" ? "Installer l'application" : "Install the app"}</b>
+          <span>${state.lang==="fr" ? "Accès depuis l'écran d'accueil, plein écran, même hors ligne." : "Home-screen access, full screen, works offline."}</span>
+        </button>` : ""}
         ${isAdminUser(user) ? `<button type="button" class="profile-tool" onclick="closeModal('profileModal');openAdmin()">
           <b>Admin</b>
           <span>${state.lang==="fr" ? "Modérer les annonces, signalements, boosts et catégories." : "Moderate listings, reports, boosts, and categories."}</span>
@@ -5260,7 +5769,7 @@ function subscriptionDashboardHTML(user, own){
         <div class="subscription-metric"><span>${isBusiness ? (state.lang === "fr" ? "Annonces actives" : "Active listings") : (state.lang === "fr" ? "Annonces ce mois" : "Listings this month")}</span><b>${quota}</b></div>
         <div class="subscription-metric"><span>${state.lang === "fr" ? "Renouvellement" : "Renewal"}</span><b>${esc(renewal)}</b></div>
         <div class="subscription-metric"><span>${state.lang === "fr" ? "Statut paiement" : "Payment status"}</span><b>${esc(statusText)}</b></div>
-        <div class="subscription-metric"><span>${state.lang === "fr" ? "Type" : "Type"}</span><b>${isBusiness ? "Pro" : (state.lang === "fr" ? "Particulier" : "Personal")}</b></div>
+        <div class="subscription-metric"><span>${state.lang === "fr" ? "Boosts auto ce mois" : "Auto boosts this month"}</span><b>${autoBoostUsedCountFor(user)} / ${includedBoostLimitFor(user)}</b></div>
       </div>
     </section>`;
 }
@@ -5318,7 +5827,7 @@ function miniListingHTML(l){
       </button>
       <div class="mini-actions">
         <small>${status}</small>
-        ${l.sold ? "" : `<button type="button" class="secondary-btn" onclick="openBoostCheckout(${idParam}, event)">${t().boostCta}</button>`}
+        ${l.sold || hasActiveProSubscription(state.user) ? "" : `<button type="button" class="secondary-btn" onclick="openBoostCheckout(${idParam}, event)">${t().boostCta}</button>`}
       </div>
     </div>`;
 }
@@ -5937,6 +6446,10 @@ async function applySupabaseUser(sbUser){
   let profile = null;
   try { profile = await SB.fetchProfile(sbUser.id); } catch(e){}
   const meta = sbUser.user_metadata || {};
+  const identityData = (sbUser.identities && sbUser.identities[0] && sbUser.identities[0].identity_data) || {};
+  // Google/Apple renvoient la photo de profil sous des noms différents selon
+  // l'endroit où Supabase l'expose (user_metadata ou identities bruts).
+  const oauthAvatar = meta.avatar_url || meta.picture || identityData.avatar_url || identityData.picture || null;
   if(!profile && window.SB && SB.enabled()){
     try {
       profile = await SB.upsertProfile({
@@ -5944,9 +6457,14 @@ async function applySupabaseUser(sbUser){
         account_type: meta.account_type || "personal",
         account_plan: meta.account_plan || "personal-free",
         business_name: meta.business_name || null,
-        phone: meta.phone || null
+        phone: meta.phone || null,
+        avatar_url: oauthAvatar
       });
     } catch(e){}
+  } else if(profile && !profile.avatar_url && oauthAvatar && window.SB && SB.enabled()){
+    // Compte existant sans photo : on récupère celle du fournisseur OAuth une
+    // seule fois. Ne s'exécute jamais si l'utilisateur a déjà choisi une photo.
+    try { profile = (await SB.upsertProfile({ avatar_url: oauthAvatar })) || profile; } catch(e){}
   }
   const accountType = (profile && profile.account_type) || meta.account_type || "personal";
   state.user = normalizeUser({
@@ -5963,7 +6481,8 @@ async function applySupabaseUser(sbUser){
     stripeCustomerId: profile && profile.stripe_customer_id,
     businessName: (profile && profile.business_name) || "",
     businessPhone: (profile && profile.phone) || "",
-    role: (profile && profile.role) || "user"
+    role: (profile && profile.role) || "user",
+    avatarUrl: (profile && profile.avatar_url) || oauthAvatar || null
   });
   persistState();
   return state.user;
@@ -6153,6 +6672,7 @@ async function confirmDemoPayment(e){
     }
     usersByEmail[state.user.email.toLowerCase()] = state.user;
     persistState();
+    await applyAutomaticIncludedBoosts();
     showToast(t().paymentSuccess);
     closeModal("paymentModal");
     const next = pendingAfterPayment;
@@ -6481,22 +7001,33 @@ function meetupLabel(v){
   return labels[v] || "";
 }
 
-function handlePhotoUpload(e){
-  const files = [...e.target.files].filter(file=>file.type.startsWith("image/")).slice(0, 8);
+async function handlePhotoUpload(e){
+  const picked = [...e.target.files].filter(file=>file.type.startsWith("image/")).slice(0, 8);
   if(e.target.files.length > 8) showToast(t().tooManyPhotos);
   selectedPostPhotos = [];
-  selectedPostFiles = files;
+  selectedPostFiles = [];
   const preview = document.getElementById("photoPreview");
   preview.innerHTML = "";
-  if(!files.length) return;
-  Promise.all(files.map(file => new Promise(resolve=>{
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.readAsDataURL(file);
-  }))).then(images=>{
-    selectedPostPhotos = images;
-    renderPhotoPreview();
-  });
+  if(!picked.length) return;
+  // Compress/resize on-device before anything is stored or uploaded: keeps a
+  // listing upload in the low-MB range instead of 30–90 MB from phone cameras.
+  preview.innerHTML = `<p style="padding:12px 4px;color:var(--mute);font-size:13px">${state.lang==="fr" ? "Optimisation des photos…" : "Optimizing photos…"}</p>`;
+  let results = null;
+  try {
+    if(window.ImgUtils) results = await ImgUtils.compressMany(picked, { maxEdge:1600, quality:0.82 });
+  } catch(err){ console.warn("[post] compression KO, envoi des originaux:", err); }
+  if(results){
+    selectedPostFiles = results.map(r=>r.file);
+    selectedPostPhotos = results.map(r=>r.dataUrl);
+  } else {
+    selectedPostFiles = picked;
+    selectedPostPhotos = await Promise.all(picked.map(file => new Promise(resolve=>{
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(file);
+    })));
+  }
+  renderPhotoPreview();
 }
 
 function renderPhotoPreview(){
@@ -6615,6 +7146,7 @@ async function createListing(e){
   setPostModalMode(false);
   document.getElementById("photoPreview").innerHTML = "";
   closeModal("postModal");
+  await applyAutomaticIncludedBoosts({silent:!hasActiveProSubscription(state.user)});
   render();
   showToast(editing ? (state.lang==="fr" ? "Annonce modifiée" : "Listing updated") : t().listingPublished);
   setTimeout(()=>openListing(finalListing.id), 250);
@@ -6746,14 +7278,15 @@ Object.assign(window, {
 window.__bstState = state;
 
 /* ---------------- INIT ---------------- */
-loadLocalState(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(); openAdminFromUrl(); handleListingRenewalActionFromUrl();
+loadLocalState(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); applyAutomaticIncludedBoosts({silent:true}); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(); openAdminFromUrl(); handleListingRenewalActionFromUrl();
 
 /* Supabase : si configuré, remplace les annonces de démo par celles de la base. */
-if (window.SB && SB.enabled()) {
+if (window.SB && SB.enabled() && !new URLSearchParams(location.search || "").has("local")) {
   if(location.hostname !== "localhost" && location.hostname !== "127.0.0.1") loadSupabasePublicSettings();
 
   SB.hydrate().then(function (ok) {
     if (ok) console.info("[Supabase] annonces chargées depuis la base.");
+    return applyAutomaticIncludedBoosts({silent:true}).then(function(count){ if(count) render(); return ok; });
   });
 
   /* Session : restaure l'utilisateur au chargement et suit connexion/déconnexion.
@@ -6763,7 +7296,7 @@ if (window.SB && SB.enabled()) {
     setTimeout(function () {
       if (user) {
         applySupabaseUser(user).then(function () {
-          render();
+          applyAutomaticIncludedBoosts({silent:true}).then(function(){ render(); });
           refreshMessageBadge();
           refreshBackendNotifications();
           handleListingRenewalActionFromUrl();
@@ -6777,7 +7310,7 @@ if (window.SB && SB.enabled()) {
         state.user = null;
         setUnreadMessageCount(0);
         persistState();
-        render();
+        applyAutomaticIncludedBoosts({silent:true}).then(()=>render());
       }
     }, 0);
   });

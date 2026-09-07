@@ -1,14 +1,16 @@
 /* ============================================================
  *  Configuration Supabase
- *  Remplace les deux valeurs ci-dessous par celles de ton projet :
- *  Supabase → Project Settings → API
+ *  Projet reel actuel:
+ *  - Account/organization: tchalaplus / tchalaplus1
+ *  - Project ref: szhaxlmronirhnntlwyb
+ *  - Project URL: https://szhaxlmronirhnntlwyb.supabase.co
  *
  *  La clé "anon public" EST faite pour être dans le code frontend.
  *  Ne mets JAMAIS la clé "service_role" ici.
  * ============================================================ */
-window.SUPABASE_URL = "https://npjkbhkmyfppmosforls.supabase.co";
-// Clé "anon public" legacy — sûre pour le navigateur si la RLS est activée.
-window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wamtiaGtteWZwcG1vc2ZvcmxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MTY3NDYsImV4cCI6MjA5NjA5Mjc0Nn0.mEyxqUNtrB3u7GHSrFb2pAoRMbKgjUeTk6Z8WI9xMW4";
+window.SUPABASE_URL = "https://szhaxlmronirhnntlwyb.supabase.co";
+// Clé publique/publishable — sûre pour le navigateur si la RLS est activée.
+window.SUPABASE_ANON_KEY = "sb_publishable_2EgfSBNrfE-5rIC2qS__tg_dCoEFyac";
 
 /* OAuth social login.
  * Mets un provider a true seulement APRES l'avoir active dans:
@@ -17,7 +19,7 @@ window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
  * l'utilisateur vers l'erreur "Unsupported provider".
  */
 window.SUPABASE_OAUTH_PROVIDERS = {
-  google: true
+  google: false
 };
 
 /* Crée le client `db` seulement si la config est remplie ET si la

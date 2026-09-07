@@ -8,7 +8,8 @@ Quand quelqu'un cree un compte avec email + password, Supabase doit envoyer un e
 
 Le SMTP par defaut de Supabase est seulement pour tester. En production, il peut bloquer les emails, surtout pour les emails qui ne sont pas dans ton equipe Supabase. Donc pour un vrai site public, il faut brancher un SMTP pro.
 
-Projet Supabase actuel: `npjkbhkmyfppmosforls`.
+Projet Supabase actuel: `szhaxlmronirhnntlwyb`.
+Compte/organisation Supabase actuel: `tchalaplus` / `tchalaplus1`.
 
 ## Le choix recommande
 
@@ -48,7 +49,7 @@ npm run supabase:enable-smtp
 Optionnel, si tu veux changer les valeurs par defaut:
 
 ```powershell
-$env:SUPABASE_PROJECT_REF="npjkbhkmyfppmosforls"
+$env:SUPABASE_PROJECT_REF="szhaxlmronirhnntlwyb"
 $env:SMTP_HOST="smtp.resend.com"
 $env:SMTP_PORT="465"
 $env:SMTP_USER="resend"
@@ -74,7 +75,7 @@ Le site cree maintenant des emails dans `email_queue`, par exemple quand une ann
 Pour envoyer ces emails réellement avec Resend:
 
 ```powershell
-$env:SUPABASE_URL="https://npjkbhkmyfppmosforls.supabase.co"
+$env:SUPABASE_URL="https://szhaxlmronirhnntlwyb.supabase.co"
 $env:SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 $env:RESEND_API_KEY="your-resend-api-key"
 $env:EMAIL_FROM="Buy Sell Trade SXM <noreply@buyselltradesxm.com>"

@@ -46,8 +46,12 @@
         days: r.boost_days,
         eur: Number(r.boost_price_eur) || 0,
         usd: Number(r.boost_price_usd) || 0,
-        paid: !!r.is_boosted,
-        startedAt: r.boost_started_at || null
+        paid: !!r.is_boosted && r.boost_source !== "included_auto",
+        startedAt: r.boost_started_at || null,
+        auto: r.boost_source === "included_auto",
+        included: r.boost_source === "included_auto",
+        month: r.boost_month || null,
+        plan: r.boost_plan || null
       } : null,
       reserved: r.status === "reserved",
       sold: r.status === "sold",
@@ -85,6 +89,9 @@
       boost_price_eur: o.boost && o.boost.eur ? o.boost.eur : null,
       boost_price_usd: o.boost && o.boost.usd ? o.boost.usd : null,
       boost_started_at: o.boost && o.boost.startedAt ? o.boost.startedAt : null,
+      boost_source: o.boost && o.boost.auto ? "included_auto" : (o.boost && o.boost.paid ? "paid" : null),
+      boost_month: o.boost && o.boost.month ? o.boost.month : null,
+      boost_plan: o.boost && o.boost.plan ? o.boost.plan : null,
       photos: o.photos || [],
       status: o.sold ? "sold" : o.reserved ? "reserved" : (o.status || "active")
     };
@@ -176,6 +183,27 @@
         urls.push(bucket.getPublicUrl(path).data.publicUrl);
       }
       return urls;
+    },
+
+    // upload (remplace) la photo de profil de l'utilisateur connecté dans le
+    // bucket public "avatars" ; reçoit un Blob/File déjà recadré côté client,
+    // renvoie l'URL publique (avec un paramètre de cache-busting) ou null.
+    uploadAvatar: async function (blob) {
+      if (!window.db || !blob) return null;
+      var user = await SB.currentUser();
+      if (!user) return null;
+      var bucket = window.db.storage.from("avatars");
+      var path = user.id + "/avatar.jpg";
+      var up = await bucket.upload(path, blob, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: "image/jpeg"
+      });
+      if (up.error) {
+        console.warn("[SB] uploadAvatar:", up.error.message);
+        return null;
+      }
+      return bucket.getPublicUrl(path).data.publicUrl + "?v=" + Date.now();
     },
 
     // insère une annonce pour l'utilisateur connecté ; renvoie l'objet créé ou null

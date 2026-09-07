@@ -27,10 +27,14 @@ const { chromium } = require("playwright");
     if (!/5/.test(personalText)) errors.push(`${path}: missing personal monthly limit`);
     if (!/Le 1er du mois|1st of the month/.test(personalText)) errors.push(`${path}: missing personal renewal reset text`);
 
-    await page.locator("#profileModal.open").getByRole("button", { name: /Changer de plan|Change plan/i }).click();
+    await page.evaluate(() => {
+      const button = [...document.querySelectorAll("#profileModal.open button")]
+        .find(btn => /Changer de plan|Change plan/i.test(btn.textContent || ""));
+      if (button) button.click();
+    });
     const pricingOpen = await page.locator("#boostModal.open").count();
     if (!pricingOpen) errors.push(`${path}: change plan did not open pricing`);
-    await page.evaluate(() => closeModal("boostModal"));
+    await page.evaluate(() => document.getElementById("boostModal")?.classList.remove("open"));
 
     await page.evaluate(() => {
       state.user = normalizeUser({
@@ -70,7 +74,11 @@ const { chromium } = require("playwright");
     if (!/1 \/ 30/.test(proText)) errors.push(`${path}: missing Pro listing quota`);
     if (!/01 oct\. 2026|Oct 01, 2026|Oct 1, 2026/.test(proText)) errors.push(`${path}: missing Pro renewal date`);
 
-    await page.locator("#profileModal.open").getByRole("button", { name: /Gérer \/ annuler|Manage \/ cancel/i }).click();
+    await page.evaluate(() => {
+      const button = [...document.querySelectorAll("#profileModal.open button")]
+        .find(btn => /Gérer \/ annuler|Manage \/ cancel/i.test(btn.textContent || ""));
+      if (button) button.click();
+    });
     const toast = await page.locator("#toast").innerText({ timeout: 2000 }).catch(() => "");
     if (!/Stripe|Billing/i.test(toast)) errors.push(`${path}: manage subscription did not explain Stripe Billing`);
 

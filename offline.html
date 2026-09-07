@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hors ligne · Buy Sell Trade Sxm</title>
+<meta name="theme-color" content="#FBF7EF">
+<style>
+  :root{ --sea:#0B6E7F; --ink:#132A2E; --paper:#FBF7EF; --sun:#F2B705; --mute:#5C6B6A; --white:#fff; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Instrument Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:var(--paper); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; padding:24px; text-align:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  .card{ max-width:420px; width:100%; }
+  img{ width:96px; height:96px; margin:0 auto 20px; display:block; border-radius:22px;
+    box-shadow:0 8px 30px rgba(19,42,46,.18); }
+  h1{ font-size:20px; letter-spacing:-.02em; margin-bottom:8px; }
+  p{ color:var(--mute); font-size:14px; line-height:1.6; margin-bottom:6px; }
+  .sep{ height:1px; background:rgba(19,42,46,.14); margin:18px 0; }
+  button{
+    font:inherit; cursor:pointer; border:none; border-radius:10px;
+    background:var(--sea); color:#fff; font-weight:600;
+    padding:12px 22px; font-size:14px; margin-top:14px;
+  }
+  button:active{ transform:translateY(1px); }
+  .lang{ margin-top:6px; }
+  .lang p{ font-size:13px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img src="/icons/icon-192.png" alt="Buy Sell Trade Sxm">
+    <div class="lang">
+      <h1>Pas de connexion</h1>
+      <p>Vous êtes hors ligne. Vérifiez votre réseau, puis réessayez.</p>
+    </div>
+    <div class="sep"></div>
+    <div class="lang">
+      <p><strong>No connection</strong> — You're offline. Check your network and try again.</p>
+      <p><strong>Geen verbinding</strong> — Je bent offline. Controleer je netwerk en probeer opnieuw.</p>
+    </div>
+    <button onclick="location.reload()">Réessayer · Retry</button>
+  </div>
+  <script>
+    // Auto-reload as soon as the connection comes back.
+    window.addEventListener('online', function () { location.reload(); });
+  </script>
+</body>
+</html>

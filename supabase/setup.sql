@@ -1,6 +1,7 @@
 -- ============================================================
 --  Buy Sell Trade Sxm — installation complete de la base
---  Projet Supabase : ujykgiitlcuqiiepsyiz
+--  Compte Supabase : tchalaplus / tchalaplus1
+--  Projet Supabase : szhaxlmronirhnntlwyb
 --  Usage : Supabase Dashboard > SQL Editor > New query >
 --          coller tout ce fichier > Run.  Rejouable sans risque.
 --  Genere depuis schema.sql + seed.sql — ne pas editer a la main.
@@ -170,6 +171,9 @@ create table if not exists listings (
   boost_price_eur numeric,
   boost_price_usd numeric,
   boost_started_at timestamptz,
+  boost_source   text,
+  boost_month    text,
+  boost_plan     text,
   photos         text[] default '{}',
   seller_name    text,
   status         text default 'active',         -- 'active' | 'reserved' | 'sold'
@@ -182,6 +186,9 @@ alter table listings add column if not exists boost_days       integer;
 alter table listings add column if not exists boost_price_eur  numeric;
 alter table listings add column if not exists boost_price_usd  numeric;
 alter table listings add column if not exists boost_started_at timestamptz;
+alter table listings add column if not exists boost_source     text;
+alter table listings add column if not exists boost_month      text;
+alter table listings add column if not exists boost_plan       text;
 alter table listings add column if not exists seller_name      text;
 
 create or replace function set_listing_seller_name()
@@ -399,6 +406,30 @@ $$;
 
 create index if not exists messages_listing_idx on messages (listing_id);
 create index if not exists messages_parties_idx on messages (sender_id, recipient_id);
+
+-- ------------------------------------------------------------
+--  DATA API GRANTS  (RLS still controls row-level access)
+-- ------------------------------------------------------------
+grant usage on schema public to anon, authenticated;
+
+grant select on public.listings to anon, authenticated;
+grant select on public.profiles to anon;
+grant select on public.admin_settings to anon, authenticated;
+
+grant select, insert, update, delete on public.profiles to authenticated;
+grant select, insert, update, delete on public.listings to authenticated;
+grant select, insert, update, delete on public.messages to authenticated;
+grant select, insert, update, delete on public.reports to authenticated;
+grant select, insert, update, delete on public.banned_users to authenticated;
+grant select, insert, update, delete on public.admin_events to authenticated;
+grant select, insert, update, delete on public.admin_settings to authenticated;
+
+grant usage, select on all sequences in schema public to authenticated;
+grant usage, select on sequence public.listings_id_seq to anon;
+
+alter default privileges in schema public grant select on tables to anon;
+alter default privileges in schema public grant select, insert, update, delete on tables to authenticated;
+alter default privileges in schema public grant usage, select on sequences to authenticated;
 
 -- Realtime : diffuse les INSERT de la table messages aux clients abonnes.
 -- (bloc DO : ne pas planter si la table est deja dans la publication)

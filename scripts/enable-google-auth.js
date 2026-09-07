@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const projectRef = process.env.SUPABASE_PROJECT_REF || "ujykgiitlcuqiiepsyiz";
+const projectRef = process.env.SUPABASE_PROJECT_REF || "szhaxlmronirhnntlwyb";
 const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
