@@ -35,7 +35,7 @@ async function main() {
     mailer_autoconfirm: false,
     smtp_admin_email: smtpSenderEmail,
     smtp_host: smtpHost,
-    smtp_port: smtpPort,
+    smtp_port: String(smtpPort),
     smtp_user: smtpUser,
     smtp_pass: smtpPass,
     smtp_sender_name: smtpSenderName,
