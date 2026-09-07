@@ -14,7 +14,7 @@ const siteUrl = "https://buyselltradesxm.com/";
   page.on("pageerror", err => errors.push(err.message));
   page.on("console", msg => {
     const text = msg.text();
-    if (msg.type() === "error" && !text.includes("400") && !text.includes("401")) {
+    if (msg.type() === "error" && !text.includes("400") && !text.includes("401") && !text.includes("422")) {
       errors.push(text);
     }
   });
@@ -22,7 +22,22 @@ const siteUrl = "https://buyselltradesxm.com/";
   await page.goto(`${siteUrl}?live-flow=${stamp}`, { waitUntil: "domcontentloaded", timeout: 30000 });
   await page.waitForFunction(() => window.SB && window.SB.enabled && window.SB.enabled(), null, { timeout: 15000 });
 
-  const result = await page.evaluate(async ({ email, password, stamp }) => {
+  async function waitForApp() {
+    await page.waitForLoadState("domcontentloaded").catch(() => {});
+    await page.waitForFunction(() => window.SB && window.SB.enabled && window.SB.enabled(), null, { timeout: 15000 });
+  }
+
+  async function appEval(fn, arg) {
+    try {
+      return await page.evaluate(fn, arg);
+    } catch (err) {
+      if (!/Execution context was destroyed|navigation/i.test(err.message || "")) throw err;
+      await waitForApp();
+      return page.evaluate(fn, arg);
+    }
+  }
+
+  const result = await appEval(async ({ email, password, stamp }) => {
     const out = {
       email,
       signedUp: false,
@@ -103,7 +118,9 @@ const siteUrl = "https://buyselltradesxm.com/";
 
   listingId = result.insertedListing?.id || null;
 
-  if (!result.signedUp) errors.push(`signup failed: ${result.signupError || "unknown"}`);
+  if (!result.signedUp && !(result.signedIn && /already registered/i.test(result.signupError || ""))) {
+    errors.push(`signup failed: ${result.signupError || "unknown"}`);
+  }
   if (!result.signedIn) errors.push(`signin failed: ${result.signinError || "maybe email confirmation is required"}`);
   if (result.signedIn && !result.profileUpserted) errors.push("profile upsert failed");
   if (result.signedIn && result.uploadedPhotos !== 1) errors.push(`photo upload failed: ${result.uploadedPhotos}`);

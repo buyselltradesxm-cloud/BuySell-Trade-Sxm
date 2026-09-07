@@ -5,3 +5,8 @@ npm-debug.log*
 .env
 .env.local
 .netlify/
+.edge-hostinger-profile/
+hostinger-current.png
+hostinger-dns-current.png
+hostinger-session-check.png
+supabase/.temp/
