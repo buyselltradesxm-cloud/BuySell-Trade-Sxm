@@ -60,7 +60,7 @@ function textOnly(html: string) {
     .trim();
 }
 
-function actionUrl(listingId: string | number | null, action: "keep" | "sold" | "delete") {
+function actionUrl(listingId: unknown, action: "keep" | "sold" | "delete") {
   const url = new URL(siteUrl + "/");
   url.searchParams.set("listing", String(listingId || ""));
   url.searchParams.set("renew", action);

@@ -35,8 +35,11 @@ function serviceKey(): string {
 }
 const SERVICE_KEY = serviceKey();
 
+// Byte arrays backed by a plain ArrayBuffer, which is what WebCrypto accepts.
+type Bytes = Uint8Array<ArrayBuffer>;
+
 // ---------- base64url helpers ----------
-function b64urlToBytes(s: string): Uint8Array {
+function b64urlToBytes(s: string): Bytes {
   s = s.replace(/-/g, "+").replace(/_/g, "/");
   s += "=".repeat((4 - (s.length % 4)) % 4);
   const bin = atob(s);
@@ -50,7 +53,7 @@ function bytesToB64url(b: ArrayBuffer | Uint8Array): string {
   for (let i = 0; i < u.length; i++) s += String.fromCharCode(u[i]);
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
-function concat(...parts: Uint8Array[]): Uint8Array {
+function concat(...parts: Uint8Array[]): Bytes {
   const len = parts.reduce((n, p) => n + p.length, 0);
   const out = new Uint8Array(len);
   let o = 0;
@@ -96,17 +99,17 @@ async function vapidAuthHeader(endpoint: string): Promise<string> {
 }
 
 // ---------- RFC 8291 / RFC 8188 payload encryption (aes128gcm) ----------
-async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, length: number): Promise<Uint8Array> {
+async function hkdf(salt: Bytes, ikm: Bytes, info: Bytes, length: number): Promise<Bytes> {
   const key = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, key, length * 8);
   return new Uint8Array(bits);
 }
 
 async function encryptPayload(
-  plaintext: Uint8Array,
-  uaP256dh: Uint8Array,   // client public key, 65 raw bytes
-  uaAuth: Uint8Array,     // client auth secret, 16 bytes
-): Promise<Uint8Array> {
+  plaintext: Bytes,
+  uaP256dh: Bytes,   // client public key, 65 raw bytes
+  uaAuth: Bytes,     // client auth secret, 16 bytes
+): Promise<Bytes> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
 
   const asPair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
