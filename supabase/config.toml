@@ -4,6 +4,7 @@ project_id = "szhaxlmronirhnntlwyb"
 enabled = true
 site_url = "https://buyselltradesxm.com"
 additional_redirect_urls = [
+  "buyselltradesxm://auth/callback",
   "https://buyselltradesxm.com",
   "https://buyselltradesxm.com/",
   "https://buyselltradesxm.com/marketplace.html",
@@ -31,3 +32,10 @@ user = "resend"
 pass = "env(RESEND_API_KEY)"
 admin_email = "noreply@buyselltradesxm.com"
 sender_name = "Buy Sell Trade SXM"
+
+# These functions verify Auth bearer tokens and Apple signed transactions themselves.
+[functions.apple-purchases]
+verify_jwt = false
+
+[functions.apple-notifications]
+verify_jwt = false

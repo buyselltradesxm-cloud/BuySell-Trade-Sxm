@@ -2329,7 +2329,7 @@
             <p data-i18n="otpSentText">Nous avons envoyé un code à votre email. Entrez-le ci-dessous pour activer votre compte.</p>
             <div class="field">
               <label for="signupOtpCode" data-i18n="otpCodeLabel">Code de confirmation</label>
-              <input id="signupOtpCode" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+              <input id="signupOtpCode" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="8" placeholder="12345678">
             </div>
             <p class="field-error" id="signupOtpError" role="alert"></p>
             <div class="detail-actions">
@@ -2422,6 +2422,7 @@
             <b data-i18n="paymentWaiting">En attente de paiement</b>
           </div>
         </div>
+        <div data-apple-only hidden><p><a href="terms.html" target="_self">Conditions / Terms</a> · <a href="privacy.html" target="_self">Confidentialité / Privacy</a></p><button type="button" class="secondary-btn" data-apple-restore>Restaurer les achats / Restore purchases</button><button type="button" class="secondary-btn" data-apple-manage>Gérer les abonnements / Manage subscriptions</button></div>
         <div class="payment-demo">
           <strong data-i18n="paymentDemoTitle">Prototype de paiement</strong>
           <p data-i18n="paymentDemoText">Pour le lancement réel, ce bouton sera remplacé par un checkout sécurisé Stripe. Aujourd'hui il simule un paiement validé pour tester le parcours Pro.</p>
@@ -2784,6 +2785,7 @@
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.74.0/dist/umd/supabase.min.js" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="supabase-config.js"></script>
+<script src="native-ios.js"></script>
 <script src="supabase-api.js"></script>
 <script src="img-utils.js"></script>
 <script src="draft-store.js"></script>

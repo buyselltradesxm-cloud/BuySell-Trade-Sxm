@@ -362,6 +362,23 @@
     // détectée automatiquement dans l'URL par supabase-js).
     signInWithOAuth: async function (provider) {
       if (!window.db) return { error: { message: "Supabase non configuré" } };
+      if (window.SXM && SXM.isIOS()) {
+        try {
+          const result = await window.db.auth.signInWithOAuth({
+            provider: provider,
+            options: { redirectTo: "buyselltradesxm://auth/callback", skipBrowserRedirect: true }
+          });
+          if (result.error) return result;
+          const callback = await SXM.plugin().authenticate({ url: result.data.url });
+          const url = new URL(callback.url);
+          if (url.protocol !== "buyselltradesxm:" || url.host !== "auth" || url.pathname !== "/callback") throw new Error("Invalid sign-in callback");
+          const code = url.searchParams.get("code");
+          if (!code) throw new Error(url.searchParams.get("error_description") || "Sign-in did not complete");
+          return await window.db.auth.exchangeCodeForSession(code);
+        } catch (error) {
+          return { error: { message: error.code === "CANCELLED" ? "" : error.message, code: error.code } };
+        }
+      }
       return window.db.auth.signInWithOAuth({
         provider: provider,
         options: { redirectTo: window.location.origin + window.location.pathname }

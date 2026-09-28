@@ -394,9 +394,9 @@ Object.assign(I18N.fr, {
   paymentAmountLabel:"Montant",
   paymentStatusLabel:"Statut",
   paymentWaiting:"En attente de paiement",
-  paymentDemoTitle:"Prototype de paiement",
-  paymentDemoText:"Pour le lancement réel, ce bouton sera remplacé par un checkout sécurisé Stripe. Aujourd'hui il simule un paiement validé pour tester le parcours Pro.",
-  paymentConfirm:"Confirmer le paiement test",
+  paymentDemoTitle:"Paiement sécurisé",
+  paymentDemoText:"Votre abonnement est activé après confirmation du paiement.",
+  paymentConfirm:"Continuer vers le paiement",
   paymentPlanText:"Votre boutique sera activée après paiement confirmé. Vous pourrez ensuite publier vos produits, recevoir des messages et utiliser les options de visibilité.",
   paymentSuccess:"Paiement confirmé. Votre compte Pro est actif.",
   proDashboardTitle:"Espace Pro",
@@ -476,7 +476,7 @@ Object.assign(I18N.fr, {
   boostBadge:"Sponsorisé",
   boostCheckoutTitle:"Booster mon annonce",
   boostCheckoutText:"Choisissez une durée. Le boost met votre annonce en avant sans abonnement Pro.",
-  boostConfirm:"Confirmer le boost test",
+  boostConfirm:"Acheter le boost",
   boostSuccess:"Boost activé. Votre annonce est maintenant sponsorisée.",
   boostAlreadyActive:"Cette annonce est déjà boostée.",
   boostLoginRequired:"Connectez-vous avec un compte normal pour booster une annonce.",
@@ -553,9 +553,9 @@ Object.assign(I18N.en, {
   paymentAmountLabel:"Amount",
   paymentStatusLabel:"Status",
   paymentWaiting:"Waiting for payment",
-  paymentDemoTitle:"Payment prototype",
-  paymentDemoText:"For the real launch, this button will be replaced by secure Stripe checkout. Today it simulates an approved payment so we can test the Pro flow.",
-  paymentConfirm:"Confirm demo payment",
+  paymentDemoTitle:"Secure payment",
+  paymentDemoText:"Your subscription is activated after payment is confirmed.",
+  paymentConfirm:"Continue to payment",
   paymentPlanText:"Your store will be activated after confirmed payment. Then you can publish products, receive messages, and use visibility options.",
   paymentSuccess:"Payment confirmed. Your Pro account is active.",
   proDashboardTitle:"Pro workspace",
@@ -1661,7 +1661,8 @@ function boostPlan(days){
   return plans[days] || plans[7];
 }
 function hasActiveProSubscription(user = state.user){
-  return user?.accountType === "business" && user?.subscriptionStatus === "active";
+  return user?.accountType === "business" && user?.subscriptionStatus === "active" &&
+    (!user.subscriptionCurrentPeriodEnd || new Date(user.subscriptionCurrentPeriodEnd).getTime() > Date.now());
 }
 function isPaidPlan(plan){
   return plan && plan !== "personal-free";
@@ -1775,6 +1776,7 @@ function subscriptionStatusLabel(user){
   return hasActiveProSubscription(user) ? t().proActive : t().proInactive;
 }
 function manageSubscription(){
+  if(window.SXM && SXM.isIOS()) { SXM.manage(); return; }
   const user = normalizeUser(state.user);
   if(!user) return;
   if(user.accountType !== "business"){
@@ -2624,6 +2626,7 @@ function setLang(lang){
   document.querySelectorAll(".post[data-mobile-label]").forEach(el=>{
     if(t().postShort) el.setAttribute("data-mobile-label", t().postShort);
   });
+  if(window.SXM) SXM.refreshPrices();
   updateTermsConsentLabel();
   const accountPlan = document.getElementById("accountPlan");
   const accountSubmit = document.querySelector("#accountModal .auth-card button[type=submit]");
@@ -2637,6 +2640,7 @@ function setLang(lang){
 function openModal(id){
   document.getElementById(id).classList.add("open");
   document.body.style.overflow = "hidden";
+  if(window.SXM) SXM.refreshPrices();
 }
 
 function closeModal(id){
@@ -3229,10 +3233,16 @@ function selectBoostPlan(days, btn){
   });
   const amount = document.getElementById("boostCheckoutAmount");
   if(amount) amount.textContent = boostPlan(days).label;
+  if(window.SXM) SXM.refreshPrices();
 }
 
-function confirmListingBoost(e){
+async function confirmListingBoost(e){
   e.preventDefault();
+  if(window.SXM && SXM.isIOS()){
+    if(await SXM.buy("boost-" + pendingBoostDays, pendingBoostListingId)){ closeModal("boostCheckoutModal"); showToast(t().boostSuccess); }
+    return false;
+  }
+  if(!isLocalDevHost()){ showToast(state.lang === "fr" ? "Achat de boost indisponible pour le moment." : "Boost purchase is currently unavailable."); return false; }
   const l = L.find(x=>idKey(x.id) === idKey(pendingBoostListingId));
   if(!l) return false;
   const plan = boostPlan(pendingBoostDays);
@@ -3380,6 +3390,7 @@ function renderProfile(){
       <button type="button" class="secondary-btn" data-click="logoutUser">${t().logoutLabel}</button>
     </div>
     <div class="detail-actions">
+      ${window.SXM && SXM.isIOS() ? `<button type="button" class="secondary-btn" data-apple-restore>${state.lang === "fr" ? "Restaurer les achats" : "Restore purchases"}</button><button type="button" class="secondary-btn" data-apple-manage>${state.lang === "fr" ? "Gérer les abonnements Apple" : "Manage Apple subscriptions"}</button>` : ""}
       <button type="button" class="secondary-btn" data-click="deleteMyAccountConfirmed">${t().deleteAccountLabel}</button>
     </div>`;
   refreshPushToolLabel(document.getElementById("pushTool"));
@@ -3505,6 +3516,7 @@ async function logoutUser(){
 // out locally -- real deletion only applies to actual Supabase accounts.
 async function deleteMyAccountConfirmed(){
   if(!state.user) return;
+  if(window.SXM && SXM.isIOS()) alert(state.lang === "fr" ? "La suppression du compte ne résilie pas un abonnement Apple. Vous pouvez le résilier avec le bouton Gérer les abonnements Apple du profil." : "Deleting your account does not cancel an Apple subscription. You can cancel it using Manage Apple subscriptions in your profile.");
   if(!confirm(state.lang==="fr"
     ? "Supprimer définitivement votre compte ? Vos messages seront supprimés et vos annonces resteront visibles sans vendeur associé. Cette action est irréversible."
     : "Permanently delete your account? Your messages will be deleted and your listings will remain visible without an associated seller. This cannot be undone.")) return;
@@ -4491,21 +4503,24 @@ async function createAccount(e){
     return false;
   }
 
-  // Compte particulier gratuit via Supabase. Les plans Pro payants restent
-  // sur le parcours démo local tant que Stripe n'est pas branché (slice suivante).
-  if(useSupabase && !isPaidPlan(accountPlan)){
+  // Create the real account before opening the selected paid plan.
+  if(useSupabase){
+    const signupPlan = "personal-free";
+    if(isPaidPlan(accountPlan)) sessionStorage.setItem("bst-selected-pro-plan", accountPlan);
     const name = document.getElementById("accountName").value.trim();
     const { data, error: sbErr } = await SB.signUp(email, password, {
       name,
       account_type: accountType,
-      account_plan: accountPlan
+      account_plan: signupPlan,
+      business_name: businessName, phone: businessPhone
     });
     if(sbErr){
-      error.textContent = sbErr.message || t().emailExists;
+      // Do not reveal whether an address is already registered.
+      error.textContent = state.lang === "fr" ? "Si cette adresse peut être utilisée, vérifiez votre email pour continuer." : "If this address can be used, check your email to continue.";
       return false;
     }
     if(data && data.session && data.user){
-      await SB.upsertProfile({ name, account_type: accountType, account_plan: accountPlan });
+      await SB.upsertProfile({ name, account_type: accountType, business_name: businessName, phone: businessPhone });
       await applySupabaseUser(data.user);
       showToast(state.lang==="fr" ? "Compte créé" : "Account created");
       e.target.reset();
@@ -4515,7 +4530,7 @@ async function createAccount(e){
       // Confirmation email activée : on garde l'email en attente et on
       // bascule le formulaire sur la saisie du code reçu par email.
       error.textContent = "";
-      pendingSignupOtp = { email, name, accountType, accountPlan };
+      pendingSignupOtp = { email, name, accountType, accountPlan: signupPlan };
       document.getElementById("signupFields").hidden = true;
       document.getElementById("signupSubmitRow").hidden = true;
       document.getElementById("signupOtpStep").hidden = false;
@@ -4568,6 +4583,11 @@ async function createAccount(e){
 
 async function confirmDemoPayment(e){
   e.preventDefault();
+  if(window.SXM && SXM.isIOS()){
+    const plan = pendingSelectedProPlan || state.user?.accountPlan;
+    if(await SXM.buy(plan)){ closeModal("paymentModal"); closeModal("accountModal"); showToast(t().paymentSuccess); }
+    return false;
+  }
   if(pendingProSignup){
     // Paiement démo local. Le vrai compte Pro Supabase doit passer par Stripe
     // ou une fonction serveur avant d'ecrire subscription_status en base.
@@ -5397,6 +5417,7 @@ if (window.SB && SB.enabled() && !new URLSearchParams(location.search || "").has
       if (user) {
         applySupabaseUser(user).then(function () {
           applyAutomaticIncludedBoosts({silent:true}).then(function(){ render(); });
+          if(window.SXM) SXM.sync();
           refreshMessageBadge();
           refreshBackendNotifications();
           if(window.Push && Push.syncEndpoint) Push.syncEndpoint();

@@ -36,7 +36,8 @@
     "cap:open:ios": "cap open ios",
     "cap:assets": "node scripts/generate-capacitor-assets.js",
     "test:qa": "npm run test:share && npm run test:gallery-search && npm run test:pro-payment && npm run test:social-auth && npm run test:uuid-listing && npm run test:backend && npm run test:admin-visibility && npm run test:category-form && npm run test:personal-monthly-limit && npm run test:clickable-sections && npm run test:edit-listing && npm run test:subscription-profile && npm run test:messenger-inbox && npm run test:notifications && npm run test:auto-boost && npm run test:push && npm run test:pwa && npm run test:email-worker && npm run test:live-admin",
-    "playwright:install": "playwright install chromium"
+    "playwright:install": "playwright install chromium",
+    "test:ios-review": "node scripts/ios-review-check.js"
   },
   "keywords": [],
   "author": "",
