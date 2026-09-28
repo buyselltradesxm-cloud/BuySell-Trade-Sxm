@@ -21,3 +21,10 @@ keystore.properties
 android/keystore.properties
 play-service-account*.json
 *-play-service-account.json
+
+# Local build outputs and store-submission bundles
+android-build-latest/
+build-artifacts/
+play-store-assets/
+appstore-iap-review-screenshots/
+appstore-iap-review-screenshots.zip
