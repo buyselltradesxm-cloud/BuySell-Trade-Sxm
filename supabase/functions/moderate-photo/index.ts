@@ -100,6 +100,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   if (req.method !== "POST") return json({ error: "method not allowed" }, 405, cors);
   if (!SUPABASE_URL || !SERVICE_KEY) return json({ error: "function not configured" }, 500, cors);
+  if (Number(req.headers.get("content-length") || 0) > 4096) return json({ error: "payload too large" }, 413, cors);
   if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY) {
     return json({ error: "AWS not configured — set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_REGION secrets" }, 500, cors);
   }
@@ -107,8 +108,10 @@ Deno.serve(async (req) => {
   const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   if (!(await callerIsAdmin(bearer))) return json({ error: "admin only" }, 403, cors);
 
+  const raw = await req.text().catch(() => "");
+  if (new TextEncoder().encode(raw).byteLength > 4096) return json({ error: "payload too large" }, 413, cors);
   let body: { image_url?: string };
-  try { body = await req.json(); } catch { return json({ error: "invalid body" }, 400, cors); }
+  try { body = JSON.parse(raw); } catch { return json({ error: "invalid body" }, 400, cors); }
   const imageUrl = (body.image_url || "").trim();
   if (!imageUrl) return json({ error: "image_url required" }, 400, cors);
 

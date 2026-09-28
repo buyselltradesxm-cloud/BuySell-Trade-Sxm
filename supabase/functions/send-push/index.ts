@@ -176,6 +176,7 @@ async function timingSafeEqual(a: string, b: string): Promise<boolean> {
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
+  if (Number(req.headers.get("content-length") || 0) > 8192) return json({ error: "payload too large" }, 413);
 
   const auth = req.headers.get("x-push-secret") || (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
   if (!PUSH_SECRET) return json({ error: "unauthorized" }, 401);
@@ -190,8 +191,10 @@ Deno.serve(async (req) => {
     return json({ error: "server not configured" }, 500);
   }
 
+  const raw = await req.text().catch(() => "");
+  if (new TextEncoder().encode(raw).byteLength > 8192) return json({ error: "payload too large" }, 413);
   let payload: { user_id?: string; title?: string; body?: string; url?: string; tag?: string };
-  try { payload = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  try { payload = JSON.parse(raw); } catch { return json({ error: "bad json" }, 400); }
   if (!payload.user_id) return json({ error: "user_id required" }, 400);
 
   const message = enc.encode(JSON.stringify({

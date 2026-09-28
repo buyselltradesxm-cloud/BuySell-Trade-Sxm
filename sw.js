@@ -11,7 +11,7 @@
  *
  * Bump CACHE_VERSION on any change here to force a clean cache swap.
  */
-const CACHE_VERSION = 'bst-v7';
+const CACHE_VERSION = 'bst-v9-apple-purchases';
 const APP_SHELL = `app-shell-${CACHE_VERSION}`;
 const RUNTIME = `runtime-${CACHE_VERSION}`;
 const FONTS = `fonts-${CACHE_VERSION}`;
@@ -23,6 +23,7 @@ const PRECACHE_URLS = [
   '/offline.html',
   '/manifest.webmanifest',
   '/pwa.js',
+  '/native-ios.js',
   '/img-utils.js',
   '/draft-store.js',
   '/push-config.js',

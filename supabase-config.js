@@ -53,7 +53,8 @@ window.db = null;
   }
   window.db = window.supabase.createClient(
     window.SUPABASE_URL,
-    window.SUPABASE_ANON_KEY
+    window.SUPABASE_ANON_KEY,
+    { auth: { flowType: "pkce" } }
   );
   console.info("[Supabase] client prêt.");
 })();

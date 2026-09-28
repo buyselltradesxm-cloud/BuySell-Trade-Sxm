@@ -84,13 +84,16 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   if (req.method !== "POST") return json({ error: "method not allowed" }, 405, cors);
   if (!SUPABASE_URL || !SERVICE_KEY) return json({ error: "function not configured" }, 500, cors);
+  if (Number(req.headers.get("content-length") || 0) > 2048) return json({ error: "payload too large" }, 413, cors);
 
   const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   const { ok: isAdmin, id: adminId } = await callerIsAdmin(bearer);
   if (!isAdmin) return json({ error: "admin only" }, 403, cors);
 
+  const raw = await req.text().catch(() => "");
+  if (new TextEncoder().encode(raw).byteLength > 2048) return json({ error: "payload too large" }, 413, cors);
   let body: { user_id?: string };
-  try { body = await req.json(); } catch { return json({ error: "invalid body" }, 400, cors); }
+  try { body = JSON.parse(raw); } catch { return json({ error: "invalid body" }, 400, cors); }
   const targetId = (body.user_id || "").trim();
   if (!targetId) return json({ error: "user_id required" }, 400, cors);
   if (targetId === adminId) return json({ error: "cannot delete your own account this way" }, 400, cors);
@@ -100,8 +103,7 @@ Deno.serve(async (req) => {
     headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
   });
   if (!delRes.ok) {
-    const errText = await delRes.text().catch(() => "");
-    return json({ error: `delete failed: ${delRes.status} ${errText}` }, 502, cors);
+    return json({ error: "delete failed" }, 502, cors);
   }
 
   await fetch(`${SUPABASE_URL}/rest/v1/admin_events`, {

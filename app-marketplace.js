@@ -394,9 +394,9 @@ Object.assign(I18N.fr, {
   paymentAmountLabel:"Montant",
   paymentStatusLabel:"Statut",
   paymentWaiting:"En attente de paiement",
-  paymentDemoTitle:"Prototype de paiement",
-  paymentDemoText:"Pour le lancement réel, ce bouton sera remplacé par un checkout sécurisé Stripe. Aujourd'hui il simule un paiement validé pour tester le parcours Pro.",
-  paymentConfirm:"Confirmer le paiement test",
+  paymentDemoTitle:"Paiement sécurisé",
+  paymentDemoText:"Votre abonnement est activé après confirmation du paiement.",
+  paymentConfirm:"Continuer vers le paiement",
   paymentPlanText:"Votre boutique sera activée après paiement confirmé. Vous pourrez ensuite publier vos produits, recevoir des messages et utiliser les options de visibilité.",
   paymentSuccess:"Paiement confirmé. Votre compte Pro est actif.",
   proDashboardTitle:"Espace Pro",
@@ -476,7 +476,7 @@ Object.assign(I18N.fr, {
   boostBadge:"Sponsorisé",
   boostCheckoutTitle:"Booster mon annonce",
   boostCheckoutText:"Choisissez une durée. Le boost met votre annonce en avant sans abonnement Pro.",
-  boostConfirm:"Confirmer le boost test",
+  boostConfirm:"Acheter le boost",
   boostSuccess:"Boost activé. Votre annonce est maintenant sponsorisée.",
   boostAlreadyActive:"Cette annonce est déjà boostée.",
   boostLoginRequired:"Connectez-vous avec un compte normal pour booster une annonce.",
@@ -553,8 +553,8 @@ Object.assign(I18N.en, {
   paymentAmountLabel:"Amount",
   paymentStatusLabel:"Status",
   paymentWaiting:"Waiting for payment",
-  paymentDemoTitle:"Payment prototype",
-  paymentDemoText:"For the real launch, this button will be replaced by secure Stripe checkout. Today it simulates an approved payment so we can test the Pro flow.",
+  paymentDemoTitle:"Secure payment",
+  paymentDemoText:"Your subscription is activated after payment is confirmed.",
   paymentConfirm:"Confirm demo payment",
   paymentPlanText:"Your store will be activated after confirmed payment. Then you can publish products, receive messages, and use visibility options.",
   paymentSuccess:"Payment confirmed. Your Pro account is active.",
@@ -1281,6 +1281,12 @@ function loadLocalState(){
       userListings = data.userListings;
       L.unshift(...userListings);
     }
+    // Local accounts are strictly a localhost demo aid. Never revive a
+    // browser-stored password hash or a forged local identity in production.
+    if(!isLocalDevHost()){
+      usersByEmail = {};
+      if(state.user && state.user.provider === "local") state.user = null;
+    }
   }catch(e){}
 }
 
@@ -1296,7 +1302,7 @@ function restoreListingsIfNeeded(){
 function persistState(){
   localStorage.setItem("bstsxm-state", JSON.stringify({
     lang:state.lang, cur:state.cur, user:state.user,
-    usersByEmail,
+    usersByEmail:isLocalDevHost() ? usersByEmail : {},
     favs:[...state.favs], saved:state.saved,
     chatThreads,
     userListings,
@@ -1506,8 +1512,8 @@ async function handleAvatarChange(input){
   const file = input.files && input.files[0];
   input.value = "";
   if(!file || !state.user) return;
-  if(!file.type || !file.type.startsWith("image/")){
-    showToast(state.lang==="fr" ? "Choisissez une image." : "Please choose an image.");
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type) || file.size < 1 || file.size > 5 * 1024 * 1024){
+    showToast(state.lang==="fr" ? "Choisissez une image JPG, PNG ou WebP de 5 Mo maximum." : "Choose a JPG, PNG, or WebP image up to 5 MB.");
     return;
   }
   try {
@@ -1587,8 +1593,10 @@ const ADMIN_EMAILS = new Set(["rxmarketing09@gmail.com"]);
 function isAdminUser(user=state.user){
   const email = (user?.email || "").toLowerCase();
   if(!user) return false;
-  if(isLocalDevHost() && ADMIN_EMAILS.has(email)) return true;
-  return user.provider === "supabase" && user.role === "admin" && ADMIN_EMAILS.has(email);
+  if(isLocalDevHost() && user.provider === "local" && ADMIN_EMAILS.has(email)) return true;
+  // Production authorization comes solely from the database role. Do not
+  // couple admin access to an email address shipped to every browser.
+  return user.provider === "supabase" && user.role === "admin";
 }
 function titleFor(l){
   return state.lang === "en" && l.te ? l.te : l.t;
@@ -1661,7 +1669,8 @@ function boostPlan(days){
   return plans[days] || plans[7];
 }
 function hasActiveProSubscription(user = state.user){
-  return user?.accountType === "business" && user?.subscriptionStatus === "active";
+  return user?.accountType === "business" && user?.subscriptionStatus === "active" &&
+    (!user.subscriptionCurrentPeriodEnd || new Date(user.subscriptionCurrentPeriodEnd).getTime() > Date.now());
 }
 function isPaidPlan(plan){
   return plan && plan !== "personal-free";
@@ -1775,6 +1784,7 @@ function subscriptionStatusLabel(user){
   return hasActiveProSubscription(user) ? t().proActive : t().proInactive;
 }
 function manageSubscription(){
+  if(window.SXM && SXM.isIOS()) { SXM.manage(); return; }
   const user = normalizeUser(state.user);
   if(!user) return;
   if(user.accountType !== "business"){
@@ -2624,6 +2634,7 @@ function setLang(lang){
   document.querySelectorAll(".post[data-mobile-label]").forEach(el=>{
     if(t().postShort) el.setAttribute("data-mobile-label", t().postShort);
   });
+  if(window.SXM) SXM.refreshPrices();
   updateTermsConsentLabel();
   const accountPlan = document.getElementById("accountPlan");
   const accountSubmit = document.querySelector("#accountModal .auth-card button[type=submit]");
@@ -2637,6 +2648,7 @@ function setLang(lang){
 function openModal(id){
   document.getElementById(id).classList.add("open");
   document.body.style.overflow = "hidden";
+  if(window.SXM) SXM.refreshPrices();
 }
 
 function closeModal(id){
@@ -3229,10 +3241,16 @@ function selectBoostPlan(days, btn){
   });
   const amount = document.getElementById("boostCheckoutAmount");
   if(amount) amount.textContent = boostPlan(days).label;
+  if(window.SXM) SXM.refreshPrices();
 }
 
-function confirmListingBoost(e){
+async function confirmListingBoost(e){
   e.preventDefault();
+  if(window.SXM && SXM.isIOS()){
+    if(await SXM.buy("boost-" + pendingBoostDays, pendingBoostListingId)){ closeModal("boostCheckoutModal"); showToast(t().boostSuccess); }
+    return false;
+  }
+  if(!isLocalDevHost()){ showToast(state.lang === "fr" ? "Achat de boost indisponible pour le moment." : "Boost purchase is currently unavailable."); return false; }
   const l = L.find(x=>idKey(x.id) === idKey(pendingBoostListingId));
   if(!l) return false;
   const plan = boostPlan(pendingBoostDays);
@@ -3380,6 +3398,7 @@ function renderProfile(){
       <button type="button" class="secondary-btn" data-click="logoutUser">${t().logoutLabel}</button>
     </div>
     <div class="detail-actions">
+      ${window.SXM && SXM.isIOS() ? `<button type="button" class="secondary-btn" data-apple-restore>${state.lang === "fr" ? "Restaurer les achats" : "Restore purchases"}</button><button type="button" class="secondary-btn" data-apple-manage>${state.lang === "fr" ? "Gérer les abonnements Apple" : "Manage Apple subscriptions"}</button>` : ""}
       <button type="button" class="secondary-btn" data-click="deleteMyAccountConfirmed">${t().deleteAccountLabel}</button>
     </div>`;
   refreshPushToolLabel(document.getElementById("pushTool"));
@@ -3505,6 +3524,7 @@ async function logoutUser(){
 // out locally -- real deletion only applies to actual Supabase accounts.
 async function deleteMyAccountConfirmed(){
   if(!state.user) return;
+  if(window.SXM && SXM.isIOS()) alert(state.lang === "fr" ? "La suppression du compte ne résilie pas un abonnement Apple. Vous pouvez le résilier avec le bouton Gérer les abonnements Apple du profil." : "Deleting your account does not cancel an Apple subscription. You can cancel it using Manage Apple subscriptions in your profile.");
   if(!confirm(state.lang==="fr"
     ? "Supprimer définitivement votre compte ? Vos messages seront supprimés et vos annonces resteront visibles sans vendeur associé. Cette action est irréversible."
     : "Permanently delete your account? Your messages will be deleted and your listings will remain visible without an associated seller. This cannot be undone.")) return;
@@ -4482,6 +4502,10 @@ async function createAccount(e){
   const businessWebsite = accountType === "business" ? document.getElementById("businessWebsite")?.value.trim() || "" : "";
   const businessLogo = accountType === "business" ? document.getElementById("businessLogo")?.value.trim() || "" : "";
   const useSupabase = !!(window.SB && SB.enabled());
+  if(!useSupabase && !isLocalDevHost()){
+    error.textContent = state.lang === "fr" ? "Service de compte temporairement indisponible." : "Account service is temporarily unavailable.";
+    return false;
+  }
   if(!useSupabase && usersByEmail[key]){
     error.textContent = t().emailExists;
     return false;
@@ -4493,19 +4517,23 @@ async function createAccount(e){
 
   // Compte particulier gratuit via Supabase. Les plans Pro payants restent
   // sur le parcours démo local tant que Stripe n'est pas branché (slice suivante).
-  if(useSupabase && !isPaidPlan(accountPlan)){
+  if(useSupabase){
+    const signupPlan = "personal-free";
+    if(isPaidPlan(accountPlan)) sessionStorage.setItem("bst-selected-pro-plan", accountPlan);
     const name = document.getElementById("accountName").value.trim();
     const { data, error: sbErr } = await SB.signUp(email, password, {
       name,
       account_type: accountType,
-      account_plan: accountPlan
+      account_plan: signupPlan,
+      business_name: businessName, phone: businessPhone
     });
     if(sbErr){
-      error.textContent = sbErr.message || t().emailExists;
+      // Do not reveal whether an address is already registered.
+      error.textContent = state.lang === "fr" ? "Si cette adresse peut être utilisée, vérifiez votre email pour continuer." : "If this address can be used, check your email to continue.";
       return false;
     }
     if(data && data.session && data.user){
-      await SB.upsertProfile({ name, account_type: accountType, account_plan: accountPlan });
+      await SB.upsertProfile({ name, account_type: accountType, business_name: businessName, phone: businessPhone });
       await applySupabaseUser(data.user);
       showToast(state.lang==="fr" ? "Compte créé" : "Account created");
       e.target.reset();
@@ -4515,7 +4543,7 @@ async function createAccount(e){
       // Confirmation email activée : on garde l'email en attente et on
       // bascule le formulaire sur la saisie du code reçu par email.
       error.textContent = "";
-      pendingSignupOtp = { email, name, accountType, accountPlan };
+      pendingSignupOtp = { email, name, accountType, accountPlan: signupPlan };
       document.getElementById("signupFields").hidden = true;
       document.getElementById("signupSubmitRow").hidden = true;
       document.getElementById("signupOtpStep").hidden = false;
@@ -4568,6 +4596,23 @@ async function createAccount(e){
 
 async function confirmDemoPayment(e){
   e.preventDefault();
+  if(window.SXM && SXM.isIOS()){
+    const plan = pendingSelectedProPlan || state.user?.accountPlan;
+    if(await SXM.buy(plan)){ closeModal("paymentModal"); closeModal("accountModal"); showToast(t().paymentSuccess); }
+    return false;
+  }
+  if(!isLocalDevHost()){
+    const plan = pendingProSignup?.accountPlan || pendingSelectedProPlan || state.user?.accountPlan;
+    if(!state.user || state.user.provider !== "supabase" || !window.SB || !SB.createSecureCheckout){
+      document.getElementById("createAccountError").textContent = state.lang === "fr" ? "Créez ou connectez d'abord un compte, puis réessayez." : "Create or sign in to an account first, then try again.";
+      closeModal("paymentModal");
+      return false;
+    }
+    const checkout = await SB.createSecureCheckout(plan);
+    if(checkout?.data?.url){ location.assign(checkout.data.url); return false; }
+    showToast(state.lang === "fr" ? "Paiement sécurisé indisponible pour le moment." : "Secure checkout is unavailable right now.");
+    return false;
+  }
   if(pendingProSignup){
     // Paiement démo local. Le vrai compte Pro Supabase doit passer par Stripe
     // ou une fonction serveur avant d'ecrire subscription_status en base.
@@ -4747,6 +4792,51 @@ async function resendSignupCode(){
   if(!error) showToast(t().otpResent);
 }
 
+function openPasswordReset(){
+  const resetMode = new URLSearchParams(location.search).get("reset") === "1";
+  const requestForm = document.getElementById("passwordResetRequestForm");
+  const completeForm = document.getElementById("passwordResetCompleteForm");
+  if(requestForm) requestForm.hidden = resetMode;
+  if(completeForm) completeForm.hidden = !resetMode;
+  document.getElementById("passwordResetRequestError").textContent = "";
+  document.getElementById("passwordResetCompleteError").textContent = "";
+  openModal("passwordResetModal");
+}
+
+async function requestPasswordReset(e){
+  e.preventDefault();
+  const email = document.getElementById("passwordResetEmail").value.trim();
+  const message = document.getElementById("passwordResetRequestError");
+  if(!window.SB || !SB.requestPasswordReset){
+    message.textContent = state.lang === "fr" ? "Service indisponible." : "Service unavailable.";
+    return false;
+  }
+  await SB.requestPasswordReset(email);
+  // Deliberately identical for valid, invalid, and rate-limited addresses.
+  message.textContent = state.lang === "fr" ? "Si un compte peut être récupéré, un lien a été envoyé." : "If an account can be recovered, a reset link has been sent.";
+  return false;
+}
+
+async function completePasswordReset(e){
+  e.preventDefault();
+  const password = document.getElementById("passwordResetNew").value;
+  const confirmation = document.getElementById("passwordResetConfirm").value;
+  const message = document.getElementById("passwordResetCompleteError");
+  if(password.length < 12 || password !== confirmation){
+    message.textContent = state.lang === "fr" ? "Utilisez au moins 12 caractères et confirmez le mot de passe." : "Use at least 12 characters and confirm the password.";
+    return false;
+  }
+  const result = await SB.updatePasswordAndRevokeSessions(password);
+  if(result && result.error){
+    message.textContent = state.lang === "fr" ? "Le lien est invalide ou a expiré. Demandez-en un nouveau." : "The link is invalid or expired. Request a new one.";
+    return false;
+  }
+  closeModal("passwordResetModal");
+  history.replaceState({}, "", location.pathname);
+  showToast(state.lang === "fr" ? "Mot de passe modifié. Reconnectez-vous." : "Password changed. Please sign in again.");
+  return false;
+}
+
 async function loginAccount(e){
   e.preventDefault();
   const email = document.getElementById("loginEmail").value.trim();
@@ -4772,10 +4862,15 @@ async function loginAccount(e){
       completeAuth();
       return false;
     }
-    // Pas de compte Supabase correspondant : on retombe sur les comptes
-    // démo locaux (utile pour les comptes Pro créés avant la migration).
+    // Production never falls back to browser-stored accounts and never
+    // exposes provider-specific authentication errors.
+    if(!isLocalDevHost()){
+      error.textContent = t().invalidLogin;
+      return false;
+    }
+    // Localhost only: retain the demo-account fallback for QA.
     if(!usersByEmail[key]){
-      error.textContent = (sbErr && sbErr.message) || t().invalidLogin;
+      error.textContent = t().invalidLogin;
       return false;
     }
   }
@@ -5096,8 +5191,11 @@ function meetupLabel(v){
 }
 
 async function handlePhotoUpload(e){
-  const picked = [...e.target.files].filter(file=>file.type.startsWith("image/")).slice(0, 8);
+  const allowedTypes = new Set(["image/jpeg","image/png","image/webp"]);
+  const all = [...e.target.files];
+  const picked = all.filter(file=>allowedTypes.has(file.type) && file.size > 0 && file.size <= 5 * 1024 * 1024).slice(0, 8);
   if(e.target.files.length > 8) showToast(t().tooManyPhotos);
+  if(picked.length !== Math.min(all.length, 8)) showToast(state.lang === "fr" ? "Seules les images JPG, PNG ou WebP de 5 Mo maximum sont acceptées." : "Only JPG, PNG, or WebP images up to 5 MB are accepted.");
   selectedPostPhotos = [];
   selectedPostFiles = [];
   const preview = document.getElementById("photoPreview");
@@ -5378,7 +5476,7 @@ Object.assign(window, {
 window.__bstState = state;
 
 /* ---------------- INIT ---------------- */
-loadLocalState(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); applyAutomaticIncludedBoosts({silent:true}); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(); openAdminFromUrl(); handleListingRenewalActionFromUrl(); handleUnsubscribeFromUrl();
+loadLocalState(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); applyAutomaticIncludedBoosts({silent:true}); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(); openAdminFromUrl(); handleListingRenewalActionFromUrl(); handleUnsubscribeFromUrl(); if(new URLSearchParams(location.search).get("reset") === "1") setTimeout(openPasswordReset, 250);
 
 /* Supabase : si configuré, remplace les annonces de démo par celles de la base. */
 if (window.SB && SB.enabled() && !new URLSearchParams(location.search || "").has("local")) {
@@ -5397,6 +5495,7 @@ if (window.SB && SB.enabled() && !new URLSearchParams(location.search || "").has
       if (user) {
         applySupabaseUser(user).then(function () {
           applyAutomaticIncludedBoosts({silent:true}).then(function(){ render(); });
+          if(window.SXM) SXM.sync();
           refreshMessageBadge();
           refreshBackendNotifications();
           if(window.Push && Push.syncEndpoint) Push.syncEndpoint();

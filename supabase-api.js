@@ -9,6 +9,20 @@
 (function () {
   "use strict";
 
+  // Client validation gives users fast feedback. The bucket policy in
+  // security-hardening-v2.sql is the authoritative server-side control.
+  var ALLOWED_IMAGE_TYPES = {
+    "image/jpeg": true,
+    "image/png": true,
+    "image/webp": true
+  };
+  var MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+  function isAllowedImage(file) {
+    return !!file && ALLOWED_IMAGE_TYPES[file.type] === true &&
+      Number(file.size || 0) > 0 && Number(file.size || 0) <= MAX_IMAGE_BYTES;
+  }
+
   /* ---- conversion  ligne DB  <->  objet annonce de l'app ---- */
     function rowToListing(r) {
     var created = r.created_at ? new Date(r.created_at).getTime() : Date.now();
@@ -167,8 +181,12 @@
       var urls = [];
       for (var i = 0; i < files.length; i++) {
         var file = files[i];
-        if (!file || typeof file.name === "undefined") continue;
-        var ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+        if (!isAllowedImage(file)) {
+          console.warn("[SB] uploadPhotos: rejected unsupported or oversized image");
+          continue;
+        }
+        // Never derive a stored extension from attacker-controlled filenames.
+        var ext = file.type === "image/png" ? "png" : (file.type === "image/webp" ? "webp" : "jpg");
         var path =
           user.id + "/" + Date.now() + "-" + i + "-" +
           Math.random().toString(36).slice(2, 8) + "." + ext;
@@ -190,7 +208,7 @@
     // bucket public "avatars" ; reçoit un Blob/File déjà recadré côté client,
     // renvoie l'URL publique (avec un paramètre de cache-busting) ou null.
     uploadAvatar: async function (blob) {
-      if (!window.db || !blob) return null;
+      if (!window.db || !blob || !isAllowedImage(blob)) return null;
       var user = await SB.currentUser();
       if (!user) return null;
       var bucket = window.db.storage.from("avatars");
@@ -362,6 +380,23 @@
     // détectée automatiquement dans l'URL par supabase-js).
     signInWithOAuth: async function (provider) {
       if (!window.db) return { error: { message: "Supabase non configuré" } };
+      if (window.SXM && SXM.isIOS()) {
+        try {
+          const result = await window.db.auth.signInWithOAuth({
+            provider: provider,
+            options: { redirectTo: "buyselltradesxm://auth/callback", skipBrowserRedirect: true }
+          });
+          if (result.error) return result;
+          const callback = await SXM.plugin().authenticate({ url: result.data.url });
+          const url = new URL(callback.url);
+          if (url.protocol !== "buyselltradesxm:" || url.host !== "auth" || url.pathname !== "/callback") throw new Error("Invalid sign-in callback");
+          const code = url.searchParams.get("code");
+          if (!code) throw new Error(url.searchParams.get("error_description") || "Sign-in did not complete");
+          return await window.db.auth.exchangeCodeForSession(code);
+        } catch (error) {
+          return { error: { message: error.code === "CANCELLED" ? "" : error.message, code: error.code } };
+        }
+      }
       return window.db.auth.signInWithOAuth({
         provider: provider,
         options: { redirectTo: window.location.origin + window.location.pathname }
@@ -371,6 +406,45 @@
     signOut: async function () {
       if (!window.db) return;
       return window.db.auth.signOut();
+    },
+
+    requestPasswordReset: async function (email) {
+      if (!window.db) return { error: { message: "Authentication unavailable" } };
+      var response = await fetch(window.SUPABASE_URL + "/functions/v1/request-password-reset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: window.SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ email: String(email || "") })
+      });
+      // The endpoint intentionally uses one generic response for both known
+      // and unknown addresses to prevent account enumeration.
+      if (!response.ok && response.status !== 202) return { error: { message: "Unable to request reset" } };
+      return { data: { accepted: true }, error: null };
+    },
+
+    updatePasswordAndRevokeSessions: async function (password) {
+      if (!window.db) return { error: { message: "Authentication unavailable" } };
+      var result = await window.db.auth.updateUser({ password: password });
+      if (result.error) return result;
+      // A reset must invalidate other devices. Supabase revokes the current
+      // browser too, so the user must sign in with the new password.
+      await window.db.auth.signOut({ scope: "global" });
+      return result;
+    },
+
+    createSecureCheckout: async function (plan) {
+      if (!window.db) return { error: { message: "Authentication unavailable" } };
+      var session = await SB.currentSession();
+      if (!session || !session.access_token) return { error: { message: "Not authenticated" } };
+      var response = await fetch(window.SUPABASE_URL + "/functions/v1/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY, Authorization: "Bearer " + session.access_token },
+        body: JSON.stringify({ plan: plan })
+      });
+      var body = await response.json().catch(function () { return {}; });
+      return response.ok && body.url ? { data: body, error: null } : { data: null, error: { message: "Checkout unavailable" } };
     },
 
     currentUser: async function () {
