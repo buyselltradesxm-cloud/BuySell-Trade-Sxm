@@ -155,3 +155,9 @@ create table if not exists public.payment_webhook_events (
 );
 alter table public.payment_webhook_events enable row level security;
 revoke all on public.payment_webhook_events from public, anon, authenticated;
+
+-- The default-privilege revokes above leave new tables with no DML grants at
+-- all, so the Edge Functions' service_role must be granted explicitly.
+-- security_rate_limits needs none: only the security-definer RPC touches it.
+grant insert on public.security_events to service_role;
+grant select, insert, update on public.payment_webhook_events to service_role;

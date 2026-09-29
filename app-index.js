@@ -1779,8 +1779,22 @@ function subscriptionStatusLabel(user){
   if(user.subscriptionCancelAtPeriodEnd) return state.lang === "fr" ? "Annulation programmée" : "Cancellation scheduled";
   return hasActiveProSubscription(user) ? t().proActive : t().proInactive;
 }
+// Google Play requires Play Billing for digital goods sold in-app. Until the
+// Android app has it, Pro plans and boosts are not sold there at all -- no
+// purchase UI and no link out to the website (Play also forbids steering).
+// Subscriptions bought elsewhere still apply to the account.
+function isAndroidApp(){
+  return !!(window.Capacitor && Capacitor.getPlatform && Capacitor.getPlatform() === "android");
+}
+if(isAndroidApp()) document.documentElement.classList.add("android-app");
+function androidPurchaseBlocked(){
+  if(!isAndroidApp()) return false;
+  showToast(state.lang === "fr" ? "Les offres Pro et les boosts ne sont pas disponibles dans l'application Android." : "Pro plans and boosts are not available in the Android app.");
+  return true;
+}
 function manageSubscription(){
   if(window.SXM && SXM.isIOS()) { SXM.manage(); return; }
+  if(androidPurchaseBlocked()) return;
   const user = normalizeUser(state.user);
   if(!user) return;
   if(user.accountType !== "business"){
@@ -3152,6 +3166,7 @@ function openProfile(){
 }
 
 function openBoostInfo(){
+  if(androidPurchaseBlocked()) return;
   openModal("boostModal");
 }
 
@@ -3161,6 +3176,7 @@ function openPricingInfo(){
 
 async function startBoostFlow(){
   closeModal("boostModal");
+  if(androidPurchaseBlocked()) return;
   if(!state.user){
     requireAccount("boost");
     showToast(t().boostLoginRequired);
@@ -3192,6 +3208,7 @@ async function startBoostFlow(){
 
 function openBoostCheckout(id, event){
   if(event) event.stopPropagation();
+  if(androidPurchaseBlocked()) return;
   const l = L.find(x=>idKey(x.id) === idKey(id));
   if(!l) return;
   if(!state.user || !isOwnListing(l)){
@@ -3242,6 +3259,7 @@ function selectBoostPlan(days, btn){
 
 async function confirmListingBoost(e){
   e.preventDefault();
+  if(androidPurchaseBlocked()) return false;
   if(window.SXM && SXM.isIOS()){
     if(await SXM.buy("boost-" + pendingBoostDays, pendingBoostListingId)){ closeModal("boostCheckoutModal"); showToast(t().boostSuccess); }
     return false;
@@ -3268,6 +3286,7 @@ async function confirmListingBoost(e){
 }
 
 function openPaymentModal({existingUser=false, plan=null, after=null} = {}){
+  if(androidPurchaseBlocked()) return;
   pendingPaymentExistingUser = existingUser;
   pendingAfterPayment = after;
   const selectedPlan = plan || pendingProSignup?.accountPlan || state.user?.accountPlan || "pro-starter";
@@ -3280,6 +3299,7 @@ function openPaymentModal({existingUser=false, plan=null, after=null} = {}){
 
 function chooseProPlan(plan){
   if(!ACCOUNT_PLANS[plan] || plan === "personal-free") return;
+  if(androidPurchaseBlocked()) return;
   closeModal("boostModal");
   sessionStorage.setItem("bst-selected-pro-plan", plan);
   if(!state.user){
@@ -4592,6 +4612,7 @@ async function createAccount(e){
 
 async function confirmDemoPayment(e){
   e.preventDefault();
+  if(androidPurchaseBlocked()) return false;
   if(window.SXM && SXM.isIOS()){
     const plan = pendingSelectedProPlan || state.user?.accountPlan;
     if(await SXM.buy(plan)){ closeModal("paymentModal"); closeModal("accountModal"); showToast(t().paymentSuccess); }
