@@ -103,7 +103,7 @@ const { chromium } = require("playwright");
     const paymentPrice = await page.locator("#paymentPlanPrice").innerText();
     if (paymentPlan !== "Pro Business") errors.push(`Selected payment plan is incorrect: ${paymentPlan}.`);
     if (paymentPrice !== "$59/month") errors.push(`Selected payment price is incorrect: ${paymentPrice}.`);
-    await page.getByRole("button", { name: /Confirmer le paiement test|Confirm demo payment/i }).click();
+    await page.getByRole("button", { name: /continuer vers le paiement|continue to payment/i }).click();
     const proState = await page.evaluate(() => ({
       type: window.__bstState.user?.accountType,
       plan: window.__bstState.user?.accountPlan,

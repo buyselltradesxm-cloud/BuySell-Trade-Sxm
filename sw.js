@@ -11,7 +11,7 @@
  *
  * Bump CACHE_VERSION on any change here to force a clean cache swap.
  */
-const CACHE_VERSION = 'bst-v10-android-no-iap';
+const CACHE_VERSION = 'bst-v11-self-hosted-fonts';
 const APP_SHELL = `app-shell-${CACHE_VERSION}`;
 const RUNTIME = `runtime-${CACHE_VERSION}`;
 const FONTS = `fonts-${CACHE_VERSION}`;
@@ -111,8 +111,8 @@ self.addEventListener('fetch', (event) => {
   // Never touch backend data / auth — must be live and per-user.
   if (url.hostname.endsWith('supabase.co') || url.hostname.endsWith('supabase.in')) return;
 
-  // Google Fonts — immutable, safe to keep for a long time.
-  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+  // Self-hosted fonts (/fonts/) — immutable, safe to keep for a long time.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/fonts/')) {
     event.respondWith(cacheFirst(request, FONTS));
     return;
   }

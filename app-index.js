@@ -392,9 +392,9 @@ Object.assign(I18N.fr, {
   paymentAmountLabel:"Montant",
   paymentStatusLabel:"Statut",
   paymentWaiting:"En attente de paiement",
-  paymentDemoTitle:"Paiement sécurisé",
+  paymentDemoTitle:"Renouvellement automatique",
   paymentDemoText:"Votre abonnement est activé après confirmation du paiement.",
-  paymentConfirm:"Continuer vers le paiement",
+  paymentConfirm:"S'abonner et continuer vers le paiement",
   paymentPlanText:"Votre boutique sera activée après paiement confirmé. Vous pourrez ensuite publier vos produits, recevoir des messages et utiliser les options de visibilité.",
   paymentSuccess:"Paiement confirmé. Votre compte Pro est actif.",
   proDashboardTitle:"Espace Pro",
@@ -551,9 +551,9 @@ Object.assign(I18N.en, {
   paymentAmountLabel:"Amount",
   paymentStatusLabel:"Status",
   paymentWaiting:"Waiting for payment",
-  paymentDemoTitle:"Secure payment",
+  paymentDemoTitle:"Automatic renewal",
   paymentDemoText:"Your subscription is activated after payment is confirmed.",
-  paymentConfirm:"Confirm demo payment",
+  paymentConfirm:"Subscribe and continue to payment",
   paymentPlanText:"Your store will be activated after confirmed payment. Then you can publish products, receive messages, and use visibility options.",
   paymentSuccess:"Payment confirmed. Your Pro account is active.",
   proDashboardTitle:"Pro workspace",
@@ -1792,7 +1792,7 @@ function androidPurchaseBlocked(){
   showToast(state.lang === "fr" ? "Les offres Pro et les boosts ne sont pas disponibles dans l'application Android." : "Pro plans and boosts are not available in the Android app.");
   return true;
 }
-function manageSubscription(){
+async function manageSubscription(){
   if(window.SXM && SXM.isIOS()) { SXM.manage(); return; }
   if(androidPurchaseBlocked()) return;
   const user = normalizeUser(state.user);
@@ -1802,15 +1802,14 @@ function manageSubscription(){
     openPricingInfo();
     return;
   }
-  if(user.stripeCustomerId){
-    showToast(state.lang === "fr"
-      ? "Le portail Stripe sera branché à l'étape Stripe."
-      : "Stripe portal will be connected in the Stripe step.");
-    return;
+  if(user.stripeCustomerId && window.SB && SB.openBillingPortal){
+    const portal = await SB.openBillingPortal();
+    if(portal?.data?.url){ location.assign(portal.data.url); return; }
   }
+  // Never leave a paying subscriber without a way to cancel.
   showToast(state.lang === "fr"
-    ? "Gestion et annulation arrivent avec Stripe Billing."
-    : "Manage and cancel arrives with Stripe Billing.");
+    ? "Portail indisponible. Pour annuler, écrivez à rxmarketing09@gmail.com : nous annulons sous 24 h."
+    : "Portal unavailable. To cancel, email rxmarketing09@gmail.com and we will cancel within 24 hours.");
 }
 // Only ever shows facts this app can actually back: a Pro badge is tied to
 // a real subscription_status check, and every account holder has a
@@ -2613,8 +2612,8 @@ function updateTermsConsentLabel(){
   if(!el) return;
   el.textContent = "";
   const parts = state.lang==="fr"
-    ? ["J'accepte les ", "Conditions d'utilisation", " et la ", "Politique de confidentialité", "."]
-    : ["I agree to the ", "Terms of Use", " and ", "Privacy Policy", "."];
+    ? ["J'ai 18 ans ou plus et j'accepte les ", "Conditions d'utilisation", " et la ", "Politique de confidentialité", "."]
+    : ["I am 18 or older and I agree to the ", "Terms of Use", " and ", "Privacy Policy", "."];
   el.appendChild(document.createTextNode(parts[0]));
   const terms = document.createElement("a");
   terms.href = "/terms.html"; terms.target = "_blank"; terms.rel = "noopener"; terms.textContent = parts[1];
@@ -3285,6 +3284,27 @@ async function confirmListingBoost(e){
   return false;
 }
 
+// Automatic-renewal disclosure shown right above the subscribe button
+// (California ARL / FTC ROSCA / French Code de la consommation): price,
+// billing period, that it renews until cancelled, and how to cancel.
+// Rebuilt on every open so the price always matches the selected plan.
+function renewalDisclosure(plan){
+  const price = accountPlan(plan).price;
+  const ios = !!(window.SXM && SXM.isIOS());
+  if(state.lang === "fr"){
+    return `Votre abonnement ${planLabel(plan)} coûte ${price.replace("/month", " par mois")} et se renouvelle automatiquement chaque mois, au même prix, jusqu'à ce que vous l'annuliez. `
+      + (ios
+        ? "Annulez à tout moment dans Réglages > Apple ID > Abonnements, au moins 24 h avant la date de renouvellement. "
+        : "Annulez à tout moment en ligne depuis Profil > Gérer / annuler ; l'annulation prend effet à la fin de la période payée. ")
+      + "Pas de remboursement pour la période en cours.";
+  }
+  return `Your ${planLabel(plan)} subscription costs ${price.replace("/month", " per month")} and renews automatically every month at the same price until you cancel. `
+    + (ios
+      ? "Cancel anytime in Settings > Apple ID > Subscriptions, at least 24 hours before the renewal date. "
+      : "Cancel anytime online from Profile > Manage / cancel; cancellation takes effect at the end of the paid period. ")
+    + "No refund for the current period.";
+}
+
 function openPaymentModal({existingUser=false, plan=null, after=null} = {}){
   if(androidPurchaseBlocked()) return;
   pendingPaymentExistingUser = existingUser;
@@ -3294,6 +3314,7 @@ function openPaymentModal({existingUser=false, plan=null, after=null} = {}){
   document.getElementById("paymentPlanName").textContent = planLabel(selectedPlan);
   document.getElementById("paymentPlanPrice").textContent = accountPlan(selectedPlan).price;
   document.getElementById("paymentPlanText").textContent = t().paymentPlanText;
+  document.getElementById("paymentRenewalTerms").textContent = renewalDisclosure(selectedPlan);
   openModal("paymentModal");
 }
 
@@ -4726,7 +4747,7 @@ async function confirmDemoPayment(e){
   return false;
 }
 
-async function socialAuth(provider){
+async function socialAuth(provider, mode){
   const providerLabels = {google:"Google", apple:"Apple"};
   if(!providerLabels[provider]){
     showToast(state.lang==="fr" ? "Ce mode de connexion n'est pas disponible." : "This sign-in method is not available.");
@@ -4742,6 +4763,20 @@ async function socialAuth(provider){
     showToast(state.lang==="fr"
       ? `${providerName} login doit d'abord être activé dans Supabase.`
       : `${providerName} login must be enabled in Supabase first.`);
+    return;
+  }
+  // Social sign-up creates an account without submitting the signup form, so
+  // it must not skip the 18+ / Terms checkbox that the email path requires.
+  // Only the "create account" buttons pass mode "signup"; returning users
+  // signing in with Google/Apple from the same modal are not blocked.
+  const consent = document.getElementById("accountTermsConsent");
+  if(mode === "signup" && consent && !consent.checked){
+    const err = document.getElementById("createAccountError");
+    if(err) err.textContent = state.lang==="fr"
+      ? "Cochez d'abord la case confirmant que vous avez 18 ans ou plus et acceptez les Conditions."
+      : "First tick the box confirming you are 18 or older and agree to the Terms.";
+    consent.scrollIntoView({block:"center", behavior:"smooth"});
+    consent.focus();
     return;
   }
   const { error } = await SB.signInWithOAuth(provider);

@@ -447,6 +447,21 @@
       return response.ok && body.url ? { data: body, error: null } : { data: null, error: { message: "Checkout unavailable" } };
     },
 
+    // Stripe Customer Portal (cancel / update card). Server looks up the
+    // customer id from the caller's own profile.
+    openBillingPortal: async function () {
+      if (!window.db) return { error: { message: "Authentication unavailable" } };
+      var session = await SB.currentSession();
+      if (!session || !session.access_token) return { error: { message: "Not authenticated" } };
+      var response = await fetch(window.SUPABASE_URL + "/functions/v1/billing-portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY, Authorization: "Bearer " + session.access_token },
+        body: "{}"
+      });
+      var body = await response.json().catch(function () { return {}; });
+      return response.ok && body.url ? { data: body, error: null } : { data: null, error: { message: "Portal unavailable" } };
+    },
+
     currentUser: async function () {
       if (!window.db) return null;
       var res = await window.db.auth.getUser();

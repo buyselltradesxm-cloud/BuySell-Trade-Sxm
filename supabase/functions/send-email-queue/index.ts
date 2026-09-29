@@ -75,6 +75,12 @@ function unsubscribeUrl(userId: string | null) {
   return url.toString();
 }
 
+// CAN-SPAM (15 U.S.C. 7704) requires a valid physical postal address in every
+// commercial email; LCEN art. 6-III requires identifying the publisher.
+const SENDER_ADDRESS = "Association Korek Digital · 17 Résidence des Gémeaux, 94260 Fresnes, France";
+const addressFooter =
+  `<p style="font-size:12px;color:#8a9598;margin-top:12px;">Buy Sell Trade SXM · ${SENDER_ADDRESS}</p>`;
+
 function buildListingRenewalEmail(row: EmailQueueRow) {
   const title = String(row.payload?.listing_title || "votre annonce");
   const listingId = row.payload?.listing_id || row.listing_id;
@@ -115,6 +121,7 @@ function buildListingRenewalEmail(row: EmailQueueRow) {
       </p>
       <p style="font-size:14px;color:#526366;">Without a response, the listing may be hidden automatically after a few days.</p>
       ${unsubFooter}
+      ${addressFooter}
     </main>
   </body>
 </html>`;
@@ -129,8 +136,10 @@ function buildListingRenewalEmail(row: EmailQueueRow) {
 function buildEmail(row: EmailQueueRow) {
   if (row.template === "listing-renewal") return buildListingRenewalEmail(row);
   const message = String(row.payload?.message || row.subject || "Notification Buy Sell Trade SXM");
-  const html = `<p>${escapeHtml(message)}</p>`;
-  return { subject: row.subject || "Notification Buy Sell Trade SXM", html, text: message };
+  const html = `<p>${escapeHtml(message)}</p>${addressFooter}`;
+  return { subject: row.subject || "Notification Buy Sell Trade SXM", html, text: `${message}
+
+Buy Sell Trade SXM · ${SENDER_ADDRESS}` };
 }
 
 async function rpc(name: string, body: Record<string, unknown>) {
@@ -168,6 +177,9 @@ async function sendWithResend(row: EmailQueueRow, email: ReturnType<typeof build
       subject: email.subject,
       html: email.html,
       text: email.text,
+      ...(unsubscribeUrl(row.user_id) && row.template === "listing-renewal"
+        ? { headers: { "List-Unsubscribe": `<${unsubscribeUrl(row.user_id)}>, <mailto:rxmarketing09@gmail.com?subject=unsubscribe>` } }
+        : {}),
     }),
   });
   const text = await response.text();
