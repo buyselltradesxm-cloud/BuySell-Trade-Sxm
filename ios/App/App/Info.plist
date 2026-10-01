@@ -43,6 +43,13 @@
 			<string>cstr6suwn9.skadnetwork</string>
 		</dict>
 	</array>
+	<!-- Required for the "Take Photo" / "Photo Library" choices iOS shows on
+	     the listing and avatar photo pickers. Without the camera string iOS
+	     terminates the app as soon as the camera opens. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Buy Sell Trade SXM uses the camera so you can take photos of the items you list and set your profile picture.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Buy Sell Trade SXM accesses your photo library so you can add photos to your listings and set your profile picture.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>This identifier will be used to deliver ads that are more relevant to you.</string>
 	<key>LSRequiresIPhoneOS</key>
