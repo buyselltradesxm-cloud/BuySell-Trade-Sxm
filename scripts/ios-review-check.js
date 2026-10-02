@@ -57,6 +57,7 @@ const server = http.createServer((req, res) => {
       assert.equal(page.url(), original, "OAuth must stay inside the app");
       let calls = await page.evaluate(() => window.calls);
       assert.equal(calls.find(x => x[0] === "oauth")[1].options.skipBrowserRedirect, true);
+      assert.equal(calls.find(x => x[0] === "oauth")[1].options.redirectTo, "https://buyselltradesxm.com/auth-callback.html");
       assert.equal(calls.find(x => x[0] === "exchange")[1], "pkce-test");
       await page.evaluate(() => { window.calls = []; });
       assert.equal(await page.evaluate(() => SXM.buy("pro-starter")), false);

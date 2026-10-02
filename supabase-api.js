@@ -384,7 +384,9 @@
         try {
           const result = await window.db.auth.signInWithOAuth({
             provider: provider,
-            options: { redirectTo: "buyselltradesxm://auth/callback", skipBrowserRedirect: true }
+            // Retour via une page du site (toujours acceptée par Supabase) qui
+            // relaie le code vers buyselltradesxm://auth/callback.
+            options: { redirectTo: "https://buyselltradesxm.com/auth-callback.html", skipBrowserRedirect: true }
           });
           if (result.error) return result;
           const callback = await SXM.plugin().authenticate({ url: result.data.url });
