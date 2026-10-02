@@ -6,6 +6,9 @@
     "url": "https://buyselltradesxm.com",
     "cleartext": false
   },
+  "ios": {
+    "includePlugins": []
+  },
   "plugins": {
     "SplashScreen": {
       "launchAutoHide": true,

@@ -29,20 +29,11 @@
 	</dict></array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<!-- AdMob — set to a real App ID once created in the AdMob console.
-	     This is currently Google's public TEST id (see ads-config.js →
-	     AdsConfig.admob for the matching ad units). -->
-	<key>GADIsAdManagerApp</key>
-	<true/>
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
-	<key>SKAdNetworkItems</key>
-	<array>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>cstr6suwn9.skadnetwork</string>
-		</dict>
-	</array>
+	<!-- No ad SDK in the iOS app for now: the AdMob plugin is excluded from
+	     iOS (capacitor.config.json → ios.includePlugins) and native-admob.js
+	     skips iOS. To bring ads back, restore GADApplicationIdentifier,
+	     SKAdNetworkItems and NSUserTrackingUsageDescription here with real
+	     AdMob ids, and update the App Privacy answers in App Store Connect. -->
 	<!-- Required for the "Take Photo" / "Photo Library" choices iOS shows on
 	     the listing and avatar photo pickers. Without the camera string iOS
 	     terminates the app as soon as the camera opens. -->
@@ -50,8 +41,6 @@
 	<string>Buy Sell Trade SXM uses the camera so you can take photos of the items you list and set your profile picture.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Buy Sell Trade SXM accesses your photo library so you can add photos to your listings and set your profile picture.</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>This identifier will be used to deliver ads that are more relevant to you.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

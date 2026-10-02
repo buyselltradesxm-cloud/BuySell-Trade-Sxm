@@ -43,12 +43,16 @@
       webSlot.hidden = true;
     }
 
+    var platform = (window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || "android";
+    // iOS ships without ads for now: no AdMob, no tracking prompt. The flag
+    // above still keeps AdSense out of the app's web view. See Info.plist.
+    if (platform === "ios") return;
+
     var Plugins = window.Capacitor && window.Capacitor.Plugins;
     var AdMob = Plugins && Plugins.AdMob;
     if (!AdMob) return; // plugin not installed in this native build yet
 
     var CFG = (window.AdsConfig && window.AdsConfig.admob) || {};
-    var platform = (window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || "android";
     var testing = CFG.testing !== false; // default true until real ids are pasted in
     var adId = (CFG.banner && CFG.banner[platform]) ||
                "ca-app-pub-3940256099942544/6300978111"; // Google TEST banner unit
