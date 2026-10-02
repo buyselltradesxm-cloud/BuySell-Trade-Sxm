@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title>Hors ligne · Buy Sell Trade Sxm</title>
 <meta name="theme-color" content="#FBF7EF">
 <style>
@@ -43,11 +44,8 @@
       <p><strong>No connection</strong> — You're offline. Check your network and try again.</p>
       <p><strong>Geen verbinding</strong> — Je bent offline. Controleer je netwerk en probeer opnieuw.</p>
     </div>
-    <button onclick="location.reload()">Réessayer · Retry</button>
+    <button id="retryBtn" type="button">Réessayer · Retry</button>
   </div>
-  <script>
-    // Auto-reload as soon as the connection comes back.
-    window.addEventListener('online', function () { location.reload(); });
-  </script>
+  <script src="/offline.js"></script>
 </body>
 </html>

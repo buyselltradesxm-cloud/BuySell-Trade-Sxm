@@ -24,6 +24,7 @@
 // already provided to every Edge Function automatically.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") || "";
 
 function serviceKey(): string {
   const direct = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -72,6 +73,29 @@ async function callerId(bearer: string): Promise<string | null> {
   return user?.id || null;
 }
 
+// Deleting the account removes the profile row that links the user to
+// their Stripe subscription -- after that nobody could cancel it from the
+// app and Stripe would keep charging. So an active subscription is
+// cancelled first, and the deletion is refused if that cancel fails.
+// (Apple subscriptions can only be cancelled by the user in iOS Settings.)
+async function cancelStripeSubscription(userId: string): Promise<"none" | "cancelled" | "failed"> {
+  const profRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=stripe_subscription_id`,
+    { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } },
+  );
+  if (!profRes.ok) return "failed";
+  const rows = await profRes.json();
+  const subscriptionId = String(rows?.[0]?.stripe_subscription_id || "");
+  if (!subscriptionId) return "none";
+  if (!STRIPE_KEY || !/^sub_[A-Za-z0-9]+$/.test(subscriptionId)) return "failed";
+  const res = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${STRIPE_KEY}` },
+  }).catch(() => null);
+  // 404 = Stripe no longer has it (already cancelled and purged).
+  return res && (res.ok || res.status === 404) ? "cancelled" : "failed";
+}
+
 Deno.serve(async (req) => {
   const cors = corsHeaders(req);
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
@@ -82,6 +106,10 @@ Deno.serve(async (req) => {
   const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   const userId = await callerId(bearer);
   if (!userId) return json({ error: "not authenticated" }, 401, cors);
+
+  if ((await cancelStripeSubscription(userId)) === "failed") {
+    return json({ error: "subscription_cancel_failed" }, 409, cors);
+  }
 
   const delRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
     method: "DELETE",

@@ -18,6 +18,7 @@
 // already provided to every Edge Function automatically.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") || "";
 
 function serviceKey(): string {
   const direct = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -96,7 +97,34 @@ Deno.serve(async (req) => {
   try { body = JSON.parse(raw); } catch { return json({ error: "invalid body" }, 400, cors); }
   const targetId = (body.user_id || "").trim();
   if (!targetId) return json({ error: "user_id required" }, 400, cors);
+  // targetId is interpolated into the Admin API path below — only a real
+  // UUID may reach it, never "../" or a query string.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId)) {
+    return json({ error: "invalid user_id" }, 400, cors);
+  }
   if (targetId === adminId) return json({ error: "cannot delete your own account this way" }, 400, cors);
+
+  // Same rule as delete-my-account: once the profile row is gone nothing
+  // links the user to their Stripe subscription, so cancel it first and
+  // refuse the deletion if that fails (cancel it in the Stripe dashboard).
+  const profRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${targetId}&select=stripe_subscription_id`,
+    { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } },
+  );
+  if (!profRes.ok) return json({ error: "profile lookup failed" }, 502, cors);
+  const subscriptionId = String((await profRes.json())?.[0]?.stripe_subscription_id || "");
+  if (subscriptionId) {
+    const cancelRes = STRIPE_KEY && /^sub_[A-Za-z0-9]+$/.test(subscriptionId)
+      ? await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${STRIPE_KEY}` },
+        }).catch(() => null)
+      : null;
+    // 404 = Stripe no longer has it (already cancelled and purged).
+    if (!cancelRes || !(cancelRes.ok || cancelRes.status === 404)) {
+      return json({ error: "subscription_cancel_failed" }, 409, cors);
+    }
+  }
 
   const delRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${targetId}`, {
     method: "DELETE",

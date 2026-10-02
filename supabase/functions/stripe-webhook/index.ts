@@ -50,7 +50,11 @@ async function setEvent(id: string, status: "processed" | "ignored" | "failed", 
 }
 async function stripeSubscription(id: string) {
   const response = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${STRIPE_KEY}` } });
-  return response.ok ? await response.json() : null;
+  if (response.ok) return await response.json();
+  // 4xx = Stripe has no such subscription (not retryable). Anything else is
+  // an outage on the way to Stripe: throw so the event is redelivered.
+  if (response.status >= 400 && response.status < 500 && response.status !== 429) return null;
+  throw new Error("stripe_unavailable");
 }
 async function updateProfile(userId: string, subscription: any, plan: string | null) {
   const active = subscription.status === "active" || subscription.status === "trialing";
@@ -82,8 +86,19 @@ Deno.serve(async (req) => {
   const insert = await fetch(`${SUPABASE_URL}/rest/v1/payment_webhook_events?on_conflict=stripe_event_id`, {
     method: "POST", headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json", Prefer: "resolution=ignore-duplicates,return=representation" }, body: JSON.stringify([{ stripe_event_id: event.id, event_type: event.type }]),
   });
-  const inserted = insert.ok ? await insert.json() : [];
-  if (!Array.isArray(inserted) || !inserted.length) return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
+  if (!insert.ok) return new Response("event store unavailable", { status: 503 });
+  const inserted = await insert.json();
+  if (!Array.isArray(inserted) || !inserted.length) {
+    // Seen before. Only a delivery that finished is a true duplicate; one
+    // that failed part-way is retried by Stripe and must be processed again
+    // (the update below is idempotent: it copies Stripe's current state).
+    const seen = await fetch(`${SUPABASE_URL}/rest/v1/payment_webhook_events?stripe_event_id=eq.${encodeURIComponent(event.id)}&select=status,error_code`, {
+      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
+    });
+    const [previous] = seen.ok ? await seen.json() : [];
+    const retryable = previous?.status === "failed" && previous?.error_code === "processing_failed";
+    if (!retryable) return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
+  }
 
   try {
     const object = event.data?.object || {};
@@ -104,7 +119,10 @@ Deno.serve(async (req) => {
     await setEvent(event.id, "processed");
     return new Response(JSON.stringify({ received: true }), { status: 200 });
   } catch (_) {
+    // A transient failure (Stripe or database unreachable) must not be
+    // acknowledged: answering 200 here left a paid subscriber without Pro, or
+    // a cancelled one with it, forever. 5xx makes Stripe redeliver.
     await setEvent(event.id, "failed", "processing_failed").catch(() => {});
-    return new Response(JSON.stringify({ received: true }), { status: 200 });
+    return new Response("processing failed", { status: 500 });
   }
 });

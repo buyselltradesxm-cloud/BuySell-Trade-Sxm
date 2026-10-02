@@ -1,0 +1,2 @@
+# Vendored libraries are loaded with an integrity hash: never rewrite line endings.
+lib/* -text

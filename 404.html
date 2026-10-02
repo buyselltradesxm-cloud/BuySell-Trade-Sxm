@@ -3,18 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
   <title>Page introuvable | Buy Sell Trade SXM</title>
   <meta name="robots" content="noindex">
-  <script>
-    (function () {
-      var path = location.pathname.replace(/\/+$/, "").toLowerCase();
-      if (path === "/admin") {
-        location.replace("/?admin=1");
-        return;
-      }
-      location.replace("/");
-    })();
-  </script>
+  <script src="/404-redirect.js"></script>
 </head>
 <body>
   <p>Redirection...</p>

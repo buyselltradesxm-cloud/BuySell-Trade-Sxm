@@ -6,12 +6,12 @@
  *   HTML / navigations ....... network-first  -> cache -> /offline.html
  *   Same-origin static ....... stale-while-revalidate (icons, pwa.js, api js…)
  *   Google Fonts (css+files) . cache-first (immutable, versioned URLs)
- *   CDN libs (jsdelivr) ...... cache-first (versioned URL)
+ *   Vendored libs (/lib/) .... cache-first (versioned filename)
  *   Supabase (*.supabase.co) . NOT intercepted — always straight to network
  *
  * Bump CACHE_VERSION on any change here to force a clean cache swap.
  */
-const CACHE_VERSION = 'bst-v11-self-hosted-fonts';
+const CACHE_VERSION = 'bst-v12-self-hosted-supabase';
 const APP_SHELL = `app-shell-${CACHE_VERSION}`;
 const RUNTIME = `runtime-${CACHE_VERSION}`;
 const FONTS = `fonts-${CACHE_VERSION}`;
@@ -23,6 +23,9 @@ const PRECACHE_URLS = [
   '/offline.html',
   '/manifest.webmanifest',
   '/pwa.js',
+  '/lib/supabase-2.74.0.min.js',
+  '/frame-guard.js',
+  '/offline.js',
   '/native-ios.js',
   '/img-utils.js',
   '/draft-store.js',
@@ -117,8 +120,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Versioned CDN libraries.
-  if (url.hostname === 'cdn.jsdelivr.net') {
+  // Vendored libraries -- the version is in the filename, so never stale.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/lib/')) {
     event.respondWith(cacheFirst(request, RUNTIME));
     return;
   }

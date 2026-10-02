@@ -2053,7 +2053,7 @@ function cardHTML(l, pinned, idx){
   return `
     <article class="card ${profile.photos ? "" : "no-media"} ${listingIsSold(l) ? "is-sold" : ""}" ${pinned?`style="--i:${idx}"`:""} data-click="openListing" data-click-args='${dataArgs([idParam])}' tabindex="0" data-keydown="cardKey" data-keydown-args='${dataArgs(["__EVENT__", idParam])}'>
       ${pinned?`<span class="pin" aria-hidden="true"></span>`:""}
-      <span class="stripe ${l.side}" aria-hidden="true"></span>
+      <span class="stripe ${esc(l.side)}" aria-hidden="true"></span>
       <button type="button" class="fav" aria-pressed="${isFav}"
         aria-label="${state.lang==="fr"?"Ajouter aux favoris":"Add to favourites"}"
         data-click="toggleFav" data-click-args='${dataArgs([idParam, "__THIS__", "__EVENT__"])}'>${isFav?"&#9829;":"&#9825;"}</button>
@@ -2070,7 +2070,7 @@ function cardHTML(l, pinned, idx){
         <div class="ttl">${esc(titleFor(l))}</div>
         <div class="badges">${badges.join("")}</div>
         <div class="meta">
-          <span class="area"><span class="n ${l.side}"></span>${l.area}</span>
+          <span class="area"><span class="n ${esc(l.side)}"></span>${esc(l.area)}</span>
           <span aria-hidden="true">·</span>
           <span>${agoHTML(l.ph)}</span>
           ${profile.condition && l.cond ? `<span aria-hidden="true">·</span><span>${condLabel(l.cond)}</span>` : ""}
@@ -2454,24 +2454,31 @@ function clearRenewalActionFromUrl(){
 }
 
 // Handles the unsubscribe link in the listing-renewal reminder email
-// (?unsub=renewal&uid=<profile id>). Works whether or not the visitor is
-// signed in -- that's the point of an unsubscribe link -- so it calls the
-// RPC directly rather than going through requireAccount().
+// (?unsub=renewal&token=<private unsubscribe token>). Works whether or not
+// the visitor is signed in -- that's the point of an unsubscribe link -- so
+// it calls the RPC directly rather than going through requireAccount().
+// Emails sent before the token existed carry ?uid=<profile id>; a profile
+// id is public, so that form only works for the signed-in owner.
 async function handleUnsubscribeFromUrl(){
   const params = new URLSearchParams(location.search);
   if(params.get("unsub") !== "renewal") return;
+  const token = params.get("token");
   const uid = params.get("uid");
   const url = new URL(location.href);
   url.searchParams.delete("unsub");
+  url.searchParams.delete("token");
   url.searchParams.delete("uid");
   history.replaceState(null, "", url.pathname + url.search + url.hash);
-  if(!uid) return;
-  const ok = canUseSupabaseAdmin() || (window.SB && SB.enabled())
-    ? await SB.unsubscribeRenewalEmails(uid)
-    : false;
+  if(!token && !uid) return;
+  const live = canUseSupabaseAdmin() || (window.SB && SB.enabled());
+  const ok = !live ? false
+    : token ? await SB.unsubscribeRenewalEmails(token)
+    : await SB.unsubscribeOwnRenewalEmails(uid);
   showToast(ok
     ? (state.lang==="fr" ? "Vous ne recevrez plus ces rappels." : "You will no longer receive these reminders.")
-    : (state.lang==="fr" ? "Échec de la désinscription." : "Unsubscribe failed."));
+    : !token
+      ? (state.lang==="fr" ? "Connectez-vous, puis rouvrez ce lien pour vous désinscrire." : "Sign in, then open this link again to unsubscribe.")
+      : (state.lang==="fr" ? "Échec de la désinscription." : "Unsubscribe failed."));
 }
 
 async function handleListingRenewalActionFromUrl(){
@@ -2720,7 +2727,7 @@ function openListing(id, syncUrl = true){
         </div>
         <div class="seller-box">
           <b>${esc(sellerName(l))} · ${l.pro ? t().sellerPro : t().sellerLocal}</b>
-          <span>${l.area} · ${side}${profile.condition && l.cond ? " · " + condLabel(l.cond) : ""} · ${agoHTML(l.ph)}</span>
+          <span>${esc(l.area)} · ${side}${profile.condition && l.cond ? " · " + condLabel(l.cond) : ""} · ${agoHTML(l.ph)}</span>
           ${profile.delivery && l.delivery ? `<br><span>${deliveryLabel(l.delivery)}${profile.meetup && l.meetup ? " · " + meetupLabel(l.meetup) : ""}${profile.negotiable && l.negotiable ? " · " + t().negotiableLabel : ""}</span>` : ""}
           ${sellerTrustHTML(l)}
         </div>
@@ -3582,7 +3589,11 @@ async function deleteMyAccountConfirmed(){
     render();
     showToast(state.lang==="fr" ? "Votre compte a été supprimé." : "Your account has been deleted.");
   } else {
-    showToast((state.lang==="fr" ? "Échec de la suppression : " : "Deletion failed: ") + (res && res.error ? res.error : "?"));
+    // The server refuses to delete while a Stripe subscription cannot be
+    // cancelled (it would keep billing with no account left to cancel from).
+    showToast(hasActiveProSubscription(state.user)
+      ? (state.lang==="fr" ? "Suppression impossible : annulez d'abord votre abonnement (Profil > Gérer / annuler), puis réessayez." : "Could not delete: cancel your subscription first (Profile > Manage / cancel), then try again.")
+      : (state.lang==="fr" ? "Échec de la suppression : " : "Deletion failed: ") + (res && res.error ? res.error : "?"));
   }
 }
 

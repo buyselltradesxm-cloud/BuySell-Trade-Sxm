@@ -294,12 +294,26 @@
 
     // Unsubscribe link target for the listing-renewal reminder email.
     // Deliberately works without being signed in -- callable by anon,
-    // keyed only by the profile id already in the (unauthenticated) link.
-    unsubscribeRenewalEmails: async function (userId) {
-      if (!window.db || !userId) return false;
-      var rpc = await window.db.rpc("unsubscribe_renewal_emails", { p_user_id: userId });
-      if (!rpc.error) return true;
+    // keyed on the seller's private unsubscribe token from the email
+    // (never the profile id, which is public as listings.seller_id).
+    unsubscribeRenewalEmails: async function (token) {
+      if (!window.db || !token) return false;
+      var rpc = await window.db.rpc("unsubscribe_renewal_by_token", { p_token: token });
+      if (!rpc.error) return rpc.data === true;
       console.warn("[SB] unsubscribeRenewalEmails:", rpc.error.message);
+      return false;
+    },
+
+    // Older emails carry ?uid=<profile id> instead of a token. That only
+    // works for the signed-in owner: RLS limits the update to their own row.
+    unsubscribeOwnRenewalEmails: async function (userId) {
+      if (!window.db || !userId) return false;
+      var res = await window.db.from("profiles")
+        .update({ renewal_emails_enabled: false })
+        .eq("id", userId)
+        .select("id");
+      if (!res.error) return (res.data || []).length === 1;
+      console.warn("[SB] unsubscribeOwnRenewalEmails:", res.error.message);
       return false;
     },
 

@@ -90,7 +90,7 @@ Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
-Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.googlesyndication.com https://partner.googleadservices.com https://www.googletagservices.com https://adservice.google.com https://*.adtrafficquality.google https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googlesyndication.com https://*.g.doubleclick.net https://*.adtrafficquality.google https://www.google.com https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google https://www.google.com; frame-ancestors 'none'; upgrade-insecure-requests
+Content-Security-Policy: default-src 'self'; script-src 'self' https://*.googlesyndication.com https://partner.googleadservices.com https://www.googletagservices.com https://adservice.google.com https://*.adtrafficquality.google https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googlesyndication.com https://*.g.doubleclick.net https://*.adtrafficquality.google https://www.google.com https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google https://www.google.com; frame-ancestors 'none'; upgrade-insecure-requests
 ```
 
 Only enable HSTS preload after every present and planned subdomain supports
@@ -113,3 +113,54 @@ explicit CORS allow-list and no wildcard credential policy.
   quota table) before calling the AI provider, and cap request body/tokens.
 - Run `npm audit` in CI and deploy only a commit whose public asset hashes
   match the reviewed commit.
+
+## 6. Hardening v3 (audit of 2026-10-02)
+
+Apply in this order; each step is safe if the next one is delayed.
+
+```powershell
+supabase db query --linked --file supabase/security-hardening-v3.sql
+supabase functions deploy send-email-queue
+supabase functions deploy admin-delete-user
+supabase functions deploy delete-my-account
+supabase functions deploy stripe-webhook --no-verify-jwt
+```
+
+Then push the site. The migration sanitizes `listings.area`/`side`, removes
+anon access to `profiles`, limits `is_banned()` to self/admin, caps messages
+at 10 per minute and 200 per day per sender (edit `message_rate_ok()` to
+change), and replaces the profile-id unsubscribe link with a private
+per-profile token. Reminder emails sent before the migration carry the old
+`?uid=` link, which afterwards only works for the signed-in owner.
+
+`delete-my-account` now cancels the caller's Stripe subscription before
+deleting, and refuses (409) if the cancel fails. It needs `STRIPE_SECRET_KEY`,
+which is already set for `create-checkout`.
+
+`lib/supabase-2.74.0.min.js` is loaded with an integrity hash. To upgrade,
+add the new file under a new versioned name, update the hash in `index.html`
+and `marketplace.html`, the precache entry in `sw.js`, and bump
+`CACHE_VERSION`.
+
+The migration also enforces plan listing limits in the database (same numbers
+and counting rule as `ACCOUNT_PLANS` in the app; keep the two in sync) and
+caps reports at 20 per day per user.
+
+`admin-delete-user` cancels the target's Stripe subscription first, like
+`delete-my-account`. `stripe-webhook` now answers 5xx when Stripe or the
+database is unreachable, so Stripe redelivers instead of the event being lost.
+
+`_config.yml` lists every root file and folder that is not part of the
+website, so GitHub Pages stops serving them. Add new non-site files there.
+After the push, these should all return 404:
+
+```text
+https://buyselltradesxm.com/supabase/schema.sql
+https://buyselltradesxm.com/package.json
+https://buyselltradesxm.com/SECURITY_DEPLOYMENT.md
+```
+
+and `https://buyselltradesxm.com/lib/supabase-2.74.0.min.js` must return 200.
+
+`frame-guard.js` is a stopgap against clickjacking; the real fix is still the
+`frame-ancestors` header from §4.

@@ -67,11 +67,16 @@ function actionUrl(listingId: unknown, action: "keep" | "sold" | "delete") {
   return url.toString();
 }
 
-function unsubscribeUrl(userId: string | null) {
-  if (!userId) return null;
+// Keyed on the seller's private unsubscribe token (put in the payload by
+// enqueue_listing_renewal_reminders), never on the profile id -- that id is
+// public as listings.seller_id. Rows queued before the token existed get no
+// link; the mailto: in List-Unsubscribe still covers them.
+function unsubscribeUrl(row: EmailQueueRow) {
+  const token = String(row.payload?.unsubscribe_token || "");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) return null;
   const url = new URL(siteUrl + "/");
   url.searchParams.set("unsub", "renewal");
-  url.searchParams.set("uid", userId);
+  url.searchParams.set("token", token);
   return url.toString();
 }
 
@@ -88,7 +93,7 @@ function buildListingRenewalEmail(row: EmailQueueRow) {
   const keepUrl = actionUrl(listingId, "keep");
   const soldUrl = actionUrl(listingId, "sold");
   const deleteUrl = actionUrl(listingId, "delete");
-  const unsubUrl = unsubscribeUrl(row.user_id);
+  const unsubUrl = unsubscribeUrl(row);
   const unsubFooter = unsubUrl
     ? `<p style="font-size:12px;color:#8a9598;margin-top:20px;">
         <a href="${unsubUrl}" style="color:#8a9598;">Ne plus recevoir ces rappels</a> ·
@@ -177,8 +182,8 @@ async function sendWithResend(row: EmailQueueRow, email: ReturnType<typeof build
       subject: email.subject,
       html: email.html,
       text: email.text,
-      ...(unsubscribeUrl(row.user_id) && row.template === "listing-renewal"
-        ? { headers: { "List-Unsubscribe": `<${unsubscribeUrl(row.user_id)}>, <mailto:rxmarketing09@gmail.com?subject=unsubscribe>` } }
+      ...(row.template === "listing-renewal"
+        ? { headers: { "List-Unsubscribe": [unsubscribeUrl(row) && `<${unsubscribeUrl(row)}>`, "<mailto:rxmarketing09@gmail.com?subject=unsubscribe>"].filter(Boolean).join(", ") } }
         : {}),
     }),
   });
@@ -193,11 +198,25 @@ async function sendWithResend(row: EmailQueueRow, email: ReturnType<typeof build
   return data as { id?: string };
 }
 
+// Same constant-time comparison as send-push: hash both sides to a fixed
+// length, then XOR-accumulate instead of short-circuiting on the first byte.
+async function timingSafeEqual(a: string, b: string): Promise<boolean> {
+  const enc = new TextEncoder();
+  const [da, db] = await Promise.all([
+    crypto.subtle.digest("SHA-256", enc.encode(a)),
+    crypto.subtle.digest("SHA-256", enc.encode(b)),
+  ]);
+  const ua = new Uint8Array(da), ub = new Uint8Array(db);
+  let diff = 0;
+  for (let i = 0; i < ua.length; i++) diff |= ua[i] ^ ub[i];
+  return diff === 0;
+}
+
 Deno.serve(async (request) => {
   try {
     if (request.method !== "POST") return json({ ok: false, error: "method not allowed" }, 405);
     if (!workerSecret) return json({ ok: false, error: "EMAIL_QUEUE_SECRET is not configured" }, 503);
-    if (request.headers.get("x-email-worker-secret") !== workerSecret) {
+    if (!(await timingSafeEqual(request.headers.get("x-email-worker-secret") || "", workerSecret))) {
       return json({ ok: false, error: "unauthorized" }, 401);
     }
     if (!supabaseUrl || !serviceRoleKey) return json({ ok: false, error: "Supabase service env is missing" }, 503);

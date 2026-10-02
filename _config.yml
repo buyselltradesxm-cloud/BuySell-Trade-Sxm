@@ -1,0 +1,67 @@
+# GitHub Pages builds this repo's root with Jekyll and publishes every file it
+# finds. Only the website belongs on buyselltradesxm.com -- keep the database
+# schema, ops scripts, QA scripts, native projects and setup docs off the
+# production domain. (The repository itself is public; this is about not
+# serving them from the site, and it shrinks what the site exposes.)
+#
+# When adding a new non-site file or folder at the root, list it here.
+exclude:
+  # backend, tooling, native projects
+  - supabase
+  - scripts
+  - android
+  - ios
+  - mobile-shell
+  - node_modules
+  - package.json
+  - package-lock.json
+  - deno.lock
+  - capacitor.config.json
+  - GITHUB_EMAIL_QUEUE_WORKFLOW.example.yml
+  # QA scripts
+  - backend-health-qa.js
+  - email-queue-worker-qa.js
+  - live-admin-access-qa.js
+  - live-supabase-flow-qa.js
+  - playwright-admin-visibility-qa.js
+  - playwright-auto-boost-qa.js
+  - playwright-category-form-qa.js
+  - playwright-clickable-sections-qa.js
+  - playwright-edit-listing-qa.js
+  - playwright-gallery-search-qa.js
+  - playwright-messenger-inbox-qa.js
+  - playwright-notifications-qa.js
+  - playwright-personal-monthly-limit-qa.js
+  - playwright-pro-payment-qa.js
+  - playwright-share-qa.js
+  - playwright-social-auth-qa.js
+  - playwright-subscription-profile-qa.js
+  - playwright-uuid-listing-qa.js
+  # setup / internal docs
+  - ADMIN_UPGRADE_SETUP.md
+  - ADMOB_SETUP.md
+  - ADS_SETUP.md
+  - ANDROID_PLAY_SETUP.md
+  - APPLE_APPSTORE_SETUP.md
+  - APPLE_SIGNIN_SETUP.md
+  - GOOGLE_OAUTH_SETUP.md
+  - IOS_CLOUD_BUILD.md
+  - MOBILE_APP_SETUP.md
+  - PRODUCT_ROADMAP.md
+  - SECURITY_DEPLOYMENT.md
+  - SECURITY_EMAIL_MIGRATION.md
+  - SMTP_SETUP.md
+  - SUPABASE_PROJECT.md
+  - ads/README.md
+  - cross-cutting-principles.md
+  - skill-observations
+  # store-submission assets and an unused draft page
+  - appstore-screenshots-ready
+  - google-play-assets
+  - appstore-shot-test.png
+  - BuySellTradeSxm.Logo.English.png
+  - BuySellTradeSXM_6.5inch_1284x2778.zip
+  - BuySellTradeSXM_AppStore_2796x1290.zip
+  - BuySellTradeSXM_iPhone_6.9_1290x2796.zip
+  - iPad_13_portrait_2064x2752.zip
+  - buy-sell-landing-page_1.html

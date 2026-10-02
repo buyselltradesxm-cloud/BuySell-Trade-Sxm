@@ -21,6 +21,10 @@ on:
         required: false
         type: string
 
+# The build only reads the repo; signing/publishing use repository secrets.
+permissions:
+  contents: read
+
 jobs:
   simulator-build:
     name: iOS simulator build
@@ -28,10 +32,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -63,7 +67,7 @@ jobs:
       EXPORT_PATH: /tmp/ios-export
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Require App Store Connect secrets
         env:
@@ -81,7 +85,7 @@ jobs:
           fi
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -196,7 +200,7 @@ jobs:
           done < <(find "$APP_PATH/Frameworks" -type d -name '*.framework' -print0)
 
       - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: BuySellTradeSXM-iOS-IPA
           path: /tmp/ios-export/*.ipa
