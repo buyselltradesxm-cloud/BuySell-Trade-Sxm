@@ -7,7 +7,10 @@
 # When adding a new non-site file or folder at the root, list it here.
 exclude:
   # backend, tooling, native projects
-  - supabase
+  # NOTE: Jekyll matches a plain entry as a path PREFIX, so a bare "supabase"
+  # also removed supabase-api.js and supabase-config.js from the site. The
+  # glob only matches files inside the folder.
+  - "supabase/*"
   - scripts
   - android
   - ios
