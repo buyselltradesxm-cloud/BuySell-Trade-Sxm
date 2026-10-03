@@ -11,7 +11,7 @@
  *
  * Bump CACHE_VERSION on any change here to force a clean cache swap.
  */
-const CACHE_VERSION = 'bst-v12-self-hosted-supabase';
+const CACHE_VERSION = 'bst-v13-turnstile';
 const APP_SHELL = `app-shell-${CACHE_VERSION}`;
 const RUNTIME = `runtime-${CACHE_VERSION}`;
 const FONTS = `fonts-${CACHE_VERSION}`;
@@ -25,6 +25,7 @@ const PRECACHE_URLS = [
   '/pwa.js',
   '/lib/supabase-2.74.0.min.js',
   '/frame-guard.js',
+  '/captcha.js',
   '/offline.js',
   '/native-ios.js',
   '/img-utils.js',

@@ -18,6 +18,25 @@
   };
   var MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+  // A missing token is not fatal here: Supabase decides. While CAPTCHA
+  // protection is off it ignores the token; once on, it answers with a
+  // captcha error, which friendlyCaptchaError() turns into a clear message.
+  async function captchaTokenOrNull() {
+    if (!window.Captcha) return null;
+    try { return await window.Captcha.token(); }
+    catch (e) { console.warn("[SB] captcha:", e && e.message); return null; }
+  }
+
+  function friendlyCaptchaError(result) {
+    if (result && result.error && /captcha/i.test(result.error.message || "")) {
+      var fr = (document.documentElement.lang || "fr").indexOf("fr") === 0;
+      result.error.message = fr
+        ? "Vérification anti-robot échouée. Rechargez la page et réessayez."
+        : "Anti-bot check failed. Reload the page and try again.";
+    }
+    return result;
+  }
+
   function isAllowedImage(file) {
     return !!file && ALLOWED_IMAGE_TYPES[file.type] === true &&
       Number(file.size || 0) > 0 && Number(file.size || 0) <= MAX_IMAGE_BYTES;
@@ -360,20 +379,29 @@
     },
 
     /* --------- AUTHENTIFICATION --------- */
+    // Sign-up, password login, resend-code and password reset carry a
+    // Cloudflare Turnstile token (captcha.js); Supabase Auth rejects them
+    // without one once CAPTCHA protection is on.
 
     signUp: async function (email, password, profile) {
       if (!window.db) return { error: { message: "Supabase non configuré" } };
       var meta = typeof profile === "object" ? profile : { name: profile || "" };
-      return window.db.auth.signUp({
+      var captchaToken = await captchaTokenOrNull();
+      return friendlyCaptchaError(await window.db.auth.signUp({
         email: email,
         password: password,
-        options: { data: meta }
-      });
+        options: { data: meta, captchaToken: captchaToken || undefined }
+      }));
     },
 
     signIn: async function (email, password) {
       if (!window.db) return { error: { message: "Supabase non configuré" } };
-      return window.db.auth.signInWithPassword({ email: email, password: password });
+      var captchaToken = await captchaTokenOrNull();
+      return friendlyCaptchaError(await window.db.auth.signInWithPassword({
+        email: email,
+        password: password,
+        options: { captchaToken: captchaToken || undefined }
+      }));
     },
 
     // Valide le code à 6 chiffres reçu par email après signUp() et ouvre
@@ -386,7 +414,12 @@
     // Renvoie un nouveau code de confirmation à la même adresse.
     resendSignupOtp: async function (email) {
       if (!window.db) return { error: { message: "Supabase non configuré" } };
-      return window.db.auth.resend({ type: "signup", email: email });
+      var captchaToken = await captchaTokenOrNull();
+      return friendlyCaptchaError(await window.db.auth.resend({
+        type: "signup",
+        email: email,
+        options: { captchaToken: captchaToken || undefined }
+      }));
     },
 
     // provider: "google" | tout provider OAuth activé côté Supabase.
@@ -432,7 +465,7 @@
           "Content-Type": "application/json",
           apikey: window.SUPABASE_ANON_KEY
         },
-        body: JSON.stringify({ email: String(email || "") })
+        body: JSON.stringify({ email: String(email || ""), captcha_token: (await captchaTokenOrNull()) || "" })
       });
       // The endpoint intentionally uses one generic response for both known
       // and unknown addresses to prevent account enumeration.

@@ -9,6 +9,9 @@
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SITE_URL = (Deno.env.get("SITE_URL") || "https://buyselltradesxm.com").replace(/\/$/, "");
+// The reset request goes to Auth with the public key, so Auth applies its
+// CAPTCHA check to the visitor's Turnstile token (a service-role call skips it).
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
 
 function serviceKey(): string {
   const direct = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -79,7 +82,12 @@ Deno.serve(async (req) => {
   const raw = await req.text().catch(() => "");
   if (new TextEncoder().encode(raw).byteLength > 2048) return accepted(headers);
   let email = "";
-  try { email = String(JSON.parse(raw).email || "").trim().toLowerCase(); } catch (_) { /* generic response */ }
+  let captchaToken = "";
+  try {
+    const body = JSON.parse(raw);
+    email = String(body.email || "").trim().toLowerCase();
+    captchaToken = String(body.captcha_token || "").slice(0, 4096);
+  } catch (_) { /* generic response */ }
 
   const ip = (req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
   const subjectHash = await sha256(email || "invalid");
@@ -91,11 +99,19 @@ Deno.serve(async (req) => {
     return accepted(headers);
   }
 
-  await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+  const recoverKey = ANON_KEY || SERVICE_KEY;
+  const redirectTo = `${SITE_URL}/?reset=1`;
+  const recover = await fetch(`${SUPABASE_URL}/auth/v1/recover?redirect_to=${encodeURIComponent(redirectTo)}`, {
     method: "POST",
-    headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ email, redirect_to: `${SITE_URL}/?reset=1` }),
-  }).catch(() => {});
+    headers: { apikey: recoverKey, Authorization: `Bearer ${recoverKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, gotrue_meta_security: { captcha_token: captchaToken } }),
+  }).catch(() => null);
+  // The caller still gets the generic answer; the outcome is only recorded here.
+  if (!recover || !recover.ok) {
+    const type = recover && recover.status === 400 ? "password_reset_captcha_rejected" : "password_reset_auth_error";
+    await securityEvent(type, subjectHash, ipHash);
+    return accepted(headers);
+  }
   await securityEvent("password_reset_requested", subjectHash, ipHash);
   return accepted(headers);
 });
