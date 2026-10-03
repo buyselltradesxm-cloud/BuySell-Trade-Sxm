@@ -27,6 +27,76 @@
     catch (e) { console.warn("[SB] captcha:", e && e.message); return null; }
   }
 
+  /* ---- Android app: provider sign-in in a Chrome Custom Tab ---- */
+
+  // Browser + App Capacitor plugins, only inside the Android app build that
+  // ships them. Older builds (and the web) fall back to the in-page redirect.
+  function androidAuthPlugins() {
+    var cap = window.Capacitor;
+    if (!cap || !cap.getPlatform || cap.getPlatform() !== "android") return null;
+    if (!cap.isNativePlatform || !cap.isNativePlatform()) return null;
+    var p = cap.Plugins || {};
+    return p.Browser && p.App ? { Browser: p.Browser, App: p.App } : null;
+  }
+
+  function isAuthCallback(url) {
+    return typeof url === "string" && url.indexOf("buyselltradesxm://auth/callback") === 0;
+  }
+
+  var pendingAuthCallback = null; // resolver for the sign-in in progress
+
+  // Opens the provider page and resolves with the buyselltradesxm:// callback
+  // URL. Rejects with code CANCELLED if the user closes the tab instead.
+  function waitForAndroidAuthCallback(android, providerUrl) {
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      var finishedHandle = null;
+      function done(fn, value) {
+        if (settled) return;
+        settled = true;
+        pendingAuthCallback = null;
+        if (finishedHandle && finishedHandle.remove) finishedHandle.remove();
+        try { android.Browser.close(); } catch (e) { /* already closed */ }
+        fn(value);
+      }
+      pendingAuthCallback = function (url) { done(resolve, url); };
+      Promise.resolve(android.Browser.addListener("browserFinished", function () {
+        // Returning through the callback link also closes the tab, and that
+        // event can arrive first: give the link a moment before calling it
+        // a cancellation.
+        setTimeout(function () {
+          var err = new Error("Sign-in cancelled");
+          err.code = "CANCELLED";
+          done(reject, err);
+        }, 2000);
+      })).then(function (h) { finishedHandle = h; });
+      android.Browser.open({ url: providerUrl }).catch(function (e) { done(reject, e); });
+    });
+  }
+
+  async function exchangeAuthCallback(callbackUrl) {
+    var url = new URL(callbackUrl);
+    var code = url.searchParams.get("code");
+    if (!code) throw new Error(url.searchParams.get("error_description") || "Sign-in did not complete");
+    return await window.db.auth.exchangeCodeForSession(code);
+  }
+
+  // One listener for the app's lifetime. It hands the callback to the
+  // sign-in in progress; if there is none (Android restarted the app while
+  // the user was in the tab), it exchanges the code itself and onAuthChange
+  // picks up the new session.
+  (function listenForAndroidAuthCallbacks() {
+    var android = androidAuthPlugins();
+    if (!android) return;
+    function handle(url) {
+      if (!isAuthCallback(url)) return;
+      if (pendingAuthCallback) { pendingAuthCallback(url); return; }
+      if (window.db) exchangeAuthCallback(url).catch(function (e) { console.warn("[SB] auth callback:", e && e.message); });
+    }
+    android.App.addListener("appUrlOpen", function (event) { handle(event && event.url); });
+    Promise.resolve(android.App.getLaunchUrl()).then(function (launch) { handle(launch && launch.url); }).catch(function () {});
+  })();
+
   function friendlyCaptchaError(result) {
     if (result && result.error && /captcha/i.test(result.error.message || "")) {
       var fr = (document.documentElement.lang || "fr").indexOf("fr") === 0;
@@ -442,6 +512,26 @@
           const code = url.searchParams.get("code");
           if (!code) throw new Error(url.searchParams.get("error_description") || "Sign-in did not complete");
           return await window.db.auth.exchangeCodeForSession(code);
+        } catch (error) {
+          return { error: { message: error.code === "CANCELLED" ? "" : error.message, code: error.code } };
+        }
+      }
+      // Android app: Google refuses sign-in inside a WebView
+      // ("disallowed_useragent"), so the provider page opens in a Chrome
+      // Custom Tab. auth-callback.html then sends the result back through
+      // buyselltradesxm://auth/callback (intent filter in AndroidManifest),
+      // and the code is exchanged here, in the WebView that holds the PKCE
+      // verifier.
+      var android = androidAuthPlugins();
+      if (android) {
+        try {
+          const result = await window.db.auth.signInWithOAuth({
+            provider: provider,
+            options: { redirectTo: "https://buyselltradesxm.com/auth-callback.html", skipBrowserRedirect: true }
+          });
+          if (result.error) return result;
+          const callbackUrl = await waitForAndroidAuthCallback(android, result.data.url);
+          return await exchangeAuthCallback(callbackUrl);
         } catch (error) {
           return { error: { message: error.code === "CANCELLED" ? "" : error.message, code: error.code } };
         }
