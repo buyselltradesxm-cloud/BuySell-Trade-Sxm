@@ -52,6 +52,12 @@
     var AdMob = Plugins && Plugins.AdMob;
     if (!AdMob) return; // plugin not installed in this native build yet
 
+    // GDPR: let users change or withdraw their ads consent later. The app's
+    // "Cookie choices" link calls this instead of the web consent banner.
+    window.__BST_ADMOB_PRIVACY__ = function () {
+      return AdMob.showPrivacyOptionsForm().catch(function () {});
+    };
+
     var CFG = (window.AdsConfig && window.AdsConfig.admob) || {};
     var testing = CFG.testing !== false; // default true until real ids are pasted in
     var adId = (CFG.banner && CFG.banner[platform]) ||
@@ -88,7 +94,12 @@
         }
         return consentInfo;
       })
-      .catch(function () {})
-      .then(showBanner);
+      // Only request ads once Google's consent SDK says it may (EU/GDPR:
+      // French Saint-Martin is in the EU). If the consent check itself
+      // fails, show no ad rather than one without a valid consent state.
+      .then(function (consentInfo) {
+        if (consentInfo && consentInfo.canRequestAds) showBanner();
+      })
+      .catch(function () {});
   });
 })();

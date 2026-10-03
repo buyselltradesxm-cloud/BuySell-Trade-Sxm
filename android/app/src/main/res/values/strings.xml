@@ -5,8 +5,7 @@
     <string name="package_name">com.korekdigitalmarketing.buyselltradesxm</string>
     <string name="custom_url_scheme">com.korekdigitalmarketing.buyselltradesxm</string>
 
-    <!-- AdMob App ID — Google's public TEST id for now. Replace with the
-         real one from admob.google.com once the app is added there
-         (see ads-config.js → AdsConfig.admob for the matching ad units). -->
-    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
+    <!-- AdMob App ID for "Buy Sell Trade SXM (Android)" in the Korek Digital
+         AdMob account (see ads-config.js → AdsConfig.admob for its ad unit). -->
+    <string name="admob_app_id">ca-app-pub-7816106453580174~7194862604</string>
 </resources>

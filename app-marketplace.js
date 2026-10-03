@@ -1441,6 +1441,9 @@ function openPostModalPreventDefault(event){ if(event) event.preventDefault(); o
 function openPricingInfoPreventDefault(event){ if(event) event.preventDefault(); openPricingInfo(); }
 function openCookieConsentPreventDefault(event){
   if(event) event.preventDefault();
+  // In the Android app, ads consent is held by Google's consent SDK (UMP):
+  // "Cookie choices" reopens its privacy options so users can withdraw.
+  if(window.__BST_ADMOB_PRIVACY__){ window.__BST_ADMOB_PRIVACY__(); return; }
   if(window.BstConsent) BstConsent.open();
 }
 function stopEventPropagation(event){ event.stopPropagation(); }

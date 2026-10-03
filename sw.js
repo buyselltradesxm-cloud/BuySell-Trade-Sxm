@@ -11,7 +11,7 @@
  *
  * Bump CACHE_VERSION on any change here to force a clean cache swap.
  */
-const CACHE_VERSION = 'bst-v13-turnstile';
+const CACHE_VERSION = 'bst-v14-admob-live';
 const APP_SHELL = `app-shell-${CACHE_VERSION}`;
 const RUNTIME = `runtime-${CACHE_VERSION}`;
 const FONTS = `fonts-${CACHE_VERSION}`;

@@ -76,10 +76,11 @@ window.AdsConfig = {
    * Until then, Google's public TEST ids below are safe to ship —
    * they show fake ads and can never get the account flagged. */
   admob: {
-    testing: true,
+    // Live since 2026-10-04 for Android (iOS ships without ads for now).
+    testing: false,
     banner: {
-      android: "ca-app-pub-3940256099942544/6300978111", // Google TEST banner unit
-      ios: "ca-app-pub-3940256099942544/2934735716"       // Google TEST banner unit
+      android: "ca-app-pub-7816106453580174/5881780931", // "SXM Android Banner"
+      ios: "ca-app-pub-3940256099942544/2934735716"       // Google TEST unit; unused while iOS has no ads
     }
     // testingDevices: ["YOUR_DEVICE_ID"], // needed to see real-looking test ads on a physical device
   },
