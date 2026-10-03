@@ -52,3 +52,7 @@ verify_jwt = false
 
 [functions.apple-notifications]
 verify_jwt = false
+
+# Authenticates with its own x-ops-secret header (polled by GitHub Actions).
+[functions.ops-health]
+verify_jwt = false
