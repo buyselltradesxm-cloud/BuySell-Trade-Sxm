@@ -19,6 +19,7 @@ $WebhookUrl  = "https://$ProjectRef.supabase.co/functions/v1/stripe-webhook"
 $StripeApi   = "https://api.stripe.com/v1"
 $DefaultEvents = @(
   "checkout.session.completed",
+  "checkout.session.async_payment_succeeded",
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted"
@@ -55,7 +56,10 @@ foreach ($amount in $SecretByAmount.Keys) {
 
 $old = @((Stripe Get "webhook_endpoints?limit=100").data | Where-Object { $_.url -like "*.supabase.co/functions/v1/stripe-webhook" })   # also catches a mistyped project ref
 foreach ($endpoint in $old) { Write-Host "  existing endpoint: $($endpoint.url)$(if ($endpoint.url -ne $WebhookUrl) { '   <-- WRONG URL, never reached this project' })" }
-$events = if ($old.Count) { @($old[0].enabled_events) } else { $DefaultEvents }
+# Keep whatever the current endpoint listens to, and make sure the events the
+# webhook needs (Pro subscriptions and one-time boost payments) are all there.
+$events = @(@($old | ForEach-Object { $_.enabled_events }) + $DefaultEvents | Where-Object { $_ -and $_ -ne "*" } | Select-Object -Unique)
+if ($old | Where-Object { $_.enabled_events -contains "*" }) { $events = @("*") }
 Write-Host "Webhook: $($old.Count) existing endpoint(s) will be replaced; events: $($events -join ', ')"
 if ((Read-Host "Type LIVE to switch production billing to live mode") -cne "LIVE") { Write-Host "Cancelled. Nothing was changed."; return }
 

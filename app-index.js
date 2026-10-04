@@ -633,7 +633,7 @@ Object.assign(I18N.en, {
   boostBadge:"Sponsored",
   boostCheckoutTitle:"Boost my ad",
   boostCheckoutText:"Choose a duration. The boost promotes your listing without a Pro subscription.",
-  boostConfirm:"Confirm demo boost",
+  boostConfirm:"Buy boost",
   boostSuccess:"Boost activated. Your listing is now sponsored.",
   boostAlreadyActive:"This listing is already boosted.",
   boostLoginRequired:"Log in with a normal account to boost a listing.",
@@ -2457,6 +2457,33 @@ function clearRenewalActionFromUrl(){
   history.replaceState(null, "", url.pathname + url.search + url.hash);
 }
 
+// Back from Stripe Checkout (?checkout= for a Pro plan, ?boost= for a boost).
+// The webhook applies the purchase a moment after the redirect, so listings
+// and the profile are reloaded shortly afterwards rather than trusted now.
+function handlePaymentReturnFromUrl(){
+  const params = new URLSearchParams(location.search);
+  const kind = params.has("boost") ? "boost" : params.has("checkout") ? "checkout" : "";
+  if(!kind) return;
+  const paid = params.get(kind) === "success";
+  const url = new URL(location.href);
+  url.searchParams.delete(kind);
+  history.replaceState(null, "", url.pathname + url.search + url.hash);
+  if(!paid){
+    showToast(state.lang === "fr" ? "Paiement annulé. Rien n'a été débité." : "Payment cancelled. You were not charged.");
+    return;
+  }
+  showToast(kind === "boost"
+    ? (state.lang === "fr" ? "Paiement reçu. Votre boost s'active dans quelques instants." : "Payment received. Your boost will be active in a moment.")
+    : (state.lang === "fr" ? "Paiement reçu. Votre compte Pro s'active dans quelques instants." : "Payment received. Your Pro account will be active in a moment."));
+  if(!(window.SB && SB.enabled())) return;
+  setTimeout(async ()=>{
+    await SB.hydrate();
+    const sbUser = SB.currentUser ? await SB.currentUser() : null;
+    if(sbUser) await applySupabaseUser(sbUser);
+    render();
+  }, 4000);
+}
+
 // Handles the unsubscribe link in the listing-renewal reminder email
 // (?unsub=renewal&token=<private unsubscribe token>). Works whether or not
 // the visitor is signed in -- that's the point of an unsubscribe link -- so
@@ -3345,7 +3372,14 @@ async function confirmListingBoost(e){
     if(await SXM.buy("boost-" + pendingBoostDays, pendingBoostListingId)){ closeModal("boostCheckoutModal"); showToast(t().boostSuccess); }
     return false;
   }
-  if(!isLocalDevHost()){ showToast(state.lang === "fr" ? "Achat de boost indisponible pour le moment." : "Boost purchase is currently unavailable."); return false; }
+  if(!isLocalDevHost() || (window.SB && SB.enabled() && state.user?.provider === "supabase")){
+    // Paid on Stripe's page; the webhook boosts the listing once payment is confirmed.
+    const checkout = state.user?.provider === "supabase" && window.SB && SB.createBoostCheckout
+      ? await SB.createBoostCheckout(pendingBoostListingId, pendingBoostDays) : null;
+    if(checkout?.data?.url){ location.assign(checkout.data.url); return false; }
+    showToast(state.lang === "fr" ? "Achat de boost indisponible pour le moment." : "Boost purchase is currently unavailable.");
+    return false;
+  }
   const l = L.find(x=>idKey(x.id) === idKey(pendingBoostListingId));
   if(!l) return false;
   const plan = boostPlan(pendingBoostDays);
@@ -5618,6 +5652,8 @@ window.__bstState = state;
 
 /* ---------------- INIT ---------------- */
 loadLocalState(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); applyAutomaticIncludedBoosts({silent:true}); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(); openAdminFromUrl(); handleListingRenewalActionFromUrl(); handleUnsubscribeFromUrl(); if(new URLSearchParams(location.search).get("reset") === "1") setTimeout(openPasswordReset, 250);
+
+handlePaymentReturnFromUrl();
 
 /* Supabase : si configuré, remplace les annonces de démo par celles de la base. */
 if (window.SB && SB.enabled() && !new URLSearchParams(location.search || "").has("local")) {

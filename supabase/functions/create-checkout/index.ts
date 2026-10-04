@@ -1,6 +1,10 @@
 // Authenticated Stripe Checkout creator. The browser supplies only a plan
-// name; the server maps it to a Stripe Price ID held in Edge Function secrets.
-// Deploy with STRIPE_SECRET_KEY and STRIPE_PRICE_PRO_* secrets.
+// name (subscription) or a listing id + boost duration (one-time payment);
+// the server maps them to a Stripe Price ID held in Edge Function secrets or
+// to the fixed boost price. Deploy with STRIPE_SECRET_KEY and
+// STRIPE_PRICE_PRO_* secrets.
+
+import { BOOST_CURRENCY, BOOST_PRICE_CENTS } from "../_shared/boosts.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SITE_URL = (Deno.env.get("SITE_URL") || "https://buyselltradesxm.com").replace(/\/$/, "");
@@ -44,6 +48,15 @@ async function consume(userId: string) {
   });
   return response.ok && (await response.json()) === true;
 }
+// The caller's own listing, or null. A boost is only sold to the seller.
+async function ownListing(listingId: string, userId: string) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/listings?id=eq.${listingId}&seller_id=eq.${encodeURIComponent(userId)}&select=id,title,status,moderation_status`, {
+    headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
+  });
+  if (!response.ok) return null;
+  const [listing] = await response.json();
+  return listing || null;
+}
 
 Deno.serve(async (req) => {
   const headers = cors(req);
@@ -57,12 +70,43 @@ Deno.serve(async (req) => {
   if (!user?.id) return json({ error: "not authenticated" }, 401, headers);
   const raw = await req.text();
   if (new TextEncoder().encode(raw).byteLength > 2048) return json({ error: "payload too large" }, 413, headers);
-  let plan = ""; try { plan = String(JSON.parse(raw).plan || ""); } catch (_) { /* invalid plan below */ }
+  // deno-lint-ignore no-explicit-any
+  let request: any = {}; try { request = JSON.parse(raw) || {}; } catch (_) { /* invalid plan below */ }
+  const boost = request.boost && typeof request.boost === "object" ? request.boost : null;
+  const plan = String(request.plan || "");
   const price = PRICE_BY_PLAN[plan];
-  if (!price) return json({ error: "invalid plan" }, 400, headers);
+  const boostDays = String(boost?.days || ""), boostListingId = String(boost?.listingId || "");
+  if (boost && (!BOOST_PRICE_CENTS[boostDays] || !/^\d{1,18}$/.test(boostListingId))) return json({ error: "invalid boost" }, 400, headers);
+  if (!boost && !price) return json({ error: "invalid plan" }, 400, headers);
   if (!(await consume(user.id))) return json({ error: "try again later" }, 429, headers);
 
-  const form = new URLSearchParams({
+  let form: URLSearchParams;
+  if (boost) {
+    const listing = await ownListing(boostListingId, user.id);
+    if (!listing) return json({ error: "listing not found" }, 404, headers);
+    const hidden = ["sold", "expired"].includes(listing.status) || (listing.moderation_status && listing.moderation_status !== "approved");
+    if (hidden) return json({ error: "listing not boostable" }, 409, headers);
+    const meta = { kind: "boost", supabase_user_id: user.id, listing_id: boostListingId, boost_days: boostDays };
+    form = new URLSearchParams({
+      mode: "payment",
+      "line_items[0][price_data][currency]": BOOST_CURRENCY,
+      "line_items[0][price_data][unit_amount]": String(BOOST_PRICE_CENTS[boostDays]),
+      "line_items[0][price_data][product_data][name]": `Boost ${boostDays} jours / days — ${String(listing.title || "").slice(0, 80)}`,
+      "line_items[0][quantity]": "1",
+      client_reference_id: user.id,
+      // Terms: a boost is non-refundable once active; say so next to consent.
+      "custom_text[submit][message]":
+        "Le boost démarre dès le paiement confirmé et n'est pas remboursable une fois actif. " +
+        "/ The boost starts as soon as payment is confirmed and is non-refundable once active.",
+      success_url: `${SITE_URL}/?boost=success`,
+      cancel_url: `${SITE_URL}/?boost=cancelled`,
+    });
+    for (const [key, value] of Object.entries(meta)) {
+      form.set(`metadata[${key}]`, value);
+      form.set(`payment_intent_data[metadata][${key}]`, value);
+    }
+    if (user.email) form.set("customer_email", user.email);
+  } else form = new URLSearchParams({
     mode: "subscription",
     "line_items[0][price]": price,
     "line_items[0][quantity]": "1",

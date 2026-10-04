@@ -2,6 +2,8 @@
 // the browser. Deploy with STRIPE_WEBHOOK_SECRET, STRIPE_SECRET_KEY, and one
 // STRIPE_PRICE_PRO_* secret per plan.
 
+import { BOOST_CURRENCY, BOOST_PRICE_CENTS } from "../_shared/boosts.ts";
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const STRIPE_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
 const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") || "";
@@ -76,6 +78,28 @@ async function updateProfile(userId: string, subscription: any, plan: string | n
   });
   return response.ok;
 }
+// A paid one-time Checkout Session for a boost (see create-checkout). Returns
+// an error code when the payment cannot be applied and needs a refund; throws
+// when the database is unreachable so Stripe redelivers.
+async function applyBoost(session: any): Promise<string | null> {
+  const meta = session.metadata || {};
+  const days = String(meta.boost_days || "");
+  if (session.payment_status !== "paid") return "boost_not_paid";
+  if (!/^[0-9a-f-]{36}$/i.test(meta.supabase_user_id || "") || !/^\d{1,18}$/.test(meta.listing_id || "")) return "untrusted_boost_data";
+  if (session.currency !== BOOST_CURRENCY || session.amount_total !== BOOST_PRICE_CENTS[days]) return "boost_amount_mismatch";
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/apply_stripe_boost`, {
+    method: "POST",
+    headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p: {
+      session_id: session.id, payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : null,
+      user_id: meta.supabase_user_id, listing_id: meta.listing_id, boost_days: Number(days),
+      amount_total: session.amount_total, currency: session.currency,
+    } }),
+  });
+  if (!response.ok) throw new Error("boost_update_failed");
+  const result = await response.json();
+  return result?.ok ? null : String(result?.reason || "boost_not_applied");
+}
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("method not allowed", { status: 405 });
@@ -105,6 +129,14 @@ Deno.serve(async (req) => {
 
   try {
     const object = event.data?.object || {};
+    if (object.mode === "payment" && object.metadata?.kind === "boost" && String(event.type).startsWith("checkout.session.")) {
+      // Sessions that expired or whose delayed payment failed carry nothing to apply.
+      const settled = event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded";
+      const problem = settled ? await applyBoost(object) : "boost_not_paid";
+      if (problem === "boost_not_paid") await setEvent(event.id, "ignored");
+      else await setEvent(event.id, problem ? "failed" : "processed", problem || undefined);
+      return new Response(JSON.stringify({ received: true }), { status: 200 });
+    }
     const subscriptionId = typeof object.subscription === "string" ? object.subscription : object.id;
     if (!subscriptionId || !String(event.type).startsWith("checkout.session.") && !String(event.type).startsWith("customer.subscription.")) {
       await setEvent(event.id, "ignored");
