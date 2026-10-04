@@ -922,6 +922,8 @@ let adminCategoryStatus = {};
 let adminModerationRules = { categories:[], keywords:[] };
 let adminAdCampaigns = [];
 let adminDailyCounts = [];
+// Visits/views per day and grouped JavaScript errors (admin_site_stats).
+let adminSiteStats = {days:[], errors:[]};
 let adminListingSearch = "";
 let adminUserSearch = "";
 let selectedPostPhotos = [];   // aperçus (data URL) pour l'affichage
@@ -3786,14 +3788,15 @@ function profileFromRow(row){
 
 async function loadSupabaseAdminData(){
   if(!canUseSupabaseAdmin()) return false;
-  const [reports, banned, profiles, categoryStatus, rules, campaigns, counts] = await Promise.all([
+  const [reports, banned, profiles, categoryStatus, rules, campaigns, counts, siteStats] = await Promise.all([
     SB.fetchReports ? SB.fetchReports() : null,
     SB.fetchBannedUsers ? SB.fetchBannedUsers() : null,
     SB.fetchProfiles ? SB.fetchProfiles() : null,
     SB.fetchAdminSettings ? SB.fetchAdminSettings("category_status") : null,
     SB.fetchModerationRules ? SB.fetchModerationRules() : null,
     SB.fetchAdCampaigns ? SB.fetchAdCampaigns() : null,
-    SB.fetchDailyCounts ? SB.fetchDailyCounts(14) : null
+    SB.fetchDailyCounts ? SB.fetchDailyCounts(14) : null,
+    SB.fetchSiteStats ? SB.fetchSiteStats(14) : null
   ]);
   if(Array.isArray(reports)) adminReports = reports.map(reportFromRow);
   if(Array.isArray(banned)) adminBanned = banned.map(row=>String(row.user_id));
@@ -3802,6 +3805,7 @@ async function loadSupabaseAdminData(){
   if(rules) adminModerationRules = { categories:rules.categories || [], keywords:rules.keywords || [] };
   if(Array.isArray(campaigns)) adminAdCampaigns = campaigns;
   if(Array.isArray(counts)) adminDailyCounts = counts;
+  if(siteStats) adminSiteStats = {days:siteStats.days || [], errors:siteStats.errors || []};
   buildCats();
   buildFilters();
   return true;
@@ -4247,9 +4251,14 @@ function adminCategoriesHTML(){
 function adminStatsHTML(){
   const rows = adminDailyCounts;
   const sum = key => rows.reduce((s,r)=>s + (Number(r[key]) || 0), 0);
+  const traffic = new Map(adminSiteStats.days.map(d=>[String(d.day), d]));
+  const trafficSum = key => adminSiteStats.days.reduce((s,d)=>s + (Number(d[key]) || 0), 0);
+  const dayKey = day => String(day).slice(0, 10);
   return `<section class="admin-panel">
     <h3>${state.lang==="fr" ? "Statistiques (14 derniers jours)" : "Stats (last 14 days)"}</h3>
     <div class="admin-metrics">
+      <div class="admin-metric"><b>${trafficSum("visits")}</b><span>${state.lang==="fr" ? "visites" : "visits"}</span></div>
+      <div class="admin-metric"><b>${trafficSum("views")}</b><span>${state.lang==="fr" ? "pages vues" : "page views"}</span></div>
       <div class="admin-metric"><b>${sum("new_listings")}</b><span>${state.lang==="fr" ? "nouvelles annonces" : "new listings"}</span></div>
       <div class="admin-metric"><b>${sum("new_users")}</b><span>${state.lang==="fr" ? "nouveaux comptes" : "new accounts"}</span></div>
       <div class="admin-metric"><b>${sum("new_messages")}</b><span>${state.lang==="fr" ? "messages" : "messages"}</span></div>
@@ -4257,8 +4266,17 @@ function adminStatsHTML(){
     <div class="admin-table">
       ${rows.map(r=>`<div class="admin-row no-img">
         <div><b>${new Date(r.day).toLocaleDateString(state.lang==="fr" ? "fr-FR" : "en-US", {weekday:"short",day:"numeric",month:"short"})}</b></div>
-        <div class="admin-actions"><span>${r.new_listings || 0} ${state.lang==="fr" ? "annonces" : "listings"}</span><span>${r.new_users || 0} ${state.lang==="fr" ? "comptes" : "users"}</span><span>${r.new_messages || 0} ${state.lang==="fr" ? "messages" : "messages"}</span></div>
+        <div class="admin-actions"><span>${traffic.get(dayKey(r.day))?.visits || 0} ${state.lang==="fr" ? "visites" : "visits"}</span><span>${r.new_listings || 0} ${state.lang==="fr" ? "annonces" : "listings"}</span><span>${r.new_users || 0} ${state.lang==="fr" ? "comptes" : "users"}</span><span>${r.new_messages || 0} ${state.lang==="fr" ? "messages" : "messages"}</span></div>
       </div>`).join("") || `<p>${state.lang==="fr" ? "Pas encore de données." : "No data yet."}</p>`}
+    </div>
+  </section>
+  <section class="admin-panel">
+    <h3>${state.lang==="fr" ? "Erreurs rencontrées par les visiteurs (14 derniers jours)" : "Errors hit by visitors (last 14 days)"}</h3>
+    <div class="admin-table">
+      ${adminSiteStats.errors.map(e=>`<div class="admin-row no-img">
+        <div><b>${esc(e.message)}</b><br><small>${esc(String(e.source || "").split("/").pop() || "?")}${e.line ? ":" + Number(e.line) : ""} · ${esc(e.page || "")} · ${esc(e.surface || "")}</small></div>
+        <div class="admin-actions"><span>× ${Number(e.count) || 1}</span><span>${new Date(e.last_seen).toLocaleDateString(state.lang==="fr" ? "fr-FR" : "en-US", {day:"numeric",month:"short"})}</span></div>
+      </div>`).join("") || `<p>${state.lang==="fr" ? "Aucune erreur signalée." : "No errors reported."}</p>`}
     </div>
   </section>`;
 }

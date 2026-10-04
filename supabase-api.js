@@ -1209,6 +1209,14 @@
       var res = await window.db.rpc("admin_daily_counts", { days: days || 14 });
       if (res.error) { console.warn("[SB] fetchDailyCounts:", res.error.message); return null; }
       return res.data || [];
+    },
+
+    // { days: [{day, visits, views, app_views}], errors: [...] } ; null on error.
+    fetchSiteStats: async function (days) {
+      if (!window.db) return null;
+      var res = await window.db.rpc("admin_site_stats", { days: days || 14 });
+      if (res.error) { console.warn("[SB] fetchSiteStats:", res.error.message); return null; }
+      return res.data || null;
     }
   };
 
