@@ -28,6 +28,7 @@ exclude:
   - live-supabase-flow-qa.js
   - playwright-admin-visibility-qa.js
   - playwright-auto-boost-qa.js
+  - playwright-block-user-qa.js
   - playwright-category-form-qa.js
   - playwright-clickable-sections-qa.js
   - playwright-edit-listing-qa.js

@@ -32,9 +32,13 @@
         })
         .catch(function (err) { console.warn('[pwa] SW registration failed:', err); });
 
+      // On a first visit there is no controller yet: the new worker claiming
+      // the page is not an update, and reloading would only interrupt the
+      // visitor (and lose whatever they had started typing).
+      var hadController = !!navigator.serviceWorker.controller;
       var reloaded = false;
       navigator.serviceWorker.addEventListener('controllerchange', function () {
-        if (reloaded) return;
+        if (reloaded || !hadController) return;
         reloaded = true;
         window.location.reload();
       });

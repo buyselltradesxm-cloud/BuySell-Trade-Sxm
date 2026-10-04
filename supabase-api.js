@@ -18,6 +18,10 @@
   };
   var MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+  // ids the signed-in user has blocked; kept in step by fetchBlocks /
+  // blockUser / unblockUser so fetchInbox can drop those conversations.
+  var blockedIds = {};
+
   // A missing token is not fatal here: Supabase decides. While CAPTCHA
   // protection is off it ignores the token; once on, it answers with a
   // captcha error, which friendlyCaptchaError() turns into a clear message.
@@ -978,6 +982,7 @@
       var threads = {};
       rows.forEach(function (m) {
         var otherId = m.sender_id === user.id ? m.recipient_id : m.sender_id;
+        if (blockedIds[otherId]) return;
         var key = (m.listing_id || "0") + ":" + otherId;
         if (!threads[key]) {
           threads[key] = {
@@ -1016,6 +1021,59 @@
         )
         .subscribe();
       return function () { window.db.removeChannel(channel); };
+    },
+
+    /* ---------------- BLOCKED USERS ---------------- */
+
+    // users the caller has blocked: [{ id, name }] ; null on error.
+    fetchBlocks: async function () {
+      if (!window.db) return null;
+      var user = await SB.currentUser();
+      if (!user) return null;
+      var res = await window.db
+        .from("user_blocks")
+        .select("blocked_id, blocked_name")
+        .order("created_at", { ascending: true });
+      if (res.error) {
+        console.warn("[SB] fetchBlocks:", res.error.message);
+        return null;
+      }
+      blockedIds = {};
+      return (res.data || []).map(function (r) {
+        blockedIds[r.blocked_id] = true;
+        return { id: r.blocked_id, name: r.blocked_name || "" };
+      });
+    },
+
+    // the message policy (user-blocks.sql) is what stops messages; this
+    // only records the block. true on success.
+    blockUser: async function (blockedId, name) {
+      if (!window.db || !blockedId) return false;
+      var user = await SB.currentUser();
+      if (!user) return false;
+      var res = await window.db
+        .from("user_blocks")
+        .upsert(
+          { blocker_id: user.id, blocked_id: blockedId, blocked_name: String(name || "").slice(0, 80) || null },
+          { onConflict: "blocker_id,blocked_id", ignoreDuplicates: true }
+        );
+      if (res.error) {
+        console.warn("[SB] blockUser:", res.error.message);
+        return false;
+      }
+      blockedIds[blockedId] = true;
+      return true;
+    },
+
+    unblockUser: async function (blockedId) {
+      if (!window.db || !blockedId) return false;
+      var res = await window.db.from("user_blocks").delete().eq("blocked_id", blockedId);
+      if (res.error) {
+        console.warn("[SB] unblockUser:", res.error.message);
+        return false;
+      }
+      delete blockedIds[blockedId];
+      return true;
     },
 
     /* ---------------- ADMIN: moderation queue ---------------- */

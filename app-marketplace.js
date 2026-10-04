@@ -2105,6 +2105,7 @@ function passesFilters(l){
   // (qui doit pouvoir les retrouver pour les remettre en vente).
   if(listingIsSold(l) && !isOwnListing(l)) return false;
   if(listingIsExpired(l) && !isOwnListing(l)) return false;
+  if(l.sellerId && isBlockedUser(l.sellerId)) return false;
   if(state.cat!=="all" && l.cat!==state.cat) return false;
   if(state.subcat && l.sub !== state.subcat) return false;
   if(state.q){
@@ -2957,8 +2958,70 @@ async function quickChatAction(id, type){
     }
     showToast(t().reportSent);
   }
-  if(type === "block") showToast(state.lang==="fr" ? "Vendeur bloqué pour cette session." : "Seller blocked for this session.");
+  if(type === "block"){
+    const l = L.find(item=>idKey(item.id) === idKey(id));
+    if(l && l.sellerId && await blockUser(l.sellerId, sellerName(l))) closeModal("detailModal");
+  }
   if(input && (type === "location" || type === "offer")) input.focus();
+}
+
+function isBlockedUser(id){
+  return !!id && blockedUsers.some(b=>b.id === id);
+}
+
+async function loadBlockedUsers(){
+  if(!(window.SB && SB.enabled() && SB.fetchBlocks) || !state.user || state.user.provider !== "supabase") return;
+  const rows = await SB.fetchBlocks();
+  if(!rows) return;
+  blockedUsers = rows;
+  if(blockedUsers.length) render();
+}
+
+// Blocks another account: neither side can message the other, and the
+// blocker no longer sees that person's conversations or listings.
+async function blockUser(otherId, name){
+  if(!state.user){ requireAccount("messages"); return false; }
+  if(!otherId || otherId === state.user.id) return false;
+  if(!(window.SB && SB.enabled() && SB.blockUser) || state.user.provider !== "supabase"){
+    showToast(state.lang==="fr" ? "Blocage indisponible pour ce compte." : "Blocking is unavailable for this account.");
+    return false;
+  }
+  if(!isBlockedUser(otherId)){
+    if(!(await SB.blockUser(otherId, name))){
+      showToast(state.lang==="fr" ? "Blocage impossible pour le moment. Réessayez." : "Could not block right now. Please try again.");
+      return false;
+    }
+    blockedUsers.push({id:otherId, name:name || ""});
+  }
+  render();
+  showToast(state.lang==="fr"
+    ? "Utilisateur bloqué. Vous pouvez le débloquer depuis votre profil."
+    : "User blocked. You can unblock them from your profile.");
+  return true;
+}
+
+async function unblockUser(otherId){
+  if(!(window.SB && SB.unblockUser) || !(await SB.unblockUser(otherId))){
+    showToast(state.lang==="fr" ? "Déblocage impossible pour le moment. Réessayez." : "Could not unblock right now. Please try again.");
+    return;
+  }
+  blockedUsers = blockedUsers.filter(b=>b.id !== otherId);
+  render();
+  openProfile();
+  showToast(state.lang==="fr" ? "Utilisateur débloqué." : "User unblocked.");
+}
+
+function blockedUsersHTML(){
+  if(!blockedUsers.length) return "";
+  return `
+    <section class="profile-section">
+      <h3>${state.lang==="fr" ? "Utilisateurs bloqués" : "Blocked users"}</h3>
+      ${blockedUsers.map(b=>`
+        <div class="detail-actions">
+          <span>${esc(b.name || (state.lang==="fr" ? "Utilisateur" : "User") + " #" + String(b.id).slice(0, 4))}</span>
+          <button type="button" class="secondary-btn" data-click="unblockUser" data-click-args='${dataArgs([String(b.id)])}'>${state.lang==="fr" ? "Débloquer" : "Unblock"}</button>
+        </div>`).join("")}
+    </section>`;
 }
 
 function sellerReply(l){
@@ -2973,6 +3036,8 @@ function sellerReply(l){
 
 /* ================= BOÎTE DE RÉCEPTION (deux volets) ================= */
 let inboxConvs = [];
+// Users this account has blocked: [{id, name}]. Loaded from Supabase at sign-in.
+let blockedUsers = [];
 let activeConvKey = null;
 let inboxSearchTerm = "";
 
@@ -3107,6 +3172,13 @@ async function openInboxThread(key){
     const hasListing = conv.listingId && String(conv.listingId) !== "0";
     openBtn.hidden = !hasListing;
     openBtn.onclick = hasListing ? ()=>{ closeModal("messagesModal"); openListing(conv.listingId); } : null;
+  }
+  const blockBtn = document.getElementById("msgrBlock");
+  if(blockBtn){
+    const canBlock = !!(conv.real && conv.otherId);
+    blockBtn.hidden = !canBlock;
+    blockBtn.textContent = t().chatBlock;
+    blockBtn.onclick = canBlock ? async ()=>{ if(await blockUser(conv.otherId, conv.who)){ activeConvKey = null; await loadInbox(); } } : null;
   }
   renderInboxLog(conv);
   renderInboxRail();
@@ -3444,6 +3516,7 @@ function renderProfile(){
         ${own.length ? own.map(l=>miniListingHTML(l)).join("") : `<p class="upload-help">${t().profileNoListings}</p>`}
       </div>
     </section>
+    ${blockedUsersHTML()}
     <div class="detail-actions">
       <button type="button" class="primary-btn" data-click="closeProfileModalThenPostModal">${t().postAd}</button>
       <button type="button" class="secondary-btn" data-click="logoutUser">${t().logoutLabel}</button>
@@ -3564,6 +3637,7 @@ async function logoutUser(){
     try { await SB.signOut(); } catch(e){}
   }
   state.user = null;
+  blockedUsers = [];
   persistState();
   closeModal("profileModal");
   render();
@@ -4497,6 +4571,7 @@ async function hashPassword(value){
    `provider:"supabase"` sert à savoir quelle session déconnecter. */
 async function applySupabaseUser(sbUser){
   if(!sbUser) return null;
+  loadBlockedUsers();
   let profile = null;
   try { profile = await SB.fetchProfile(sbUser.id); } catch(e){}
   const meta = sbUser.user_metadata || {};
