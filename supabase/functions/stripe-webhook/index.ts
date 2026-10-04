@@ -58,6 +58,9 @@ async function stripeSubscription(id: string) {
 }
 async function updateProfile(userId: string, subscription: any, plan: string | null) {
   const active = subscription.status === "active" || subscription.status === "trialing";
+  // Stripe API versions from 2025-03-31 moved the period end from the
+  // subscription onto its items; read whichever the account's version sends.
+  const periodEnd = subscription.current_period_end ?? subscription.items?.data?.[0]?.current_period_end;
   const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
     method: "PATCH",
     headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json", Prefer: "return=minimal" },
@@ -67,7 +70,7 @@ async function updateProfile(userId: string, subscription: any, plan: string | n
       subscription_status: active && plan ? "active" : "inactive",
       stripe_customer_id: String(subscription.customer || "") || null,
       stripe_subscription_id: String(subscription.id || "") || null,
-      subscription_current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+      subscription_current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
       subscription_cancel_at_period_end: !!subscription.cancel_at_period_end,
     }),
   });
