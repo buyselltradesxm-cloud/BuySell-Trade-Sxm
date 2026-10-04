@@ -65,9 +65,9 @@ const { chromium } = require("playwright");
     if(!/Favoris|Saved/.test(toast)) errors.push(`${path}: saved-items tool did not respond`);
 
     await page.evaluate(() => openListing("qa-click-listing"));
-    await page.getByRole("button", { name:/Envoyer une photo|Send photo/i }).click();
-    const photoLine = await page.locator("#chatLog-qa-click-listing").innerText({ timeout:2000 }).catch(() => "");
-    if(!/photo/i.test(photoLine)) errors.push(`${path}: send photo action did not update chat`);
+    // Sending a photo in chat is not built, so the chat must not offer it.
+    const photoButtons = await page.getByRole("button", { name:/Envoyer une photo|Send photo/i }).count();
+    if(photoButtons) errors.push(`${path}: chat still offers a send-photo action that does nothing`);
 
     await page.locator("#detailModal").getByRole("button", { name:/Copier le lien|Copy link/i }).click();
     await page.waitForFunction(() => /copié|copied|prêt|ready/i.test(document.querySelector("#toast")?.textContent || ""), null, { timeout:2000 }).catch(() => {});

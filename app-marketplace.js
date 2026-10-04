@@ -315,7 +315,7 @@ const I18N = {
       howL:"Créez un compte, publiez en quelques minutes, recevez un message ce soir.",
       s1h:"Photographiez et publiez",s1p:"Des photos, un prix en € ou en $, votre zone: Marigot, Philipsburg, Grand Case, où que vous soyez sur l'île.",
       s2h:"Discutez, sans appeler",s2p:"Les acheteurs vous écrivent dans l'app. Votre numéro reste privé jusqu'à ce que vous décidiez de le partager.",
-      s3h:"Retrouvez-vous et vendez",s3p:"Un lieu, la main à la main, marqué vendu. Laissez-vous une note pour le prochain sur l'île.",
+      s3h:"Retrouvez-vous et vendez",s3p:"Un lieu, la main à la main, marqué vendu.",
       t1h:"Deux territoires, une app",t1p:"Français et anglais, avec le prix dans la devise de votre côté de l'île.",
       t2h:"Messagerie intégrée",t2p:"Posez une question, négociez, organisez le retrait sans donner votre numéro.",
       t3h:"Signaler et bloquer",t3p:"Chaque annonce et chaque profil peut être signalé. Une petite île tourne à la confiance.",
@@ -343,7 +343,7 @@ const I18N = {
       howL:"Create an account, post in minutes, get a message tonight.",
       s1h:"Snap and post",s1p:"Photos, a price in € or $, your area: Marigot, Philipsburg, Grand Case, wherever you are on the island.",
       s2h:"Chat, don't call",s2p:"Buyers message you in the app. Your number stays yours until you decide to share it.",
-      s3h:"Meet and sell",s3p:"Pick a spot, hand it over, mark it sold. Leave each other a rating for the next person on the island.",
+      s3h:"Meet and sell",s3p:"Pick a spot, hand it over, mark it sold.",
       t1h:"Two territories, one app",t1p:"French and English, with the price in whichever currency fits your side.",
       t2h:"Messaging built in",t2p:"Ask a question, negotiate, arrange pickup without handing out your number.",
       t3h:"Report and block",t3p:"Every listing and every profile can be flagged. A small island runs on trust.",
@@ -360,7 +360,7 @@ Object.assign(I18N.fr, {
   planPersonalText:"Pour vendre vos propres objets de temps en temps.",
   planPersonal1:"Annonces personnelles",
   planPersonal2:"Chat, favoris et partage de lien",
-  planPersonal3:"Notes vendeur après achat",
+  planPersonal3:"Signalement et blocage des utilisateurs",
   planStarterTitle:"Pro Starter",
   planStarterText:"Pour un commerce qui commence à vendre régulièrement.",
   planStarter1:"Page business + badge Pro",
@@ -401,7 +401,7 @@ Object.assign(I18N.fr, {
   paymentSuccess:"Paiement confirmé. Votre compte Pro est actif.",
   proDashboardTitle:"Espace Pro",
   proStorefrontTitle:"Vitrine business",
-  proStorefrontText:"Votre page business regroupe vos produits, logo, WhatsApp, téléphone, site web, badge Pro, avis clients et informations de confiance.",
+  proStorefrontText:"Votre page business regroupe vos produits, logo, WhatsApp, téléphone, site web, badge Pro et informations de confiance.",
   proProductsTitle:"Produits à vendre",
   proProductsText:"Chaque produit se publie comme une annonce: photos réelles, prix en euro ou dollar, catégorie, quartier et chat direct avec les acheteurs.",
   proVisibilityTitle:"Visibilité",
@@ -519,7 +519,7 @@ Object.assign(I18N.en, {
   planPersonalText:"For selling your own items from time to time.",
   planPersonal1:"Personal listings",
   planPersonal2:"Chat, saved items, and shareable links",
-  planPersonal3:"Seller ratings after purchase",
+  planPersonal3:"Report and block users",
   planStarterTitle:"Pro Starter",
   planStarterText:"For a business starting to sell regularly.",
   planStarter1:"Business page + Pro badge",
@@ -560,7 +560,7 @@ Object.assign(I18N.en, {
   paymentSuccess:"Payment confirmed. Your Pro account is active.",
   proDashboardTitle:"Pro workspace",
   proStorefrontTitle:"Business storefront",
-  proStorefrontText:"Your business page brings together your products, logo, WhatsApp, phone, website, Pro badge, customer ratings, and trust information.",
+  proStorefrontText:"Your business page brings together your products, logo, WhatsApp, phone, website, Pro badge, and trust information.",
   proProductsTitle:"Products for sale",
   proProductsText:"Each product is posted like a listing: real photos, euro or dollar price, category, area, and direct buyer chat.",
   proVisibilityTitle:"Visibility",
@@ -2035,7 +2035,6 @@ function chatHTML(id){
       </form>
       <div class="chat-actions">
         <button type="button" class="chat-action" data-click="quickChatAction" data-click-args='${dataArgs([idParam, 'location'])}'>${t().chatLocation}</button>
-        <button type="button" class="chat-action" data-click="quickChatAction" data-click-args='${dataArgs([idParam, 'photo'])}'>${t().chatPhoto}</button>
         <button type="button" class="chat-action" data-click="quickChatAction" data-click-args='${dataArgs([idParam, 'offer'])}'>${t().chatOffer}</button>
         <button type="button" class="chat-action" data-click="quickChatAction" data-click-args='${dataArgs([idParam, 'report'])}'>${t().chatReport}</button>
         <button type="button" class="chat-action" data-click="quickChatAction" data-click-args='${dataArgs([idParam, 'block'])}'>${t().chatBlock}</button>
@@ -2560,7 +2559,6 @@ function openProfileStat(type){
     openMessages();
     return;
   }
-  if(type === "rating") showTrustInfo("member");
 }
 function openCategoryPost(category){
   closeModal("boostModal");
@@ -3498,7 +3496,6 @@ function renderProfile(){
       <button type="button" class="profile-stat" data-click="openProfileStat" data-click-args='${dataArgs(['listings'])}'><b>${own.length}</b><span>${t().activeListings}</span></button>
       <button type="button" class="profile-stat" data-click="openProfileStat" data-click-args='${dataArgs(['saved'])}'><b>${state.favs.size}</b><span>${t().savedItems}</span></button>
       <button type="button" class="profile-stat" data-click="openProfileStat" data-click-args='${dataArgs(['messages'])}'><b>${Object.keys(chatThreads).length}</b><span>${t().conversations}</span></button>
-      <button type="button" class="profile-stat" data-click="openProfileStat" data-click-args='${dataArgs(['rating'])}'><b>${Number(user.rating).toFixed(1)}</b><span>${t().ratingLabel}</span></button>
     </div>
     ${subscriptionDashboardHTML(user, own)}
     <section class="profile-section">
@@ -3638,7 +3635,6 @@ function proDashboardHTML(user, own, proActive){
           <ul>
             <li>${state.lang==="fr" ? "Publiez chaque produit avec ses propres photos et son stock." : "Publish each product with its own photos and stock."}</li>
             <li>${state.lang==="fr" ? "Les acheteurs contactent le commerce dans le chat instantané." : "Buyers contact the business through instant chat."}</li>
-            <li>${state.lang==="fr" ? "Les avis renforcent la confiance autour de votre boutique." : "Ratings build trust around your store."}</li>
           </ul>
         </article>
       </div>
