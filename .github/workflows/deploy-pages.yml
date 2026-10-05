@@ -1,0 +1,65 @@
+name: Deploy website
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  # Commits made with GITHUB_TOKEN do not trigger another push workflow.
+  workflow_run:
+    workflows: [Listing pages]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/configure-pages@v5
+      - name: Version app assets to avoid stale CDN releases
+        run: |
+          node scripts/version-assets.js
+          node scripts/version-assets.js --check
+          node --check app-index.js
+          node --check app-marketplace.js
+          node --check supabase-api.js
+          node --check push-notifications.js
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - name: Verify production artifact
+        run: |
+          test -f _site/app-index.js
+          test -f _site/app-marketplace.js
+          test -f _site/supabase-api.js
+          test ! -e _site/scripts
+          test ! -e _site/supabase
+          test ! -e _site/APP_QA_STATUS.md
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./_site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

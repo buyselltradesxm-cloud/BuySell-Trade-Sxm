@@ -5,7 +5,9 @@
 (function () {
   'use strict';
 
-  var SW_URL = '/sw.js';
+  // Match the version in this script's HTML URL, including through the CDN.
+  var assetVersion = new URL(document.currentScript.src, window.location.href).searchParams.get('v');
+  var SW_URL = '/sw.js' + (assetVersion ? '?v=' + encodeURIComponent(assetVersion) : '');
   var DISMISS_KEY = 'bst_pwa_install_dismissed_at';
   var DISMISS_DAYS = 14; // re-offer install two weeks after an explicit dismissal
   var SEEN_KEY = 'bst_pwa_install_seen_at';

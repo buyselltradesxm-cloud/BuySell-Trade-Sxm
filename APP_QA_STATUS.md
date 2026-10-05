@@ -65,7 +65,22 @@ Changes apply to both `index.html` and `marketplace.html` app bundles.
 - The profile photo button had an undefined accessible label. It now has a
   translated label. All 324 keys referenced by app code and HTML translation
   attributes are checked in both languages on both routes.
-- The service-worker cache version is now `bst-v23-profile-labels`.
+- The service-worker cache now includes the generated asset release version.
+
+### Release delivery correction
+
+The canonical JavaScript URLs were served from an older four-hour CDN cache
+after successful GitHub Pages deployments. This explained the outdated profile
+labels still visible in the signed-in browser. All local JavaScript/CSS references
+on the three app entry pages now carry a deterministic content version. The PWA
+passes that same version to its worker registration and offline cache assets.
+The new GitHub Pages workflow generates these versions for every deployment and
+checks that backend/tooling files are excluded from the published artifact.
+Scheduled listing-page builds also trigger website publication.
+
+A read-only Supabase query confirmed a recent sign-in for
+`tchalaplus@gmail.com` and a confirmed email. This confirms an existing account's
+authentication, not new-account email delivery or the remaining paid journeys.
 
 New local checks pass on both routes: messaging failures/session isolation
 (32 assertions per route), admin/auth failures and avatar replacement
@@ -152,6 +167,8 @@ process you started.
 - `npm run test:messaging-failures`: drafts, failures, realtime and account isolation.
 - `npm run test:admin-auth-failures`: rejected admin/auth changes and avatar paths.
 - `npm run test:push-client`: notification readiness and persistence failures.
+- `npm run build:assets`: regenerate versioned asset references after app changes.
+- `npm run test:assets`: check that the generated asset references are current.
 - `npm run test:launch-smoke`: isolated public browsing on the live site at desktop
   and mobile sizes; no accounts, listings, messages, reports, or payments created.
 - `npm run test:backend`: public reads and explicit anonymous permission denials,
