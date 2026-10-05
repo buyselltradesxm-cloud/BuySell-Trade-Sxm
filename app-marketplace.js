@@ -5656,11 +5656,17 @@ function openAdminFromUrl(){
   setTimeout(()=>openAdmin(), 250);
 }
 
+// Au demarrage, L ne contient que les annonces d'exemple : un lien partage vers
+// une vraie annonce ne peut s'ouvrir qu'une fois la base chargee (voir hydrate).
+let urlListingOpened = false;
 function openListingFromUrl(){
   const id = new URLSearchParams(window.location.search).get("listing");
   if(!id) return;
   const exists = L.some(l=>idKey(l.id)===idKey(id));
-  if(exists) setTimeout(()=>openListing(id, false), 120);
+  if(exists){
+    urlListingOpened = true;
+    setTimeout(()=>openListing(id, false), 120);
+  }
 }
 
 window.addEventListener("popstate", openListingFromUrl);
@@ -5691,6 +5697,7 @@ if (window.SB && SB.enabled() && !new URLSearchParams(location.search || "").has
 
   SB.hydrate().then(function (ok) {
     if (ok) console.info("[Supabase] annonces chargées depuis la base.");
+    if (ok && !urlListingOpened) openListingFromUrl();
     return applyAutomaticIncludedBoosts({silent:true}).then(function(count){ if(count) render(); return ok; });
   });
 

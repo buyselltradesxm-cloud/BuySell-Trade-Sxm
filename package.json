@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test:share": "node playwright-share-qa.js",
+    "test:deep-link": "node playwright-deep-link-qa.js",
+    "build:listing-pages": "node scripts/build-listing-pages.js",
     "test:gallery-search": "node playwright-gallery-search-qa.js",
     "test:pro-payment": "node playwright-pro-payment-qa.js",
     "test:social-auth": "node playwright-social-auth-qa.js",

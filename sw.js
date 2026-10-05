@@ -11,7 +11,7 @@
  *
  * Bump CACHE_VERSION on any change here to force a clean cache swap.
  */
-const CACHE_VERSION = 'bst-v19-samples';
+const CACHE_VERSION = 'bst-v20-deep-link';
 const APP_SHELL = `app-shell-${CACHE_VERSION}`;
 const RUNTIME = `runtime-${CACHE_VERSION}`;
 const FONTS = `fonts-${CACHE_VERSION}`;
