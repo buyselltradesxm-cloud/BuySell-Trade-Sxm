@@ -62,7 +62,10 @@ Changes apply to both `index.html` and `marketplace.html` app bundles.
   matching existing policies. Disconnected profile uploads preserve the old photo.
 - Profile badges no longer invent fast-response history or trusted-member status.
   Verified email comes from Auth confirmation; a paid plan is labelled Pro account.
-- The service-worker cache version is now `bst-v22-safe-messaging`.
+- The profile photo button had an undefined accessible label. It now has a
+  translated label. All 324 keys referenced by app code and HTML translation
+  attributes are checked in both languages on both routes.
+- The service-worker cache version is now `bst-v23-profile-labels`.
 
 New local checks pass on both routes: messaging failures/session isolation
 (32 assertions per route), admin/auth failures and avatar replacement

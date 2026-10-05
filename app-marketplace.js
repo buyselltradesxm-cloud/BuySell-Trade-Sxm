@@ -353,6 +353,7 @@ const I18N = {
 };
 
 Object.assign(I18N.fr, {
+  changePhoto:"Modifier la photo de profil",
   planPersonalTitle:"Particulier",
   planFreeBadge:"Gratuit",
   planPaidBadge:"Payant",
@@ -512,6 +513,7 @@ Object.assign(I18N.fr, {
 });
 
 Object.assign(I18N.en, {
+  changePhoto:"Change profile photo",
   planPersonalTitle:"Personal",
   planFreeBadge:"Free",
   planPaidBadge:"Paid",

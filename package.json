@@ -40,6 +40,7 @@
     "test:telemetry": "node playwright-telemetry-qa.js",
     "test:push": "node scripts/push-crypto-check.js",
     "test:push-client": "node scripts/push-client-check.js",
+    "test:translations": "node scripts/translation-check.js",
     "test:draft": "node scripts/draft-check.js",
     "test:pwa": "node scripts/pwa-check.js",
     "supabase:enable-google-auth": "node scripts/enable-google-auth.js",
@@ -53,7 +54,7 @@
     "cap:open:android": "cap open android",
     "cap:open:ios": "cap open ios",
     "cap:assets": "node scripts/generate-capacitor-assets.js",
-    "test:qa": "npm run test:share && npm run test:gallery-search && npm run test:pro-payment && npm run test:social-auth && npm run test:uuid-listing && npm run test:backend && npm run test:admin-visibility && npm run test:category-form && npm run test:personal-monthly-limit && npm run test:clickable-sections && npm run test:edit-listing && npm run test:subscription-profile && npm run test:messenger-inbox && npm run test:messaging-failures && npm run test:admin-auth-failures && npm run test:save-failures && npm run test:notifications && npm run test:auto-boost && npm run test:block-user && npm run test:web-boost && npm run test:telemetry && npm run test:push && npm run test:push-client && npm run test:pwa && npm run test:email-worker && npm run test:live-admin",
+    "test:qa": "npm run test:share && npm run test:gallery-search && npm run test:pro-payment && npm run test:social-auth && npm run test:uuid-listing && npm run test:backend && npm run test:admin-visibility && npm run test:category-form && npm run test:personal-monthly-limit && npm run test:clickable-sections && npm run test:edit-listing && npm run test:subscription-profile && npm run test:messenger-inbox && npm run test:messaging-failures && npm run test:admin-auth-failures && npm run test:save-failures && npm run test:notifications && npm run test:auto-boost && npm run test:block-user && npm run test:web-boost && npm run test:telemetry && npm run test:push && npm run test:push-client && npm run test:translations && npm run test:pwa && npm run test:email-worker && npm run test:live-admin",
     "playwright:install": "playwright install chromium"
   },
   "keywords": [],
