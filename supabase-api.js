@@ -506,7 +506,7 @@
     verifySignupCode: async function (email, userId, token) {
       var response = await fetch(window.SUPABASE_URL + "/functions/v1/signup-code", { method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY || "" }, body: JSON.stringify({ action: "verify", email: email, user_id: userId, code: token }) });
       var data = await response.json().catch(function () { return {}; });
-      return response.ok ? { data: data, error: null } : { data: null, error: { message: data.error || "Invalid or expired code" } };
+      return response.ok ? { data: data, error: null } : { data: null, error: { message: data.error || "Invalid or expired code", code: data.code || "", status: response.status } };
     },
     // Renvoie un nouveau code de confirmation à la même adresse.
     resendSignupOtp: async function (email) {

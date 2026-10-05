@@ -5065,11 +5065,40 @@ async function confirmSignupCode(){
   const code = document.getElementById("signupOtpCode").value.trim();
   const otpError = document.getElementById("signupOtpError");
   if(!code){ otpError.textContent = t().otpInvalid; return; }
-  const result = await SB.verifySignupCode(pendingSignupOtp.email, pendingSignupOtp.userId, code);
-  if(!result.error){ result.data = (await SB.signIn(pendingSignupOtp.email, pendingSignupOtp.password)).data; }
-  const { data, error } = result;
-  if(error || !(data && data.session && data.user)){
-    otpError.textContent = (error && error.message) || t().otpInvalid;
+  let result;
+  try { result = await SB.verifySignupCode(pendingSignupOtp.email, pendingSignupOtp.userId, code); }
+  catch(e){ result = {error:{code:"service_unavailable"}}; }
+  if(result.error){
+    const code = result.error.code || "";
+    const messages = state.lang === "fr" ? {
+      invalid_or_expired_code: "Code invalide ou expiré. Utilisez le code du dernier email reçu ; chaque renvoi invalide le précédent.",
+      verification_rate_limited: "Trop de tentatives. Attendez 15 minutes ou demandez un nouveau code.",
+      service_unavailable: "Impossible de vérifier le code pour le moment. Réessayez dans quelques instants.",
+      confirmation_unavailable: "Le code a été accepté, mais l’activation du compte n’a pas abouti. Réessayez dans quelques instants."
+    } : {
+      invalid_or_expired_code: "Invalid or expired code. Use the code in your latest email; requesting another code invalidates the previous one.",
+      verification_rate_limited: "Too many attempts. Wait 15 minutes or request a new code.",
+      service_unavailable: "The code could not be checked right now. Please try again shortly.",
+      confirmation_unavailable: "The code was accepted, but account activation did not finish. Please try again shortly."
+    };
+    otpError.textContent = messages[code] || (state.lang === "fr" ? "Le code n’a pas pu être vérifié. Vérifiez le dernier email reçu et réessayez." : "The code could not be verified. Check your latest email and try again.");
+    return;
+  }
+  let loginResult;
+  try { loginResult = await SB.signIn(pendingSignupOtp.email, pendingSignupOtp.password); }
+  catch(e){ loginResult = {error:{message:"Sign-in unavailable"}}; }
+  const data = loginResult && loginResult.data;
+  if((loginResult && loginResult.error) || !(data && data.session && data.user)){
+    const email = pendingSignupOtp.email;
+    pendingSignupOtp = null;
+    document.getElementById("signupFields").hidden = false;
+    document.getElementById("signupSubmitRow").hidden = false;
+    document.getElementById("signupOtpStep").hidden = true;
+    document.getElementById("loginEmail").value = email;
+    document.getElementById("loginError").textContent = state.lang === "fr"
+      ? "Code accepté : votre adresse email est confirmée. Connectez-vous avec votre mot de passe dans la section ci-dessous."
+      : "Code accepted: your email is confirmed. Sign in with your password in the section below.";
+    document.querySelector(".email-login-card")?.scrollIntoView({block:"center", behavior:"smooth"});
     return;
   }
   const { name, accountType, accountPlan } = pendingSignupOtp;
