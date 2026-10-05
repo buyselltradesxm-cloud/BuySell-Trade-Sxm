@@ -2216,6 +2216,14 @@ function sortList(arr){
   return a;
 }
 
+function categoryGuideHTML(){
+  const title = state.lang === "fr" ? "Commencez par une cat�gorie" : "Start with a category";
+  const text = state.lang === "fr" ? "Les vendeurs arrivent bient�t. Explorez les cat�gories pour voir ce qui pourra �tre publi� ici." : "Sellers are joining soon. Explore the categories to see what can be posted here.";
+  const cta = state.lang === "fr" ? "Parcourir" : "Browse";
+  const visibleCats = CATS.filter(c=>c.id !== "all" && !adminCategoryStatus[c.id]?.hidden);
+  return `<section class="category-guide" aria-labelledby="categoryGuideTitle"><div class="category-guide-copy"><h3 id="categoryGuideTitle">${title}</h3><p>${text}</p></div><div class="category-guide-grid">${visibleCats.map(c=>`<button type="button" class="category-guide-tile" data-click="filterByCategory" data-click-args='${dataArgs([c.id])}' aria-label="${esc(cta + ': ' + c[state.lang])}"><img src="${esc(G[c.id].img)}" alt="${esc(c[state.lang])}" loading="lazy"><span>${esc(c[state.lang])}</span></button>`).join("")}</div></section>`;
+}
+
 function render(){
   restoreListingsIfNeeded();
   // featured board
@@ -2245,7 +2253,7 @@ function render(){
   });
   grid.innerHTML = list.length
     ? listingCardsWithAds.join("")
-    : `<div class="no-results"><b>${t().noneT}</b>${t().noneB}</div>`;
+    : `<div class="no-results"><b>${t().noneT}</b>${t().noneB}</div>${L.length ? "" : categoryGuideHTML()}`;
 
   document.getElementById("count").innerHTML =
     `${t().results(list.length)} <small>${state.cat==="all" ? "" : "· " + CATS.find(c=>c.id===state.cat)[state.lang]}</small>`;

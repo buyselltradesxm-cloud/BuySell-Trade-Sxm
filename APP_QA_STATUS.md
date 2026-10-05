@@ -95,6 +95,11 @@ Those rows were labelled “Example” and had no real owner or messaging path.
 They remain in the database for deliberate administrator cleanup, but customers
 only see listings belonging to real accounts.
 
+When the public board has no real listings, it now shows one image tile for each
+available category. These are navigation tiles, not fake listings and cannot be
+messaged or purchased. Selecting one applies that category filter so a new user
+has a clear starting point while the marketplace is being populated.
+
 A read-only Supabase query confirmed a recent sign-in for
 `tchalaplus@gmail.com` and a confirmed email. This confirms an existing account's
 authentication, not new-account email delivery or the remaining paid journeys.

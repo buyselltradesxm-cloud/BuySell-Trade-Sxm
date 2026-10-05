@@ -31,10 +31,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<script src="/frame-guard.js?v=2f4c647a0d056947"></script>
-<script src="/telemetry.js?v=2f4c647a0d056947"></script>
-<script src="/pwa.js?v=2f4c647a0d056947" defer></script>
-<link href="/fonts/fonts.css?v=2f4c647a0d056947" rel="stylesheet">
+<script src="/frame-guard.js?v=a9f613b874b1d1b4"></script>
+<script src="/telemetry.js?v=a9f613b874b1d1b4"></script>
+<script src="/pwa.js?v=a9f613b874b1d1b4" defer></script>
+<link href="/fonts/fonts.css?v=a9f613b874b1d1b4" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -706,6 +706,15 @@
     border:2px dashed var(--line);border-radius:14px;
   }
   .no-results b{display:block;color:var(--ink);font-family:'Space Grotesk',sans-serif;font-size:17px;margin-bottom:6px;}
+  .category-guide{grid-column:1/-1;margin-top:4px;padding:22px;border:1.5px solid var(--line);border-radius:16px;background:var(--white);}
+  .category-guide-copy{text-align:left;margin-bottom:14px;}
+  .category-guide-copy h3{margin:0 0 5px;font-family:'Space Grotesk',sans-serif;font-size:20px;color:var(--ink);}
+  .category-guide-copy p{margin:0;color:var(--mute);font-size:13px;}
+  .category-guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;}
+  .category-guide-tile{border:1.5px solid var(--line);border-radius:12px;background:var(--paper);padding:0 0 9px;overflow:hidden;color:var(--ink);font:inherit;font-weight:700;cursor:pointer;transition:transform .18s ease,border-color .18s ease;}
+  .category-guide-tile:hover,.category-guide-tile:focus-visible{transform:translateY(-2px);border-color:var(--sea);outline:none;}
+  .category-guide-tile img{display:block;width:100%;height:76px;object-fit:cover;margin-bottom:7px;}
+  .category-guide-tile span{padding:0 6px;font-size:12px;}
 
   /* ---------------- HERO BAND ---------------- */
   .hero{
@@ -2820,20 +2829,20 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=2f4c647a0d056947" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=2f4c647a0d056947"></script>
-<script src="native-ios.js?v=2f4c647a0d056947"></script>
-<script src="captcha.js?v=2f4c647a0d056947"></script>
-<script src="supabase-api.js?v=2f4c647a0d056947"></script>
-<script src="img-utils.js?v=2f4c647a0d056947"></script>
-<script src="draft-store.js?v=2f4c647a0d056947"></script>
-<script src="push-config.js?v=2f4c647a0d056947"></script>
-<script src="push-notifications.js?v=2f4c647a0d056947"></script>
-<script src="consent.js?v=2f4c647a0d056947" defer></script>
-<script src="native-admob.js?v=2f4c647a0d056947"></script>
-<script src="ads-config.js?v=2f4c647a0d056947"></script>
-<script src="ads.js?v=2f4c647a0d056947" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=a9f613b874b1d1b4" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=a9f613b874b1d1b4"></script>
+<script src="native-ios.js?v=a9f613b874b1d1b4"></script>
+<script src="captcha.js?v=a9f613b874b1d1b4"></script>
+<script src="supabase-api.js?v=a9f613b874b1d1b4"></script>
+<script src="img-utils.js?v=a9f613b874b1d1b4"></script>
+<script src="draft-store.js?v=a9f613b874b1d1b4"></script>
+<script src="push-config.js?v=a9f613b874b1d1b4"></script>
+<script src="push-notifications.js?v=a9f613b874b1d1b4"></script>
+<script src="consent.js?v=a9f613b874b1d1b4" defer></script>
+<script src="native-admob.js?v=a9f613b874b1d1b4"></script>
+<script src="ads-config.js?v=a9f613b874b1d1b4"></script>
+<script src="ads.js?v=a9f613b874b1d1b4" defer></script>
 
-<script src="app-marketplace.js?v=2f4c647a0d056947"></script>
+<script src="app-marketplace.js?v=a9f613b874b1d1b4"></script>
 </body>
 </html>
