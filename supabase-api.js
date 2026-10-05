@@ -451,6 +451,12 @@
     hydrate: async function () {
       var rows = await SB.fetchListings();
       if (!rows || typeof L === "undefined") return false;
+      // Optional seed records have no seller_id and cannot receive real
+      // messages or ownership actions. Keep them available for administration
+      // but never expose them to customers on the production domain.
+      var host = String(window.location.hostname || "").toLowerCase();
+      var productionHost = host === "buyselltradesxm.com" || host === "www.buyselltradesxm.com";
+      if (productionHost) rows = rows.filter(function (listing) { return !!listing.sellerId; });
       L.length = 0;
       rows.forEach(function (r) { L.push(r); });
       if (typeof render === "function") render();

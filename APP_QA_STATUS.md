@@ -90,6 +90,11 @@ The translated photo button and removal of unsupported trust badges are visible
 in the real profile. A second already-signed-in account also survived a reload.
 No listings, messages, reports or payments were created during these checks.
 
+Public production hydration now hides database seed rows without a `seller_id`.
+Those rows were labelled “Example” and had no real owner or messaging path.
+They remain in the database for deliberate administrator cleanup, but customers
+only see listings belonging to real accounts.
+
 A read-only Supabase query confirmed a recent sign-in for
 `tchalaplus@gmail.com` and a confirmed email. This confirms an existing account's
 authentication, not new-account email delivery or the remaining paid journeys.
