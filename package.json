@@ -27,6 +27,8 @@
     "test:personal-monthly-limit": "node playwright-personal-monthly-limit-qa.js",
     "test:clickable-sections": "node playwright-clickable-sections-qa.js",
     "test:edit-listing": "node playwright-edit-listing-qa.js",
+    "test:save-failures": "node playwright-save-failures-qa.js",
+    "test:launch-smoke": "node scripts/launch-smoke-check.js",
     "test:subscription-profile": "node playwright-subscription-profile-qa.js",
     "test:messenger-inbox": "node playwright-messenger-inbox-qa.js",
     "test:notifications": "node playwright-notifications-qa.js",

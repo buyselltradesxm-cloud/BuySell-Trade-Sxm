@@ -162,6 +162,7 @@
       } : null,
       reserved: r.status === "reserved",
       sold: r.status === "sold",
+      status: r.status || "active",
       moderationStatus: r.moderation_status || "approved",
       createdAt: r.created_at || null,
       sellerId: r.seller_id || null,
@@ -375,8 +376,8 @@
     },
 
     // confirme qu'une annonce est toujours disponible et repousse son
-    // expiration de 30 jours. Si la RPC n'est pas encore installée, l'app
-    // retombe sur updateListing().
+    // expiration de 30 jours. Renvoie null si la RPC échoue ; le client
+    // conserve alors l'annonce et le rappel pour permettre une nouvelle tentative.
     confirmListingAvailable: async function (id) {
       if (!window.db || !id) return null;
       var rpc = await window.db.rpc("confirm_listing_available", { listing_id: id });
@@ -420,12 +421,15 @@
       var res = await window.db
         .from("listings")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .select("id");
       if (res.error) {
         console.warn("[SB] deleteListing:", res.error.message);
         return false;
       }
-      return true;
+      // RLS can silently affect zero rows. HTTP success alone is not proof
+      // that this seller's listing was deleted.
+      return Array.isArray(res.data) && res.data.length === 1;
     },
 
     adminSetListingStatus: async function (id, status) {

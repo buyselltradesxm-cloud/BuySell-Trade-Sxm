@@ -943,7 +943,8 @@ const chatThreads = {};
 let unreadMessageCount = 0;
 
 /* ================= NOTIFICATIONS (cloche + panneau) ================= */
-const LISTING_ACTIVE_DAYS = 14;
+// Keep the browser fallback aligned with confirm_listing_available in SQL.
+const LISTING_ACTIVE_DAYS = 30;
 const LISTING_EXPIRY_WARNING_DAYS = 3;
 let notifications = [];          // { id, kind, title, text, at, seen, listingId, convKey }
 let dismissedNotificationIds = new Set();
@@ -1525,7 +1526,8 @@ async function handleAvatarChange(input){
         showToast(state.lang==="fr" ? "Échec de l'envoi de la photo." : "Photo upload failed.");
         return;
       }
-      await SB.upsertProfile({ avatar_url: url });
+      const saved = await SB.upsertProfile({ avatar_url: url });
+      if(!saved) throw new Error("Profile photo was not saved");
       state.user.avatarUrl = url;
     } else {
       const dataUrl = await blobToDataURL(blob);
@@ -1743,22 +1745,30 @@ async function applyAutomaticIncludedBoosts({silent=false} = {}){
   if(remaining <= 0) return 0;
   const selected = autoBoostEligibleListings(state.user).slice(0, remaining);
   if(!selected.length) return 0;
+  let applied = 0;
   for(const listing of selected){
-    applyIncludedBoostToListing(listing, state.user);
-    if(window.SB && SB.enabled() && state.user.provider === "supabase" && typeof SB.updateListing === "function"){
+    let candidate = applyIncludedBoostToListing({...listing}, state.user);
+    if(state.user.provider === "supabase"){
+      if(!(window.SB && SB.enabled() && typeof SB.updateListing === "function")) continue;
       try {
-        const updated = await SB.updateListing(listing);
-        if(updated) Object.assign(listing, updated);
-      } catch(e){}
+        const updated = await SB.updateListing(candidate);
+        if(!updated || !isIncludedAutoBoost(updated)) continue;
+        candidate = updated;
+      } catch(e){ continue; }
     }
+    Object.assign(listing, candidate);
+    const owned = userListings.find(item=>idKey(item.id) === idKey(listing.id));
+    if(owned) Object.assign(owned, candidate);
+    applied += 1;
   }
+  if(!applied) return 0;
   persistState();
   if(!silent){
     showToast(state.lang === "fr"
-      ? `${selected.length} boost${selected.length > 1 ? "s" : ""} inclus activé${selected.length > 1 ? "s" : ""} automatiquement.`
-      : `${selected.length} included boost${selected.length > 1 ? "s" : ""} activated automatically.`);
+      ? `${applied} boost${applied > 1 ? "s" : ""} inclus activé${applied > 1 ? "s" : ""} automatiquement.`
+      : `${applied} included boost${applied > 1 ? "s" : ""} activated automatically.`);
   }
-  return selected.length;
+  return applied;
 }
 function planLabel(plan){
   const selected = accountPlan(plan);
@@ -2542,10 +2552,11 @@ async function handleListingRenewalActionFromUrl(){
     showToast(state.lang==="fr" ? "Cette action est réservée au vendeur." : "This action is for the seller only.");
     return;
   }
-  if(pending.action === "keep") await confirmListingAvailable(l.id);
-  if(pending.action === "sold") await markSoldAndRemove(l.id);
-  if(pending.action === "delete") await deleteOwnListing(l.id);
-  clearRenewalActionFromUrl();
+  let saved = false;
+  if(pending.action === "keep") saved = await confirmListingAvailable(l.id);
+  if(pending.action === "sold") saved = await markSoldAndRemove(l.id);
+  if(pending.action === "delete") saved = await deleteOwnListing(l.id);
+  if(saved) clearRenewalActionFromUrl();
 }
 
 function showTrustInfo(type){
@@ -3416,17 +3427,16 @@ async function confirmListingBoost(e){
 // (California ARL / FTC ROSCA / French Code de la consommation): price,
 // billing period, that it renews until cancelled, and how to cancel.
 // Rebuilt on every open so the price always matches the selected plan.
-function renewalDisclosure(plan){
-  const price = accountPlan(plan).price;
+function renewalDisclosure(plan, price=accountPlan(plan).price){
   const ios = !!(window.SXM && SXM.isIOS());
   if(state.lang === "fr"){
-    return `Votre abonnement ${planLabel(plan)} coûte ${price.replace("/month", " par mois")} et se renouvelle automatiquement chaque mois, au même prix, jusqu'à ce que vous l'annuliez. `
+    return `Votre abonnement ${planLabel(plan)} coûte ${price.replace(/\s*\/\s*(month|mois)\b/i, " par mois")} et se renouvelle automatiquement chaque mois, au même prix, jusqu'à ce que vous l'annuliez. `
       + (ios
         ? "Annulez à tout moment dans Réglages > Apple ID > Abonnements, au moins 24 h avant la date de renouvellement. "
         : "Annulez à tout moment en ligne depuis Profil > Gérer / annuler ; l'annulation prend effet à la fin de la période payée. ")
       + "Pas de remboursement pour la période en cours.";
   }
-  return `Your ${planLabel(plan)} subscription costs ${price.replace("/month", " per month")} and renews automatically every month at the same price until you cancel. `
+  return `Your ${planLabel(plan)} subscription costs ${price.replace(/\s*\/\s*(month|mois)\b/i, " per month")} and renews automatically every month at the same price until you cancel. `
     + (ios
       ? "Cancel anytime in Settings > Apple ID > Subscriptions, at least 24 hours before the renewal date. "
       : "Cancel anytime online from Profile > Manage / cancel; cancellation takes effect at the end of the paid period. ")
@@ -4474,6 +4484,28 @@ function syncOwnListingPatch(id, patch){
   return l;
 }
 
+// A failed write must leave the listing, reminders, and favorites intact.
+// SB methods return null/false for rejected writes as well as throwing on
+// network failures. Apply local changes only after backend confirmation.
+async function saveOwnListingChange(listing, patch, {renew=false, remove=false} = {}){
+  if(state.user?.provider !== "supabase") return remove ? true : patch;
+  try{
+    if(!(window.SB && SB.enabled())) throw new Error("Backend unavailable");
+    let saved;
+    if(remove) saved = await SB.deleteListing(listing.id);
+    else if(renew && SB.confirmListingAvailable) saved = await SB.confirmListingAvailable(listing.id);
+    else saved = await SB.updateListing({...listing, ...patch});
+    if(!saved) throw new Error("Listing change was not saved");
+    return saved;
+  }catch(err){
+    console.warn("[listing save]", err);
+    showToast(state.lang === "fr"
+      ? "Échec de l'enregistrement. Vérifiez votre connexion et réessayez."
+      : "Save failed. Check your connection and try again.");
+    return null;
+  }
+}
+
 async function confirmListingAvailable(id, e){
   if(e) e.stopPropagation();
   const l = L.find(x=>idKey(x.id)===idKey(id));
@@ -4489,34 +4521,24 @@ async function confirmListingAvailable(id, e){
     renewalResponseAt:now.toISOString(),
     expiredAt:null
   };
-  syncOwnListingPatch(id, patch);
-  try{
-    if(window.SB && SB.enabled() && state.user?.provider === "supabase"){
-      const updated = SB.confirmListingAvailable
-        ? await SB.confirmListingAvailable(id)
-        : (SB.updateListing ? await SB.updateListing({...l, ...patch}) : null);
-      if(updated) syncOwnListingPatch(id, updated);
-    }
-  }catch(err){ console.warn("[confirm available]", err); }
+  const saved = await saveOwnListingChange(l, patch, {renew:true});
+  if(!saved) return false;
+  syncOwnListingPatch(id, {...patch, ...saved});
   persistState();
   render();
   closeNotifPanel();
-  showToast(state.lang==="fr" ? "Annonce gardée en ligne pour 14 jours." : "Listing kept online for 14 days.");
+  showToast(state.lang==="fr" ? "Annonce gardée en ligne pour 30 jours." : "Listing kept online for 30 days.");
+  return true;
 }
 
 async function setOwnListingSold(id, sold, e){
   if(e) e.stopPropagation();
   const l = L.find(x=>idKey(x.id)===idKey(id));
   if(!l || !isOwnListing(l)) return;
-  l.sold = !!sold;
-  l.reserved = false;
-  l.status = sold ? "sold" : "active";
-  const u = userListings.find(x=>idKey(x.id)===idKey(id));
-  if(u){ u.sold = l.sold; u.reserved = false; u.status = l.status; }
-  removeListingExpiryNotifications(id);
-  try{
-    if(window.SB && SB.enabled() && state.user?.provider === "supabase" && SB.updateListing) await SB.updateListing(l);
-  }catch(err){ console.warn("[sold]", err); }
+  const patch = {sold:!!sold, reserved:false, status:sold ? "sold" : "active"};
+  const saved = await saveOwnListingChange(l, patch);
+  if(!saved) return false;
+  syncOwnListingPatch(id, {...patch, ...saved});
   persistState();
   render();
   if(document.querySelector("#detailModal.open")) openListing(l.id, false);
@@ -4538,22 +4560,21 @@ async function deleteOwnListing(id, e){
   const ok = window.confirm(state.lang==="fr"
     ? "Supprimer définitivement cette annonce ? Pour une vente terminée, préférez « Marquer comme vendu »."
     : "Permanently delete this listing? For a completed sale, use “Mark as sold” instead.");
-  if(!ok) return;
+  if(!ok) return false;
+  if(!await saveOwnListingChange(l, null, {remove:true})) return false;
   const idx = L.findIndex(x=>idKey(x.id)===idKey(id));
   if(idx >= 0) L.splice(idx, 1);
   userListings = userListings.filter(x=>idKey(x.id)!==idKey(id));
   state.favs.delete(idKey(id));
   removeListingExpiryNotifications(id);
-  try{
-    if(window.SB && SB.enabled() && state.user?.provider === "supabase" && SB.deleteListing) await SB.deleteListing(id);
-  }catch(err){ console.warn("[delete listing]", err); }
   persistState();
   closeModal("detailModal");
   render();
   showToast(state.lang==="fr" ? "Annonce supprimée." : "Listing deleted.");
+  return true;
 }
 
-// "Sold" from the 2-week renewal reminder: unlike the general "mark as
+// "Sold" from the 30-day renewal reminder: unlike the general "mark as
 // sold" toggle elsewhere (which just tags status=sold and keeps it
 // visible), confirming a sale from the reminder removes the listing
 // outright — the whole point of the reminder is to keep sold items off
@@ -4562,19 +4583,18 @@ async function markSoldAndRemove(id, e){
   if(e) e.stopPropagation();
   const l = L.find(x=>idKey(x.id)===idKey(id));
   if(!l || !isOwnListing(l)) return;
+  if(!await saveOwnListingChange(l, null, {remove:true})) return false;
   const idx = L.findIndex(x=>idKey(x.id)===idKey(id));
   if(idx >= 0) L.splice(idx, 1);
   userListings = userListings.filter(x=>idKey(x.id)!==idKey(id));
   state.favs.delete(idKey(id));
   removeListingExpiryNotifications(id);
-  try{
-    if(window.SB && SB.enabled() && state.user?.provider === "supabase" && SB.deleteListing) await SB.deleteListing(id);
-  }catch(err){ console.warn("[sold+remove]", err); }
   persistState();
   closeModal("detailModal");
   closeNotifPanel();
   render();
   showToast(state.lang==="fr" ? "Vendu — annonce retirée du site." : "Sold — listing removed from the site.");
+  return true;
 }
 
 function ownerActionBarHTML(l){
@@ -5503,20 +5523,24 @@ async function createListing(e){
     feat:editing?.feat ?? true
   };
 
-  // Supabase : upload des photos dans Storage puis insertion en base.
-  // En cas d'échec on retombe sur l'annonce locale (data URL) sans bloquer.
+  // A real account must receive a confirmed backend write. On failure,
+  // preserve the form and draft rather than pretending a local copy is live.
   let published = null;
-  if(window.SB && SB.enabled() && state.user && state.user.provider === "supabase"){
+  if(state.user?.provider === "supabase"){
     const submitBtn = e.target.querySelector("button[type=submit]");
     if(submitBtn){ submitBtn.disabled = true; }
     try {
+      if(!(window.SB && SB.enabled())) throw new Error("Backend unavailable");
       const urls = profile.photos && selectedPostFiles.length ? await SB.uploadPhotos(selectedPostFiles) : [];
+      if(profile.photos && selectedPostFiles.length && urls.length !== selectedPostFiles.length){
+        throw new Error("Not all listing photos were uploaded");
+      }
       if(urls.length) listing.photos = urls;
       published = editing ? await SB.updateListing(listing) : await SB.insertListing(listing);
-    } catch(err){ console.warn("[post] Supabase KO, fallback local:", err); }
+    } catch(err){ console.warn("[post] Supabase save failed:", err); }
     if(submitBtn){ submitBtn.disabled = false; }
-    if(editing && !published){
-      showToast(state.lang==="fr" ? "Annonce non modifiée. Réessayez." : "Listing not updated. Please try again.");
+    if(!published){
+      showToast(state.lang==="fr" ? "Enregistrement non confirmé. Réessayez ; votre formulaire est conservé." : "Save not confirmed. Please try again; your form has been kept.");
       return false;
     }
   }
@@ -5530,9 +5554,8 @@ async function createListing(e){
     else if(!published) userListings.unshift(finalListing);
     persistState();
   } else {
-    // Add to local state regardless of local-fallback vs. real Supabase
-    // publish — otherwise the profile's own-listings count and "My
-    // listings" stay stale until the next full hydrate (e.g. re-login).
+    // Keep own-listings counts in sync after a confirmed publish (or a
+    // deliberate local demo write).
     userListings.unshift(finalListing);
     L.unshift(finalListing);
     persistState();

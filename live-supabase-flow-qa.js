@@ -143,17 +143,17 @@ const siteUrl = "https://buyselltradesxm.com/";
 
   listingId = result.insertedListing?.id || null;
 
-  // Turnstile intentionally blocks headless signup. Report this as a skipped
-  // integration check instead of waiting two minutes or calling it an app
-  // failure; the normal browser flow still requires and verifies CAPTCHA.
+  // A timeout does not establish a CAPTCHA cause and does not prove the
+  // pending request had no side effects. This is an incomplete test, never
+  // a successful integration run.
   if (/^(signup|signin)_timeout$/.test(result.signupError || result.signinError || "")) {
     console.log(JSON.stringify({
       errors,
-      skipped: "Cloudflare Turnstile CAPTCHA is unavailable in the headless QA runner",
+      incomplete: "Authentication timed out; the cause and request outcome are unverified. Reconcile any created QA user before retrying.",
       result
     }, null, 2));
     await browser.close();
-    process.exit(0);
+    process.exit(1);
   }
 
   if (!result.signedUp && !(result.signedIn && /already registered/i.test(result.signupError || ""))) {

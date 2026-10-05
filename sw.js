@@ -11,7 +11,7 @@
  *
  * Bump CACHE_VERSION on any change here to force a clean cache swap.
  */
-const CACHE_VERSION = 'bst-v20-deep-link';
+const CACHE_VERSION = 'bst-v21-confirmed-saves';
 const APP_SHELL = `app-shell-${CACHE_VERSION}`;
 const RUNTIME = `runtime-${CACHE_VERSION}`;
 const FONTS = `fonts-${CACHE_VERSION}`;
@@ -24,11 +24,16 @@ const PRECACHE_URLS = [
   '/manifest.webmanifest',
   '/pwa.js',
   '/lib/supabase-2.74.0.min.js',
+  '/supabase-config.js',
+  '/supabase-api.js',
+  '/app-index.js',
+  '/app-marketplace.js',
   '/frame-guard.js',
   '/telemetry.js',
   '/captcha.js',
   '/offline.js',
   '/native-ios.js',
+  '/native-admob.js',
   '/img-utils.js',
   '/draft-store.js',
   '/push-config.js',
@@ -36,6 +41,15 @@ const PRECACHE_URLS = [
   '/consent.js',
   '/ads-config.js',
   '/ads.js',
+  '/BuySellTradeSxm.Logo.png',
+  '/fonts/fonts.css',
+  '/fonts/spacegrotesk-V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2',
+  '/fonts/spacegrotesk-V8mDoQDjQSkFtoMM3T6r8E7mPb94C-s0.woff2',
+  '/fonts/spacegrotesk-V8mDoQDjQSkFtoMM3T6r8E7mPb54C-s0.woff2',
+  '/fonts/instrumentsans-pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2',
+  '/fonts/instrumentsans-pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0She1YmV.woff2',
+  '/fonts/instrumentsans-pxigypc9vsFDm051Uf6KVwgkfoSbSnNPooZAN0lInHGpCWNE27lgU-XJojENuu-2oyAH297Y.woff2',
+  '/fonts/instrumentsans-pxigypc9vsFDm051Uf6KVwgkfoSbSnNPooZAN0lInHGpCWNE27lgU-XJojENuu-2oy4H2w.woff2',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/favicon-32.png',
@@ -86,21 +100,29 @@ async function networkFirstHtml(request) {
   }
 }
 
-async function staleWhileRevalidate(request, cacheName) {
+async function staleWhileRevalidate(request, cacheName, event) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
+  const shell = await caches.open(APP_SHELL);
+  const cached = await cache.match(request) || await shell.match(request);
   const network = fetch(request)
     .then((res) => {
       if (res && res.ok) cache.put(request, res.clone());
       return res;
     })
     .catch(() => null);
-  return cached || network || fetch(request);
+  // Keep revalidation alive after returning a cached response. A Promise
+  // object is always truthy, even when it later resolves to null offline.
+  event.waitUntil(network.then(() => {}));
+  if(cached) return cached;
+  const fresh = await network;
+  if(fresh) return fresh;
+  return Response.error();
 }
 
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
+  const shell = await caches.open(APP_SHELL);
+  const cached = await cache.match(request) || await shell.match(request);
   if (cached) return cached;
   const res = await fetch(request);
   if (res && (res.ok || res.type === 'opaque')) cache.put(request, res.clone());
@@ -136,7 +158,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(staleWhileRevalidate(request, RUNTIME));
+  event.respondWith(staleWhileRevalidate(request, RUNTIME, event));
 });
 
 /* ------------------------------------------------------------------ *

@@ -35,6 +35,8 @@ exclude:
   - playwright-category-form-qa.js
   - playwright-clickable-sections-qa.js
   - playwright-edit-listing-qa.js
+  - playwright-save-failures-qa.js
+  - APP_QA_STATUS.md
   - playwright-gallery-search-qa.js
   - playwright-messenger-inbox-qa.js
   - playwright-notifications-qa.js

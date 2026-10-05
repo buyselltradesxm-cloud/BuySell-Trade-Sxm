@@ -36,7 +36,7 @@ const { chromium } = require("playwright");
     if (!pricingOpen) errors.push(`${path}: change plan did not open pricing`);
     await page.evaluate(() => document.getElementById("boostModal")?.classList.remove("open"));
 
-    await page.evaluate(() => {
+    const renewalDate = await page.evaluate(() => {
       state.user = normalizeUser({
         id: "qa-sub-pro",
         name: "QA Pro",
@@ -44,8 +44,8 @@ const { chromium } = require("playwright");
         accountType: "business",
         accountPlan: "pro-business",
         subscriptionStatus: "active",
-        subscriptionStarted: "2026-09-01T12:00:00.000Z",
-        subscriptionCurrentPeriodEnd: "2026-10-01T12:00:00.000Z"
+        subscriptionStarted: new Date(Date.now() - 5 * 86400000).toISOString(),
+        subscriptionCurrentPeriodEnd: new Date(Date.now() + 25 * 86400000).toISOString()
       });
       const existing = L.find(l => l.ownerId === state.user.id);
       if (!existing) {
@@ -67,12 +67,14 @@ const { chromium } = require("playwright");
       }
       render();
       openProfile();
+      return formatProfileDate(state.user.subscriptionCurrentPeriodEnd);
     });
 
     const proText = await page.locator("#profileModal.open").innerText();
     if (!/Pro Business/.test(proText)) errors.push(`${path}: missing Pro plan label`);
     if (!/1 \/ 30/.test(proText)) errors.push(`${path}: missing Pro listing quota`);
-    if (!/01 oct\. 2026|Oct 01, 2026|Oct 1, 2026/.test(proText)) errors.push(`${path}: missing Pro renewal date`);
+    if (!proText.includes(renewalDate)) errors.push(`${path}: missing Pro renewal date`);
+    if (!await page.evaluate(() => hasActiveProSubscription(state.user))) errors.push(`${path}: active fixture is not active`);
 
     await page.evaluate(() => {
       const button = [...document.querySelectorAll("#profileModal.open button")]
@@ -82,6 +84,24 @@ const { chromium } = require("playwright");
     const toast = await page.locator("#toast").innerText({ timeout: 2000 }).catch(() => "");
     // Without a Stripe customer the app must still tell a subscriber how to cancel.
     if (!/Portail indisponible|Portal unavailable/i.test(toast)) errors.push(`${path}: manage subscription gave no way to cancel`);
+
+    const expired = await page.evaluate(async () => {
+      state.user.subscriptionCurrentPeriodEnd = new Date(Date.now() - 86400000).toISOString();
+      renderProfile();
+      closeModal("postModal");
+      closeModal("paymentModal");
+      openPostModal();
+      return {
+        active: hasActiveProSubscription(state.user),
+        pendingBadge: !!document.querySelector("#profileModal .subscription-badges .pending"),
+        publishing: document.getElementById("postModal").classList.contains("open"),
+        paymentRequired: document.getElementById("paymentModal").classList.contains("open"),
+        boosted: await applyAutomaticIncludedBoosts({ silent: true })
+      };
+    });
+    if (expired.active || !expired.pendingBadge || expired.publishing || !expired.paymentRequired || expired.boosted !== 0) {
+      errors.push(`${path}: expired subscription still grants publishing or boosts: ${JSON.stringify(expired)}`);
+    }
 
     await page.close();
   }

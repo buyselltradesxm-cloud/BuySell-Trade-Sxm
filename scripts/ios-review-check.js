@@ -75,7 +75,11 @@ const server = http.createServer((req, res) => {
       assert.ok(calls.findIndex(x => x[1] === "verify") < calls.findIndex(x => x[0] === "finish"));
       await page.evaluate(() => { setLang("en"); openPaymentModal({ existingUser: true, plan: "pro-starter" }); });
       await page.waitForFunction(() => document.getElementById("paymentPlanPrice").textContent.includes("€12.34"));
-      assert.match(await page.locator('[data-i18n="paymentDemoText"]').innerText(), /auto-renewing/);
+      assert.match(await page.locator('#paymentRenewalTerms').innerText(), /renew.*automatically|auto-renew/i);
+      const renewalText = await page.locator('#paymentRenewalTerms').innerText();
+      const localizedPrice = (await page.locator('#paymentPlanPrice').innerText()).replace(/\s*\/\s*month$/, '');
+      assert.ok(renewalText.includes(localizedPrice), `Renewal disclosure must match the Apple localized price: ${renewalText}`);
+      assert.ok(!renewalText.includes('$29'), "Apple renewal disclosure must not quote the web Stripe price");
       assert.equal(await page.locator("[data-apple-restore]").first().isVisible(), true);
       assert.deepEqual(errors, []);
       await page.close();

@@ -46,7 +46,10 @@ function check(name, ok, detail) {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log('  [pageerror] ' + e.message));
-  page.on('requestfailed', (r) => console.log('  [reqfailed] ' + r.url() + ' — ' + (r.failure() && r.failure().errorText)));
+  page.on('requestfailed', (r) => {
+    const url = new URL(r.url());
+    console.log('  [reqfailed] ' + url.origin + url.pathname + ' - ' + (r.failure() && r.failure().errorText));
+  });
 
   await page.goto(base + '/', { waitUntil: 'domcontentloaded', timeout: 45000 });
   await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
@@ -109,6 +112,21 @@ function check(name, ok, detail) {
   check('offline navigation serves a cached page (not browser error)',
     !!offlineResp || /hors ligne|offline|connexion|Buy Sell Trade/i.test(bodyText),
     (bodyText || '').slice(0, 60).replace(/\n/g, ' '));
+  const offlineApp = await page.evaluate(() => ({
+    listingHandler: typeof window.openListing === 'function',
+    cards: document.querySelectorAll('#grid [data-click="openListing"]').length,
+    draftStore: !!window.Drafts
+  }));
+  check('offline cached app runs its scripts and shows listings', offlineApp.listingHandler && offlineApp.cards > 0 && offlineApp.draftStore,
+    JSON.stringify(offlineApp));
+  await page.goto(base + '/marketplace.html', { waitUntil: 'load' });
+  const offlineMarketplace = await page.evaluate(() => ({
+    listingHandler: typeof window.openListing === 'function',
+    cards: document.querySelectorAll('#grid [data-click="openListing"]').length,
+    draftStore: !!window.Drafts
+  }));
+  check('offline marketplace page runs its scripts and shows listings', offlineMarketplace.listingHandler && offlineMarketplace.cards > 0 && offlineMarketplace.draftStore,
+    JSON.stringify(offlineMarketplace));
   await ctx.setOffline(false);
 
   await browser.close();

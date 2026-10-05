@@ -19,6 +19,7 @@ const headers = {
 async function request(label, endpoint, options = {}) {
   const response = await fetch(`${url}${endpoint}`, {
     ...options,
+    signal: AbortSignal.timeout(20000),
     headers: { ...headers, ...(options.headers || {}) }
   });
   const text = await response.text();
@@ -37,52 +38,53 @@ function fail(errors, label, detail) {
   errors.push(`${label}: ${detail}`);
 }
 
+function securityRejection(check) {
+  return [401, 403].includes(check.status) && check.body?.code === "42501";
+}
+
 (async () => {
   const errors = [];
   const checks = [];
 
   const listings = await request("public listings expose seller_name", "/rest/v1/listings?select=id,title,seller_name&limit=3");
   checks.push(listings);
-  if (!listings.ok) fail(errors, listings.label, `expected 200, got ${listings.status}`);
+  if (!listings.ok || !Array.isArray(listings.body)) fail(errors, listings.label, `expected 200 array, got ${listings.status}`);
 
   const profiles = await request("anon cannot read profiles", "/rest/v1/profiles?select=id,name,role&limit=1");
-  checks.push(profiles);
   // Production hardening revokes the anon table grant, so PostgREST returns
   // 401 instead of returning an empty 200 result. Accept either secure shape:
   // older deployments may still expose an empty RLS-filtered response.
-  if (![200, 401, 403].includes(profiles.status)) {
-    fail(errors, profiles.label, `expected 200 empty or 401/403 denied, got ${profiles.status}`);
-  }
-  if (Array.isArray(profiles.body) && profiles.body.length !== 0) {
-    fail(errors, profiles.label, "profiles returned rows to anon user");
-  }
+  const profilesSecure = securityRejection(profiles) ||
+    (profiles.status === 200 && Array.isArray(profiles.body) && profiles.body.length === 0);
+  checks.push(expected(profiles, profilesSecure, "Expected empty RLS result or explicit permission denial"));
+  if (!profilesSecure) fail(errors, profiles.label, `unexpected response ${profiles.status}/${profiles.body?.code || "rows"}`);
 
   const reportInsert = await request("anon cannot create reports", "/rest/v1/reports", {
     method: "POST",
     body: JSON.stringify({
-      listing_id: 1,
+      listing_id: -9007199254740000,
       reporter_id: "00000000-0000-4000-8000-000000000000",
       reason: "anon qa should fail"
     })
   });
-  checks.push(expected(reportInsert, reportInsert.status >= 400, "Expected security rejection"));
-  if (reportInsert.status < 400) fail(errors, reportInsert.label, `expected rejection, got ${reportInsert.status}`);
+  checks.push(expected(reportInsert, securityRejection(reportInsert), "Expected permission denial, not a generic server error"));
+  if (!securityRejection(reportInsert)) fail(errors, reportInsert.label, `expected permission rejection, got ${reportInsert.status}/${reportInsert.body?.code}`);
 
   const adminStatus = await request("anon cannot call admin status RPC", "/rest/v1/rpc/admin_set_listing_status", {
     method: "POST",
-    body: JSON.stringify({ listing_id: 1, new_status: "active" })
+    body: JSON.stringify({ listing_id: -9007199254740000, new_status: "active" })
   });
-  checks.push(expected(adminStatus, adminStatus.status >= 400, "Expected admin-only rejection"));
-  if (adminStatus.status < 400) fail(errors, adminStatus.label, `expected rejection, got ${adminStatus.status}`);
+  checks.push(expected(adminStatus, securityRejection(adminStatus), "Expected admin-only permission denial"));
+  if (!securityRejection(adminStatus)) fail(errors, adminStatus.label, `expected permission rejection, got ${adminStatus.status}/${adminStatus.body?.code}`);
 
   const adminDelete = await request("anon cannot call admin delete RPC", "/rest/v1/rpc/admin_delete_listing", {
     method: "POST",
-    body: JSON.stringify({ listing_id: 1 })
+    body: JSON.stringify({ listing_id: -9007199254740000 })
   });
-  checks.push(expected(adminDelete, adminDelete.status >= 400, "Expected admin-only rejection"));
-  if (adminDelete.status < 400) fail(errors, adminDelete.label, `expected rejection, got ${adminDelete.status}`);
+  checks.push(expected(adminDelete, securityRejection(adminDelete), "Expected admin-only permission denial"));
+  if (!securityRejection(adminDelete)) fail(errors, adminDelete.label, `expected permission rejection, got ${adminDelete.status}/${adminDelete.body?.code}`);
 
-  const publicBridge = await fetch("https://buyselltradesxm.com/supabase-api.js?backend-health=1");
+  const publicBridge = await fetch("https://buyselltradesxm.com/supabase-api.js?backend-health=1", { signal: AbortSignal.timeout(20000) });
   const bridgeText = await publicBridge.text();
   checks.push({
     label: "public site has hardened Supabase bridge",

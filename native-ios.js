@@ -64,6 +64,10 @@
       const plan = typeof pendingSelectedProPlan !== "undefined" ? pendingSelectedProPlan : null;
       const amount = document.getElementById("paymentPlanPrice");
       if (amount && plan) amount.textContent = catalog ? price(plan) : loading;
+      const renewalTerms = document.getElementById("paymentRenewalTerms");
+      if (renewalTerms && plan && typeof renewalDisclosure === "function") {
+        renewalTerms.textContent = catalog ? renewalDisclosure(plan, price(plan)) : loading;
+      }
       const boostAmount = document.getElementById("boostCheckoutAmount");
       if (boostAmount) boostAmount.textContent = catalog ? price("boost-" + (typeof pendingBoostDays !== "undefined" ? pendingBoostDays : 7)) : loading;
       document.querySelectorAll('[data-i18n="paymentDemoTitle"]').forEach(el => { el.textContent = fr() ? "Paiement Apple" : "Apple payment"; });
