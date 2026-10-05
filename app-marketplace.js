@@ -4844,12 +4844,28 @@ async function createAccount(e){
     if(isPaidPlan(accountPlan)) sessionStorage.setItem("bst-selected-pro-plan", accountPlan);
     const name = document.getElementById("accountName").value.trim();
     let result;
+    const submitButton = document.querySelector('#signupSubmitRow button[type="submit"]');
+    const submitLabel = submitButton?.textContent || "";
+    if(submitButton){
+      submitButton.disabled = true;
+      submitButton.classList.add("is-loading");
+      submitButton.setAttribute("aria-busy", "true");
+      submitButton.textContent = state.lang === "fr" ? "Création du compte…" : "Creating account…";
+    }
     try{
       result = await SB.signUpWithCode(email, password, {
         name, account_type: accountType, account_plan: signupPlan,
         business_name: businessName, phone: businessPhone
       });
     }catch(e){ result = {error:{message:"Account service unavailable"}}; }
+    finally{
+      if(submitButton){
+        submitButton.disabled = false;
+        submitButton.classList.remove("is-loading");
+        submitButton.removeAttribute("aria-busy");
+        submitButton.textContent = submitLabel;
+      }
+    }
     const { data, error: sbErr } = result || {error:{}};
     if(sbErr){
       // Do not reveal whether an address is already registered.
@@ -5107,17 +5123,6 @@ async function confirmSignupCode(){
   let result;
   try { result = await SB.verifySignupCode(pendingSignupOtp.email, pendingSignupOtp.userId, code); }
   catch(e){ result = {error:{code:"service_unavailable"}}; }
-  let loginResult = null;
-  // A code is single-use. If confirmation already succeeded but the browser
-  // lost the response (or an older client mislabeled the sign-in failure),
-  // allow the pending credentials to recover the newly confirmed session.
-  if(result.error && result.error.code === "invalid_or_expired_code"){
-    try { loginResult = await SB.signIn(pendingSignupOtp.email, pendingSignupOtp.password); }
-    catch(e){ loginResult = {error:{message:"Sign-in unavailable"}}; }
-    if(loginResult && loginResult.data && loginResult.data.session && loginResult.data.user){
-      result = {data:{confirmed:true, recovered:true}, error:null};
-    }
-  }
   if(result.error){
     const code = result.error.code || "";
     const messages = state.lang === "fr" ? {
@@ -5134,43 +5139,29 @@ async function confirmSignupCode(){
     otpError.textContent = messages[code] || (state.lang === "fr" ? "Le code n’a pas pu être vérifié. Vérifiez le dernier email reçu et réessayez." : "The code could not be verified. Check your latest email and try again.");
     return;
   }
-  if(!loginResult){
-    try { loginResult = await SB.signIn(pendingSignupOtp.email, pendingSignupOtp.password); }
-    catch(e){ loginResult = {error:{message:"Sign-in unavailable"}}; }
-  }
-  const data = loginResult && loginResult.data;
-  if((loginResult && loginResult.error) || !(data && data.session && data.user)){
-    const email = pendingSignupOtp.email;
-    pendingSignupOtp = null;
-    document.getElementById("signupFields").hidden = false;
-    document.getElementById("signupSubmitRow").hidden = false;
-    document.getElementById("signupOtpStep").hidden = true;
-    document.getElementById("loginEmail").value = email;
-    document.getElementById("loginError").textContent = state.lang === "fr"
-      ? "Code accepté : votre adresse email est confirmée. Connectez-vous avec votre mot de passe dans la section ci-dessous."
-      : "Code accepted: your email is confirmed. Sign in with your password in the section below.";
-    document.querySelector(".email-login-card")?.scrollIntoView({block:"center", behavior:"smooth"});
-    return;
-  }
-  const { name, accountType, accountPlan } = pendingSignupOtp;
-  await SB.upsertProfile({ name, account_type: accountType, account_plan: accountPlan });
-  await applySupabaseUser(data.user);
+  const email = pendingSignupOtp.email;
   pendingSignupOtp = null;
-  showToast(t().otpConfirmed);
   const form = document.getElementById("signupOtpStep").closest("form");
   if(form) form.reset();
   document.getElementById("signupFields").hidden = false;
   document.getElementById("signupSubmitRow").hidden = false;
   document.getElementById("signupOtpStep").hidden = true;
-  selectAccountPlan("personal-free", document.querySelector(".plan-card"));
-  completeAuth();
+  document.getElementById("loginEmail").value = email;
+  document.getElementById("loginPassword").value = "";
+  document.getElementById("loginError").textContent = state.lang === "fr"
+    ? "Adresse email confirmée. Votre compte est prêt : connectez-vous avec votre mot de passe ci-dessous."
+    : "Email confirmed. Your account is ready: sign in with your password below.";
+  showToast(t().otpConfirmed);
+  document.querySelector(".email-login-card")?.scrollIntoView({block:"center", behavior:"smooth"});
 }
 
 async function resendSignupCode(){
   if(!pendingSignupOtp) return;
   const otpError = document.getElementById("signupOtpError");
   const { error } = await SB.resendSignupCode(pendingSignupOtp.email, pendingSignupOtp.userId);
-  otpError.textContent = error ? (error.message || t().otpInvalid) : "";
+  otpError.textContent = error ? (error.code === "already_confirmed"
+    ? (state.lang === "fr" ? "Adresse email déjà confirmée. Connectez-vous avec votre mot de passe ci-dessous." : "Email already confirmed. Sign in with your password below.")
+    : (error.message || t().otpInvalid)) : "";
   if(!error) showToast(t().otpResent);
 }
 

@@ -49,13 +49,15 @@
     if (widgetId !== null) return;
     box = document.createElement("div");
     box.id = "bst-captcha";
-    box.style.cssText = "position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2147483000;display:none;";
+    // Center the interaction challenge in the visible viewport. Anchoring it
+    // to the bottom clipped the checkbox on short screens and inside dialogs.
+    box.style.cssText = "position:fixed;inset:0;z-index:2147483000;display:none;place-items:center;box-sizing:border-box;width:100vw;height:100vh;height:100dvh;padding:16px;background:rgba(15,35,40,.22);backdrop-filter:blur(2px);";
     document.body.appendChild(box);
     widgetId = window.turnstile.render(box, {
       sitekey: siteKey,
       execution: "execute",
       appearance: "interaction-only",
-      "before-interactive-callback": function () { box.style.display = "block"; },
+      "before-interactive-callback": function () { box.style.display = "grid"; },
       "after-interactive-callback": function () { box.style.display = "none"; },
       callback: function (token) { settle(null, token); },
       "error-callback": function () { settle(new Error("captcha_failed")); return true; },

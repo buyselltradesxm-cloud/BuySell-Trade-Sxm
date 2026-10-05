@@ -522,7 +522,7 @@
     resendSignupCode: async function (email, userId) {
       var response = await fetch(window.SUPABASE_URL + "/functions/v1/signup-code", { method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY || "" }, body: JSON.stringify({ action: "resend", email: email, user_id: userId }) });
       var data = await response.json().catch(function () { return {}; });
-      return response.ok ? { data: data, error: null } : { data: null, error: { message: data.error || "Could not resend code" } };
+      return response.ok ? { data: data, error: null } : { data: null, error: { message: data.error || "Could not resend code", code: data.code || "", status: response.status } };
     },
     // provider: "google" | tout provider OAuth activé côté Supabase.
     // Redirige le navigateur ; onAuthChange() reprend la main au retour (session
