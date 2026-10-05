@@ -1,7 +1,7 @@
 /* ============================================================
  *  Configuration Supabase
  *  Projet reel actuel:
- *  - Account/organization: tchalaplus / tchalaplus1
+ *  - Account/organization: buyselltradesxm-cloud's Org
  *  - Project ref: szhaxlmronirhnntlwyb
  *  - Project URL: https://szhaxlmronirhnntlwyb.supabase.co
  *

@@ -5,6 +5,7 @@ The Android project (`android/`) is a Capacitor webview wrapper around
 will accept: a **signed release AAB** built and uploaded by CI.
 
 - App / package ID: `com.korekdigitalmarketing.buyselltradesxm`
+- GitHub repo: https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm
 - Play + Apple are the same pro account: `korekdigitalmarketing@gmail.com`
 - Build/publish workflow: `.github/workflows/mobile-android-cloud.yml`
   (manual — Actions → "Mobile Android Cloud Build" → Run workflow)

@@ -9,6 +9,7 @@ App name: Buy Sell Trade SXM
 Bundle ID: com.korekdigitalmarketing.buyselltradesxm
 Apple Team ID: CJ7X9S5JDT
 App Store Connect ID: 6809964445
+GitHub repo: https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm
 Workflow: .github/workflows/mobile-ios-cloud.yml
 ```
 
@@ -16,7 +17,7 @@ Workflow: .github/workflows/mobile-ios-cloud.yml
 
 Dans GitHub:
 
-1. Ouvrir le repo.
+1. Ouvrir le repo: https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm
 2. Aller dans `Actions`.
 3. Choisir `Mobile iOS Cloud Build`.
 4. Cliquer `Run workflow`.

@@ -6,7 +6,7 @@ Current production setup:
 
 ```text
 Google Cloud account: korekdigitalmarketing@gmail.com
-Supabase account/organization: tchalaplus / tchalaplus1
+Supabase account/organization: buyselltradesxm-cloud's Org
 Supabase project ref: szhaxlmronirhnntlwyb
 Website origin: https://buyselltradesxm.com
 Supabase OAuth callback: https://szhaxlmronirhnntlwyb.supabase.co/auth/v1/callback
@@ -54,7 +54,7 @@ GOOGLE_CLIENT_SECRET
 
 ## Supabase
 
-Create a Supabase access token from the `tchalaplus` / `tchalaplus1` account that owns project:
+Create a Supabase access token from an Owner account in the `buyselltradesxm-cloud` organization that owns project:
 
 ```text
 szhaxlmronirhnntlwyb

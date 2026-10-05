@@ -842,6 +842,8 @@
       "dependencies": [
         "npm:@capacitor-community/admob@^8.1.0",
         "npm:@capacitor/android@^8.5.1",
+        "npm:@capacitor/app@^8.1.2",
+        "npm:@capacitor/browser@^8.0.5",
         "npm:@capacitor/cli@^8.5.1",
         "npm:@capacitor/core@^8.5.1",
         "npm:@capacitor/ios@^8.5.1",

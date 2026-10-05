@@ -9,7 +9,7 @@ Quand quelqu'un cree un compte avec email + password, Supabase doit envoyer un e
 Le SMTP par defaut de Supabase est seulement pour tester. En production, il peut bloquer les emails, surtout pour les emails qui ne sont pas dans ton equipe Supabase. Donc pour un vrai site public, il faut brancher un SMTP pro.
 
 Projet Supabase actuel: `szhaxlmronirhnntlwyb`.
-Compte/organisation Supabase actuel: `tchalaplus` / `tchalaplus1`.
+Compte/organisation Supabase actuel: `buyselltradesxm-cloud`.
 
 ## Le choix recommande
 
@@ -109,7 +109,8 @@ Pour l'activer, ajoute ces secrets dans GitHub:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `RESEND_API_KEY`
 
-GitHub > repository `BuySell-Trade-Sxm` > Settings > Secrets and variables > Actions > New repository secret.
+GitHub repo: https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm
+Open its Settings > Secrets and variables > Actions > New repository secret.
 
 Sans ces secrets, l'action se lance mais n'envoie rien.
 

@@ -5,6 +5,7 @@ The `ios/` project is the same Capacitor webview wrapper as Android — it loads
 `ANDROID_PLAY_SETUP.md`.
 
 - App / bundle ID: `com.korekdigitalmarketing.buyselltradesxm`
+- GitHub repo: https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm
 - Apple Team ID: `CJ7X9S5JDT`  ·  App Store Connect app ID: `6809964445`
 - Account: `korekdigitalmarketing@gmail.com` (same pro account as Play)
 - Build/publish workflow: `.github/workflows/mobile-ios-cloud.yml`

@@ -1,6 +1,6 @@
 -- ============================================================
 --  Buy Sell Trade Sxm — installation complete de la base
---  Compte Supabase : tchalaplus / tchalaplus1
+--  Organisation Supabase : buyselltradesxm-cloud's Org
 --  Projet Supabase : szhaxlmronirhnntlwyb
 --  Usage : Supabase Dashboard > SQL Editor > New query >
 --          coller tout ce fichier > Run.  Rejouable sans risque.
