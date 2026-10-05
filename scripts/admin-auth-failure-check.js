@@ -96,6 +96,15 @@ const { chromium } = require('playwright');
         SB.signOut = async ()=>({error:null});
         await logoutUser();
         record('auth/logout-success: clear identity', state.user === null);
+        const resetAuth = window.db;
+        let resetPasswordUpdated = false;
+        window.db = {auth:{
+          updateUser:async ({password})=>{resetPasswordUpdated = password === 'QA secure reset password 123'; return {data:{user:{id:'qa-auth-user'}},error:null};},
+          signOut:async ()=>{throw new Error('QA transient global sign-out failure');}
+        }};
+        const resetResult = await api.updatePasswordAndRevokeSessions('QA secure reset password 123');
+        record('auth/reset-success-survives-revocation-network-error', resetPasswordUpdated && !resetResult.error);
+        window.db = resetAuth;
         SB.fetchProfile = async ()=>({name:'QA Profile',account_type:'personal',account_plan:'personal-free',role:'user'});
         SB.fetchBlocks = async ()=>[{id:targetId,name:'Blocked'}];
         await applySupabaseUser({id:'qa-profile-user',email:'qa-profile@example.com',user_metadata:{}});

@@ -597,11 +597,28 @@
 
     updatePasswordAndRevokeSessions: async function (password) {
       if (!window.db) return { error: { message: "Authentication unavailable" } };
-      var result = await window.db.auth.updateUser({ password: password });
+      var result;
+      try {
+        result = await window.db.auth.updateUser({ password: password });
+      } catch (error) {
+        return { error: error || { message: "Password update failed" } };
+      }
       if (result.error) return result;
       // A reset must invalidate other devices. Supabase revokes the current
-      // browser too, so the user must sign in with the new password.
-      await window.db.auth.signOut({ scope: "global" });
+      // browser too, so the user must sign in with the new password. The
+      // password change is already committed at this point: a transient error
+      // while revoking sessions must not tell the user the change failed.
+      var revocationError = null;
+      try {
+        var revocation = await window.db.auth.signOut({ scope: "global" });
+        revocationError = revocation && revocation.error || null;
+      } catch (error) {
+        revocationError = error;
+      }
+      if (revocationError) {
+        result.sessionRevocationWarning = true;
+        console.warn("[SB] Password changed, but global session revocation could not be confirmed.", revocationError.message);
+      }
       return result;
     },
 

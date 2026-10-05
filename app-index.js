@@ -5220,12 +5220,23 @@ async function completePasswordReset(e){
   let result;
   try{ result = await SB.updatePasswordAndRevokeSessions(password); }catch(e){ result = {error:{}}; }
   if(!result || result.error){
-    message.textContent = state.lang === "fr" ? "Modification impossible. Vérifiez votre connexion ou demandez un nouveau lien." : "Could not change password. Check your connection or request a new recovery link.";
+    const authError = result && result.error || {};
+    const authReason = String(authError.code || "") + " " + String(authError.message || "");
+    if(/session.*missing|auth session|expired|invalid.*token|flow.?state|pkce/i.test(authReason)){
+      message.textContent = state.lang === "fr" ? "Ce lien de réinitialisation est expiré ou invalide. Demandez un nouveau lien depuis cette application, puis ouvrez le dernier email reçu." : "This recovery link is expired or invalid. Request a new link from this app, then open the newest email.";
+    }else if(/network|fetch|timeout|offline/i.test(authReason)){
+      message.textContent = state.lang === "fr" ? "Connexion impossible. Vérifiez votre connexion Internet et réessayez." : "Could not connect. Check your internet connection and try again.";
+    }else{
+      message.textContent = state.lang === "fr" ? "Le mot de passe n'a pas pu être modifié. Demandez un nouveau lien depuis cette application et utilisez le dernier email reçu." : "The password could not be changed. Request a new link from this app and use the newest email.";
+    }
     return false;
   }
   closeModal("passwordResetModal");
   history.replaceState({}, "", location.pathname);
-  showToast(state.lang === "fr" ? "Mot de passe modifié. Reconnectez-vous." : "Password changed. Please sign in again.");
+  const successMessage = result.sessionRevocationWarning
+    ? (state.lang === "fr" ? "Mot de passe modifié. La déconnexion des autres appareils n'a pas pu être confirmée." : "Password changed. Sign-out on other devices could not be confirmed.")
+    : (state.lang === "fr" ? "Mot de passe modifié. Reconnectez-vous." : "Password changed. Please sign in again.");
+  showToast(successMessage);
   return false;
 }
 
