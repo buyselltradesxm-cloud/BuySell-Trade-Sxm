@@ -36,6 +36,7 @@
     "test:messenger-inbox": "node playwright-messenger-inbox-qa.js",
     "test:messaging-failures": "node scripts/messaging-failure-check.js",
     "test:admin-auth-failures": "node scripts/admin-auth-failure-check.js",
+    "test:password-reset-pkce": "node scripts/password-reset-pkce-check.js",
     "test:notifications": "node playwright-notifications-qa.js",
     "test:auto-boost": "node playwright-auto-boost-qa.js",
     "test:block-user": "node playwright-block-user-qa.js",

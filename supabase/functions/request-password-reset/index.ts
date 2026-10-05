@@ -9,8 +9,8 @@
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SITE_URL = (Deno.env.get("SITE_URL") || "https://buyselltradesxm.com").replace(/\/$/, "");
-// The reset request goes to Auth with the public key, so Auth applies its
-// CAPTCHA check to the visitor's Turnstile token (a service-role call skips it).
+// Legacy clients use the Edge Function as an Auth proxy. New clients request
+// client_pkce=true and let the browser SDK create and store the PKCE verifier.
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
 
 function serviceKey(): string {
@@ -43,8 +43,8 @@ function cors(req: Request): Record<string, string> {
   if (isAllowedOrigin(origin)) headers["Access-Control-Allow-Origin"] = origin;
   return headers;
 }
-function accepted(headers: Record<string, string>) {
-  return new Response(JSON.stringify({ accepted: true }), {
+function accepted(headers: Record<string, string>, allowed = false) {
+  return new Response(JSON.stringify({ accepted: true, allowed }), {
     status: 202,
     headers: { ...headers, "Content-Type": "application/json" },
   });
@@ -83,10 +83,12 @@ Deno.serve(async (req) => {
   if (new TextEncoder().encode(raw).byteLength > 2048) return accepted(headers);
   let email = "";
   let captchaToken = "";
+  let clientPkce = false;
   try {
     const body = JSON.parse(raw);
     email = String(body.email || "").trim().toLowerCase();
     captchaToken = String(body.captcha_token || "").slice(0, 4096);
+    clientPkce = body.client_pkce === true;
   } catch (_) { /* generic response */ }
 
   const ip = (req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
@@ -99,6 +101,14 @@ Deno.serve(async (req) => {
     return accepted(headers);
   }
 
+  if (clientPkce) {
+    // The browser sends the email with auth.resetPasswordForEmail() after this
+    // gate approves it. Calling /auth/v1/recover here would skip the verifier.
+    await securityEvent("password_reset_rate_limit_passed", subjectHash, ipHash);
+    return accepted(headers, true);
+  }
+
+  // Compatibility for clients deployed before client_pkce was introduced.
   const recoverKey = ANON_KEY || SERVICE_KEY;
   const redirectTo = `${SITE_URL}/?reset=1`;
   const recover = await fetch(`${SUPABASE_URL}/auth/v1/recover?redirect_to=${encodeURIComponent(redirectTo)}`, {
@@ -106,7 +116,6 @@ Deno.serve(async (req) => {
     headers: { apikey: recoverKey, Authorization: `Bearer ${recoverKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ email, gotrue_meta_security: { captcha_token: captchaToken } }),
   }).catch(() => null);
-  // The caller still gets the generic answer; the outcome is only recorded here.
   if (!recover || !recover.ok) {
     const type = recover && recover.status === 400 ? "password_reset_captcha_rejected" : "password_reset_auth_error";
     await securityEvent(type, subjectHash, ipHash);

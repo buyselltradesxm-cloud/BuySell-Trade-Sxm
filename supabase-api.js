@@ -581,18 +581,30 @@
 
     requestPasswordReset: async function (email) {
       if (!window.db) return { error: { message: "Authentication unavailable" } };
+      var captchaToken = (await captchaTokenOrNull()) || "";
       var response = await fetch(window.SUPABASE_URL + "/functions/v1/request-password-reset", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           apikey: window.SUPABASE_ANON_KEY
         },
-        body: JSON.stringify({ email: String(email || ""), captcha_token: (await captchaTokenOrNull()) || "" })
+        body: JSON.stringify({
+          email: String(email || ""),
+          client_pkce: true,
+          captcha_token: captchaToken
+        })
       });
-      // The endpoint intentionally uses one generic response for both known
-      // and unknown addresses to prevent account enumeration.
       if (!response.ok && response.status !== 202) return { error: { message: "Unable to request reset" } };
-      return { data: { accepted: true }, error: null };
+      var gate = await response.json().catch(function () { return {}; });
+      if (!gate.allowed) return { data: { accepted: true }, error: null };
+
+      // Start recovery from the browser so the PKCE verifier is created and
+      // stored by the same Supabase client that will exchange the email link.
+      // Calling /auth/v1/recover from the Edge Function skips that verifier.
+      return await window.db.auth.resetPasswordForEmail(String(email || "").trim(), {
+        redirectTo: window.location.origin + "/?reset=1",
+        captchaToken: captchaToken || undefined
+      });
     },
 
     updatePasswordAndRevokeSessions: async function (password) {
