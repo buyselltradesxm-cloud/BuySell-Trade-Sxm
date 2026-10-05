@@ -75,6 +75,7 @@ const { chromium } = require("playwright");
   await page.locator("#accountEmail").fill(email);
   await page.locator("#accountPassword").fill("password123");
   await page.locator("#accountPasswordConfirm").fill("password123");
+  await page.locator("#accountTermsConsent").check();
   await page.getByRole("button", { name: /créer mon compte|create my account/i }).click();
   await Promise.race([
     page.locator("#postModal.open").waitFor({ timeout: 10000 }).catch(() => null),

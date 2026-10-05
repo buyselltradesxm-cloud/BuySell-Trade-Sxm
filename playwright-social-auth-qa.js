@@ -14,6 +14,8 @@ const { chromium } = require("playwright");
 
   const results = [];
 
+  // The first Google button creates an account, which requires the 18+ / Terms box.
+  await page.locator("#accountTermsConsent").check();
   const googleBeforeUrl = page.url();
   await page.getByRole("button", { name: /Google/i }).first().click();
   await page.waitForTimeout(1500);
@@ -28,6 +30,8 @@ const { chromium } = require("playwright");
   await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /login/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
+  // The first Apple button creates an account, which requires the 18+ / Terms box.
+  await page.locator("#accountTermsConsent").check();
   const appleBeforeUrl = page.url();
   await page.getByRole("button", { name: /Apple/i }).first().click();
   await page.waitForTimeout(1500);

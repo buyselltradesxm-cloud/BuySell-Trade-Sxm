@@ -80,7 +80,8 @@ const { chromium } = require("playwright");
       if (button) button.click();
     });
     const toast = await page.locator("#toast").innerText({ timeout: 2000 }).catch(() => "");
-    if (!/Stripe|Billing/i.test(toast)) errors.push(`${path}: manage subscription did not explain Stripe Billing`);
+    // Without a Stripe customer the app must still tell a subscriber how to cancel.
+    if (!/Portail indisponible|Portal unavailable/i.test(toast)) errors.push(`${path}: manage subscription gave no way to cancel`);
 
     await page.close();
   }

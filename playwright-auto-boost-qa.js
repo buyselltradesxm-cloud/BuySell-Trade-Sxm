@@ -83,8 +83,9 @@ function startServer() {
         accountType: "business",
         accountPlan: "pro-business",
         subscriptionStatus: "active",
-        subscriptionStarted: "2026-09-01T08:00:00.000Z",
-        subscriptionCurrentPeriodEnd: "2026-10-01T08:00:00.000Z"
+        // Relative dates: a fixed period end silently turns this account inactive once it passes.
+        subscriptionStarted: new Date(Date.now() - 5 * 86400000).toISOString(),
+        subscriptionCurrentPeriodEnd: new Date(Date.now() + 25 * 86400000).toISOString()
       });
 
       L.length = 0;

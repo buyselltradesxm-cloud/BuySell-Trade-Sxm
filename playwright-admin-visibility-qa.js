@@ -1,7 +1,8 @@
 const { chromium } = require("playwright");
 const path = require("path");
 
-const fileUrl = `file://${path.resolve(__dirname, "index.html").replace(/\\/g, "/")}`;
+// Needs the local server on :5173 (the page no longer runs from file://).
+const fileUrl = "http://localhost:5173/";
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
@@ -24,7 +25,7 @@ const fileUrl = `file://${path.resolve(__dirname, "index.html").replace(/\\/g, "
       email: "normal.user@example.com",
       name: "Normal User",
       avatar: "NU",
-      role: "admin"
+      role: "user"
     };
     window.render();
   });
@@ -35,7 +36,7 @@ const fileUrl = `file://${path.resolve(__dirname, "index.html").replace(/\\/g, "
     return document.querySelector("#profileModal")?.textContent?.includes("Admin") || false;
   });
   if (normalProfileHasAdmin) {
-    errors.push("A non-allowlisted Supabase user with role=admin can see the profile Admin shortcut.");
+    errors.push("A Supabase user without the admin role can see the profile Admin shortcut.");
   }
   await page.evaluate(() => window.closeModal("profileModal"));
 
@@ -57,7 +58,7 @@ const fileUrl = `file://${path.resolve(__dirname, "index.html").replace(/\\/g, "
     return document.querySelector("#adminModal")?.classList.contains("open") || false;
   });
   if (!allowedAdminCanOpen) {
-    errors.push("An allowlisted Supabase user with role=admin cannot open admin.");
+    errors.push("A Supabase user with role=admin cannot open admin.");
   }
 
   console.log(JSON.stringify({ errors }, null, 2));
