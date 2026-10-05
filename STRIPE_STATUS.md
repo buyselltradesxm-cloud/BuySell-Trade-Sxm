@@ -23,6 +23,12 @@ Webhook URL:           https://szhaxlmronirhnntlwyb.supabase.co/functions/v1/str
 Live publishable key:  pk_live_51RMcyaQplshpsW9HWxO8OnsWlySoYBVqEsjsb8TnnBX4bDxhQW5euiHO4oqt9r1fLu2pn59JPWGzXw18KjzaLu6E00JMNNfeiQ
 ```
 
+Stripe does not store the Supabase login email or organization name for this
+integration. It stores the webhook destination and server-side secret values.
+The Supabase project ref and webhook URL stayed the same when ownership moved
+to `buyselltradesxm-cloud`, so there was no old Supabase account URL to replace
+in Stripe. The destination project remains the one named above.
+
 The publishable key is public by design and is **not used anywhere** in this
 project: checkout is created server-side by `create-checkout` and the browser
 is redirected to the returned URL, so no page loads Stripe.js. It is recorded
