@@ -2097,7 +2097,19 @@ function mobileAdHTML(slot){
 }
 
 /* ---------------- RENDER: FILTER + LOGIC ---------------- */
+// Les annonces d'exemple (sans vendeur) remplissent le site au lancement. Elles
+// sortent du fil des qu'il y a assez de vraies annonces actives.
+const SAMPLE_RETIRE_AT = 20;
+function samplesRetired(){
+  let real = 0;
+  for(const l of L){
+    if(l.sellerId && !listingIsSold(l) && !listingIsExpired(l) && ++real >= SAMPLE_RETIRE_AT) return true;
+  }
+  return false;
+}
+
 function passesFilters(l){
+  if(!l.sellerId && !isOwnListing(l) && samplesRetired()) return false;
   // Les annonces vendues/expirees sortent du fil principal, sauf pour leur propre vendeur
   // (qui doit pouvoir les retrouver pour les remettre en vente).
   if(listingIsSold(l) && !isOwnListing(l)) return false;
