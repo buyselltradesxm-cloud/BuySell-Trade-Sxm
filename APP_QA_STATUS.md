@@ -3,6 +3,12 @@
 Checked: 2026-10-05. Repository: `buyselltradesxm-cloud/BuySell-Trade-Sxm`.
 
 **Launch decision: not yet ready for public launch approval.** Local regression
+
+## Latest code hardening (2026-10-05)
+
+- Stripe subscription deletion handling was hardened in `supabase/functions/stripe-webhook/index.ts`: if Stripe no longer returns a deleted subscription, the signed deletion event metadata is used to revoke the user's Pro entitlement.
+- Pricing copy now matches the configured $29/$59/$99/$149/$199 monthly plans and $6/$11/$20 boost prices.
+- The repository change is ready, but the Supabase CLI session currently has no organization/project privileges (`functions deploy` returned HTTP 403). The function must be deployed from a terminal authenticated as the `buyselltradesxm@gmail.com` owner before the fix is live.
 checks pass, but the real authenticated and payment journeys still need acceptance
 tests. A timeout, empty error log, active webhook, or simulated payment is not proof
 that a customer can complete those journeys.

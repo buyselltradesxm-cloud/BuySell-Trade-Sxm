@@ -143,14 +143,18 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ received: true }), { status: 200 });
     }
     const subscription = await stripeSubscription(subscriptionId);
-    const userId = subscription?.metadata?.supabase_user_id || object?.metadata?.supabase_user_id || object?.client_reference_id;
-    const priceId = subscription?.items?.data?.[0]?.price?.id;
+    // A deleted subscription may no longer be retrievable from Stripe. The
+    // deletion event still contains the authoritative metadata and item price,
+    // so use that event object to revoke access instead of leaving Pro active.
+    const source = subscription || (event.type === "customer.subscription.deleted" ? object : null);
+    const userId = source?.metadata?.supabase_user_id || object?.metadata?.supabase_user_id || object?.client_reference_id;
+    const priceId = source?.items?.data?.[0]?.price?.id || object?.items?.data?.[0]?.price?.id;
     const plan = PLAN_BY_PRICE[priceId || ""] || null;
-    if (!subscription || !userId || !/^[0-9a-f-]{36}$/i.test(userId) || !plan) {
+    if (!source || !userId || !/^[0-9a-f-]{36}$/i.test(userId) || (!plan && event.type !== "customer.subscription.deleted")) {
       await setEvent(event.id, "failed", "untrusted_subscription_data");
       return new Response(JSON.stringify({ received: true }), { status: 200 });
     }
-    if (!(await updateProfile(userId, subscription, plan))) throw new Error("profile_update_failed");
+    if (!(await updateProfile(userId, source, plan))) throw new Error("profile_update_failed");
     await setEvent(event.id, "processed");
     return new Response(JSON.stringify({ received: true }), { status: 200 });
   } catch (_) {
