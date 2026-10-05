@@ -57,6 +57,18 @@ SUPABASE_URL=https://szhaxlmronirhnntlwyb.supabase.co
 
 The public publishable key is stored in `supabase-config.js`. Never put the Supabase `service_role` key in frontend files.
 
+## Repository ownership
+
+The application source is maintained in the destination GitHub repository:
+
+```text
+https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm
+```
+
+The repository owner is `buyselltradesxm-cloud`, its default branch is `main`,
+and the local checkout's fetch and push remote point to that repository. See
+`ACCOUNT_OWNERSHIP.md` for the recorded ownership and live connection check.
+
 ## Production readiness check (2026-10-05)
 
 The existing project is active and healthy, linked to this checkout, and is
