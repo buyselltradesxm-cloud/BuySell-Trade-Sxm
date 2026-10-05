@@ -484,7 +484,7 @@
       var meta = typeof profile === "object" ? profile : { name: profile || "" };
       var response = await fetch(window.SUPABASE_URL + "/functions/v1/signup-code", { method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY || "" }, body: JSON.stringify({ action: "start", email: email, password: password, ...meta }) });
       var data = await response.json().catch(function () { return {}; });
-      return response.ok ? { data: data, error: null } : { data: null, error: { message: data.error || "Signup could not be completed" } };
+      return response.ok ? { data: data, error: null } : { data: null, error: { message: data.error || "Signup could not be completed", code: data.code || "", status: response.status } };
     },
     signIn: async function (email, password) {
       if (!window.db) return { error: { message: "Supabase non configuré" } };

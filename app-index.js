@@ -4809,8 +4809,25 @@ async function createAccount(e){
     }catch(e){ result = {error:{message:"Account service unavailable"}}; }
     const { data, error: sbErr } = result || {error:{}};
     if(sbErr){
-      // Do not reveal whether an address is already registered.
-      error.textContent = state.lang === "fr" ? "Inscription non terminée. Vérifiez vos informations et réessayez, ou connectez-vous si vous avez déjà un compte." : "Signup could not be completed. Check your details and try again, or sign in if you already have an account.";
+      // Keep existing-account status private, but surface safe operational
+      // errors so users know whether to retry, change their password, or log in.
+      const code = sbErr.code || "";
+      const messages = state.lang === "fr" ? {
+        password_rejected: "Ce mot de passe est refusé par le service. Essayez un mot de passe plus long.",
+        email_delivery_failed: "Le compte n’a pas pu être finalisé car l’email de vérification n’a pas été envoyé. Réessayez plus tard.",
+        signup_rate_limited: "Trop de tentatives de création de compte. Attendez une heure avant de réessayer.",
+        service_unavailable: "Le service de création de compte est temporairement indisponible. Réessayez dans quelques instants.",
+        invalid_email: "Vérifiez le format de votre adresse email et réessayez.",
+        signup_failed: "Inscription impossible. Cette adresse est peut-être déjà utilisée : essayez la connexion plus bas ou réinitialisez votre mot de passe."
+      } : {
+        password_rejected: "The service rejected this password. Try a longer password.",
+        email_delivery_failed: "We could not finish creating the account because the verification email was not sent. Please try again later.",
+        signup_rate_limited: "Too many signup attempts. Wait an hour before trying again.",
+        service_unavailable: "Account creation is temporarily unavailable. Please try again shortly.",
+        invalid_email: "Check the email address format and try again.",
+        signup_failed: "Signup could not be completed. This address may already have an account; try signing in below or reset the password."
+      };
+      error.textContent = messages[code] || (state.lang === "fr" ? "Inscription non terminée. Essayez la connexion plus bas ou réinitialisez votre mot de passe si cette adresse a déjà un compte." : "Signup could not be completed. Try signing in below, or reset your password if this address already has an account.");
       return false;
     }
     if(data && data.session && data.user){

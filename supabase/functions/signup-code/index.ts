@@ -18,19 +18,29 @@ async function consume(bucket: string, max_attempts: number, window_seconds: num
 Deno.serve(async (req) => {
   const h = headers(req); if (req.method === "OPTIONS") return new Response(null, { headers: h });
   if (req.method !== "POST" || !allowedOrigin(req.headers.get("origin") || "")) return json({ error:"forbidden" }, 403, h);
-  if (!SUPABASE_URL || !SERVICE_KEY || !RESEND_KEY) return json({ error:"signup unavailable" }, 503, h);
+  if (!SUPABASE_URL || !SERVICE_KEY || !RESEND_KEY) return json({ error:"signup unavailable", code:"service_unavailable" }, 503, h);
   let body: any; try { body = await req.json(); } catch (_) { return json({ error:"invalid request" }, 400, h); }
-  const action = String(body.action || "start"); const email = String(body.email || "").trim().toLowerCase(); if (!validEmail(email)) return json({ error:"invalid signup" }, 400, h);
-  const ip = (req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim(); if (!(await consume(`signup:email:${email}`, 3, 3600)) || !(await consume(`signup:ip:${ip}`, 10, 3600))) return json({ error:"signup unavailable" }, 429, h);
+  const action = String(body.action || "start"); const email = String(body.email || "").trim().toLowerCase(); if (!validEmail(email)) return json({ error:"invalid signup", code:"invalid_email" }, 400, h);
+  if (!["start", "verify", "resend"].includes(action)) return json({ error:"invalid request", code:"invalid_request" }, 400, h);
+  const ip = (req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
+  // The shared limiter accepts only hashed bucket identifiers (minimum 32
+  // characters). Hash both identifiers to satisfy that contract and avoid
+  // persisting raw email addresses or IPs in the rate-limit table.
+  const rate = action === "verify" ? { email: 10, ip: 30, seconds: 900 } : { email: 3, ip: 10, seconds: 3600 };
+  if (!(await consume(`signup:${action}:email:${await digest(email)}`, rate.email, rate.seconds)) || !(await consume(`signup:${action}:ip:${await digest(ip)}`, rate.ip, rate.seconds))) return json({ error:"signup unavailable", code:action === "verify" ? "verification_rate_limited" : "signup_rate_limited" }, 429, h);
   if (action === "start") {
-    const password = String(body.password || ""); if (password.length < 8 || password.length > 256) return json({ error:"invalid signup" }, 400, h);
+    const password = String(body.password || ""); if (password.length < 8 || password.length > 256) return json({ error:"invalid signup", code:"password_rejected" }, 400, h);
     const value = code(); const userMetadata = { name:String(body.name || "").slice(0,120), account_type:String(body.account_type || "personal").slice(0,20), account_plan:"personal-free", business_name:String(body.business_name || "").slice(0,160), phone:String(body.phone || "").slice(0,40), signup_code_hash:await digest(email + ":" + value), signup_code_expires_at:new Date(Date.now() + CODE_TTL_SECONDS * 1000).toISOString(), signup_code_attempts:0 };
-    const created = await auth("/admin/users", { method:"POST", body:JSON.stringify({ email, password, email_confirm:false, user_metadata:userMetadata }) }); if (!created.ok) return json({ error:"signup could not be completed" }, 400, h);
-    const user = await created.json(); if (!user?.id || !(await sendEmail(email, value))) { if (user?.id) await auth(`/admin/users/${encodeURIComponent(user.id)}`, { method:"DELETE" }); return json({ error:"signup unavailable" }, 503, h); } return json({ accepted:true, user_id:user.id }, 200, h);
+    let created: Response; try { created = await auth("/admin/users", { method:"POST", body:JSON.stringify({ email, password, email_confirm:false, user_metadata:userMetadata }) }); } catch (_) { return json({ error:"signup unavailable", code:"service_unavailable" }, 503, h); }
+    if (!created.ok) { let reason = ""; try { const detail = await created.json(); reason = String(detail.code || detail.error_code || "").toLowerCase(); } catch (_) {} return json({ error:"signup could not be completed", code:reason.includes("password") ? "password_rejected" : "signup_failed" }, 400, h); }
+    const user = await created.json(); if (!user?.id) return json({ error:"signup unavailable", code:"service_unavailable" }, 503, h);
+    let emailSent = false; try { emailSent = await sendEmail(email, value); } catch (_) {}
+    if (!emailSent) { try { await auth(`/admin/users/${encodeURIComponent(user.id)}`, { method:"DELETE" }); } catch (_) {} return json({ error:"signup unavailable", code:"email_delivery_failed" }, 503, h); }
+    return json({ accepted:true, user_id:user.id }, 200, h);
   }
   const userId = String(body.user_id || ""); if (!/^[0-9a-f-]{36}$/i.test(userId)) return json({ error:"invalid code" }, 400, h); const found = await auth(`/admin/users/${encodeURIComponent(userId)}`); if (!found.ok) return json({ error:"invalid code" }, 400, h); const user = await found.json(); if (String(user.email || "").toLowerCase() !== email) return json({ error:"invalid code" }, 400, h);
-  if (action === "resend") { const value = code(); const meta = { ...(user.user_metadata || {}), signup_code_hash:await digest(email + ":" + value), signup_code_expires_at:new Date(Date.now() + CODE_TTL_SECONDS * 1000).toISOString(), signup_code_attempts:0 }; const updated = await auth(`/admin/users/${encodeURIComponent(userId)}`, { method:"PUT", body:JSON.stringify({ user_metadata:meta, email_confirm:false }) }); if (!updated.ok || !(await sendEmail(email,value))) return json({ error:"signup unavailable" }, 503, h); return json({ accepted:true }, 200, h); }
-  if (action !== "verify") return json({ error:"invalid request" }, 400, h); const value = String(body.code || ""); const meta = user.user_metadata || {}; const attempts = Number(meta.signup_code_attempts || 0); const expires = Date.parse(String(meta.signup_code_expires_at || ""));
+  if (action === "resend") { const value = code(); const meta = { ...(user.user_metadata || {}), signup_code_hash:await digest(email + ":" + value), signup_code_expires_at:new Date(Date.now() + CODE_TTL_SECONDS * 1000).toISOString(), signup_code_attempts:0 }; const updated = await auth(`/admin/users/${encodeURIComponent(userId)}`, { method:"PUT", body:JSON.stringify({ user_metadata:meta, email_confirm:false }) }); if (!updated.ok || !(await sendEmail(email,value))) return json({ error:"signup unavailable", code:"email_delivery_failed" }, 503, h); return json({ accepted:true }, 200, h); }
+  const value = String(body.code || ""); const meta = user.user_metadata || {}; const attempts = Number(meta.signup_code_attempts || 0); const expires = Date.parse(String(meta.signup_code_expires_at || ""));
   if (!/^\d{4}$/.test(value) || attempts >= 5 || !expires || expires < Date.now() || (await digest(email + ":" + value)) !== meta.signup_code_hash) { await auth(`/admin/users/${encodeURIComponent(userId)}`, { method:"PUT", body:JSON.stringify({ user_metadata:{ ...meta, signup_code_attempts:attempts + 1 } }) }); return json({ error:"invalid or expired code" }, 400, h); }
   const clean = { ...meta }; delete clean.signup_code_hash; delete clean.signup_code_expires_at; delete clean.signup_code_attempts; const confirmed = await auth(`/admin/users/${encodeURIComponent(userId)}`, { method:"PUT", body:JSON.stringify({ email_confirm:true, user_metadata:clean }) }); if (!confirmed.ok) return json({ error:"confirmation unavailable" }, 503, h); return json({ confirmed:true }, 200, h);
 });
