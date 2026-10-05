@@ -47,7 +47,12 @@ function fail(errors, label, detail) {
 
   const profiles = await request("anon cannot read profiles", "/rest/v1/profiles?select=id,name,role&limit=1");
   checks.push(profiles);
-  if (!profiles.ok) fail(errors, profiles.label, `expected 200 empty result, got ${profiles.status}`);
+  // Production hardening revokes the anon table grant, so PostgREST returns
+  // 401 instead of returning an empty 200 result. Accept either secure shape:
+  // older deployments may still expose an empty RLS-filtered response.
+  if (![200, 401, 403].includes(profiles.status)) {
+    fail(errors, profiles.label, `expected 200 empty or 401/403 denied, got ${profiles.status}`);
+  }
   if (Array.isArray(profiles.body) && profiles.body.length !== 0) {
     fail(errors, profiles.label, "profiles returned rows to anon user");
   }
