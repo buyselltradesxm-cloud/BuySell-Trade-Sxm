@@ -55,4 +55,3 @@ This file intentionally contains no Supabase access tokens, service-role keys,
 database passwords, OAuth secrets, Stripe secrets, SMTP keys, or GitHub
 credentials. Keep those values in Supabase/GitHub secret storage and outside
 the public repository.
-
