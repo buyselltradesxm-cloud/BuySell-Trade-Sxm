@@ -5068,6 +5068,17 @@ async function confirmSignupCode(){
   let result;
   try { result = await SB.verifySignupCode(pendingSignupOtp.email, pendingSignupOtp.userId, code); }
   catch(e){ result = {error:{code:"service_unavailable"}}; }
+  let loginResult = null;
+  // A code is single-use. If confirmation already succeeded but the browser
+  // lost the response (or an older client mislabeled the sign-in failure),
+  // allow the pending credentials to recover the newly confirmed session.
+  if(result.error && result.error.code === "invalid_or_expired_code"){
+    try { loginResult = await SB.signIn(pendingSignupOtp.email, pendingSignupOtp.password); }
+    catch(e){ loginResult = {error:{message:"Sign-in unavailable"}}; }
+    if(loginResult && loginResult.data && loginResult.data.session && loginResult.data.user){
+      result = {data:{confirmed:true, recovered:true}, error:null};
+    }
+  }
   if(result.error){
     const code = result.error.code || "";
     const messages = state.lang === "fr" ? {
@@ -5084,9 +5095,10 @@ async function confirmSignupCode(){
     otpError.textContent = messages[code] || (state.lang === "fr" ? "Le code n’a pas pu être vérifié. Vérifiez le dernier email reçu et réessayez." : "The code could not be verified. Check your latest email and try again.");
     return;
   }
-  let loginResult;
-  try { loginResult = await SB.signIn(pendingSignupOtp.email, pendingSignupOtp.password); }
-  catch(e){ loginResult = {error:{message:"Sign-in unavailable"}}; }
+  if(!loginResult){
+    try { loginResult = await SB.signIn(pendingSignupOtp.email, pendingSignupOtp.password); }
+    catch(e){ loginResult = {error:{message:"Sign-in unavailable"}}; }
+  }
   const data = loginResult && loginResult.data;
   if((loginResult && loginResult.error) || !(data && data.session && data.user)){
     const email = pendingSignupOtp.email;
