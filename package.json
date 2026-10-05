@@ -17,6 +17,7 @@
     "build:listing-pages": "node scripts/build-listing-pages.js",
     "build:assets": "node scripts/version-assets.js",
     "test:assets": "node scripts/version-assets.js --check",
+    "test:release": "node scripts/release-check.js",
     "test:gallery-search": "node playwright-gallery-search-qa.js",
     "test:pro-payment": "node playwright-pro-payment-qa.js",
     "test:social-auth": "node playwright-social-auth-qa.js",

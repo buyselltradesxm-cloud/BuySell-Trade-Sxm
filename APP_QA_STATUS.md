@@ -78,6 +78,18 @@ The new GitHub Pages workflow generates these versions for every deployment and
 checks that backend/tooling files are excluded from the published artifact.
 Scheduled listing-page builds also trigger website publication.
 
+Deployment `37319148252` succeeded from commit `5ccbda2`. GitHub Pages is now
+configured to publish through GitHub Actions. The live release check passed for
+all three entry pages and all 21 referenced assets, including the service worker;
+each versioned response matches the local source. The report, asset generator and
+database schema return 404 on the production website. Public browsing and login
+UI checks also passed on both app routes at desktop and mobile widths.
+
+The existing Tchala session restored in a fresh browser tab after deployment.
+The translated photo button and removal of unsupported trust badges are visible
+in the real profile. A second already-signed-in account also survived a reload.
+No listings, messages, reports or payments were created during these checks.
+
 A read-only Supabase query confirmed a recent sign-in for
 `tchalaplus@gmail.com` and a confirmed email. This confirms an existing account's
 authentication, not new-account email delivery or the remaining paid journeys.
@@ -169,6 +181,8 @@ process you started.
 - `npm run test:push-client`: notification readiness and persistence failures.
 - `npm run build:assets`: regenerate versioned asset references after app changes.
 - `npm run test:assets`: check that the generated asset references are current.
+- `npm run test:release`: compare the public versioned assets with local source
+  and confirm that selected backend/tooling files are excluded from the site.
 - `npm run test:launch-smoke`: isolated public browsing on the live site at desktop
   and mobile sizes; no accounts, listings, messages, reports, or payments created.
 - `npm run test:backend`: public reads and explicit anonymous permission denials,
