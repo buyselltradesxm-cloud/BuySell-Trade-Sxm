@@ -480,6 +480,12 @@
       }));
     },
 
+    signUpWithCode: async function (email, password, profile) {
+      var meta = typeof profile === "object" ? profile : { name: profile || "" };
+      var response = await fetch(window.SUPABASE_URL + "/functions/v1/signup-code", { method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY || "" }, body: JSON.stringify({ action: "start", email: email, password: password, ...meta }) });
+      var data = await response.json().catch(function () { return {}; });
+      return response.ok ? { data: data, error: null } : { data: null, error: { message: data.error || "Signup could not be completed" } };
+    },
     signIn: async function (email, password) {
       if (!window.db) return { error: { message: "Supabase non configuré" } };
       var captchaToken = await captchaTokenOrNull();
@@ -497,6 +503,11 @@
       return window.db.auth.verifyOtp({ email: email, token: token, type: "signup" });
     },
 
+    verifySignupCode: async function (email, userId, token) {
+      var response = await fetch(window.SUPABASE_URL + "/functions/v1/signup-code", { method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY || "" }, body: JSON.stringify({ action: "verify", email: email, user_id: userId, code: token }) });
+      var data = await response.json().catch(function () { return {}; });
+      return response.ok ? { data: data, error: null } : { data: null, error: { message: data.error || "Invalid or expired code" } };
+    },
     // Renvoie un nouveau code de confirmation à la même adresse.
     resendSignupOtp: async function (email) {
       if (!window.db) return { error: { message: "Supabase non configuré" } };
@@ -508,6 +519,11 @@
       }));
     },
 
+    resendSignupCode: async function (email, userId) {
+      var response = await fetch(window.SUPABASE_URL + "/functions/v1/signup-code", { method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY || "" }, body: JSON.stringify({ action: "resend", email: email, user_id: userId }) });
+      var data = await response.json().catch(function () { return {}; });
+      return response.ok ? { data: data, error: null } : { data: null, error: { message: data.error || "Could not resend code" } };
+    },
     // provider: "google" | tout provider OAuth activé côté Supabase.
     // Redirige le navigateur ; onAuthChange() reprend la main au retour (session
     // détectée automatiquement dans l'URL par supabase-js).
