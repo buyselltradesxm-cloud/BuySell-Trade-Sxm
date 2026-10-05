@@ -1358,6 +1358,45 @@ function esc(s){
  * URL contains none of the characters esc() touches, so it survives
  * escaping intact and runs in the visitor's session when clicked.
  * Only allow http(s) links (and same-origin absolute paths) through. */
+function setupPasswordVisibilityControls(){
+  document.querySelectorAll('input[type="password"]').forEach(input=>{
+    if(input.closest(".password-field-control")) return;
+    const wrapper = document.createElement("div");
+    wrapper.className = "password-field-control";
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "password-visibility-toggle";
+    button.setAttribute("aria-label", state.lang === "fr" ? "Afficher le mot de passe" : "Show password");
+    button.setAttribute("aria-pressed", "false");
+    button.setAttribute("aria-controls", input.id);
+    button.title = button.getAttribute("aria-label");
+    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="password-eye-slash" d="m3 3 18 18"/></svg>';
+    button.addEventListener("click", ()=>{
+      const visible = input.type === "password";
+      input.type = visible ? "text" : "password";
+      wrapper.classList.toggle("password-is-visible", visible);
+      button.setAttribute("aria-pressed", String(visible));
+      const label = visible
+        ? (state.lang === "fr" ? "Masquer le mot de passe" : "Hide password")
+        : (state.lang === "fr" ? "Afficher le mot de passe" : "Show password");
+      button.setAttribute("aria-label", label);
+      button.title = label;
+    });
+    const form = input.closest("form");
+    if(form) form.addEventListener("reset", ()=>{
+      input.type = "password";
+      wrapper.classList.remove("password-is-visible");
+      button.setAttribute("aria-pressed", "false");
+      const label = state.lang === "fr" ? "Afficher le mot de passe" : "Show password";
+      button.setAttribute("aria-label", label);
+      button.title = label;
+    });
+    wrapper.appendChild(button);
+  });
+}
+
 function safeUrl(u){
   if(typeof u !== "string") return "";
   if(/^https?:\/\//i.test(u)) return u;
@@ -5928,7 +5967,7 @@ async function handleIncomingMessage(message){
 }
 
 /* ---------------- INIT ---------------- */
-loadLocalState(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); applyAutomaticIncludedBoosts({silent:true}); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(); openAdminFromUrl(); handleListingRenewalActionFromUrl(); handleUnsubscribeFromUrl(); if(new URLSearchParams(location.search).get("reset") === "1") setTimeout(openPasswordReset, 250);
+loadLocalState(); setupPasswordVisibilityControls(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); applyAutomaticIncludedBoosts({silent:true}); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(); openAdminFromUrl(); handleListingRenewalActionFromUrl(); handleUnsubscribeFromUrl(); if(new URLSearchParams(location.search).get("reset") === "1") setTimeout(openPasswordReset, 250);
 
 handlePaymentReturnFromUrl();
 

@@ -31,10 +31,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<script src="/frame-guard.js?v=76d3f4302b7f9433"></script>
-<script src="/telemetry.js?v=76d3f4302b7f9433"></script>
-<script src="/pwa.js?v=76d3f4302b7f9433" defer></script>
-<link href="/fonts/fonts.css?v=76d3f4302b7f9433" rel="stylesheet">
+<script src="/frame-guard.js?v=95fa3b22c66fe206"></script>
+<script src="/telemetry.js?v=95fa3b22c66fe206"></script>
+<script src="/pwa.js?v=95fa3b22c66fe206" defer></script>
+<link href="/fonts/fonts.css?v=95fa3b22c66fe206" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -1112,6 +1112,13 @@
     border:2px solid var(--line);border-radius:9px;background:var(--white);
     padding:10px 11px;min-height:42px;
   }
+  .password-field-control{position:relative;display:flex;align-items:center;width:100%;}
+  .password-field-control input{width:100%;padding-right:48px!important;}
+  .password-visibility-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--mute);cursor:pointer;}
+  .password-visibility-toggle:hover{background:var(--paper-deep);color:var(--ink);}
+  .password-visibility-toggle:focus-visible{outline:2px solid var(--sea);outline-offset:1px;}
+  .password-visibility-toggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .password-field-control.password-is-visible .password-eye-slash{display:none;}
   .field textarea{resize:vertical;min-height:92px;}
   .vehicle-fields{
     display:none;grid-column:1/-1;border:2px solid var(--line);border-radius:12px;
@@ -2829,20 +2836,20 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=76d3f4302b7f9433" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=76d3f4302b7f9433"></script>
-<script src="native-ios.js?v=76d3f4302b7f9433"></script>
-<script src="captcha.js?v=76d3f4302b7f9433"></script>
-<script src="supabase-api.js?v=76d3f4302b7f9433"></script>
-<script src="img-utils.js?v=76d3f4302b7f9433"></script>
-<script src="draft-store.js?v=76d3f4302b7f9433"></script>
-<script src="push-config.js?v=76d3f4302b7f9433"></script>
-<script src="push-notifications.js?v=76d3f4302b7f9433"></script>
-<script src="consent.js?v=76d3f4302b7f9433" defer></script>
-<script src="native-admob.js?v=76d3f4302b7f9433"></script>
-<script src="ads-config.js?v=76d3f4302b7f9433"></script>
-<script src="ads.js?v=76d3f4302b7f9433" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=95fa3b22c66fe206" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=95fa3b22c66fe206"></script>
+<script src="native-ios.js?v=95fa3b22c66fe206"></script>
+<script src="captcha.js?v=95fa3b22c66fe206"></script>
+<script src="supabase-api.js?v=95fa3b22c66fe206"></script>
+<script src="img-utils.js?v=95fa3b22c66fe206"></script>
+<script src="draft-store.js?v=95fa3b22c66fe206"></script>
+<script src="push-config.js?v=95fa3b22c66fe206"></script>
+<script src="push-notifications.js?v=95fa3b22c66fe206"></script>
+<script src="consent.js?v=95fa3b22c66fe206" defer></script>
+<script src="native-admob.js?v=95fa3b22c66fe206"></script>
+<script src="ads-config.js?v=95fa3b22c66fe206"></script>
+<script src="ads.js?v=95fa3b22c66fe206" defer></script>
 
-<script src="app-marketplace.js?v=76d3f4302b7f9433"></script>
+<script src="app-marketplace.js?v=95fa3b22c66fe206"></script>
 </body>
 </html>
