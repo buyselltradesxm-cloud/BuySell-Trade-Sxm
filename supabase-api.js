@@ -300,23 +300,25 @@
 
     // upload (remplace) la photo de profil de l'utilisateur connecté dans le
     // bucket public "avatars" ; reçoit un Blob/File déjà recadré côté client,
-    // renvoie l'URL publique (avec un paramètre de cache-busting) ou null.
+    // Each version is a new object: existing Storage policies permit INSERT,
+    // not UPDATE. The profile switches URLs only after its save succeeds.
     uploadAvatar: async function (blob) {
       if (!window.db || !blob || !isAllowedImage(blob)) return null;
       var user = await SB.currentUser();
       if (!user) return null;
       var bucket = window.db.storage.from("avatars");
-      var path = user.id + "/avatar.jpg";
+      var version = typeof crypto.randomUUID === "function" ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2);
+      var path = user.id + "/avatar-" + version + ".jpg";
       var up = await bucket.upload(path, blob, {
         cacheControl: "3600",
-        upsert: true,
+        upsert: false,
         contentType: "image/jpeg"
       });
       if (up.error) {
         console.warn("[SB] uploadAvatar:", up.error.message);
         return null;
       }
-      return bucket.getPublicUrl(path).data.publicUrl + "?v=" + Date.now();
+      return bucket.getPublicUrl(path).data.publicUrl;
     },
 
     // insère une annonce pour l'utilisateur connecté ; renvoie l'objet créé ou null
@@ -930,8 +932,11 @@
     /* --------- MESSAGES --------- */
 
     markMessageRead: async function (msgId) {
-      if (!window.db) return;
-      return window.db.rpc("mark_message_read", { msg_id: msgId });
+      if (!window.db || !msgId) return false;
+      try {
+        var res = await window.db.rpc("mark_message_read", { msg_id: msgId });
+        return !!res && !res.error;
+      } catch (e) { return false; }
     },
 
     // marque lus tous les messages non lus d'une conversation (ceux qui me sont
@@ -943,11 +948,14 @@
       var unread = messages.filter(function (m) {
         return m && !m.read && m.recipient_id === user.id;
       });
+      var done = 0;
       for (var i = 0; i < unread.length; i++) {
-        try { await window.db.rpc("mark_message_read", { msg_id: unread[i].id }); }
-        catch (e) { /* ignore : RLS ou message déjà lu */ }
+        if (await SB.markMessageRead(unread[i].id)) {
+          unread[i].read = true;
+          done++;
+        }
       }
-      return unread.length;
+      return done;
     },
 
     // envoie un message ; renvoie la ligne créée ou null.
@@ -1116,8 +1124,10 @@
       var res = await window.db
         .from("listings")
         .update({ moderation_status: status })
-        .eq("id", listingId);
+        .eq("id", listingId)
+        .select("id");
       if (res.error) { console.warn("[SB] setListingModerationStatus:", res.error.message); return false; }
+      if (!Array.isArray(res.data) || res.data.length !== 1) return false;
       await SB.logAdminEvent("set_moderation_status", "listing", listingId, { status: status });
       return true;
     },
@@ -1144,9 +1154,10 @@
           updated_by: user ? user.id : null,
           updated_at: new Date().toISOString()
         })
-        .eq("id", true);
+        .eq("id", true)
+        .select("id");
       if (res.error) { console.warn("[SB] saveModerationRules:", res.error.message); return false; }
-      return true;
+      return Array.isArray(res.data) && res.data.length === 1;
     },
 
     /* ---------------- ADMIN: users ---------------- */
@@ -1201,9 +1212,9 @@
 
     deleteAdCampaign: async function (id) {
       if (!window.db || !id) return false;
-      var res = await window.db.from("ad_campaigns").delete().eq("id", id);
+      var res = await window.db.from("ad_campaigns").delete().eq("id", id).select("id");
       if (res.error) { console.warn("[SB] deleteAdCampaign:", res.error.message); return false; }
-      return true;
+      return Array.isArray(res.data) && res.data.length === 1;
     },
 
     /* ---------------- ADMIN: stats ---------------- */

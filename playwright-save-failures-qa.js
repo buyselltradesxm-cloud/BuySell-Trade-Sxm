@@ -31,13 +31,13 @@ const { chromium } = require("playwright");
           state.favs.add(idKey(listing.id));
           notifications.push({ id: "qa-expiry", kind: "listing_expiring", listingId: listing.id });
           const failed = async () => { if (mode === "throw") throw new Error("QA network failure"); return mode === "false" ? false : null; };
-          window.SB = { enabled: () => true, confirmListingAvailable: failed, updateListing: failed,
+          window.SB = { enabled: () => mode !== "offline", confirmListingAvailable: failed, updateListing: failed,
             deleteListing: failed, uploadAvatar: async () => "https://example.com/new-avatar.jpg", upsertProfile: failed };
           window.confirm = () => true;
           return listing;
         };
         const record = (label, pass) => results.push({ label, pass: !!pass });
-        for (const mode of ["null", "false", "throw"]) {
+        for (const mode of ["null", "false", "throw", "offline"]) {
           for (const action of ["renew", "sold", "delete", "sold-remove"]) {
             const listing = setup(mode);
             const before = JSON.stringify(listing);

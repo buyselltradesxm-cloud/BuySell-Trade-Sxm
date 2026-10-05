@@ -1158,8 +1158,10 @@ async function refreshMessageBadge(inbox){
     setUnreadMessageCount(0);
     return;
   }
-  const conversations = inbox || await SB.fetchInbox();
-  if(!conversations) return;
+  const userId = state.user.id;
+  let conversations = inbox;
+  try{ if(!conversations) conversations = await SB.fetchInbox(); }catch(e){}
+  if(!conversations || state.user?.id !== userId) return;
   setUnreadMessageCount(conversations.reduce((total, conversation)=>total + (Number(conversation.unread) || 0), 0));
   seedMessageNotifications(conversations);
 }
@@ -1238,8 +1240,10 @@ function removeListingExpiryNotifications(id){
 
 async function refreshBackendNotifications(){
   if(!(window.SB && SB.enabled() && SB.fetchNotifications) || !state.user || state.user.provider !== "supabase") return;
-  const rows = await SB.fetchNotifications();
-  if(!Array.isArray(rows)) return;
+  const userId = state.user.id;
+  let rows;
+  try{ rows = await SB.fetchNotifications(); }catch(e){}
+  if(!Array.isArray(rows) || state.user?.id !== userId) return;
   rows.forEach(row=>{
     const kind = row.kind === "listing_renewal_required" ? "listing_expiring" : row.kind;
     pushNotification({
@@ -1304,7 +1308,7 @@ function persistState(){
     lang:state.lang, cur:state.cur, user:state.user,
     usersByEmail:isLocalDevHost() ? usersByEmail : {},
     favs:[...state.favs], saved:state.saved,
-    chatThreads,
+    chatThreads:isLocalDevHost() ? chatThreads : {},
     userListings,
     adminReports,
     adminBanned,
@@ -1519,6 +1523,7 @@ async function handleAvatarChange(input){
     return;
   }
   try {
+    if(state.user.provider === "supabase" && !(window.SB && SB.enabled())) throw new Error("Profile service unavailable");
     const blob = await resizeImageToSquareJpeg(file, 512);
     if(window.SB && SB.enabled()){
       const url = await SB.uploadAvatar(blob);
@@ -2000,8 +2005,9 @@ async function hydrateRealThread(id){
   if(!(window.SB && SB.enabled()) || !state.user || state.user.provider !== "supabase") return;
   const l = L.find(x=>idKey(x.id)===idKey(id));
   if(!l || !l.sellerId || l.sellerId === state.user.id) return;
+  const userId = state.user.id;
   const inbox = await SB.fetchInbox();
-  if(!inbox) return;
+  if(!inbox || state.user?.id !== userId) return;
   const conv = inbox.find(x => String(x.listingId) === String(id) && x.otherId === l.sellerId);
   const thread = threadFor(id);
   thread.real = true;
@@ -2562,7 +2568,7 @@ async function handleListingRenewalActionFromUrl(){
 function showTrustInfo(type){
   const messages = {
     email: state.lang==="fr" ? "Email vérifié: ce compte peut recevoir les messages importants." : "Verified email: this account can receive important messages.",
-    pro: state.lang==="fr" ? "Compte Pro certifié: abonnement business actif ou validé." : "Certified Pro account: business subscription active or approved.",
+    pro: state.lang==="fr" ? "Compte Pro: abonnement payant actif." : "Pro account: active paid subscription.",
     member: state.lang==="fr" ? "Membre de confiance: profil avec activité normale et historique positif." : "Trusted member: normal activity and positive history.",
     reply: state.lang==="fr" ? "Réponse rapide: le vendeur répond généralement vite aux acheteurs." : "Fast reply: the seller usually replies quickly."
   };
@@ -2892,6 +2898,28 @@ function scrollChatToBottom(id){
   if(log) log.scrollTop = log.scrollHeight;
 }
 
+const pendingMessageInputs = new WeakSet();
+
+async function sendConfirmedMessage(input, opts){
+  if(input && pendingMessageInputs.has(input)) return null;
+  const userId = state.user?.id;
+  if(input) pendingMessageInputs.add(input);
+  try{
+    if(!(window.SB && SB.enabled() && SB.sendMessage) || !opts.recipientId || isBlockedUser(opts.recipientId)) throw new Error("Messaging unavailable");
+    const sent = await SB.sendMessage(opts);
+    if(!sent) throw new Error("Message was not saved");
+    if(state.user?.id !== userId) return null;
+    // Preserve anything typed while this request was in flight.
+    if(input && input.value.trim() === opts.body) input.value = "";
+    return sent;
+  }catch(e){
+    showToast(state.lang==="fr" ? "Envoi non confirmé. Vérifiez la conversation avant de réessayer." : "Message delivery not confirmed. Check the conversation before retrying.");
+    return null;
+  }finally{
+    if(input) pendingMessageInputs.delete(input);
+  }
+}
+
 async function sendListingMessage(id, e){
   if(e) e.preventDefault();
   if(!state.user){
@@ -2908,14 +2936,9 @@ async function sendListingMessage(id, e){
   // Vraie messagerie : annonce avec vendeur réel + utilisateur Supabase.
   // On envoie le message en base ; la réponse arrivera via le realtime,
   // pas via le faux "vendeur" simulé.
-  if(window.SB && SB.enabled() && state.user.provider === "supabase" && l.sellerId && l.sellerId !== state.user.id){
-    if(input) input.value = "";
-    const sent = await SB.sendMessage({ listingId: id, recipientId: l.sellerId, body: text });
-    if(!sent){
-      showToast(state.lang==="fr" ? "Message non envoyé" : "Message not sent");
-      if(input) input.value = text;
-      return false;
-    }
+  if(state.user.provider === "supabase"){
+    const sent = await sendConfirmedMessage(input, { listingId: id, recipientId: l.sellerId !== state.user.id ? l.sellerId : null, body: text, senderName: state.user.name });
+    if(!sent) return false;
     const rt = threadFor(id);
     rt.real = true;
     rt.seller = sellerName(l);
@@ -2988,9 +3011,16 @@ async function quickChatAction(id, type){
     showToast(state.lang==="fr" ? "Photo: upload réel à brancher avec Supabase Storage." : "Photo: real upload will be connected with Supabase Storage.");
   }
   if(type === "report"){
-    if(window.SB && SB.enabled() && state.user?.provider === "supabase" && SB.createReport){
-      const l = L.find(item=>String(item.id) === String(id));
-      await SB.createReport(id, state.lang==="fr" ? "Signalement utilisateur" : "User report", l ? titleFor(l) : "");
+    if(state.user?.provider === "supabase"){
+      try{
+        if(!(window.SB && SB.enabled() && SB.createReport)) throw new Error("Reporting unavailable");
+        const l = L.find(item=>String(item.id) === String(id));
+        const saved = await SB.createReport(id, state.lang==="fr" ? "Signalement utilisateur" : "User report", l ? titleFor(l) : "");
+        if(!saved) throw new Error("Report was not saved");
+      }catch(e){
+        showToast(state.lang==="fr" ? "Signalement non confirmé. Réessayez." : "Report not confirmed. Please try again.");
+        return;
+      }
     } else {
       const exists = adminReports.some(r=>String(r.listingId) === String(id) && r.status !== "resolved");
       if(!exists) adminReports.unshift({
@@ -3017,8 +3047,10 @@ function isBlockedUser(id){
 
 async function loadBlockedUsers(){
   if(!(window.SB && SB.enabled() && SB.fetchBlocks) || !state.user || state.user.provider !== "supabase") return;
-  const rows = await SB.fetchBlocks();
-  if(!rows) return;
+  const userId = state.user.id;
+  let rows = null;
+  try{ rows = await SB.fetchBlocks(); }catch(e){}
+  if(!rows || state.user?.id !== userId) return;
   blockedUsers = rows;
   if(blockedUsers.length) render();
 }
@@ -3112,8 +3144,16 @@ function inboxOtherLabel(conv, listing){
 
 async function loadInbox(){
   const convs = [];
-  if(window.SB && SB.enabled() && state.user.provider === "supabase"){
-    const inbox = await SB.fetchInbox();
+  if(!state.user) return;
+  const userId = state.user.id;
+  if(state.user.provider === "supabase"){
+    let inbox = null;
+    try{ if(window.SB && SB.enabled() && SB.fetchInbox) inbox = await SB.fetchInbox(); }catch(e){}
+    if(state.user?.id !== userId) return;
+    if(!inbox){
+      showToast(state.lang==="fr" ? "Messagerie indisponible. Réessayez." : "Could not load messages. Please try again.");
+      return;
+    }
     if(inbox){
       refreshMessageBadge(inbox);
       inbox.forEach(conv=>{
@@ -3129,6 +3169,7 @@ async function loadInbox(){
     }
   }
   Object.entries(chatThreads).forEach(([id, thread])=>{
+    if(state.user.provider === "supabase" || thread.real) return;
     if(convs.some(c=>String(c.listingId) === String(id))) return;
     const l = L.find(x=>idKey(x.id) === idKey(id));
     if(!l) return;
@@ -3229,11 +3270,13 @@ async function openInboxThread(key){
   renderInboxLog(conv);
   renderInboxRail();
   if(conv.real && conv.unread && window.SB && SB.markConversationRead){
-    const done = await SB.markConversationRead(conv.messages);
+    const userId = state.user?.id;
+    let done = 0;
+    try{ done = await SB.markConversationRead(conv.messages); }catch(e){}
+    if(state.user?.id !== userId) return;
     if(done){
       setUnreadMessageCount(Math.max(0, unreadMessageCount - done));
-      conv.unread = 0;
-      conv.messages.forEach(m=>{ if(m.recipient_id === state.user.id) m.read = true; });
+      conv.unread = conv.messages.filter(m=>m.recipient_id === state.user.id && !m.read).length;
       renderInboxRail();
     }
   }
@@ -3258,20 +3301,16 @@ async function sendInboxMessage(e){
   if(!conv || !input) return false;
   const text = input.value.trim();
   if(!text) return false;
-  input.value = "";
-  if(conv.real && window.SB && SB.enabled() && state.user.provider === "supabase" && conv.otherId){
-    const sent = await SB.sendMessage({ listingId: conv.listingId, recipientId: conv.otherId, body: text, senderName: state.user.name });
-    if(!sent){
-      input.value = text;
-      showToast(state.lang==="fr" ? "Message non envoyé" : "Message not sent");
-      return false;
-    }
+  if(conv.real || state.user?.provider === "supabase"){
+    const sent = await sendConfirmedMessage(input, { listingId: conv.listingId, recipientId: conv.otherId, body: text, senderName: state.user?.name });
+    if(!sent) return false;
     conv.messages.push(sent);
     conv.preview = text;
     conv.at = sent.created_at;
     const rt = chatThreads[conv.listingId];
     if(rt){ rt.messages.push(sbMsgToBubble(sent)); rt.updated = state.lang==="fr" ? "maintenant" : "now"; }
   }else{
+    input.value = "";
     const rt = threadFor(conv.listingId);
     rt.messages.push({ who:"buyer", fr:text, en:text, at:state.lang==="fr" ? "maintenant" : "now" });
     rt.updated = state.lang==="fr" ? "maintenant" : "now";
@@ -3279,7 +3318,7 @@ async function sendInboxMessage(e){
     conv.preview = text;
     persistState();
   }
-  renderInboxLog(conv);
+  if(activeConvKey === conv.key) renderInboxLog(conv);
   renderInboxRail();
   return false;
 }
@@ -3521,10 +3560,8 @@ function renderProfile(){
     <section class="profile-section">
       <h3>${state.lang==="fr" ? "Confiance" : "Trust"}</h3>
       <div class="trust-badges">
-        <button type="button" data-click="showTrustInfo" data-click-args='${dataArgs(['email'])}'>${t().verifiedEmail}</button>
-        ${proActive ? `<button type="button" data-click="showTrustInfo" data-click-args='${dataArgs(['pro'])}'>${state.lang === "fr" ? "Compte Pro certifié" : "Certified Pro account"}</button>` : ""}
-        <button type="button" data-click="showTrustInfo" data-click-args='${dataArgs(['member'])}'>${t().trustedMember}</button>
-        <button type="button" data-click="showTrustInfo" data-click-args='${dataArgs(['reply'])}'>${t().fastReply}</button>
+        ${state.user.provider === "supabase" && state.user.verifiedEmail ? `<button type="button" data-click="showTrustInfo" data-click-args='${dataArgs(['email'])}'>${t().verifiedEmail}</button>` : ""}
+        ${proActive ? `<button type="button" data-click="showTrustInfo" data-click-args='${dataArgs(['pro'])}'>${state.lang === "fr" ? "Compte Pro" : "Pro account"}</button>` : ""}
       </div>
     </section>
     <section class="profile-section">
@@ -3683,11 +3720,18 @@ async function logoutUser(){
   if(window.Push && Push.disable && state.user && state.user.provider === "supabase"){
     try { await Push.disable(); } catch(e){}
   }
-  if(window.SB && SB.enabled() && state.user && state.user.provider === "supabase"){
-    try { await SB.signOut(); } catch(e){}
+  if(state.user?.provider === "supabase"){
+    try{
+      if(!(window.SB && SB.enabled() && SB.signOut)) throw new Error("Auth service unavailable");
+      const result = await SB.signOut();
+      if(!result || result.error) throw new Error("Sign-out not confirmed");
+    }catch(e){
+      showToast(state.lang==="fr" ? "Déconnexion non confirmée. Réessayez." : "Sign-out could not be confirmed. Please try again.");
+      return;
+    }
   }
+  clearAccountMessaging();
   state.user = null;
-  blockedUsers = [];
   persistState();
   closeModal("profileModal");
   render();
@@ -3704,16 +3748,18 @@ async function deleteMyAccountConfirmed(){
     ? "Supprimer définitivement votre compte ? Vos messages seront supprimés et vos annonces resteront visibles sans vendeur associé. Cette action est irréversible."
     : "Permanently delete your account? Your messages will be deleted and your listings will remain visible without an associated seller. This cannot be undone.")) return;
 
-  if(!window.SB || !SB.enabled() || state.user.provider !== "supabase"){
+  if(state.user.provider !== "supabase"){
     showToast(state.lang==="fr" ? "Compte de démonstration : rien à supprimer côté serveur." : "Demo account: nothing to delete server-side.");
     await logoutUser();
     return;
   }
 
-  const res = await SB.deleteMyAccount();
+  let res;
+  try{ if(window.SB && SB.enabled() && SB.deleteMyAccount) res = await SB.deleteMyAccount(); }catch(e){}
   if(res && res.ok){
     if(window.Push && Push.disable){ try { await Push.disable(); } catch(e){} }
     try { await SB.signOut(); } catch(e){}
+    clearAccountMessaging();
     state.user = null;
     persistState();
     closeModal("profileModal");
@@ -4063,7 +4109,7 @@ function adminModerationHTML(){
 async function setModerationStatusAdmin(id, status){
   const l = L.find(x=>String(x.id) === String(id));
   if(!l) return;
-  const ok = canUseSupabaseAdmin() ? await SB.setListingModerationStatus(id, status) : true;
+  const ok = await confirmedAdminWrite(()=>SB.setListingModerationStatus(id, status));
   if(!ok){ showToast(state.lang==="fr" ? "Échec" : "Failed"); return; }
   l.moderationStatus = status;
   refreshAdmin();
@@ -4075,7 +4121,7 @@ async function setModerationStatusAdmin(id, status){
 async function saveModerationRulesAdmin(){
   const boxes = [...document.querySelectorAll("#adminModCats input[type=checkbox]:checked")].map(b=>b.value);
   const kws = (document.getElementById("adminModKeywords")?.value || "").split(/[,\n]/).map(s=>s.trim()).filter(Boolean);
-  const ok = canUseSupabaseAdmin() ? await SB.saveModerationRules(boxes, kws) : true;
+  const ok = await confirmedAdminWrite(()=>SB.saveModerationRules(boxes, kws));
   if(ok){
     adminModerationRules = { categories:boxes, keywords:kws };
     showToast(state.lang==="fr" ? "Règles enregistrées" : "Rules saved");
@@ -4237,7 +4283,7 @@ async function saveAdCampaignRow(id){
     cta_fr:val(".ad-cta-fr"), cta_en:val(".ad-cta-en")
   };
   if(!payload.url){ showToast(state.lang==="fr" ? "URL requise" : "URL required"); return; }
-  const ok = canUseSupabaseAdmin() ? await SB.upsertAdCampaign(payload) : true;
+  const ok = await confirmedAdminWrite(()=>SB.upsertAdCampaign(payload));
   if(ok){
     payload._saved = true;
     const i = adminAdCampaigns.findIndex(x=>x.id === id);
@@ -4249,7 +4295,7 @@ async function saveAdCampaignRow(id){
 
 async function deleteAdCampaignRow(id){
   if(!confirm(state.lang==="fr" ? "Supprimer cette pub ?" : "Delete this ad?")) return;
-  const ok = canUseSupabaseAdmin() ? await SB.deleteAdCampaign(id) : true;
+  const ok = await confirmedAdminWrite(()=>SB.deleteAdCampaign(id));
   if(ok){
     adminAdCampaigns = adminAdCampaigns.filter(x=>x.id !== id);
     renderAdmin("ads");
@@ -4304,11 +4350,23 @@ function adminStatsHTML(){
 }
 
 async function syncAdminListing(l, removed=false){
-  if(!(window.SB && SB.enabled() && state.user?.provider === "supabase")) return;
+  return confirmedAdminWrite(()=>removed ? SB.deleteListing(l.id) : SB.updateListing(l), l);
+}
+
+async function confirmedAdminWrite(write, localValue=true){
+  if(state.user?.provider !== "supabase"){
+    if(isLocalDevHost() && isAdminUser()) return localValue;
+    return null;
+  }
   try{
-    if(removed && SB.deleteListing) await SB.deleteListing(l.id);
-    else if(SB.updateListing) await SB.updateListing(l);
-  }catch(e){ console.warn("[admin sync]", e); }
+    if(!canUseSupabaseAdmin()) throw new Error("Admin service unavailable");
+    const saved = await write();
+    if(!saved) throw new Error("Admin change was not saved");
+    return saved;
+  }catch(e){
+    showToast(state.lang==="fr" ? "Modification non confirmée. Actualisez puis réessayez." : "Change not confirmed. Refresh and try again.");
+    return null;
+  }
 }
 
 function refreshAdmin(){
@@ -4320,44 +4378,42 @@ function refreshAdmin(){
 async function toggleFeaturedAdmin(id){
   const l = L.find(x=>String(x.id) === String(id));
   if(!l) return;
-  l.feat = !l.feat;
-  if(l.feat && !l.boosted) l.boosted = true;
-  await syncAdminListing(l);
-  if(canUseSupabaseAdmin() && SB.logAdminEvent) await SB.logAdminEvent(l.feat ? "feature_listing" : "unfeature_listing", "listing", id, {});
+  const candidate = {...l, feat:!l.feat};
+  if(candidate.feat && !candidate.boosted) candidate.boosted = true;
+  const saved = await syncAdminListing(candidate);
+  if(!saved) return;
+  Object.assign(l, typeof saved === "object" ? saved : candidate);
   refreshAdmin();
 }
 
 async function markListingStatusAdmin(id, status){
   const l = L.find(x=>String(x.id) === String(id));
   if(!l) return;
-  l.sold = status === "sold";
-  l.reserved = status === "reserved";
-  if(canUseSupabaseAdmin() && SB.adminSetListingStatus){
-    const row = await SB.adminSetListingStatus(id, status);
-    if(row) Object.assign(l, row);
-  } else {
-    await syncAdminListing(l);
-    if(canUseSupabaseAdmin() && SB.logAdminEvent) await SB.logAdminEvent("mark_listing_status", "listing", id, {status});
-  }
+  const candidate = {...l, status, sold:status === "sold", reserved:status === "reserved"};
+  const saved = await confirmedAdminWrite(()=>SB.adminSetListingStatus(id, status), candidate);
+  if(!saved) return;
+  Object.assign(l, typeof saved === "object" ? saved : candidate);
   refreshAdmin();
 }
 
 async function removeListingAdmin(id){
   const index = L.findIndex(x=>String(x.id) === String(id));
   if(index < 0) return;
-  const [removed] = L.splice(index, 1);
+  const removed = L[index];
+  if(!(await syncAdminListing(removed, true))) return;
+  const currentIndex = L.indexOf(removed);
+  if(currentIndex >= 0) L.splice(currentIndex, 1);
   userListings = userListings.filter(x=>String(x.id) !== String(id));
   adminReports = adminReports.map(r=>String(r.listingId) === String(id) ? {...r,status:"resolved"} : r);
-  await syncAdminListing(removed, true);
-  if(canUseSupabaseAdmin() && SB.logAdminEvent) await SB.logAdminEvent("remove_listing", "listing", id, {});
   refreshAdmin();
 }
 
 async function resolveReportAdmin(id){
-  if(canUseSupabaseAdmin() && SB.resolveReport){
-    const row = await SB.resolveReport(id);
-    if(row) adminReports = adminReports.map(r=>String(r.id) === String(id) ? reportFromRow(row) : r);
-  } else {
+  const row = await confirmedAdminWrite(()=>SB.resolveReport(id));
+  if(!row) return;
+  if(state.user?.provider === "supabase"){
+    adminReports = adminReports.map(r=>String(r.id) === String(id) ? reportFromRow(row) : r);
+  }else{
     adminReports = adminReports.map(r=>r.id === id ? {...r,status:"resolved",resolvedAt:new Date().toISOString()} : r);
   }
   refreshAdmin();
@@ -4365,16 +4421,16 @@ async function resolveReportAdmin(id){
 
 async function toggleBanUser(id){
   const key = String(id);
-  if(canUseSupabaseAdmin()){
+  if(state.user?.provider === "supabase"){
     if(!isUuid(key)){
       showToast(state.lang==="fr" ? "Utilisateur Supabase requis." : "Supabase user required.");
       return;
     }
     if(adminBanned.includes(key)){
-      const ok = SB.unbanUser ? await SB.unbanUser(key) : false;
+      const ok = await confirmedAdminWrite(()=>SB.unbanUser(key));
       if(ok) adminBanned = adminBanned.filter(x=>x!==key);
     } else {
-      const row = SB.banUser ? await SB.banUser(key) : null;
+      const row = await confirmedAdminWrite(()=>SB.banUser(key));
       if(row) adminBanned = [...adminBanned, key];
     }
   } else {
@@ -4385,14 +4441,14 @@ async function toggleBanUser(id){
 
 async function toggleAdminRole(id){
   const key = String(id);
-  if(canUseSupabaseAdmin()){
+  if(state.user?.provider === "supabase"){
     if(!isUuid(key)){
       showToast(state.lang==="fr" ? "Utilisateur Supabase requis." : "Supabase user required.");
       return;
     }
     const user = adminProfiles.find(u=>String(u.id) === key);
     const nextRole = user?.role === "admin" ? "user" : "admin";
-    const row = SB.updateUserRole ? await SB.updateUserRole(key, nextRole) : null;
+    const row = await confirmedAdminWrite(()=>SB.updateUserRole(key, nextRole));
     if(row){
       adminProfiles = adminProfiles.map(u=>String(u.id) === key ? profileFromRow(row) : u);
       if(String(state.user?.id) === key) state.user.role = row.role || nextRole;
@@ -4408,9 +4464,10 @@ async function toggleAdminRole(id){
 }
 
 async function toggleCategoryAdmin(id){
-  adminCategoryStatus[id] = {hidden:!adminCategoryStatus[id]?.hidden};
+  const candidate = {...adminCategoryStatus, [id]:{hidden:!adminCategoryStatus[id]?.hidden}};
+  if(!(await confirmedAdminWrite(()=>SB.saveAdminSettings("category_status", candidate)))) return;
+  adminCategoryStatus = candidate;
   if(state.cat === id && adminCategoryStatus[id].hidden) state.cat = "all";
-  if(canUseSupabaseAdmin() && SB.saveAdminSettings) await SB.saveAdminSettings("category_status", adminCategoryStatus);
   buildCats();
   buildFilters();
   refreshAdmin();
@@ -4647,9 +4704,11 @@ async function hashPassword(value){
    `provider:"supabase"` sert à savoir quelle session déconnecter. */
 async function applySupabaseUser(sbUser){
   if(!sbUser) return null;
-  loadBlockedUsers();
+  if(state.user?.id !== sbUser.id) clearAccountMessaging();
+  const revision = ++authProjectionRevision;
   let profile = null;
   try { profile = await SB.fetchProfile(sbUser.id); } catch(e){}
+  if(revision !== authProjectionRevision) return null;
   const meta = sbUser.user_metadata || {};
   const identityData = (sbUser.identities && sbUser.identities[0] && sbUser.identities[0].identity_data) || {};
   // Google/Apple renvoient la photo de profil sous des noms différents selon
@@ -4672,10 +4731,12 @@ async function applySupabaseUser(sbUser){
     try { profile = (await SB.upsertProfile({ avatar_url: oauthAvatar })) || profile; } catch(e){}
   }
   const accountType = (profile && profile.account_type) || meta.account_type || "personal";
+  if(revision !== authProjectionRevision) return null;
   state.user = normalizeUser({
     id: sbUser.id,
     provider: "supabase",
     email: sbUser.email || "",
+    verifiedEmail: !!(sbUser.email_confirmed_at || sbUser.confirmed_at),
     name: (profile && profile.name) || meta.name || (sbUser.email || "").split("@")[0],
     accountType,
     accountPlan: (profile && profile.account_plan) || (accountType === "business" ? "pro-starter" : "personal-free"),
@@ -4689,6 +4750,8 @@ async function applySupabaseUser(sbUser){
     role: (profile && profile.role) || "user",
     avatarUrl: (profile && profile.avatar_url) || oauthAvatar || null
   });
+  await loadBlockedUsers();
+  if(revision !== authProjectionRevision) return null;
   persistState();
   return state.user;
 }
@@ -4727,15 +4790,17 @@ async function createAccount(e){
     const signupPlan = "personal-free";
     if(isPaidPlan(accountPlan)) sessionStorage.setItem("bst-selected-pro-plan", accountPlan);
     const name = document.getElementById("accountName").value.trim();
-    const { data, error: sbErr } = await SB.signUp(email, password, {
-      name,
-      account_type: accountType,
-      account_plan: signupPlan,
-      business_name: businessName, phone: businessPhone
-    });
+    let result;
+    try{
+      result = await SB.signUp(email, password, {
+        name, account_type: accountType, account_plan: signupPlan,
+        business_name: businessName, phone: businessPhone
+      });
+    }catch(e){ result = {error:{message:"Account service unavailable"}}; }
+    const { data, error: sbErr } = result || {error:{}};
     if(sbErr){
       // Do not reveal whether an address is already registered.
-      error.textContent = state.lang === "fr" ? "Si cette adresse peut être utilisée, vérifiez votre email pour continuer." : "If this address can be used, check your email to continue.";
+      error.textContent = state.lang === "fr" ? "Inscription non terminée. Vérifiez vos informations et réessayez, ou connectez-vous si vous avez déjà un compte." : "Signup could not be completed. Check your details and try again, or sign in if you already have an account.";
       return false;
     }
     if(data && data.session && data.user){
@@ -5032,9 +5097,14 @@ async function requestPasswordReset(e){
     message.textContent = state.lang === "fr" ? "Service indisponible." : "Service unavailable.";
     return false;
   }
-  await SB.requestPasswordReset(email);
-  // Deliberately identical for valid, invalid, and rate-limited addresses.
-  message.textContent = state.lang === "fr" ? "Si un compte peut être récupéré, un lien a été envoyé." : "If an account can be recovered, a reset link has been sent.";
+  let result;
+  try{ result = await SB.requestPasswordReset(email); }catch(e){ result = {error:{}}; }
+  if(!result || result.error){
+    message.textContent = state.lang === "fr" ? "Demande non envoyée. Réessayez dans quelques instants." : "Request could not be sent. Please try again shortly.";
+    return false;
+  }
+  // Deliberately identical for existing and unknown addresses.
+  message.textContent = state.lang === "fr" ? "Si la récupération est possible, vérifiez votre email. Si aucun lien n'arrive, réessayez plus tard." : "If recovery is available, check your email. If no link arrives, try again later.";
   return false;
 }
 
@@ -5047,9 +5117,10 @@ async function completePasswordReset(e){
     message.textContent = state.lang === "fr" ? "Utilisez au moins 12 caractères et confirmez le mot de passe." : "Use at least 12 characters and confirm the password.";
     return false;
   }
-  const result = await SB.updatePasswordAndRevokeSessions(password);
-  if(result && result.error){
-    message.textContent = state.lang === "fr" ? "Le lien est invalide ou a expiré. Demandez-en un nouveau." : "The link is invalid or expired. Request a new one.";
+  let result;
+  try{ result = await SB.updatePasswordAndRevokeSessions(password); }catch(e){ result = {error:{}}; }
+  if(!result || result.error){
+    message.textContent = state.lang === "fr" ? "Modification impossible. Vérifiez votre connexion ou demandez un nouveau lien." : "Could not change password. Check your connection or request a new recovery link.";
     return false;
   }
   closeModal("passwordResetModal");
@@ -5066,7 +5137,9 @@ async function loginAccount(e){
   const password = document.getElementById("loginPassword").value;
 
   if(window.SB && SB.enabled()){
-    const { data, error: sbErr } = await SB.signIn(email, password);
+    let result;
+    try{ result = await SB.signIn(email, password); }catch(e){ result = {error:{}}; }
+    const { data, error: sbErr } = result || {error:{}};
     if(!sbErr && data && data.user){
       await applySupabaseUser(data.user);
       showToast(t().loginToast);
@@ -5705,6 +5778,85 @@ Object.assign(window, {
 });
 window.__bstState = state;
 
+const receivedMessageIds = new Set();
+let authProjectionRevision = 0;
+function clearAccountMessaging(){
+  authProjectionRevision++;
+  blockedUsers = [];
+  inboxConvs = [];
+  activeConvKey = null;
+  inboxSearchTerm = "";
+  Object.keys(chatThreads).forEach(key=>delete chatThreads[key]);
+  receivedMessageIds.clear();
+  notifications = [];
+  dismissedNotificationIds = new Set();
+  setUnreadMessageCount(0);
+  closeModal("messagesModal");
+  const log = document.getElementById("msgrLog");
+  if(log) log.textContent = "";
+  renderInboxRail();
+  closeNotifPanel();
+}
+
+async function handleIncomingMessage(message){
+  if(!message || !state.user || message.recipient_id !== state.user.id || isBlockedUser(message.sender_id)) return;
+  const userId = state.user.id;
+  const m = {...message};
+  const convKey = (m.listing_id || "0") + ":" + m.sender_id;
+  let conv = inboxConvs.find(c=>c.key === convKey);
+  const seenKey = userId + ":" + m.id;
+  if(m.id && (receivedMessageIds.has(seenKey) || conv?.messages.some(row=>row.id === m.id))) return;
+  if(m.id){
+    receivedMessageIds.add(seenKey);
+    if(receivedMessageIds.size > 1000) receivedMessageIds.delete(receivedMessageIds.values().next().value);
+  }
+  const l = L.find(x=>String(x.id) === String(m.listing_id));
+  const id = l ? l.id : m.listing_id;
+  const fromName = m.sender_name || (l ? sellerName(l) : (state.lang === "fr" ? "un utilisateur" : "a user"));
+  const alreadyReading = activeConvKey === convKey && !!document.querySelector("#messagesModal.open");
+  const thread = chatThreads[id];
+  // A listing owner may have several buyers: do not mix their detail threads.
+  if(thread && l?.sellerId === m.sender_id && !thread.messages.some(row=>row.mid === m.id)){
+    const bubble = sbMsgToBubble(m);
+    thread.messages.push(bubble);
+    thread.updated = state.lang === "fr" ? "maintenant" : "now";
+    const log = document.getElementById("chatLog-" + id);
+    if(log){
+      log.insertAdjacentHTML("beforeend", bubbleRowHTML(bubble, thread.seller || fromName));
+      scrollChatToBottom(id);
+    }
+  }
+  if(!conv){
+    conv = {key:convKey, listingId:m.listing_id, otherId:m.sender_id, who:fromName,
+      title:l ? titleFor(l) : (state.lang==="fr" ? "Annonce" : "Listing"), messages:[], unread:0, real:true};
+    inboxConvs.unshift(conv);
+  }
+  conv.messages.push(m);
+  conv.preview = m.body;
+  conv.at = m.created_at;
+  if(!m.read){
+    conv.unread = (conv.unread || 0) + 1;
+    setUnreadMessageCount(unreadMessageCount + 1);
+  }
+  if(alreadyReading) renderInboxLog(conv);
+  if(document.querySelector("#messagesModal.open")) renderInboxRail();
+  if(alreadyReading && !m.read && window.SB && SB.markMessageRead){
+    let saved = false;
+    try{ saved = await SB.markMessageRead(m.id); }catch(e){}
+    if(saved && state.user?.id === userId){
+      m.read = true;
+      conv.unread = Math.max(0, conv.unread - 1);
+      setUnreadMessageCount(Math.max(0, unreadMessageCount - 1));
+      if(document.querySelector("#messagesModal.open")) renderInboxRail();
+    }
+  }
+  if(!alreadyReading && state.user?.id === userId){
+    pushNotification({kind:"message", title:(state.lang === "fr" ? "Nouveau message de " : "New message from ") + fromName,
+      text:m.body, at:m.created_at, listingId:id, convKey});
+    showToast((state.lang === "fr" ? "Nouveau message de " : "New message from ") + fromName);
+  }
+}
+
 /* ---------------- INIT ---------------- */
 loadLocalState(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); applyAutomaticIncludedBoosts({silent:true}); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(); openAdminFromUrl(); handleListingRenewalActionFromUrl(); handleUnsubscribeFromUrl(); if(new URLSearchParams(location.search).get("reset") === "1") setTimeout(openPasswordReset, 250);
 
@@ -5726,7 +5878,8 @@ if (window.SB && SB.enabled() && !new URLSearchParams(location.search || "").has
   SB.onAuthChange(function (user) {
     setTimeout(function () {
       if (user) {
-        applySupabaseUser(user).then(function () {
+        applySupabaseUser(user).then(function (applied) {
+          if(!applied) return;
           applyAutomaticIncludedBoosts({silent:true}).then(function(){ render(); });
           if(window.SXM) SXM.sync();
           refreshMessageBadge();
@@ -5741,6 +5894,7 @@ if (window.SB && SB.enabled() && !new URLSearchParams(location.search || "").has
           if (pm && pm.classList.contains("open") && typeof renderProfile === "function") renderProfile();
         });
       } else if (state.user && state.user.provider === "supabase") {
+        clearAccountMessaging();
         state.user = null;
         setUnreadMessageCount(0);
         persistState();
@@ -5751,52 +5905,5 @@ if (window.SB && SB.enabled() && !new URLSearchParams(location.search || "").has
 
   /* Realtime : messages entrants. RLS limite déjà la diffusion aux participants,
      on ignore donc simplement nos propres envois (sender === moi). */
-  SB.subscribeInbox(function (m) {
-    if (!state.user || m.recipient_id !== state.user.id) return;
-    var l = L.find(function (x) { return String(x.id) === String(m.listing_id); });
-    var id = l ? l.id : m.listing_id;
-    var thread = chatThreads[id];
-    if (thread) {
-      var bubble = sbMsgToBubble(m);
-      thread.messages.push(bubble);
-      thread.updated = state.lang === "fr" ? "maintenant" : "now";
-      var log = document.getElementById("chatLog-" + id);
-      if (log) {
-        log.insertAdjacentHTML("beforeend", bubbleRowHTML(bubble, thread.seller || (l ? sellerName(l) : "")));
-        scrollChatToBottom(id);
-      }
-    }
-    // Boîte de réception ouverte : on met à jour le volet en direct.
-    var convKey = (m.listing_id || "0") + ":" + m.sender_id;
-    var conv = inboxConvs.find(function (c) { return c.key === convKey; });
-    if (conv) {
-      conv.messages.push(m);
-      conv.preview = m.body;
-      conv.at = m.created_at;
-      if (activeConvKey === convKey && document.querySelector("#messagesModal.open")) {
-        m.read = true;
-        if (SB.markMessageRead) SB.markMessageRead(m.id);
-        renderInboxLog(conv);
-      } else {
-        conv.unread = (conv.unread || 0) + 1;
-      }
-      if (document.querySelector("#messagesModal.open")) renderInboxRail();
-    } else if (document.querySelector("#messagesModal.open") && typeof loadInbox === "function") {
-      loadInbox();
-    }
-    setUnreadMessageCount(unreadMessageCount + 1);
-    var fromName = m.sender_name || (l ? sellerName(l) : (state.lang === "fr" ? "un utilisateur" : "a user"));
-    var alreadyReading = activeConvKey === convKey && document.querySelector("#messagesModal.open");
-    if (!alreadyReading && typeof pushNotification === "function") {
-      pushNotification({
-        kind: "message",
-        title: (state.lang === "fr" ? "Nouveau message de " : "New message from ") + fromName,
-        text: m.body,
-        at: m.created_at,
-        listingId: l ? l.id : m.listing_id,
-        convKey: convKey
-      });
-    }
-    showToast((state.lang === "fr" ? "Nouveau message de " : "New message from ") + fromName);
-  });
+  SB.subscribeInbox(handleIncomingMessage);
 }

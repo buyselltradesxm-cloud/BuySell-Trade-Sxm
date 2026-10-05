@@ -34,6 +34,47 @@ that a customer can complete those journeys.
 
 Changes apply to both `index.html` and `marketplace.html` app bundles.
 
+## Follow-up fixes on 2026-10-05
+
+- Failed or disconnected chat requests preserve the draft and cannot become
+  simulated local replies. Repeated clicks cannot submit the same pending draft;
+  text typed during a request remains available for the next message.
+- Reports and admin changes now require confirmation. Failed feature, status,
+  deletion, moderation, report resolution, role, ban, category and ad requests
+  preserve the previous state. Moderation and ad deletion adapters reject
+  zero-row results rather than treating HTTP success as a saved change.
+- Realtime messages are deduplicated, blocked senders are ignored, and unread
+  counts decrease only after confirmed read requests. Partial read failures keep
+  the remaining messages unread.
+- Logout/account changes clear messages and notifications. Late responses from
+  the previous account are ignored; a delayed profile cannot restore a signed-out
+  identity. Real chat contents are no longer saved in production localStorage.
+- Blocks now load after the authenticated identity is applied on first login.
+- Signup, login and password recovery handle thrown network failures. Signup and
+  recovery no longer promise that an email was sent after a failed request.
+  Failed sign-out no longer claims the session ended.
+- Notification removal previously waited forever for a service worker that might
+  never register, preventing logout in blocked/private browsers. It now checks
+  existing registration; other worker readiness waits have an eight-second limit.
+  Notification setup also requires backend confirmation.
+- Avatar replacement used an overwrite requiring a Storage UPDATE policy that
+  is absent in production. New avatars now use unique filenames and INSERT,
+  matching existing policies. Disconnected profile uploads preserve the old photo.
+- Profile badges no longer invent fast-response history or trusted-member status.
+  Verified email comes from Auth confirmation; a paid plan is labelled Pro account.
+- The service-worker cache version is now `bst-v22-safe-messaging`.
+
+New local checks pass on both routes: messaging failures/session isolation
+(32 assertions per route), admin/auth failures and avatar replacement
+(56 per route), plus 14 push-client assertions. These are isolated fixtures;
+they do not replace real authenticated acceptance tests.
+
+Additional live, read-only checks confirmed custom SMTP is enabled with Resend;
+messages are in the realtime publication with RLS and the read RPC grant present;
+the INSERT policy enforces bans and blocks; all public tables have RLS enabled;
+photo/avatar buckets have 5 MB and JPEG/PNG/WebP limits and own-folder upload rules.
+These configuration checks do not establish actual email, upload or chat delivery.
+
 ## Verification completed
 
 Local browser checks passed for listing editing, messaging UI, notifications and
@@ -105,6 +146,9 @@ Most existing UI scripts require a local server on port 5173. Start one bound to
 process you started.
 
 - `npm run test:save-failures`: local save/error regression checks.
+- `npm run test:messaging-failures`: drafts, failures, realtime and account isolation.
+- `npm run test:admin-auth-failures`: rejected admin/auth changes and avatar paths.
+- `npm run test:push-client`: notification readiness and persistence failures.
 - `npm run test:launch-smoke`: isolated public browsing on the live site at desktop
   and mobile sizes; no accounts, listings, messages, reports, or payments created.
 - `npm run test:backend`: public reads and explicit anonymous permission denials,

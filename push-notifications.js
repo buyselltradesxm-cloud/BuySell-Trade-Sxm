@@ -31,7 +31,18 @@
   }
 
   function readyReg() {
-    return navigator.serviceWorker.ready;
+    // ready never rejects when registration is absent or blocked. Bound the
+    // wait so notification controls cannot stall account actions forever.
+    return new Promise(function (resolve, reject) {
+      var timer = setTimeout(function () { reject(new Error('Service worker unavailable')); }, 8000);
+      navigator.serviceWorker.ready.then(function (reg) {
+        clearTimeout(timer);
+        resolve(reg);
+      }, function (err) {
+        clearTimeout(timer);
+        reject(err);
+      });
+    });
   }
 
   function subToJSON(sub) {
@@ -43,6 +54,13 @@
       auth: j.keys && j.keys.auth,
       user_agent: navigator.userAgent
     };
+  }
+
+  function rejectSubscription(sub, reason) {
+    // A browser subscription without a saved endpoint cannot receive app
+    // messages. Remove it so the next status check offers a genuine retry.
+    return Promise.resolve(sub.unsubscribe()).catch(function () {})
+      .then(function () { return { ok: false, status: 'ready', reason: reason }; });
   }
 
   function status() {
@@ -75,12 +93,14 @@
           });
         }).then(function (sub) {
           if (!(window.SB && SB.savePushSubscription)) {
-            return { ok: true, status: 'on', reason: 'no-backend' };
+            return rejectSubscription(sub, 'no-backend');
           }
-          return SB.savePushSubscription(subToJSON(sub)).then(function (saved) {
+          return Promise.resolve().then(function () { return SB.savePushSubscription(subToJSON(sub)); }).then(function (saved) {
             return saved
               ? { ok: true, status: 'on' }
-              : { ok: false, status: 'ready', reason: 'save-failed' };
+              : rejectSubscription(sub, 'save-failed');
+          }, function () {
+            return rejectSubscription(sub, 'save-failed');
           });
         });
       })
@@ -92,8 +112,10 @@
 
   function disable() {
     if (!('serviceWorker' in navigator)) return Promise.resolve({ ok: true });
-    return readyReg()
-      .then(function (reg) { return reg.pushManager.getSubscription(); })
+    // No registration means no subscription to disable. Do not wait for a
+    // future registration during logout (private/offline/blocked browsers).
+    return navigator.serviceWorker.getRegistration()
+      .then(function (reg) { return reg ? reg.pushManager.getSubscription() : null; })
       .then(function (sub) {
         if (!sub) return { ok: true };
         var endpoint = sub.endpoint;
@@ -101,7 +123,7 @@
           .then(function () {
             if (window.SB && SB.deletePushSubscription) return SB.deletePushSubscription(endpoint);
           })
-          .then(function () { return { ok: true }; });
+          .then(function (saved) { return { ok: saved !== false }; });
       })
       .catch(function (err) {
         console.warn('[push] disable failed:', err);

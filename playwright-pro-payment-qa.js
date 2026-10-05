@@ -116,8 +116,8 @@ const { chromium } = require("playwright");
     }
     if (proState.limit !== 30) errors.push(`Pro Business should allow 30 active listings, got ${proState.limit}.`);
     await page.evaluate(() => openProfile());
-    if (!/Compte Pro certifié|Certified Pro account/.test(await page.locator("#profileModal").innerText())) {
-      errors.push("Certified Pro badge is missing after payment confirmation.");
+    if (!/Compte Pro|Pro account/.test(await page.locator("#profileModal").innerText())) {
+      errors.push("Pro account badge is missing after payment confirmation.");
     }
   }
 
