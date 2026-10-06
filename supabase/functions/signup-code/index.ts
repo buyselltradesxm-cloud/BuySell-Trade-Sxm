@@ -6,6 +6,11 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const SITE_URL = (Deno.env.get("SITE_URL") || "https://buyselltradesxm.com").replace(/\/$/, "");
 const CODE_TTL_SECONDS = 900;
+// Cloudflare Turnstile secret. Account creation and code resends bypass
+// Supabase Auth's own CAPTCHA (they use the admin API), so the token is
+// verified here. Until the secret is set, the check is skipped.
+const TURNSTILE_SECRET = Deno.env.get("TURNSTILE_SECRET_KEY") || "";
+async function captchaOk(token: string, ip: string) { if (!TURNSTILE_SECRET) return true; if (!token) return false; try { const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ secret:TURNSTILE_SECRET, response:token, remoteip:ip === "unknown" ? undefined : ip }) }); return response.ok && (await response.json()).success === true; } catch (_) { return false; } }
 function allowedOrigin(origin: string) { return origin === "https://buyselltradesxm.com" || origin === "https://www.buyselltradesxm.com" || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin); }
 function headers(req: Request): Record<string,string> { const h: Record<string,string> = { "Access-Control-Allow-Headers":"content-type, apikey", "Access-Control-Allow-Methods":"POST, OPTIONS", "Cache-Control":"no-store", "Vary":"Origin" }; const origin = req.headers.get("origin") || ""; if (allowedOrigin(origin)) h["Access-Control-Allow-Origin"] = origin; return h; }
 function json(body: unknown, status: number, h: Record<string,string>) { return new Response(JSON.stringify(body), { status, headers: { ...h, "Content-Type":"application/json" } }); }
@@ -28,6 +33,7 @@ Deno.serve(async (req) => {
   // persisting raw email addresses or IPs in the rate-limit table.
   const rate = action === "verify" ? { email: 10, ip: 30, seconds: 900 } : { email: 3, ip: 10, seconds: 3600 };
   if (!(await consume(`signup:${action}:email:${await digest(email)}`, rate.email, rate.seconds)) || !(await consume(`signup:${action}:ip:${await digest(ip)}`, rate.ip, rate.seconds))) return json({ error:"signup unavailable", code:action === "verify" ? "verification_rate_limited" : "signup_rate_limited" }, 429, h);
+  if (action !== "verify" && !(await captchaOk(String(body.captcha_token || "").slice(0, 4096), ip))) return json({ error:"captcha rejected", code:"captcha_failed" }, 400, h);
   if (action === "start") {
     const password = String(body.password || ""); if (password.length < 8 || password.length > 256) return json({ error:"invalid signup", code:"password_rejected" }, 400, h);
     const value = code(); const userMetadata = { name:String(body.name || "").slice(0,120), account_type:String(body.account_type || "personal").slice(0,20), account_plan:"personal-free", business_name:String(body.business_name || "").slice(0,160), phone:String(body.phone || "").slice(0,40), signup_code_hash:await digest(email + ":" + value), signup_code_expires_at:new Date(Date.now() + CODE_TTL_SECONDS * 1000).toISOString(), signup_code_attempts:0 };

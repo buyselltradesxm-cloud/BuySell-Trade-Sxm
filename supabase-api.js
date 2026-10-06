@@ -482,7 +482,8 @@
 
     signUpWithCode: async function (email, password, profile) {
       var meta = typeof profile === "object" ? profile : { name: profile || "" };
-      var response = await fetch(window.SUPABASE_URL + "/functions/v1/signup-code", { method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY || "" }, body: JSON.stringify({ action: "start", email: email, password: password, ...meta }) });
+      var captchaToken = (await captchaTokenOrNull()) || "";
+      var response = await fetch(window.SUPABASE_URL + "/functions/v1/signup-code", { method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY || "" }, body: JSON.stringify({ action: "start", email: email, password: password, ...meta, captcha_token: captchaToken }) });
       var data = await response.json().catch(function () { return {}; });
       return response.ok ? { data: data, error: null } : { data: null, error: { message: data.error || "Signup could not be completed", code: data.code || "", status: response.status } };
     },
@@ -520,7 +521,8 @@
     },
 
     resendSignupCode: async function (email, userId) {
-      var response = await fetch(window.SUPABASE_URL + "/functions/v1/signup-code", { method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY || "" }, body: JSON.stringify({ action: "resend", email: email, user_id: userId }) });
+      var captchaToken = (await captchaTokenOrNull()) || "";
+      var response = await fetch(window.SUPABASE_URL + "/functions/v1/signup-code", { method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY || "" }, body: JSON.stringify({ action: "resend", email: email, user_id: userId, captcha_token: captchaToken }) });
       var data = await response.json().catch(function () { return {}; });
       return response.ok ? { data: data, error: null } : { data: null, error: { message: data.error || "Could not resend code", code: data.code || "", status: response.status } };
     },

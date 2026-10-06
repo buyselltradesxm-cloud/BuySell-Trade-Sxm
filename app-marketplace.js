@@ -4783,6 +4783,18 @@ async function applySupabaseUser(sbUser){
     // seule fois. Ne s'exécute jamais si l'utilisateur a déjà choisi une photo.
     try { profile = (await SB.upsertProfile({ avatar_url: oauthAvatar })) || profile; } catch(e){}
   }
+  // Inscription par code email : le trigger SQL crée le profil avec le nom
+  // seul. On recopie une fois les infos pro saisies à l'inscription, tant
+  // que le profil n'en contient aucune.
+  if(profile && meta.account_type === "business" && profile.account_type !== "business" && !profile.business_name && window.SB && SB.enabled()){
+    try {
+      profile = (await SB.upsertProfile({
+        account_type: "business",
+        business_name: meta.business_name || null,
+        phone: profile.phone || meta.phone || null
+      })) || profile;
+    } catch(e){}
+  }
   const accountType = (profile && profile.account_type) || meta.account_type || "personal";
   if(revision !== authProjectionRevision) return null;
   state.user = normalizeUser({
