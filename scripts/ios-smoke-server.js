@@ -28,4 +28,4 @@ http.createServer((req, res) => {
     res.writeHead(200, { "Content-Type": type, "Cache-Control": "no-store" });
     res.end(type.startsWith("text/html") ? data.toString("utf8").replace(/;\s*upgrade-insecure-requests/g, "") : data);
   });
-}).listen(port, "127.0.0.1", () => console.log("smoke server on http://localhost:" + port));
+}).listen(port, () => console.log("smoke server on http://localhost:" + port));
