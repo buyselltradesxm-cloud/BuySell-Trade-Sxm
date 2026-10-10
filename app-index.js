@@ -4846,7 +4846,7 @@ async function createAccount(e){
         password_rejected: "Ce mot de passe est refusé par le service. Essayez un mot de passe plus long.",
         email_delivery_failed: "Le compte n’a pas pu être finalisé car l’email de vérification n’a pas été envoyé. Réessayez plus tard.",
         signup_rate_limited: "Trop de tentatives de création de compte. Attendez une heure avant de réessayer.",
-        captcha_failed: "La vérification anti-robot a échoué. Actualisez la page et réessayez.",
+        captcha_failed: "La vérification anti-robot a échoué. Réessayez dans un instant.",
         service_unavailable: "Le service de création de compte est temporairement indisponible. Réessayez dans quelques instants.",
         invalid_email: "Vérifiez le format de votre adresse email et réessayez.",
         signup_failed: "Inscription impossible. Cette adresse a peut-être déjà un compte, y compris créé avec Google ou Apple : connectez-vous de cette façon, ou réinitialisez votre mot de passe."
@@ -4854,7 +4854,7 @@ async function createAccount(e){
         password_rejected: "The service rejected this password. Try a longer password.",
         email_delivery_failed: "We could not finish creating the account because the verification email was not sent. Please try again later.",
         signup_rate_limited: "Too many signup attempts. Wait an hour before trying again.",
-        captcha_failed: "The anti-robot check failed. Refresh the page and try again.",
+        captcha_failed: "The anti-robot check failed. Try again in a moment.",
         service_unavailable: "Account creation is temporarily unavailable. Please try again shortly.",
         invalid_email: "Check the email address format and try again.",
         signup_failed: "Signup could not be completed. This address may already have an account, including one created with Google or Apple: sign in that way, or reset your password."

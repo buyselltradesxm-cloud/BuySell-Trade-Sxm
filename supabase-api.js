@@ -106,8 +106,8 @@
       var fr = (document.documentElement.lang || "fr").indexOf("fr") === 0;
       result.error.code = "captcha_failed";
       result.error.message = fr
-        ? "Vérification anti-robot échouée. Rechargez la page et réessayez."
-        : "Anti-bot check failed. Reload the page and try again.";
+        ? "Vérification anti-robot échouée. Réessayez dans un instant."
+        : "Anti-bot check failed. Try again in a moment.";
     }
     return result;
   }
