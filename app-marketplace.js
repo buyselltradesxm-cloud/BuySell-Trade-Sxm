@@ -1921,8 +1921,8 @@ async function manageSubscription(){
   }
   // Never leave a paying subscriber without a way to cancel.
   showToast(state.lang === "fr"
-    ? "Portail indisponible. Pour annuler, écrivez à rxmarketing09@gmail.com : nous annulons sous 24 h."
-    : "Portal unavailable. To cancel, email rxmarketing09@gmail.com and we will cancel within 24 hours.");
+    ? "Portail indisponible. Pour annuler, écrivez à buyselltradesxm@gmail.com : nous annulons sous 24 h."
+    : "Portal unavailable. To cancel, email buyselltradesxm@gmail.com and we will cancel within 24 hours.");
 }
 // Only ever shows facts this app can actually back: a Pro badge is tied to
 // a real subscription_status check, and every account holder has a
