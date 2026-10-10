@@ -5377,7 +5377,27 @@ function wirePostFormEvents(){
   if(form){
     form.addEventListener("input", scheduleDraftSave);
     form.addEventListener("change", scheduleDraftSave);
+    // The browser blocks a submit with a required field missing, and its
+    // own hint is easy to miss or absent inside the apps: name the field.
+    form.addEventListener("invalid", event => showMissingPostField(event.target), true);
+    form.addEventListener("input", event => event.target.closest(".field")?.classList.remove("missing"));
+    form.addEventListener("change", event => event.target.closest(".field")?.classList.remove("missing"));
   }
+}
+
+let missingPostFieldShown = false;
+function showMissingPostField(target, message){
+  // One submit reports every invalid field; point at the first only.
+  if(missingPostFieldShown) return;
+  missingPostFieldShown = true;
+  setTimeout(() => { missingPostFieldShown = false; }, 400);
+  const field = target.closest(".field") || target;
+  const label = field.querySelector("label")?.textContent.trim() || "";
+  field.classList.add("missing");
+  field.scrollIntoView({block:"center", behavior:"smooth"});
+  showToast(message || (state.lang==="fr"
+    ? `Pour publier, complétez le champ « ${label} ».`
+    : `To publish, fill in "${label}".`));
 }
 
 /* ---------------- OFFLINE DRAFT (post flow) ----------------
@@ -5681,8 +5701,7 @@ async function createListing(e){
   const sub = document.getElementById("newSubcatField").hidden ? "" : document.getElementById("newSubcat").value;
   const profile = postFieldProfile(cat, sub);
   if(profile.photosRequired && !selectedPostPhotos.length){
-    showToast(t().photoRequired);
-    document.getElementById("newPhotos").focus();
+    showMissingPostField(document.getElementById("postPhotosField"), t().photoRequired);
     return false;
   }
   const cur = profile.price ? document.getElementById("newCur").value : (state.cur || "usd");
