@@ -59,8 +59,18 @@
    * ------------------------------------------------------------------ */
   var deferredPrompt = null;
 
+  // The App Store and Play Store apps show this same site in a web view:
+  // there is nothing to install from inside them.
+  function isNativeApp() {
+    try {
+      return !!(window.Capacitor && window.Capacitor.isNativePlatform &&
+                window.Capacitor.isNativePlatform());
+    } catch (e) { return false; }
+  }
+
   function isStandalone() {
-    return window.matchMedia('(display-mode: standalone)').matches ||
+    return isNativeApp() ||
+      window.matchMedia('(display-mode: standalone)').matches ||
       window.navigator.standalone === true ||
       document.referrer.indexOf('android-app://') === 0;
   }
@@ -224,6 +234,7 @@
   });
 
   // Expose a hook so the app can trigger the prompt from its own UI later.
+  window.bstIsInstalled = isStandalone;
   window.bstPromptInstall = function () {
     if (deferredPrompt) { deferredPrompt.prompt(); return true; }
     if (isIos() && !isStandalone()) { showBanner({ ios: true }); return true; }

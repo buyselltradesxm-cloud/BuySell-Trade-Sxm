@@ -24,7 +24,7 @@ const server = http.createServer((req, res) => {
       page.on("pageerror", error => errors.push(error.message));
       await page.addInitScript(() => {
         window.calls = []; window.purchaseResult = { cancelled: true };
-        window.Capacitor = { getPlatform: () => "ios", Plugins: { SXMNative: {
+        window.Capacitor = { getPlatform: () => "ios", isNativePlatform: () => true, Plugins: { SXMNative: {
           products: async () => ({ products: ["starter", "business", "premium", "elite", "unlimited"].map(tier => ({ id: "com.korekdigitalmarketing.buyselltradesxm.pro_" + tier + "_monthly", price: "€12.34" })).concat([3, 7, 14].map(days => ({ id: "com.korekdigitalmarketing.buyselltradesxm.boost_" + days + "_days", price: "€4.56" }))) }),
           purchase: async args => { calls.push(["purchase", args]); return purchaseResult; },
           finish: async args => { calls.push(["finish", args]); },
@@ -111,6 +111,17 @@ const server = http.createServer((req, res) => {
       assert.equal(await page.locator("[data-apple-restore]").first().isVisible(), true);
       assert.deepEqual(errors, []);
       await page.close();
+      // The web "add to home screen" hint has no place inside the App Store app;
+      // in Safari on the same iPhone it still appears.
+      for (const inApp of [true, false]) {
+        const hintPage = await browser.newPage({ serviceWorkers: "block", userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148" });
+        if (inApp) await hintPage.addInitScript(() => { window.Capacitor = { getPlatform: () => "ios", isNativePlatform: () => true, Plugins: {} }; });
+        await hintPage.goto(`http://127.0.0.1:${server.address().port}/${filename}?local=1`);
+        await hintPage.waitForTimeout(5500);
+        assert.equal(await hintPage.locator("#bst-pwa-banner").count(), inApp ? 0 : 1, inApp ? "No install hint inside the app" : "Install hint still shown in Safari");
+        assert.equal(await hintPage.evaluate(() => bstPromptInstall()), !inApp);
+        await hintPage.close();
+      }
       console.log(filename + ": in-app OAuth, cancelled/pending purchases, failed delivery, verified delivery, localized prices and restore controls passed.");
     }
   } finally { await browser.close(); server.close(); }

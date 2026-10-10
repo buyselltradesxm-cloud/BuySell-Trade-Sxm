@@ -3669,7 +3669,7 @@ function renderProfile(){
           <b>${state.lang==="fr" ? "Suivre mes favoris" : "Watch saved items"}</b>
           <span>${state.lang==="fr" ? "Gardez les bons plans sous la main." : "Keep good deals close."}</span>
         </button>
-        ${(!window.matchMedia || !window.matchMedia('(display-mode: standalone)').matches) ? `<button type="button" class="profile-tool" data-click="handleInstallAppClick">
+        ${!(window.bstIsInstalled ? bstIsInstalled() : (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)) ? `<button type="button" class="profile-tool" data-click="handleInstallAppClick">
           <b>${state.lang==="fr" ? "Installer l'application" : "Install the app"}</b>
           <span>${state.lang==="fr" ? "Accès depuis l'écran d'accueil, plein écran, même hors ligne." : "Home-screen access, full screen, works offline."}</span>
         </button>` : ""}
