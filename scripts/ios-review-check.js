@@ -120,6 +120,7 @@ const server = http.createServer((req, res) => {
         await hintPage.waitForTimeout(5500);
         assert.equal(await hintPage.locator("#bst-pwa-banner").count(), inApp ? 0 : 1, inApp ? "No install hint inside the app" : "Install hint still shown in Safari");
         assert.equal(await hintPage.evaluate(() => bstPromptInstall()), !inApp);
+        assert.equal(await hintPage.locator(".getapp .stores").evaluate(el => getComputedStyle(el).display === "none"), inApp, "App store badges are hidden inside the apps only");
         await hintPage.close();
       }
       console.log(filename + ": in-app OAuth, cancelled/pending purchases, failed delivery, verified delivery, localized prices and restore controls passed.");

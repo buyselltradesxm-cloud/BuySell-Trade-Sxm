@@ -1885,6 +1885,8 @@ function isAndroidApp(){
   return !!(window.Capacitor && Capacitor.getPlatform && Capacitor.getPlatform() === "android");
 }
 if(isAndroidApp()) document.documentElement.classList.add("android-app");
+// Inside either store app the page must not advertise app stores.
+if(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) document.documentElement.classList.add("native-app");
 function androidPurchaseBlocked(){
   if(!isAndroidApp()) return false;
   showToast(state.lang === "fr" ? "Les offres Pro et les boosts ne sont pas disponibles dans l'application Android." : "Pro plans and boosts are not available in the Android app.");
