@@ -1316,6 +1316,10 @@
   .pricing-card li{font-size:12px;color:var(--mute);line-height:1.35;}
   .pricing-cta{margin-top:auto;border-top:1.5px solid rgba(19,42,46,.18);padding-top:9px;font-weight:900;color:var(--sea);}
   .pricing-card.free .pricing-cta{color:var(--white);border-top-color:rgba(255,255,255,.3);}
+  .pricing-legal{font-size:13px;color:var(--mute);line-height:1.5;margin:14px 2px 0;}
+  .pricing-legal a{color:var(--sea);font-weight:700;text-decoration:underline;}
+  /* These one-off items are not sold through the stores: no prices for them inside the apps. */
+  .native-app .pricing-extras .pricing-info-block:nth-child(2){display:none;}
   .pricing-price{
     display:inline-flex;align-self:flex-start;border:1.5px solid var(--line);border-radius:8px;
     background:var(--sun);color:var(--ink);padding:4px 8px;font-size:12px;font-weight:900;
@@ -2700,6 +2704,7 @@
               <ul><li data-en="Unlimited listings">Annonces illimitées</li><li data-en="Premium storefront">Vitrine premium</li><li data-en="20 automatic boosts per month">20 boosts automatiques par mois</li><li data-en="Advanced statistics">Statistiques avancées</li></ul><span class="pricing-cta" data-en="Choose Pro Unlimited">Choisir Pro Unlimited</span>
             </button>
           </div>
+          <p class="pricing-legal"><span data-en="Pro subscriptions are monthly and renew automatically until cancelled.">Les abonnements Pro sont mensuels et se renouvellent automatiquement jusqu'à résiliation.</span> <a href="terms.html" target="_self" data-en="Terms of Use (EULA)">Conditions d'utilisation (EULA)</a> · <a href="privacy.html" target="_self" data-en="Privacy Policy">Politique de confidentialité</a></p>
           <div class="pricing-context"><strong data-en="One Pro system for every business">Un seul système Pro pour toutes les entreprises</strong><span data-en="Restaurant, clothing shop, garage, real estate agency, appliance store or phone seller: each one picks a plan by the number of listings and the visibility it wants.">Restaurant, boutique de vêtements, garage, agence immobilière, magasin d'électroménager ou vendeur de téléphones : chacun choisit son plan selon le nombre d'annonces et la visibilité recherchée.</span></div>
           <div class="pricing-extras">
             <section class="pricing-info-block"><h3 data-en="Compatible categories">Catégories compatibles</h3><p data-en="The same subscription works in every main category.">Le même abonnement fonctionne dans toutes les grandes catégories.</p><div class="pricing-list"><div><span data-en="Vehicles">Véhicules</span><b data-en="Cars, motorbikes, boats, parts">Autos, motos, bateaux, pièces</b></div><div><span data-en="Real estate">Immobilier</span><b data-en="Sales, land, rentals">Vente, terrain, location</b></div><div><span data-en="Marketplace">Marketplace</span><b data-en="Fashion, home, electronics">Mode, maison, électronique</b></div><div><span data-en="Jobs &amp; services">Emploi & services</span><b data-en="Job offers and services">Offres et prestations</b></div><div><span data-en="Business">Business</span><b data-en="Shops and equipment">Commerces et équipements</b></div></div></section>
