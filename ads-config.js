@@ -99,7 +99,7 @@ window.AdsConfig = {
      * Until a real id is pasted, Google's public TEST id is used (safe
      * to ship — shows a fake ad and can never flag the account). */
     interstitial: {
-      android: "ca-app-pub-3940256099942544/1033173712", // Google TEST id — replace with real one when ready
+      android: "ca-app-pub-7816106453580174/8561114276", // SXM Android Interstitial
       ios: "ca-app-pub-3940256099942544/4411468910"      // Google TEST id — iOS has no ads yet
     },
 
