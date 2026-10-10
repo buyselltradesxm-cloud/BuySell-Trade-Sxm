@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
   <script src="/frame-guard.js"></script>
   <title>Privacy Policy | Buy Sell Trade Sxm</title>
   <link rel="canonical" href="https://buyselltradesxm.com/privacy.html">
@@ -17,25 +17,53 @@
     h2{font-size:1.25rem;margin-top:28px}
     p,li{color:var(--muted)}
     a{color:var(--accent);font-weight:700}
-    .brand{display:flex;justify-content:space-between;gap:16px;align-items:center}
+    .brand{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
     .home{border:2px solid var(--line);border-radius:8px;padding:10px 14px;text-decoration:none;color:var(--ink)}
     footer{border-top:2px solid var(--line);font-size:.95rem}
+    .lang-btn{border:2px solid var(--accent);border-radius:8px;padding:8px 14px;background:none;color:var(--accent);font-weight:700;cursor:pointer;font-size:.9rem}
+    [data-lang="fr"] .en-only{display:none}
+    [data-lang="en"] .fr-only{display:none}
   </style>
+  <script>
+    (function(){
+      var l=localStorage.getItem("lang")||"en";
+      document.documentElement.setAttribute("data-lang",l==="fr"?"fr":"en");
+    })();
+  </script>
 </head>
 <body>
   <header>
     <div class="brand">
       <strong>Buy Sell Trade Sxm</strong>
-      <a class="home" href="/">Back to marketplace</a>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="lang-btn" onclick="toggleLang()">FR / EN</button>
+        <a class="home" href="/">
+          <span class="en-only">Back to marketplace</span>
+          <span class="fr-only">Retour à la marketplace</span>
+        </a>
+      </div>
     </div>
-    <h1>Privacy Policy</h1>
-    <p>Last updated: October 5, 2026</p>
+    <h1>
+      <span class="en-only">Privacy Policy</span>
+      <span class="fr-only">Politique de confidentialité</span>
+    </h1>
+    <p>
+      <span class="en-only">Last updated: October 5, 2026</span>
+      <span class="fr-only">Dernière mise à jour : 5 octobre 2026</span>
+    </p>
   </header>
   <main>
-    <p>Buy Sell Trade Sxm is a local marketplace for Saint-Martin and Sint Maarten, operated by <strong>Association Korek Digital</strong>, a French declared association (SIREN 105 268 098), registered at 17 Résidence des Gémeaux, 94260 Fresnes, France. This policy explains what information we collect and how we use it.</p>
 
-    <h2>Information We Collect</h2>
-    <ul>
+    <!-- ── INTRODUCTION ── -->
+    <p class="en-only">Buy Sell Trade Sxm is a local marketplace for Saint-Martin and Sint Maarten, operated by <strong>Association Korek Digital</strong>, a French declared association (SIREN 105 268 098), registered at 17 Résidence des Gémeaux, 94260 Fresnes, France. This policy explains what information we collect and how we use it.</p>
+    <p class="fr-only">Buy Sell Trade Sxm est une marketplace locale pour Saint-Martin, exploitée par <strong>Association Korek Digital</strong>, une association française déclarée (SIREN 105 268 098), dont le siège est au 17 Résidence des Gémeaux, 94260 Fresnes, France. Cette politique explique les informations que nous collectons et la façon dont nous les utilisons.</p>
+
+    <!-- ── INFORMATION WE COLLECT ── -->
+    <h2>
+      <span class="en-only">Information We Collect</span>
+      <span class="fr-only">Informations que nous collectons</span>
+    </h2>
+    <ul class="en-only">
       <li>Account details such as name, email address, and account type.</li>
       <li>Listing details such as title, description, category, price, area, and photos uploaded by the seller.</li>
       <li>Messages, saved listings, and moderation reports created inside the app.</li>
@@ -43,55 +71,116 @@
       <li>Login information handled by Supabase Auth and, when selected, Google or Apple sign-in.</li>
       <li>Optional browser notification subscriptions when a signed-in user chooses to receive alerts on a device.</li>
     </ul>
+    <ul class="fr-only">
+      <li>Les coordonnées du compte, telles que le nom, l'adresse e-mail et le type de compte.</li>
+      <li>Les détails des annonces : titre, description, catégorie, prix, zone et photos téléchargées par le vendeur.</li>
+      <li>Les messages, annonces sauvegardées et signalements de modération créés dans l'application.</li>
+      <li>Le nombre de visites quotidiennes anonymes et les rapports d'erreurs techniques (texte de l'erreur, page et type de navigateur) utilisés pour maintenir le service en bon état. Ces données ne sont pas liées à votre compte ; aucun cookie n'est utilisé, seule la date de votre dernière visite est conservée dans votre navigateur.</li>
+      <li>Les informations de connexion gérées par Supabase Auth et, le cas échéant, par la connexion Google ou Apple.</li>
+      <li>Les abonnements optionnels aux notifications du navigateur lorsqu'un utilisateur connecté choisit de recevoir des alertes sur un appareil.</li>
+    </ul>
 
-    <h2>How We Use Information</h2>
-    <ul>
+    <!-- ── HOW WE USE INFORMATION ── -->
+    <h2>
+      <span class="en-only">How We Use Information</span>
+      <span class="fr-only">Comment nous utilisons les informations</span>
+    </h2>
+    <ul class="en-only">
       <li>To create accounts and let users publish, manage, save, and share listings.</li>
       <li>To connect buyers and sellers through marketplace messages.</li>
       <li>To send optional alerts about marketplace messages and account activity.</li>
       <li>To moderate unsafe, illegal, fraudulent, or abusive content.</li>
       <li>To improve the reliability and security of the service.</li>
     </ul>
-
-    <h2>Sharing</h2>
-    <p>We do not sell personal information. Information may be shared with service providers used to operate the app, such as Supabase for authentication, database, and storage. Public listing information is visible to marketplace visitors.</p>
-
-    <h2>Advertising and Cookies</h2>
-    <p>This site shows advertising to keep it free to use. We use cookies and similar
-    technologies to run the site, remember your preferences (such as language), and
-    measure and display ads.</p>
-    <ul>
-      <li>Third-party vendors, including Google, use cookies to serve ads based on a
-      user's prior visits to this and other websites.</li>
-      <li>Google's use of advertising cookies enables it and its partners to serve ads
-      to users based on their visit to this site and/or other sites on the Internet.</li>
-      <li>You may opt out of personalized advertising by visiting
-      <a href="https://www.google.com/settings/ads" rel="noopener">Google Ads Settings</a>,
-      or opt out of a third-party vendor's use of cookies for personalized advertising at
-      <a href="https://www.aboutads.info/choices/" rel="noopener">aboutads.info/choices</a>.</li>
-      <li>Where required, we ask for your consent before non-essential cookies are set,
-      and we request non-personalized ads until consent is given. You can change your
-      choice at any time using the "Cookie choices" link in the site footer.</li>
+    <ul class="fr-only">
+      <li>Pour créer des comptes et permettre aux utilisateurs de publier, gérer, sauvegarder et partager des annonces.</li>
+      <li>Pour mettre en relation acheteurs et vendeurs via les messages de la marketplace.</li>
+      <li>Pour envoyer des alertes facultatives concernant les messages de la marketplace et l'activité du compte.</li>
+      <li>Pour modérer les contenus dangereux, illégaux, frauduleux ou abusifs.</li>
+      <li>Pour améliorer la fiabilité et la sécurité du service.</li>
     </ul>
-    <p>We may also use Google Analytics to understand aggregate, non-identifying traffic
-    patterns. Analytics is only loaded after consent.</p>
 
-    <h2>Security</h2>
-    <p>Authentication and user data are handled through Supabase. Access rules are used to limit private data to the correct users and administrators.</p>
+    <!-- ── SHARING ── -->
+    <h2>
+      <span class="en-only">Sharing</span>
+      <span class="fr-only">Partage</span>
+    </h2>
+    <p class="en-only">We do not sell personal information. Information may be shared with service providers used to operate the app, such as Supabase for authentication, database, and storage. Public listing information is visible to marketplace visitors.</p>
+    <p class="fr-only">Nous ne vendons pas d'informations personnelles. Les informations peuvent être partagées avec les prestataires de services utilisés pour exploiter l'application, tels que Supabase pour l'authentification, la base de données et le stockage. Les informations des annonces publiques sont visibles par les visiteurs de la marketplace.</p>
 
-    <h2 id="delete-account">Account and Data Deletion</h2>
-    <p>You can permanently delete your account at any time from your profile ("Delete my account"). This immediately removes your login and profile, and deletes your messages. Your listings remain visible without an associated seller (shown as an example listing) rather than disappearing, the same as any other account deletion — you can also delete individual listings first if you prefer nothing to remain.</p>
-    <p>If you would rather not use the in-app option, or want only specific data removed (such as a single listing or message) without deleting your whole account, email <a href="mailto:rxmarketing09@gmail.com?subject=Delete%20my%20account">rxmarketing09@gmail.com</a> from the address linked to your account and we will action the request within 30 days.</p>
-    <p>Data we are required to keep for legal, security, or fraud-prevention reasons (such as moderation and abuse reports) is retained for as long as necessary and then deleted.</p>
+    <!-- ── ADVERTISING AND COOKIES ── -->
+    <h2>
+      <span class="en-only">Advertising and Cookies</span>
+      <span class="fr-only">Publicité et cookies</span>
+    </h2>
+    <p class="en-only">This site shows advertising to keep it free to use. We use cookies and similar technologies to run the site, remember your preferences (such as language), and measure and display ads.</p>
+    <p class="fr-only">Ce site affiche des publicités pour rester gratuit. Nous utilisons des cookies et des technologies similaires pour faire fonctionner le site, mémoriser vos préférences (comme la langue) et mesurer et afficher des publicités.</p>
+    <ul class="en-only">
+      <li>Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to this and other websites.</li>
+      <li>Google's use of advertising cookies enables it and its partners to serve ads to users based on their visit to this site and/or other sites on the Internet.</li>
+      <li>You may opt out of personalized advertising by visiting <a href="https://www.google.com/settings/ads" rel="noopener">Google Ads Settings</a>, or opt out of a third-party vendor's use of cookies for personalized advertising at <a href="https://www.aboutads.info/choices/" rel="noopener">aboutads.info/choices</a>.</li>
+      <li>Where required, we ask for your consent before non-essential cookies are set, and we request non-personalized ads until consent is given. You can change your choice at any time using the "Cookie choices" link in the site footer.</li>
+    </ul>
+    <ul class="fr-only">
+      <li>Des vendeurs tiers, notamment Google, utilisent des cookies pour diffuser des annonces en fonction des visites précédentes d'un utilisateur sur ce site et d'autres sites.</li>
+      <li>L'utilisation de cookies publicitaires par Google permet à Google et à ses partenaires de diffuser des annonces aux utilisateurs en fonction de leur visite sur ce site et/ou sur d'autres sites Internet.</li>
+      <li>Vous pouvez refuser la publicité personnalisée en visitant <a href="https://www.google.com/settings/ads" rel="noopener">Paramètres des annonces Google</a>, ou refuser l'utilisation de cookies par un fournisseur tiers pour la publicité personnalisée sur <a href="https://www.aboutads.info/choices/" rel="noopener">aboutads.info/choices</a>.</li>
+      <li>Lorsque la loi l'exige, nous demandons votre consentement avant que des cookies non essentiels soient définis, et nous demandons des annonces non personnalisées jusqu'à ce que le consentement soit donné. Vous pouvez modifier votre choix à tout moment en utilisant le lien « Paramètres des cookies » dans le pied de page du site.</li>
+    </ul>
+    <p class="en-only">We may also use Google Analytics to understand aggregate, non-identifying traffic patterns. Analytics is only loaded after consent.</p>
+    <p class="fr-only">Nous pouvons également utiliser Google Analytics pour comprendre les tendances de trafic globales et non identifiantes. Analytics n'est chargé qu'après consentement.</p>
 
-    <h2>Your Choices</h2>
-    <p>You can choose not to create an account. You can turn browser notifications off in the app or in your browser settings. You can unsubscribe from listing-renewal reminder emails using the link in any such email. You can also contact us for help with account or listing data.</p>
+    <!-- ── SECURITY ── -->
+    <h2>
+      <span class="en-only">Security</span>
+      <span class="fr-only">Sécurité</span>
+    </h2>
+    <p class="en-only">Authentication and user data are handled through Supabase. Access rules are used to limit private data to the correct users and administrators.</p>
+    <p class="fr-only">L'authentification et les données des utilisateurs sont gérées via Supabase. Des règles d'accès sont utilisées pour limiter les données privées aux utilisateurs et administrateurs concernés.</p>
 
-    <h2>Contact</h2>
-    <p>For privacy questions, contact <a href="mailto:rxmarketing09@gmail.com">rxmarketing09@gmail.com</a>.</p>
+    <!-- ── ACCOUNT DELETION ── -->
+    <h2 id="delete-account">
+      <span class="en-only">Account and Data Deletion</span>
+      <span class="fr-only">Suppression du compte et des données</span>
+    </h2>
+    <p class="en-only">You can permanently delete your account at any time from your profile ("Delete my account"). This immediately removes your login and profile, and deletes your messages. Your listings remain visible without an associated seller (shown as an example listing) rather than disappearing, the same as any other account deletion — you can also delete individual listings first if you prefer nothing to remain.</p>
+    <p class="fr-only">Vous pouvez supprimer définitivement votre compte à tout moment depuis votre profil (« Supprimer mon compte »). Cela supprime immédiatement votre connexion et votre profil, et efface vos messages. Vos annonces restent visibles sans vendeur associé (affichées comme exemple d'annonce) plutôt que de disparaître, comme pour toute autre suppression de compte — vous pouvez également supprimer les annonces individuelles au préalable si vous préférez qu'il ne reste rien.</p>
+    <p class="en-only">If you would rather not use the in-app option, or want only specific data removed (such as a single listing or message) without deleting your whole account, email <a href="mailto:buyselltradesxm@gmail.com?subject=Delete%20my%20account">buyselltradesxm@gmail.com</a> from the address linked to your account and we will action the request within 30 days.</p>
+    <p class="fr-only">Si vous préférez ne pas utiliser l'option intégrée à l'application, ou si vous souhaitez supprimer uniquement des données spécifiques (comme une annonce ou un message) sans supprimer l'intégralité de votre compte, envoyez un e-mail à <a href="mailto:buyselltradesxm@gmail.com?subject=Supprimer%20mon%20compte">buyselltradesxm@gmail.com</a> depuis l'adresse liée à votre compte et nous traiterons la demande dans les 30 jours.</p>
+    <p class="en-only">Data we are required to keep for legal, security, or fraud-prevention reasons (such as moderation and abuse reports) is retained for as long as necessary and then deleted.</p>
+    <p class="fr-only">Les données que nous sommes tenus de conserver pour des raisons légales, de sécurité ou de prévention de la fraude (telles que les signalements de modération et d'abus) sont conservées aussi longtemps que nécessaire, puis supprimées.</p>
+
+    <!-- ── YOUR CHOICES ── -->
+    <h2>
+      <span class="en-only">Your Choices</span>
+      <span class="fr-only">Vos choix</span>
+    </h2>
+    <p class="en-only">You can choose not to create an account. You can turn browser notifications off in the app or in your browser settings. You can unsubscribe from listing-renewal reminder emails using the link in any such email. You can also contact us for help with account or listing data.</p>
+    <p class="fr-only">Vous pouvez choisir de ne pas créer de compte. Vous pouvez désactiver les notifications du navigateur dans l'application ou dans les paramètres de votre navigateur. Vous pouvez vous désabonner des e-mails de rappel de renouvellement d'annonce en utilisant le lien figurant dans tout e-mail de ce type. Vous pouvez également nous contacter pour obtenir de l'aide concernant les données de votre compte ou de vos annonces.</p>
+
+    <!-- ── CONTACT ── -->
+    <h2>
+      <span class="en-only">Contact</span>
+      <span class="fr-only">Contact</span>
+    </h2>
+    <p class="en-only">For privacy questions, contact <a href="mailto:buyselltradesxm@gmail.com">buyselltradesxm@gmail.com</a>.</p>
+    <p class="fr-only">Pour toute question relative à la confidentialité, contactez <a href="mailto:buyselltradesxm@gmail.com">buyselltradesxm@gmail.com</a>.</p>
+
   </main>
   <footer>
-    <a href="/terms.html">Terms of Use</a>
+    <a href="/terms.html">
+      <span class="en-only">Terms of Use</span>
+      <span class="fr-only">Conditions d'utilisation</span>
+    </a>
   </footer>
+  <script>
+    function toggleLang(){
+      var html=document.documentElement;
+      var next=html.getAttribute("data-lang")==="fr"?"en":"fr";
+      html.setAttribute("data-lang",next);
+      html.lang=next;
+      try{localStorage.setItem("lang",next);}catch(e){}
+    }
+  </script>
 </body>
 </html>
