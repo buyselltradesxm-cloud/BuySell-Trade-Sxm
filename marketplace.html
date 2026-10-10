@@ -31,10 +31,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<script src="/frame-guard.js?v=5b83168d74aa80b9"></script>
-<script src="/telemetry.js?v=5b83168d74aa80b9"></script>
-<script src="/pwa.js?v=5b83168d74aa80b9" defer></script>
-<link href="/fonts/fonts.css?v=5b83168d74aa80b9" rel="stylesheet">
+<script src="/frame-guard.js?v=9ae01f03faf05f34"></script>
+<script src="/telemetry.js?v=9ae01f03faf05f34"></script>
+<script src="/pwa.js?v=9ae01f03faf05f34" defer></script>
+<link href="/fonts/fonts.css?v=9ae01f03faf05f34" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -1288,6 +1288,7 @@
   .pricing-card ul{display:grid;gap:5px;padding-left:18px;margin-top:auto;}
   .pricing-card li{font-size:12px;color:var(--mute);line-height:1.35;}
   .pricing-cta{margin-top:auto;border-top:1.5px solid rgba(19,42,46,.18);padding-top:9px;font-weight:900;color:var(--sea);}
+  .pricing-card.free .pricing-cta{color:var(--white);border-top-color:rgba(255,255,255,.3);}
   .pricing-price{
     display:inline-flex;align-self:flex-start;border:1.5px solid var(--line);border-radius:8px;
     background:var(--sun);color:var(--ink);padding:4px 8px;font-size:12px;font-weight:900;
@@ -2078,10 +2079,10 @@
 <div class="ad-page">
   <aside class="ad-rail left" aria-label="Publicité">
     <div class="ad-card" style="background-image:url('https://images.unsplash.com/photo-1593508512255-86ab42a8e620?auto=format&fit=crop&w=500&q=80')">
-      <span class="ad-label">Ad</span>
+      <span class="ad-label" data-en="Ad">Pub</span>
       <div>
-        <b>Promote your shop</b>
-        <p>Weekly slots for local SXM businesses.</p>
+        <b data-en="Promote your shop">Mettez votre boutique en avant</b>
+        <p data-en="Weekly slots for local SXM businesses.">Emplacements à la semaine pour les commerces de SXM.</p>
       </div>
     </div>
   </aside>
@@ -2496,7 +2497,7 @@
           <p class="field-error" id="loginError" role="alert"></p>
           <div class="detail-actions">
             <button type="submit" class="primary-btn" data-i18n="loginSubmit">Se connecter</button>
-            <button type="button" class="secondary-btn" data-click="openPasswordReset">Mot de passe oublié</button>
+            <button type="button" class="secondary-btn" data-click="openPasswordReset" data-en="Forgot password">Mot de passe oublié</button>
             <button type="button" class="secondary-btn" data-click="closeModal" data-click-args='["accountModal"]' data-i18n="cancelLabel">Annuler</button>
           </div>
         </div>
@@ -2508,22 +2509,22 @@
 <div class="modal" id="passwordResetModal" role="dialog" aria-modal="true" aria-labelledby="passwordResetTitle">
   <div class="dialog small">
     <div class="dialog-head">
-      <h2 id="passwordResetTitle">Reset password</h2>
+      <h2 id="passwordResetTitle" data-en="Reset password">Réinitialiser le mot de passe</h2>
       <button type="button" class="close-btn" data-click="closeModal" data-click-args='["passwordResetModal"]' aria-label="Close">x</button>
     </div>
     <div class="dialog-body">
       <form data-submit="requestPasswordReset" data-submit-args='["__EVENT__"]' id="passwordResetRequestForm">
-        <p>Enter your email. If an account can be recovered, we will send a reset link.</p>
+        <p data-en="Enter your email. If an account can be recovered, we will send a reset link.">Saisissez votre email. Si un compte peut être récupéré, nous vous enverrons un lien de réinitialisation.</p>
         <div class="field"><label for="passwordResetEmail">Email</label><input id="passwordResetEmail" type="email" autocomplete="email" required maxlength="254"></div>
         <p class="field-error" id="passwordResetRequestError" role="alert"></p>
-        <div class="detail-actions"><button type="submit" class="primary-btn">Send reset link</button></div>
+        <div class="detail-actions"><button type="submit" class="primary-btn" data-en="Send reset link">Envoyer le lien</button></div>
       </form>
       <form data-submit="completePasswordReset" data-submit-args='["__EVENT__"]' id="passwordResetCompleteForm" hidden>
-        <p>Choose a new password. All other sessions will be signed out.</p>
-        <div class="field"><label for="passwordResetNew">New password</label><input id="passwordResetNew" type="password" autocomplete="new-password" required minlength="12" maxlength="128"></div>
-        <div class="field"><label for="passwordResetConfirm">Confirm password</label><input id="passwordResetConfirm" type="password" autocomplete="new-password" required minlength="12" maxlength="128"></div>
+        <p data-en="Choose a new password. All other sessions will be signed out.">Choisissez un nouveau mot de passe. Toutes les autres sessions seront déconnectées.</p>
+        <div class="field"><label for="passwordResetNew" data-en="New password">Nouveau mot de passe</label><input id="passwordResetNew" type="password" autocomplete="new-password" required minlength="12" maxlength="128"></div>
+        <div class="field"><label for="passwordResetConfirm" data-en="Confirm password">Confirmer le mot de passe</label><input id="passwordResetConfirm" type="password" autocomplete="new-password" required minlength="12" maxlength="128"></div>
         <p class="field-error" id="passwordResetCompleteError" role="alert"></p>
-        <div class="detail-actions"><button type="submit" class="primary-btn">Save new password</button></div>
+        <div class="detail-actions"><button type="submit" class="primary-btn" data-en="Save new password">Enregistrer le nouveau mot de passe</button></div>
       </form>
     </div>
   </div>
@@ -2540,17 +2541,17 @@
         <div class="payment-summary">
           <span class="profile-kicker" data-i18n="paymentKicker">Paiement obligatoire</span>
           <h3 id="paymentPlanName">Pro Starter</h3>
-          <p id="paymentPlanText" class="upload-help">Votre boutique sera activée après paiement confirmé.</p>
+          <p id="paymentPlanText" class="upload-help" data-i18n="paymentPlanText">Votre boutique sera activée après paiement confirmé.</p>
           <div class="payment-line">
             <span data-i18n="paymentAmountLabel">Montant</span>
-            <b id="paymentPlanPrice">$29/month</b>
+            <b id="paymentPlanPrice"></b>
           </div>
           <div class="payment-line">
             <span data-i18n="paymentStatusLabel">Statut</span>
             <b data-i18n="paymentWaiting">En attente de paiement</b>
           </div>
         </div>
-        <div data-apple-only hidden><p><a href="terms.html" target="_self">Conditions / Terms</a> · <a href="privacy.html" target="_self">Confidentialité / Privacy</a></p><button type="button" class="secondary-btn" data-apple-restore>Restaurer les achats / Restore purchases</button><button type="button" class="secondary-btn" data-apple-manage>Gérer les abonnements / Manage subscriptions</button></div>
+        <div data-apple-only hidden><p><a href="terms.html" target="_self" data-en="Terms of Use">Conditions d'utilisation</a> · <a href="privacy.html" target="_self" data-en="Privacy Policy">Politique de confidentialité</a></p><button type="button" class="secondary-btn" data-apple-restore data-en="Restore purchases">Restaurer les achats</button><button type="button" class="secondary-btn" data-apple-manage data-en="Manage subscriptions">Gérer les abonnements</button></div>
         <div class="payment-demo">
           <strong data-i18n="paymentDemoTitle">Renouvellement automatique</strong>
           <p id="paymentRenewalTerms"></p>
@@ -2648,36 +2649,36 @@
           </div>
           <div class="pricing-grid">
             <button type="button" class="pricing-card free" data-click="closeBoostModalThenPostModal">
-              <span class="pricing-price">Gratuit</span><h4>Particulier</h4><p>Pour vendre vos propres objets de temps en temps.</p>
-              <ul><li>5 annonces gratuites par mois</li><li>Annonces standards</li><li>Chat, favoris et évaluations</li></ul><span class="pricing-cta">Publier gratuitement</span>
+              <span class="pricing-price" data-en="Free">Gratuit</span><h4 data-en="Personal">Particulier</h4><p data-en="For selling your own things from time to time.">Pour vendre vos propres objets de temps en temps.</p>
+              <ul><li data-en="5 free listings per month">5 annonces gratuites par mois</li><li data-en="Standard listings">Annonces standards</li><li data-en="Chat, saved items and ratings">Chat, favoris et évaluations</li></ul><span class="pricing-cta" data-en="Post for free">Publier gratuitement</span>
             </button>
             <button type="button" class="pricing-card" data-click="chooseProPlan" data-click-args='["pro-starter"]'>
-              <span class="pricing-price">$29/month</span><h4>Pro Starter</h4><p>Pour commencer à vendre régulièrement.</p>
-              <ul><li>10 annonces actives</li><li>Page entreprise</li><li>Badge Pro</li><li>1 boost automatique par mois</li></ul><span class="pricing-cta">Choisir Starter</span>
+              <span class="pricing-price" data-en="$29 / month">29 $ / mois</span><h4 data-en="Pro Starter">Pro Starter</h4><p data-en="To start selling regularly.">Pour commencer à vendre régulièrement.</p>
+              <ul><li data-en="10 active listings">10 annonces actives</li><li data-en="Business page">Page entreprise</li><li data-en="Pro badge">Badge Pro</li><li data-en="1 automatic boost per month">1 boost automatique par mois</li></ul><span class="pricing-cta" data-en="Choose Starter">Choisir Starter</span>
             </button>
             <button type="button" class="pricing-card" data-click="chooseProPlan" data-click-args='["pro-business"]'>
-              <span class="pricing-price">$59/month</span><h4>Pro Business</h4><p>Plus de volume et des résultats mesurables.</p>
-              <ul><li>30 annonces actives</li><li>Statistiques</li><li>2 boosts automatiques par mois</li></ul><span class="pricing-cta">Choisir Pro Business</span>
+              <span class="pricing-price" data-en="$59 / month">59 $ / mois</span><h4 data-en="Pro Business">Pro Business</h4><p data-en="More volume and measurable results.">Plus de volume et des résultats mesurables.</p>
+              <ul><li data-en="30 active listings">30 annonces actives</li><li data-en="Statistics">Statistiques</li><li data-en="2 automatic boosts per month">2 boosts automatiques par mois</li></ul><span class="pricing-cta" data-en="Choose Pro Business">Choisir Pro Business</span>
             </button>
             <button type="button" class="pricing-card featured" data-click="chooseProPlan" data-click-args='["pro-premium"]'>
-              <span class="pricing-price">$99/month</span><h4>Premium</h4><p>Pour un catalogue actif et plus de contacts.</p>
-              <ul><li>75 annonces actives</li><li>5 boosts automatiques par mois</li><li>Remontées automatiques</li><li>WhatsApp et catalogue</li></ul><span class="pricing-cta">Choisir Premium</span>
+              <span class="pricing-price" data-en="$99 / month">99 $ / mois</span><h4 data-en="Premium">Premium</h4><p data-en="For an active catalog and more contacts.">Pour un catalogue actif et plus de contacts.</p>
+              <ul><li data-en="75 active listings">75 annonces actives</li><li data-en="5 automatic boosts per month">5 boosts automatiques par mois</li><li data-en="Automatic bumps">Remontées automatiques</li><li data-en="WhatsApp and catalog">WhatsApp et catalogue</li></ul><span class="pricing-cta" data-en="Choose Premium">Choisir Premium</span>
             </button>
             <button type="button" class="pricing-card" data-click="chooseProPlan" data-click-args='["pro-elite"]'>
-              <span class="pricing-price">$149/month</span><h4>Elite</h4><p>Une vraie vitrine pour les entreprises établies.</p>
-              <ul><li>150 annonces actives</li><li>10 boosts automatiques par mois</li><li>Vitrine entreprise</li><li>Priorité dans les résultats</li></ul><span class="pricing-cta">Choisir Elite</span>
+              <span class="pricing-price" data-en="$149 / month">149 $ / mois</span><h4 data-en="Elite">Elite</h4><p data-en="A real storefront for established businesses.">Une vraie vitrine pour les entreprises établies.</p>
+              <ul><li data-en="150 active listings">150 annonces actives</li><li data-en="10 automatic boosts per month">10 boosts automatiques par mois</li><li data-en="Business storefront">Vitrine entreprise</li><li data-en="Priority in results">Priorité dans les résultats</li></ul><span class="pricing-cta" data-en="Choose Elite">Choisir Elite</span>
             </button>
             <button type="button" class="pricing-card" data-click="chooseProPlan" data-click-args='["pro-unlimited"]'>
-              <span class="pricing-price">$199/month</span><h4>Unlimited</h4><p>Capacité et visibilité maximales.</p>
-              <ul><li>Annonces illimitées</li><li>Vitrine premium</li><li>20 boosts automatiques par mois</li><li>Statistiques avancées</li></ul><span class="pricing-cta">Choisir Pro Unlimited</span>
+              <span class="pricing-price" data-en="$199 / month">199 $ / mois</span><h4 data-en="Unlimited">Unlimited</h4><p data-en="Maximum capacity and visibility.">Capacité et visibilité maximales.</p>
+              <ul><li data-en="Unlimited listings">Annonces illimitées</li><li data-en="Premium storefront">Vitrine premium</li><li data-en="20 automatic boosts per month">20 boosts automatiques par mois</li><li data-en="Advanced statistics">Statistiques avancées</li></ul><span class="pricing-cta" data-en="Choose Pro Unlimited">Choisir Pro Unlimited</span>
             </button>
           </div>
-          <div class="pricing-context"><strong>Un seul système Pro pour toutes les entreprises</strong>Restaurant, boutique de vêtements, garage, agence immobilière, magasin d'électroménager ou vendeur de téléphones: chacun choisit son plan selon le nombre d'annonces et la visibilité recherchée.</div>
+          <div class="pricing-context"><strong data-en="One Pro system for every business">Un seul système Pro pour toutes les entreprises</strong><span data-en="Restaurant, clothing shop, garage, real estate agency, appliance store or phone seller: each one picks a plan by the number of listings and the visibility it wants.">Restaurant, boutique de vêtements, garage, agence immobilière, magasin d'électroménager ou vendeur de téléphones : chacun choisit son plan selon le nombre d'annonces et la visibilité recherchée.</span></div>
           <div class="pricing-extras">
-            <section class="pricing-info-block"><h3>Catégories compatibles</h3><p>Le même abonnement fonctionne dans toutes les grandes catégories.</p><div class="pricing-list"><div><span>Véhicules</span><b>Autos, motos, bateaux, pièces</b></div><div><span>Immobilier</span><b>Vente, terrain, location</b></div><div><span>Marketplace</span><b>Mode, maison, électronique</b></div><div><span>Emploi & services</span><b>Offres et prestations</b></div><div><span>Business</span><b>Commerces et équipements</b></div></div></section>
-            <section class="pricing-info-block"><h3>Achats à l'unité</h3><p>Ajoutez de la visibilité sans changer immédiatement d'abonnement.</p><div class="pricing-list"><div><span>Remonter l'annonce</span><b>$2.99</b></div><div><span>À la Une 24 h</span><b>$4.99</b></div><div><span>À la Une 7 jours</span><b>$12.99</b></div><div><span>Urgent</span><b>$3.99</b></div><div><span>Homepage sponsorisée</span><b>$19.99 / 7 j</b></div><div><span>Boutique sponsorisée</span><b>$29.99 / 7 j</b></div><div><span>Badge vérifié</span><b>Inclus Pro ou $9.99/month</b></div><div><span>Promotion spéciale</span><b>$9.99</b></div></div></section>
+            <section class="pricing-info-block"><h3 data-en="Compatible categories">Catégories compatibles</h3><p data-en="The same subscription works in every main category.">Le même abonnement fonctionne dans toutes les grandes catégories.</p><div class="pricing-list"><div><span data-en="Vehicles">Véhicules</span><b data-en="Cars, motorbikes, boats, parts">Autos, motos, bateaux, pièces</b></div><div><span data-en="Real estate">Immobilier</span><b data-en="Sales, land, rentals">Vente, terrain, location</b></div><div><span data-en="Marketplace">Marketplace</span><b data-en="Fashion, home, electronics">Mode, maison, électronique</b></div><div><span data-en="Jobs &amp; services">Emploi & services</span><b data-en="Job offers and services">Offres et prestations</b></div><div><span data-en="Business">Business</span><b data-en="Shops and equipment">Commerces et équipements</b></div></div></section>
+            <section class="pricing-info-block"><h3 data-en="One-off purchases">Achats à l'unité</h3><p data-en="Add visibility without changing your subscription right away.">Ajoutez de la visibilité sans changer immédiatement d'abonnement.</p><div class="pricing-list"><div><span data-en="Bump the listing">Remonter l'annonce</span><b data-en="$2.99">2,99 $</b></div><div><span data-en="Featured for 24 h">À la Une 24 h</span><b data-en="$4.99">4,99 $</b></div><div><span data-en="Featured for 7 days">À la Une 7 jours</span><b data-en="$12.99">12,99 $</b></div><div><span data-en="Urgent">Urgent</span><b data-en="$3.99">3,99 $</b></div><div><span data-en="Sponsored homepage">Homepage sponsorisée</span><b data-en="$19.99 / 7 days">19,99 $ / 7 j</b></div><div><span data-en="Sponsored store">Boutique sponsorisée</span><b data-en="$29.99 / 7 days">29,99 $ / 7 j</b></div><div><span data-en="Verified badge">Badge vérifié</span><b data-en="Included with Pro or $9.99 / month">Inclus Pro ou 9,99 $ / mois</b></div><div><span data-en="Special promotion">Promotion spéciale</span><b data-en="$9.99">9,99 $</b></div></div></section>
           </div>
-          <p class="pricing-note">Un abonnement Pro doit être payé et confirmé avant son activation. Sans paiement confirmé, le compte professionnel ne peut pas publier.</p>
+          <p class="pricing-note" data-en="A Pro subscription must be paid and confirmed before it is activated. Without a confirmed payment, the business account cannot publish.">Un abonnement Pro doit être payé et confirmé avant son activation. Sans paiement confirmé, le compte professionnel ne peut pas publier.</p>
         </section>
 
         <div class="guide-grid">
@@ -2791,7 +2792,7 @@
       <form data-submit="confirmListingBoost" data-submit-args='["__EVENT__"]'>
         <div class="payment-summary">
           <span class="profile-kicker" data-i18n="boostKicker">Visibilité payante</span>
-          <h3 id="boostListingTitle">Annonce</h3>
+          <h3 id="boostListingTitle" data-i18n="listingLabel">Annonce</h3>
           <p id="boostCheckoutText" class="upload-help" data-i18n="boostCheckoutText">Choisissez une durée. Le boost met votre annonce en avant sans abonnement Pro.</p>
           <div class="payment-line">
             <span data-i18n="paymentAmountLabel">Montant</span>
@@ -2872,10 +2873,10 @@
 
   <aside class="ad-rail right" aria-label="Publicité">
     <div class="ad-card" style="background-image:url('https://images.unsplash.com/photo-1580674285054-bed31e145f59?auto=format&fit=crop&w=500&q=80')">
-      <span class="ad-label">Ad</span>
+      <span class="ad-label" data-en="Ad">Pub</span>
       <div>
-        <b>Local deals all week</b>
-        <p>Restaurants, rentals, services and events.</p>
+        <b data-en="Local deals all week">Bons plans locaux toute la semaine</b>
+        <p data-en="Restaurants, rentals, services and events.">Restaurants, locations, services et événements.</p>
       </div>
     </div>
   </aside>
@@ -2902,9 +2903,9 @@
       <span data-i18n="frSide">Côté français · Marigot</span>
       <span data-i18n="nlSide">Côté Sint Maarten · Philipsburg</span>
       <span data-i18n="footerLang">Français et anglais</span>
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="terms.html">Terms of Use</a>
-      <a href="#" data-click="openCookieConsentPreventDefault" data-click-args='["__EVENT__"]'>Cookie choices</a>
+      <a href="privacy.html" data-en="Privacy Policy">Politique de confidentialité</a>
+      <a href="terms.html" data-en="Terms of Use">Conditions d'utilisation</a>
+      <a href="#" data-click="openCookieConsentPreventDefault" data-click-args='["__EVENT__"]' data-en="Cookie choices">Choix des cookies</a>
     </div>
     <p class="policy-note" data-i18n="illegalPolicy">Les objets illégaux, armes, drogues, contrefaçons, produits volés et articles dangereux sont strictement interdits. Les comptes en infraction peuvent être supprimés et bannis définitivement.</p>
   </div>
@@ -2912,20 +2913,20 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=5b83168d74aa80b9" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=5b83168d74aa80b9"></script>
-<script src="native-ios.js?v=5b83168d74aa80b9"></script>
-<script src="captcha.js?v=5b83168d74aa80b9"></script>
-<script src="supabase-api.js?v=5b83168d74aa80b9"></script>
-<script src="img-utils.js?v=5b83168d74aa80b9"></script>
-<script src="draft-store.js?v=5b83168d74aa80b9"></script>
-<script src="push-config.js?v=5b83168d74aa80b9"></script>
-<script src="push-notifications.js?v=5b83168d74aa80b9"></script>
-<script src="consent.js?v=5b83168d74aa80b9" defer></script>
-<script src="native-admob.js?v=5b83168d74aa80b9"></script>
-<script src="ads-config.js?v=5b83168d74aa80b9"></script>
-<script src="ads.js?v=5b83168d74aa80b9" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=9ae01f03faf05f34" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=9ae01f03faf05f34"></script>
+<script src="native-ios.js?v=9ae01f03faf05f34"></script>
+<script src="captcha.js?v=9ae01f03faf05f34"></script>
+<script src="supabase-api.js?v=9ae01f03faf05f34"></script>
+<script src="img-utils.js?v=9ae01f03faf05f34"></script>
+<script src="draft-store.js?v=9ae01f03faf05f34"></script>
+<script src="push-config.js?v=9ae01f03faf05f34"></script>
+<script src="push-notifications.js?v=9ae01f03faf05f34"></script>
+<script src="consent.js?v=9ae01f03faf05f34" defer></script>
+<script src="native-admob.js?v=9ae01f03faf05f34"></script>
+<script src="ads-config.js?v=9ae01f03faf05f34"></script>
+<script src="ads.js?v=9ae01f03faf05f34" defer></script>
 
-<script src="app-marketplace.js?v=5b83168d74aa80b9"></script>
+<script src="app-marketplace.js?v=9ae01f03faf05f34"></script>
 </body>
 </html>

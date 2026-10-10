@@ -1766,6 +1766,13 @@ const ACCOUNT_PLANS = {
   "pro-unlimited":{fr:"Unlimited",en:"Unlimited",price:"$199/month",limit:Infinity,includedBoosts:20}
 };
 function accountPlan(plan){ return ACCOUNT_PLANS[plan] || ACCOUNT_PLANS["personal-free"]; }
+// Plan prices are stored in one form; show them in the reader's language.
+function planPriceLabel(plan){
+  const price = accountPlan(plan).price;
+  const amount = (price.match(/[\d.]+/) || [])[0];
+  if(!amount) return state.lang === "fr" ? "Gratuit" : "Free";
+  return state.lang === "fr" ? `${amount} $ / mois` : `$${amount} / month`;
+}
 function listingLimitFor(user=state.user){ return accountPlan(user?.accountPlan || "personal-free").limit; }
 function includedBoostLimitFor(user=state.user){ return accountPlan(user?.accountPlan || "personal-free").includedBoosts || 0; }
 function monthKey(value=new Date()){
@@ -2793,6 +2800,16 @@ function setLang(lang){
     const k = el.getAttribute("data-i18n-ph");
     if(t()[k]) el.setAttribute("placeholder", t()[k]);
   });
+  // Texts written in French in the page itself carry their English in data-en.
+  document.querySelectorAll("[data-en]").forEach(el=>{
+    if(el.dataset.fr === undefined) el.dataset.fr = el.textContent;
+    el.textContent = lang === "en" ? el.dataset.en : el.dataset.fr;
+  });
+  // House promos are drawn once: draw them again in the new language.
+  document.querySelectorAll('[data-ad-kind="house"]').forEach(el=>{
+    el.removeAttribute("data-ad-state"); el.removeAttribute("data-ad-kind");
+  });
+  if(window.Ads && Ads.refresh) Ads.refresh();
   document.querySelectorAll(".post[data-mobile-label]").forEach(el=>{
     if(t().postShort) el.setAttribute("data-mobile-label", t().postShort);
   });
@@ -3575,7 +3592,7 @@ function openPaymentModal({existingUser=false, plan=null, after=null} = {}){
   const selectedPlan = plan || pendingProSignup?.accountPlan || state.user?.accountPlan || "pro-starter";
   pendingSelectedProPlan = selectedPlan;
   document.getElementById("paymentPlanName").textContent = planLabel(selectedPlan);
-  document.getElementById("paymentPlanPrice").textContent = accountPlan(selectedPlan).price;
+  document.getElementById("paymentPlanPrice").textContent = planPriceLabel(selectedPlan);
   document.getElementById("paymentPlanText").textContent = t().paymentPlanText;
   document.getElementById("paymentRenewalTerms").textContent = renewalDisclosure(selectedPlan);
   openModal("paymentModal");
@@ -3664,7 +3681,6 @@ function renderProfile(){
 }
 
 function subscriptionDashboardHTML(user, own){
-  const plan = accountPlan(user.accountPlan);
   const isBusiness = user.accountType === "business";
   const proActive = hasActiveProSubscription(user);
   const fr = state.lang === "fr";
@@ -3684,7 +3700,7 @@ function subscriptionDashboardHTML(user, own){
     <section class="pf-group">
       <div class="pf-plan">
         <div>
-          <b>${esc(planLabel(user.accountPlan))}</b>${isBusiness ? `<small>${esc(plan.price)}</small>` : ""}
+          <b>${esc(planLabel(user.accountPlan))}</b>${isBusiness && !(window.SXM && SXM.isIOS()) ? `<small>${esc(planPriceLabel(user.accountPlan))}</small>` : ""}
           <div class="subscription-badges"><span class="${statusClass}">${esc(statusText)}</span></div>
         </div>
         <button type="button" class="pf-link" data-click="closeProfileModalThenPricing">${fr ? "Changer de plan" : "Change plan"}</button>
