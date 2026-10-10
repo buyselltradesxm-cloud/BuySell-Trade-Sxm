@@ -31,10 +31,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<script src="/frame-guard.js?v=202cf237496ff6a7"></script>
-<script src="/telemetry.js?v=202cf237496ff6a7"></script>
-<script src="/pwa.js?v=202cf237496ff6a7" defer></script>
-<link href="/fonts/fonts.css?v=202cf237496ff6a7" rel="stylesheet">
+<script src="/frame-guard.js?v=ad9ace5aa045c03b"></script>
+<script src="/telemetry.js?v=ad9ace5aa045c03b"></script>
+<script src="/pwa.js?v=ad9ace5aa045c03b" defer></script>
+<link href="/fonts/fonts.css?v=ad9ace5aa045c03b" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -1418,6 +1418,74 @@
   .trust-badges span,.trust-badges button{border:1.5px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;font-weight:800;background:var(--paper);font:inherit;color:inherit;}
   .trust-badges button{cursor:pointer;}
   .trust-badges button:hover{background:var(--sun);}
+  /* Profile screen: identity, one stats line, then grouped rows. Related
+     items share one container with hairline dividers instead of each
+     getting its own outlined box. */
+  #profileBody{--pf-rule:rgba(19,42,46,.14);}
+  @media (min-width:700px){#profileBody{max-width:640px;margin:0 auto;}}
+  .pf-id{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;padding:2px 2px 0;}
+  .pf-id .profile-avatar-wrap{position:relative;}
+  .pf-id .profile-avatar{width:68px;height:68px;border-radius:20px;box-shadow:4px 4px 0 var(--line);overflow:hidden;}
+  .pf-id .profile-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+  .pf-id .avatar-edit-btn{
+    position:absolute;right:-8px;bottom:-8px;width:30px;height:30px;border-radius:50%;
+    border:1.5px solid var(--line);background:var(--white);font-size:14px;line-height:1;
+    display:grid;place-content:center;
+  }
+  .pf-id h3{font-size:20px;line-height:1.2;margin:0 0 3px;overflow-wrap:anywhere;}
+  .pf-id p{color:var(--mute);font-size:13.5px;line-height:1.45;overflow-wrap:anywhere;}
+  .pf-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .pf-chips:empty{display:none;}
+  .pf-chips button{
+    border:1px solid var(--pf-rule);border-radius:999px;background:var(--white);
+    padding:4px 10px;font-size:12px;font-weight:700;color:var(--sea);
+  }
+  .pf-stats{
+    display:grid;grid-template-columns:repeat(3,1fr);margin:18px 0 0;
+    border-top:1px solid var(--pf-rule);border-bottom:1px solid var(--pf-rule);
+  }
+  .pf-stats button{padding:12px 4px;text-align:center;}
+  .pf-stats button + button{border-left:1px solid var(--pf-rule);}
+  .pf-stats b{display:block;font-family:'Space Grotesk',sans-serif;font-size:20px;line-height:1.15;}
+  .pf-stats span{font-size:12px;color:var(--mute);font-weight:600;}
+  .pf-label{font-size:13px;font-weight:700;color:var(--mute);letter-spacing:0;margin:20px 4px 8px;}
+  .pf-group{border:1px solid var(--pf-rule);border-radius:14px;background:var(--white);overflow:hidden;}
+  .pf-group.pf-gap{margin-top:16px;}
+  .pf-group > * + *{border-top:1px solid var(--pf-rule);}
+  .pf-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    width:100%;min-height:50px;padding:12px 14px;text-align:left;
+  }
+  .pf-row b{font-weight:600;font-size:15px;}
+  .pf-row::after{
+    content:"";flex:none;width:8px;height:8px;margin-right:3px;
+    border-top:2px solid rgba(19,42,46,.35);border-right:2px solid rgba(19,42,46,.35);
+    transform:rotate(45deg);
+  }
+  .pf-row.plain::after{display:none;}
+  .pf-row.danger b{color:var(--coral);}
+  .pf-row:active{background:var(--paper);}
+  .pf-row:focus-visible,.pf-stats button:focus-visible,.pf-link:focus-visible,.pf-chips button:focus-visible{outline:2px solid var(--sea);outline-offset:-2px;}
+  .pf-plan{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;}
+  .pf-plan b{font-family:'Space Grotesk',sans-serif;font-size:17px;}
+  .pf-plan small{margin-left:8px;color:var(--mute);font-size:13px;}
+  .pf-plan .subscription-badges{margin-top:6px;}
+  .pf-plan .subscription-badges span{border:0;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;}
+  .pf-link{
+    flex:none;border:1.5px solid var(--sea);border-radius:999px;padding:8px 14px;
+    color:var(--sea);font-weight:700;font-size:13.5px;background:var(--white);
+  }
+  .pf-note{padding:10px 14px;font-size:13px;color:var(--ink);background:rgba(242,183,5,.16);}
+  .pf-usage{padding-bottom:12px;}
+  .pf-kv{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:11px 14px;font-size:14px;}
+  .pf-kv span{color:var(--mute);}
+  .pf-kv b{font-weight:600;text-align:right;}
+  .pf-usage .pf-kv{padding-bottom:8px;}
+  .pf-meter{height:6px;margin:0 14px;border-radius:999px;background:rgba(19,42,46,.1);overflow:hidden;}
+  .pf-meter i{display:block;height:100%;border-radius:999px;background:var(--sea);}
+  #profileBody .profile-section{border:1px solid var(--pf-rule);border-radius:14px;margin-top:16px;}
+  #profileBody .mini-row{border:1px solid var(--pf-rule);border-radius:12px;}
+  .pf-id .business-contact span,.pf-id .business-contact a{border:1px solid var(--pf-rule);border-radius:999px;background:var(--white);padding:4px 10px;font-size:12px;font-weight:600;}
   .drawer-list{display:flex;flex-direction:column;gap:10px;}
   .thread{
     border:2px solid var(--line);border-radius:12px;background:var(--white);
@@ -2842,20 +2910,20 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=202cf237496ff6a7" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=202cf237496ff6a7"></script>
-<script src="native-ios.js?v=202cf237496ff6a7"></script>
-<script src="captcha.js?v=202cf237496ff6a7"></script>
-<script src="supabase-api.js?v=202cf237496ff6a7"></script>
-<script src="img-utils.js?v=202cf237496ff6a7"></script>
-<script src="draft-store.js?v=202cf237496ff6a7"></script>
-<script src="push-config.js?v=202cf237496ff6a7"></script>
-<script src="push-notifications.js?v=202cf237496ff6a7"></script>
-<script src="consent.js?v=202cf237496ff6a7" defer></script>
-<script src="native-admob.js?v=202cf237496ff6a7"></script>
-<script src="ads-config.js?v=202cf237496ff6a7"></script>
-<script src="ads.js?v=202cf237496ff6a7" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=ad9ace5aa045c03b" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=ad9ace5aa045c03b"></script>
+<script src="native-ios.js?v=ad9ace5aa045c03b"></script>
+<script src="captcha.js?v=ad9ace5aa045c03b"></script>
+<script src="supabase-api.js?v=ad9ace5aa045c03b"></script>
+<script src="img-utils.js?v=ad9ace5aa045c03b"></script>
+<script src="draft-store.js?v=ad9ace5aa045c03b"></script>
+<script src="push-config.js?v=ad9ace5aa045c03b"></script>
+<script src="push-notifications.js?v=ad9ace5aa045c03b"></script>
+<script src="consent.js?v=ad9ace5aa045c03b" defer></script>
+<script src="native-admob.js?v=ad9ace5aa045c03b"></script>
+<script src="ads-config.js?v=ad9ace5aa045c03b"></script>
+<script src="ads.js?v=ad9ace5aa045c03b" defer></script>
 
-<script src="app-marketplace.js?v=202cf237496ff6a7"></script>
+<script src="app-marketplace.js?v=ad9ace5aa045c03b"></script>
 </body>
 </html>

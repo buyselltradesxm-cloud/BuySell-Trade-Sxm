@@ -3618,90 +3618,50 @@ function renderProfile(){
   const displayName = user.businessName || user.name;
   const isBusiness = user.accountType === "business";
   const proActive = hasActiveProSubscription(user);
-  const profileType = isBusiness ? (state.lang==="fr" ? "Boutique Pro SXM" : "SXM Pro Store") : (state.lang==="fr" ? "Vendeur local" : "Local seller");
-  const profileCopy = own.length
-    ? (state.lang==="fr" ? "Votre vitrine commence à prendre forme. Gardez vos photos propres, répondez vite et marquez les annonces vendues." : "Your storefront is taking shape. Keep photos clean, reply fast, and mark sold listings.")
-    : isBusiness
-      ? (state.lang==="fr" ? "Votre boutique Pro est prête à recevoir vos produits. Ajoutez des photos propres, un prix clair, et gardez le chat ouvert aux clients." : "Your Pro store is ready for products. Add clean photos, a clear price, and keep chat open for customers.")
-      : (state.lang==="fr" ? "Prêt à vendre sur l'île ? Ajoutez une vraie photo, un prix clair, et votre annonce peut partir aujourd'hui." : "Ready to sell on the island? Add a real photo, a clear price, and your listing can move today.");
+  const fr = state.lang === "fr";
+  const row = (label, attrs, extra = "") => `<button type="button" class="pf-row ${extra}" ${attrs}><b>${label}</b></button>`;
+  const canInstall = !(window.bstIsInstalled ? bstIsInstalled() : (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
   body.innerHTML = `
-    <section class="profile-hero">
+    <section class="pf-id">
       <div class="profile-avatar-wrap">
         <div class="profile-avatar">${avatarHTML(user)}</div>
         <button type="button" class="avatar-edit-btn" data-click="triggerAvatarFileInput" aria-label="${t().changePhoto}" title="${t().changePhoto}">📷</button>
         <input type="file" id="avatarFileInput" accept="image/*" hidden data-change="handleAvatarChange" data-change-args='${dataArgs(["__THIS__"])}'>
       </div>
       <div>
-        <span class="profile-kicker">${profileType}</span>
         <h3>${esc(displayName)}</h3>
-        <p>${esc(user.email)} · ${esc(user.area || "SXM")}</p>
+        <p>${esc(user.email)}</p>
         <p>${t().memberSince} ${joined}</p>
-        ${isBusiness ? `<p><strong>${t().proPlan}:</strong> ${planLabel(user.accountPlan)} · ${proActive ? t().proActive : t().proInactive}</p>` : ""}
+        <div class="pf-chips">
+          ${state.user.provider === "supabase" && state.user.verifiedEmail ? `<button type="button" data-click="showTrustInfo" data-click-args='${dataArgs(['email'])}'>${t().verifiedEmail}</button>` : ""}
+          ${proActive ? `<button type="button" data-click="showTrustInfo" data-click-args='${dataArgs(['pro'])}'>${fr ? "Compte Pro" : "Pro account"}</button>` : ""}
+        </div>
         ${businessContactHTML(user)}
-        <p class="profile-copy">${profileCopy}</p>
       </div>
     </section>
-    <div class="profile-stats">
-      <button type="button" class="profile-stat" data-click="openProfileStat" data-click-args='${dataArgs(['listings'])}'><b>${own.length}</b><span>${t().activeListings}</span></button>
-      <button type="button" class="profile-stat" data-click="openProfileStat" data-click-args='${dataArgs(['saved'])}'><b>${state.favs.size}</b><span>${t().savedItems}</span></button>
-      <button type="button" class="profile-stat" data-click="openProfileStat" data-click-args='${dataArgs(['messages'])}'><b>${Object.keys(chatThreads).length}</b><span>${t().conversations}</span></button>
+    <div class="pf-stats">
+      <button type="button" data-click="openProfileStat" data-click-args='${dataArgs(['listings'])}'><b>${own.length}</b><span>${t().activeListings}</span></button>
+      <button type="button" data-click="openProfileStat" data-click-args='${dataArgs(['saved'])}'><b>${state.favs.size}</b><span>${t().savedItems}</span></button>
+      <button type="button" data-click="openProfileStat" data-click-args='${dataArgs(['messages'])}'><b>${Object.keys(chatThreads).length}</b><span>${t().conversations}</span></button>
     </div>
     ${subscriptionDashboardHTML(user, own)}
-    <section class="profile-section">
-      <h3>${state.lang==="fr" ? "Confiance" : "Trust"}</h3>
-      <div class="trust-badges">
-        ${state.user.provider === "supabase" && state.user.verifiedEmail ? `<button type="button" data-click="showTrustInfo" data-click-args='${dataArgs(['email'])}'>${t().verifiedEmail}</button>` : ""}
-        ${proActive ? `<button type="button" data-click="showTrustInfo" data-click-args='${dataArgs(['pro'])}'>${state.lang === "fr" ? "Compte Pro" : "Pro account"}</button>` : ""}
-      </div>
-    </section>
-    <section class="profile-section">
-      <h3>${state.lang==="fr" ? "Boîte à outils vendeur" : "Seller toolkit"}</h3>
-      <div class="profile-tools">
-        <button type="button" class="profile-tool" data-click="closeProfileModalThenPostModal">
-          <b>${state.lang==="fr" ? "Mettre un objet en avant" : "List something now"}</b>
-          <span>${state.lang==="fr" ? "Photos, prix, quartier et devise en quelques minutes." : "Photos, price, area and currency in a few minutes."}</span>
-        </button>
-        <button type="button" class="profile-tool" data-click="closeProfileModalThenMessages">
-          <b>${state.lang==="fr" ? "Répondre aux acheteurs" : "Reply to buyers"}</b>
-          <span>${state.lang==="fr" ? "Les réponses rapides aident à vendre plus vite." : "Fast replies help listings sell sooner."}</span>
-        </button>
-        <button type="button" class="profile-tool" data-click="closeProfileModalThenBoostInfo">
-          <b>${t().boostCta}</b>
-          <span>${state.lang==="fr" ? "Boost 3, 7 ou 14 jours sans abonnement Pro." : "Boost for 3, 7, or 14 days without a Pro subscription."}</span>
-        </button>
-        <button type="button" class="profile-tool" data-click="scrollFavsThenCloseProfileModal">
-          <b>${state.lang==="fr" ? "Suivre mes favoris" : "Watch saved items"}</b>
-          <span>${state.lang==="fr" ? "Gardez les bons plans sous la main." : "Keep good deals close."}</span>
-        </button>
-        ${!(window.bstIsInstalled ? bstIsInstalled() : (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)) ? `<button type="button" class="profile-tool" data-click="handleInstallAppClick">
-          <b>${state.lang==="fr" ? "Installer l'application" : "Install the app"}</b>
-          <span>${state.lang==="fr" ? "Accès depuis l'écran d'accueil, plein écran, même hors ligne." : "Home-screen access, full screen, works offline."}</span>
-        </button>` : ""}
-        ${(window.PUSH_ENABLED && window.Push && Push.supported()) ? `<button type="button" class="profile-tool" id="pushTool" data-click="toggleProfilePushNotifications" data-click-args='${dataArgs(["__THIS__"])}'>
-          <b>${state.lang==="fr" ? "Activer les notifications" : "Turn on notifications"}</b>
-          <span>${state.lang==="fr" ? "Soyez prévenu des nouveaux messages, même l'app fermée." : "Get told about new messages, even when the app is closed."}</span>
-        </button>` : ""}
-        ${isAdminUser(user) ? `<button type="button" class="profile-tool" data-click="closeProfileModalThenAdmin">
-          <b>Admin</b>
-          <span>${state.lang==="fr" ? "Modérer les annonces, signalements, boosts et catégories." : "Moderate listings, reports, boosts, and categories."}</span>
-        </button>` : ""}
-      </div>
-    </section>
-    ${isBusiness ? proDashboardHTML(user, own, proActive) : ""}
-    <section class="profile-section">
-      <h3>${t().profileListings}</h3>
-      <div class="mini-listing">
-        ${own.length ? own.map(l=>miniListingHTML(l)).join("") : `<p class="upload-help">${t().profileNoListings}</p>`}
-      </div>
-    </section>
-    ${blockedUsersHTML()}
-    <div class="detail-actions">
-      <button type="button" class="primary-btn" data-click="closeProfileModalThenPostModal">${t().postAd}</button>
-      <button type="button" class="secondary-btn" data-click="logoutUser">${t().logoutLabel}</button>
+    <div class="pf-group pf-gap">
+      ${row(t().postAd, 'data-click="closeProfileModalThenPostModal"')}
+      ${row(fr ? "Répondre aux acheteurs" : "Reply to buyers", 'data-click="closeProfileModalThenMessages"')}
+      ${row(t().boostCta, 'data-click="closeProfileModalThenBoostInfo"')}
+      ${row(fr ? "Suivre mes favoris" : "Watch saved items", 'data-click="scrollFavsThenCloseProfileModal"')}
+      ${(window.PUSH_ENABLED && window.Push && Push.supported()) ? row(fr ? "Activer les notifications" : "Turn on notifications", `id="pushTool" data-click="toggleProfilePushNotifications" data-click-args='${dataArgs(["__THIS__"])}'`) : ""}
+      ${canInstall ? row(fr ? "Installer l'application" : "Install the app", 'data-click="handleInstallAppClick"') : ""}
+      ${isAdminUser(user) ? row("Admin", 'data-click="closeProfileModalThenAdmin"') : ""}
     </div>
-    <div class="detail-actions">
-      ${window.SXM && SXM.isIOS() ? `<button type="button" class="secondary-btn" data-apple-restore>${state.lang === "fr" ? "Restaurer les achats" : "Restore purchases"}</button><button type="button" class="secondary-btn" data-apple-manage>${state.lang === "fr" ? "Gérer les abonnements Apple" : "Manage Apple subscriptions"}</button>` : ""}
-      <button type="button" class="secondary-btn" data-click="deleteMyAccountConfirmed">${t().deleteAccountLabel}</button>
+    ${own.length ? `
+    <h3 class="pf-label">${t().profileListings}</h3>
+    <div class="mini-listing">${own.map(l=>miniListingHTML(l)).join("")}</div>` : ""}
+    ${blockedUsersHTML()}
+    <div class="pf-group pf-gap">
+      ${window.SXM && SXM.isIOS() ? row(fr ? "Restaurer les achats" : "Restore purchases", "data-apple-restore") + (isBusiness ? "" : row(fr ? "Gérer les abonnements Apple" : "Manage Apple subscriptions", "data-apple-manage")) : ""}
+      ${row(t().logoutLabel, 'data-click="logoutUser"', "plain")}
+      ${row(t().deleteAccountLabel, 'data-click="deleteMyAccountConfirmed"', "plain danger")}
     </div>`;
   refreshPushToolLabel(document.getElementById("pushTool"));
   persistState();
@@ -3711,80 +3671,36 @@ function subscriptionDashboardHTML(user, own){
   const plan = accountPlan(user.accountPlan);
   const isBusiness = user.accountType === "business";
   const proActive = hasActiveProSubscription(user);
+  const fr = state.lang === "fr";
   const limit = listingLimitFor(user);
   const used = publicationUsageCountFor(user);
-  const quota = Number.isFinite(limit) ? `${used} / ${limit}` : `${used} / ${state.lang === "fr" ? "Illimité" : "Unlimited"}`;
+  const quota = Number.isFinite(limit) ? `${used} / ${limit}` : `${used} / ${fr ? "Illimité" : "Unlimited"}`;
+  const filled = Number.isFinite(limit) && limit > 0 ? Math.min(100, Math.round(used / limit * 100)) : null;
   const periodEnd = subscriptionPeriodEndFor(user);
   const renewal = isBusiness
-    ? (periodEnd ? formatProfileDate(periodEnd) : (state.lang === "fr" ? "Après connexion Stripe" : "After Stripe setup"))
-    : (state.lang === "fr" ? "Le 1er du mois" : "1st of the month");
+    ? (periodEnd ? formatProfileDate(periodEnd) : (fr ? "Après connexion Stripe" : "After Stripe setup"))
+    : (fr ? "Le 1er du mois" : "1st of the month");
   const statusClass = proActive || !isBusiness ? "active" : "pending";
   const statusText = subscriptionStatusLabel(user);
-  const paymentText = isBusiness
-    ? (proActive
-      ? (state.lang === "fr" ? "Votre compte Pro peut publier selon sa limite actuelle." : "Your Pro account can publish within its current limit.")
-      : (state.lang === "fr" ? "Paiement requis avant publication Pro." : "Payment is required before Pro publishing."))
-    : (state.lang === "fr" ? "Créer un compte et vendre vos objets personnels reste gratuit." : "Creating an account and selling personal items stays free.");
+  const kv = (label, value) => `<div class="pf-kv"><span>${label}</span><b>${value}</b></div>`;
   return `
-    <section class="subscription-card">
-      <div class="subscription-summary">
-        <h3>${state.lang === "fr" ? "Mon abonnement" : "My subscription"}</h3>
-        <div class="subscription-badges">
-          <span class="${statusClass}">${esc(statusText)}</span>
-          <span>${esc(planLabel(user.accountPlan))}</span>
-          <span>${esc(plan.price)}</span>
+    <h3 class="pf-label">${fr ? "Mon abonnement" : "My subscription"}</h3>
+    <section class="pf-group">
+      <div class="pf-plan">
+        <div>
+          <b>${esc(planLabel(user.accountPlan))}</b>${isBusiness ? `<small>${esc(plan.price)}</small>` : ""}
+          <div class="subscription-badges"><span class="${statusClass}">${esc(statusText)}</span></div>
         </div>
-        <p>${paymentText}</p>
-        <div class="subscription-actions">
-          <button type="button" class="primary-btn" data-click="closeProfileModalThenPricing">${state.lang === "fr" ? "Changer de plan" : "Change plan"}</button>
-          <button type="button" class="secondary-btn" data-click="manageSubscription">${state.lang === "fr" ? "Gérer / annuler" : "Manage / cancel"}</button>
-        </div>
+        <button type="button" class="pf-link" data-click="closeProfileModalThenPricing">${fr ? "Changer de plan" : "Change plan"}</button>
       </div>
-      <div class="subscription-metrics">
-        <div class="subscription-metric"><span>${isBusiness ? (state.lang === "fr" ? "Annonces actives" : "Active listings") : (state.lang === "fr" ? "Annonces ce mois" : "Listings this month")}</span><b>${quota}</b></div>
-        <div class="subscription-metric"><span>${state.lang === "fr" ? "Renouvellement" : "Renewal"}</span><b>${esc(renewal)}</b></div>
-        <div class="subscription-metric"><span>${state.lang === "fr" ? "Statut paiement" : "Payment status"}</span><b>${esc(statusText)}</b></div>
-        <div class="subscription-metric"><span>${state.lang === "fr" ? "Boosts auto ce mois" : "Auto boosts this month"}</span><b>${autoBoostUsedCountFor(user)} / ${includedBoostLimitFor(user)}</b></div>
+      ${isBusiness && !proActive ? `<p class="pf-note">${fr ? "Paiement requis avant publication Pro." : "Payment is required before Pro publishing."}</p>` : ""}
+      <div class="pf-usage">
+        ${kv(isBusiness ? (fr ? "Annonces actives" : "Active listings") : (fr ? "Annonces ce mois" : "Listings this month"), quota)}
+        ${filled === null ? "" : `<div class="pf-meter"><i style="width:${filled}%"></i></div>`}
       </div>
-    </section>`;
-}
-
-function proDashboardHTML(user, own, proActive){
-  const activeOwn = own.filter(l=>!l.sold && l.status !== "sold").length;
-  const planLimit = listingLimitFor(user);
-  const quota = Number.isFinite(planLimit) ? `${activeOwn} / ${planLimit}` : `${activeOwn} / ∞`;
-  return `
-    <section class="profile-section">
-      <h3>${t().proDashboardTitle}</h3>
-      <div class="pro-status">
-        <span class="${proActive ? "active" : "pending"}">${proActive ? t().proActive : t().proInactive}</span>
-        <span>${t().proPlan}: ${planLabel(user.accountPlan)}</span>
-        <span>${quota} ${t().activeListings}</span>
-      </div>
-      <div class="pro-dashboard">
-        <article class="pro-panel">
-          <h4>${t().proStorefrontTitle}</h4>
-          <p>${t().proStorefrontText}</p>
-          <button type="button" class="secondary-btn" data-click="showToast" data-click-args='${dataArgs([t().comingSoon])}'>${t().proOpenStore}</button>
-        </article>
-        <article class="pro-panel">
-          <h4>${t().proProductsTitle}</h4>
-          <p>${t().proProductsText}</p>
-          <button type="button" class="primary-btn" data-click="closeProfileModalThenPostModal">${t().proAddProduct}</button>
-        </article>
-        <article class="pro-panel">
-          <h4>${t().proVisibilityTitle}</h4>
-          <p>${t().proVisibilityText}</p>
-          <button type="button" class="secondary-btn" data-click="closeProfileModalThenBoostInfo">${t().proBoostProduct}</button>
-        </article>
-        <article class="pro-panel">
-          <h4>${state.lang==="fr" ? "Méthode de vente" : "Selling method"}</h4>
-          <ul>
-            <li>${state.lang==="fr" ? "Publiez chaque produit avec ses propres photos et son stock." : "Publish each product with its own photos and stock."}</li>
-            <li>${state.lang==="fr" ? "Les acheteurs contactent le commerce dans le chat instantané." : "Buyers contact the business through instant chat."}</li>
-          </ul>
-        </article>
-      </div>
+      ${kv(isBusiness ? (fr ? "Renouvellement" : "Renewal") : (fr ? "Remise à zéro" : "Resets on"), esc(renewal))}
+      ${isBusiness ? kv(fr ? "Boosts auto ce mois" : "Auto boosts this month", `${autoBoostUsedCountFor(user)} / ${includedBoostLimitFor(user)}`) : ""}
+      ${isBusiness ? `<button type="button" class="pf-row" data-click="manageSubscription"><b>${fr ? "Gérer / annuler" : "Manage / cancel"}</b></button>` : ""}
     </section>`;
 }
 
