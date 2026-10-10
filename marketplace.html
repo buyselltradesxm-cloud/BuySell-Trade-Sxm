@@ -31,10 +31,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<script src="/frame-guard.js?v=ad9ace5aa045c03b"></script>
-<script src="/telemetry.js?v=ad9ace5aa045c03b"></script>
-<script src="/pwa.js?v=ad9ace5aa045c03b" defer></script>
-<link href="/fonts/fonts.css?v=ad9ace5aa045c03b" rel="stylesheet">
+<script src="/frame-guard.js?v=e5a249aa60b6b6a7"></script>
+<script src="/telemetry.js?v=e5a249aa60b6b6a7"></script>
+<script src="/pwa.js?v=e5a249aa60b6b6a7" defer></script>
+<link href="/fonts/fonts.css?v=e5a249aa60b6b6a7" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -2061,7 +2061,7 @@
         <span aria-hidden="true">$</span>
         <span class="label" data-i18n="pricingLabel">Pricing</span>
       </button>
-      <button type="button" class="post" data-click="openPostModal" data-i18n="postAd" data-mobile-label="Déposer">Déposer une annonce</button>
+      <button type="button" class="post" data-click="openPostModal" data-i18n="postAd" data-mobile-label="Publier">Publier une annonce</button>
     </div>
   </div>
 </header>
@@ -2227,7 +2227,7 @@
   <div class="mobile-nav-inner">
     <a href="#browse"><span aria-hidden="true">&#8962;</span><span data-i18n="browseLabel">Parcourir</span></a>
     <button type="button" data-click="toggleFilters" data-click-args='[true]'><span aria-hidden="true">&#9776;</span><span data-i18n="filters">Filtres</span></button>
-    <button type="button" class="hot" data-click="openPostModal"><span aria-hidden="true">+</span><span data-i18n="postShort">Déposer</span></button>
+    <button type="button" class="hot" data-click="openPostModal"><span aria-hidden="true">+</span><span data-i18n="postShort">Publier</span></button>
     <button type="button" data-click="openMessages"><span aria-hidden="true">&#9993;</span><span data-i18n="messages">Messages</span></button>
     <button type="button" data-click="toggleNotifPanel" data-click-args='["__EVENT__"]'><span aria-hidden="true">&#128276;</span><span data-i18n="notifLabel">Alertes</span><span class="n" id="mobileNotifCount" hidden>0</span></button>
     <button type="button" id="mobileProfileBtn" class="nav-login" data-click="openProfile"><span class="nav-login-ic" aria-hidden="true">&#9673;</span><span id="mobileProfileLabel" data-i18n="profileLabel">Profil</span></button>
@@ -2254,7 +2254,7 @@
 <div class="modal" id="postModal" role="dialog" aria-modal="true" aria-labelledby="postTitle">
   <div class="dialog">
     <div class="dialog-head">
-      <h2 id="postTitle" data-i18n="postAd">Déposer une annonce</h2>
+      <h2 id="postTitle" data-i18n="postAd">Publier une annonce</h2>
       <button type="button" class="close-btn" data-click="closeModal" data-click-args='["postModal"]' aria-label="Fermer">x</button>
     </div>
     <div class="dialog-body">
@@ -2857,7 +2857,7 @@
 
 <section class="getapp">
   <div class="getapp-inner">
-    <h2 data-i18n="getH">Déposez votre première annonce aujourd'hui</h2>
+    <h2 data-i18n="getH">Publiez votre première annonce aujourd'hui</h2>
     <p data-i18n="getP">C'est gratuit, c'est local, et votre voisin cherche sans doute déjà ce que vous vendez.</p>
     <div class="stores">
       <button type="button" class="store" disabled><span class="sm" data-i18n="storeAvailable">Disponible</span><span class="big">App&nbsp;Store</span></button>
@@ -2891,7 +2891,7 @@
     <div class="foot-col">
       <b data-i18n="footerMarket">Marketplace</b>
       <a href="#browse" data-i18n="browseLabel">Parcourir</a>
-      <a href="#browse" data-click="openPostModalPreventDefault" data-click-args='["__EVENT__"]' data-i18n="postAd">Déposer une annonce</a>
+      <a href="#browse" data-click="openPostModalPreventDefault" data-click-args='["__EVENT__"]' data-i18n="postAd">Publier une annonce</a>
       <a href="#browse" data-click="openPricingInfoPreventDefault" data-click-args='["__EVENT__"]' data-i18n="pricingLabel">Pricing</a>
       <a href="#browse" data-click="openMessagesPreventDefault" data-click-args='["__EVENT__"]' data-i18n="messages">Messages</a>
     </div>
@@ -2910,20 +2910,20 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=ad9ace5aa045c03b" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=ad9ace5aa045c03b"></script>
-<script src="native-ios.js?v=ad9ace5aa045c03b"></script>
-<script src="captcha.js?v=ad9ace5aa045c03b"></script>
-<script src="supabase-api.js?v=ad9ace5aa045c03b"></script>
-<script src="img-utils.js?v=ad9ace5aa045c03b"></script>
-<script src="draft-store.js?v=ad9ace5aa045c03b"></script>
-<script src="push-config.js?v=ad9ace5aa045c03b"></script>
-<script src="push-notifications.js?v=ad9ace5aa045c03b"></script>
-<script src="consent.js?v=ad9ace5aa045c03b" defer></script>
-<script src="native-admob.js?v=ad9ace5aa045c03b"></script>
-<script src="ads-config.js?v=ad9ace5aa045c03b"></script>
-<script src="ads.js?v=ad9ace5aa045c03b" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=e5a249aa60b6b6a7" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=e5a249aa60b6b6a7"></script>
+<script src="native-ios.js?v=e5a249aa60b6b6a7"></script>
+<script src="captcha.js?v=e5a249aa60b6b6a7"></script>
+<script src="supabase-api.js?v=e5a249aa60b6b6a7"></script>
+<script src="img-utils.js?v=e5a249aa60b6b6a7"></script>
+<script src="draft-store.js?v=e5a249aa60b6b6a7"></script>
+<script src="push-config.js?v=e5a249aa60b6b6a7"></script>
+<script src="push-notifications.js?v=e5a249aa60b6b6a7"></script>
+<script src="consent.js?v=e5a249aa60b6b6a7" defer></script>
+<script src="native-admob.js?v=e5a249aa60b6b6a7"></script>
+<script src="ads-config.js?v=e5a249aa60b6b6a7"></script>
+<script src="ads.js?v=e5a249aa60b6b6a7" defer></script>
 
-<script src="app-marketplace.js?v=ad9ace5aa045c03b"></script>
+<script src="app-marketplace.js?v=e5a249aa60b6b6a7"></script>
 </body>
 </html>

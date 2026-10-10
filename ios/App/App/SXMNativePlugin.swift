@@ -167,8 +167,12 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
         for (name, value) in call.getObject("badges") ?? [:] {
             if let count = value as? Int { badges[name] = count } else if let count = value as? Double { badges[name] = Int(count) }
         }
+        var titles: [String: String] = [:]
+        for (name, value) in call.getObject("titles") ?? [:] {
+            if let text = value as? String { titles[name] = text }
+        }
         DispatchQueue.main.async { [weak self] in
-            self?.root?.update(selected: selected, french: french, badges: badges)
+            self?.root?.update(selected: selected, french: french, badges: badges, titles: titles)
             call.resolve()
         }
     }

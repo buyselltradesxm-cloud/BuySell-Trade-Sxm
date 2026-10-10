@@ -13,7 +13,7 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     // choice. Icons are SF Symbol names; ".fill" is used for the selected one.
     private static let labels: [Tab: (fr: String, en: String, symbol: String)] = [
         .browse: ("Parcourir", "Browse", "house"),
-        .post: ("Déposer", "Post", "plus.circle"),
+        .post: ("Publier", "Post", "plus.circle"),
         .messages: ("Messages", "Messages", "envelope"),
         .alerts: ("Alertes", "Alerts", "bell"),
         .profile: ("Profil", "Profile", "person.crop.circle")
@@ -28,6 +28,9 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     private let refresh = UIRefreshControl()
     private let feedback = UISelectionFeedbackGenerator()
     private var french = Locale.preferredLanguages.first?.hasPrefix("fr") ?? false
+    /// Titles sent by the page. They replace the built-in ones, so wording can
+    /// change on the site without shipping a new build.
+    private var pageTitles: [Tab: String] = [:]
     /// A tab chosen before the page could act on it (cold start from a home
     /// screen shortcut, or while a legal page was showing).
     private var pendingTab: Tab?
@@ -83,11 +86,15 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
 
     // MARK: - Tabs
 
+    private func title(_ tab: Tab) -> String {
+        let label = Self.labels[tab]
+        return pageTitles[tab] ?? (french ? label?.fr : label?.en) ?? tab.rawValue
+    }
+
     private func buildItems(selected: Tab) {
         let items = Tab.allCases.enumerated().map { index, tab -> UITabBarItem in
-            let label = Self.labels[tab]
-            let symbol = label?.symbol ?? "circle"
-            let item = UITabBarItem(title: french ? label?.fr : label?.en,
+            let symbol = Self.labels[tab]?.symbol ?? "circle"
+            let item = UITabBarItem(title: title(tab),
                                     image: UIImage(systemName: symbol),
                                     selectedImage: UIImage(systemName: symbol + ".fill"))
             item.tag = index
@@ -132,12 +139,21 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     }
 
     /// The page reports what it is showing, in which language, and its unread counts.
-    func update(selected: String?, french: Bool?, badges: [String: Int]) {
-        if let french = french, french != self.french {
-            self.french = french
-            buildItems(selected: selected.flatMap(Tab.init(rawValue:)) ?? .browse)
+    func update(selected: String?, french: Bool?, badges: [String: Int], titles: [String: String]) {
+        var sent: [Tab: String] = [:]
+        for (name, text) in titles where !text.isEmpty {
+            if let tab = Tab(rawValue: name) { sent[tab] = text }
+        }
+        let retitled = !sent.isEmpty && sent != pageTitles
+        if retitled { pageTitles = sent }
+        let languageChanged = french != nil && french != self.french
+        if let french = french { self.french = french }
+        let chosen = selected.flatMap(Tab.init(rawValue:))
+        if retitled || languageChanged {
+            let current = tabBar.selectedItem.flatMap { Tab.allCases.indices.contains($0.tag) ? Tab.allCases[$0.tag] : nil }
+            buildItems(selected: chosen ?? current ?? .browse)
             updateShortcuts()
-        } else if let tab = selected.flatMap(Tab.init(rawValue:)) {
+        } else if let tab = chosen {
             select(tab)
         }
         for (name, count) in badges {
@@ -163,11 +179,10 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
 
     private func updateShortcuts() {
         UIApplication.shared.shortcutItems = [Tab.post, .messages].map { tab in
-            let label = Self.labels[tab]
             return UIApplicationShortcutItem(type: tab.rawValue,
-                                             localizedTitle: (french ? label?.fr : label?.en) ?? tab.rawValue,
+                                             localizedTitle: title(tab),
                                              localizedSubtitle: nil,
-                                             icon: UIApplicationShortcutIcon(systemImageName: label?.symbol ?? "circle"),
+                                             icon: UIApplicationShortcutIcon(systemImageName: Self.labels[tab]?.symbol ?? "circle"),
                                              userInfo: nil)
         }
     }

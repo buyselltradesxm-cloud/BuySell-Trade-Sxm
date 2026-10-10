@@ -28,7 +28,7 @@ const { chromium } = require("playwright");
   }
   await page.keyboard.press("Escape");
 
-  await page.getByRole("button", { name: /déposer|post/i }).first().click();
+  await page.getByRole("button", { name: /publier|post/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
 
   const loginText = await page.locator("#accountModal").innerText();
@@ -68,7 +68,7 @@ const { chromium } = require("playwright");
   }
 
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: /déposer|post/i }).first().click();
+  await page.getByRole("button", { name: /publier|post/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
   const email = `free-${Date.now()}@example.com`;
   await page.locator("#accountName").fill("Free Seller");

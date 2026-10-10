@@ -153,9 +153,16 @@
     const el = document.getElementById(id);
     return el && !el.hidden ? parseInt(el.textContent, 10) || 0 : 0;
   }
+  // The bar shows the page's own words, so a wording change on the site
+  // reaches the app without a new build.
+  function tabTitles() {
+    if (typeof t !== "function") return {};
+    const words = t();
+    return { browse: words.browseLabel, post: words.postShort, messages: words.messages, alerts: words.notifLabel, profile: words.profileLabel };
+  }
   function syncTabs() {
     const tabs = { selected: currentTab(), lang: document.documentElement.lang || "fr",
-      badges: { messages: unread("msgCount"), alerts: unread("notifCount") } };
+      badges: { messages: unread("msgCount"), alerts: unread("notifCount") }, titles: tabTitles() };
     const key = JSON.stringify(tabs);
     if (key === sentTabs) return;
     sentTabs = key;
