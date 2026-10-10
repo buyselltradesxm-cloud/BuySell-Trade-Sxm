@@ -273,6 +273,9 @@ jobs:
           plutil -p "$RUNNER_TEMP/entitlements.plist"
           grep -q "com.apple.developer.applesignin" "$RUNNER_TEMP/entitlements.plist" || {
             echo "::error::the exported app is missing the Sign in with Apple entitlement"; exit 1; }
+          # Push notifications need theirs too, and it must be the production one for the store.
+          grep -A1 "aps-environment" "$RUNNER_TEMP/entitlements.plist" | grep -q "production" || {
+            echo "::error::the exported app is missing the production push (aps-environment) entitlement"; exit 1; }
           REQUIREMENT='anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.1] exists and certificate leaf[field.1.2.840.113635.100.6.1.4] exists'
           codesign --verify -R="$REQUIREMENT" "$APP_PATH"
           while IFS= read -r -d '' framework; do

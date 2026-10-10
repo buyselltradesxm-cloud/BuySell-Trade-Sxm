@@ -2,6 +2,7 @@ import AuthenticationServices
 import Capacitor
 import CryptoKit
 import StoreKit
+import UserNotifications
 import WebKit
 
 final class SXMBridgeViewController: CAPBridgeViewController {
@@ -9,7 +10,7 @@ final class SXMBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(SXMNativePlugin())
         // The site is shared with older builds and with browsers: tell it,
         // before its scripts run, what this build can do natively.
-        let info = "window.SXMNativeInfo={shell:2,tabs:true,appleSignIn:true,refresh:true};" +
+        let info = "window.SXMNativeInfo={shell:3,tabs:true,appleSignIn:true,refresh:true,push:true};" +
             "document.documentElement&&document.documentElement.classList.add('sxm-native-tabs');"
         webView?.configuration.userContentController.addUserScript(
             WKUserScript(source: info, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -18,7 +19,8 @@ final class SXMBridgeViewController: CAPBridgeViewController {
 
 @objc(SXMNativePlugin)
 public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresentationContextProviding,
-                              ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+                              ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding,
+                              NotificationHandlerProtocol {
     public let identifier = "SXMNativePlugin"
     public let jsName = "SXMNative"
     public let pluginMethods: [CAPPluginMethod] = [
@@ -27,6 +29,9 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
         CAPPluginMethod(name: "ready", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setTabs", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "refreshDone", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "pushStatus", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "pushEnable", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "pushDisable", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "products", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "pending", returnType: CAPPluginReturnPromise),
@@ -37,6 +42,9 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
     private var authSession: ASWebAuthenticationSession?
     private var appleCall: CAPPluginCall?
     private var appleNonce: String?
+    private var pushCall: CAPPluginCall?
+    private static let pushTokenKey = "sxm.push.token"
+    private static let pushOnKey = "sxm.push.on"
     private var updates: Task<Void, Never>?
     private let productIDs: Set<String> = Set([
         "pro_starter_monthly", "pro_business_monthly", "pro_premium_monthly",
@@ -44,6 +52,12 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
     ].map { "com.korekdigitalmarketing.buyselltradesxm." + $0 })
 
     public override func load() {
+        // Taps on a notification and the device token both arrive through Capacitor.
+        bridge?.notificationRouter.pushNotificationHandler = self
+        NotificationCenter.default.addObserver(self, selector: #selector(didRegisterForPush(_:)),
+                                               name: .capacitorDidRegisterForRemoteNotifications, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(didFailToRegisterForPush(_:)),
+                                               name: .capacitorDidFailToRegisterForRemoteNotifications, object: nil)
         updates = Task { [weak self] in
             for await result in StoreKit.Transaction.updates {
                 guard case .verified = result else { continue }
@@ -147,6 +161,82 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
                 call.reject("Sign-in cancelled", "CANCELLED")
             } else { call.reject("Unable to complete sign-in", "AUTH_FAILED") }
         }
+    }
+
+    // MARK: - Push notifications (APNs)
+    // The page keeps the opt-in switch and stores the device token with the
+    // account (native-ios.js); the server sends through APNs (send-push).
+
+    @objc func pushStatus(_ call: CAPPluginCall) {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            let status: String
+            switch settings.authorizationStatus {
+            case .authorized, .provisional, .ephemeral: status = "granted"
+            case .denied: status = "denied"
+            default: status = "prompt"
+            }
+            DispatchQueue.main.async {
+                call.resolve(["status": status,
+                              "on": status == "granted" && UserDefaults.standard.bool(forKey: Self.pushOnKey)])
+            }
+        }
+    }
+
+    /// Asks for permission if needed, registers with Apple and resolves with the device token.
+    @objc func pushEnable(_ call: CAPPluginCall) {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { [weak self] granted, _ in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                guard granted else { call.resolve(["status": "denied"]); return }
+                guard self.pushCall == nil else { call.resolve(["status": "busy"]); return }
+                call.keepAlive = true
+                self.pushCall = call
+                UIApplication.shared.registerForRemoteNotifications()
+                // Apple may never answer (no network): do not leave the page waiting.
+                let id = call.callbackId
+                DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
+                    guard self?.pushCall?.callbackId == id else { return }
+                    self?.finishPush(["status": "error"])
+                }
+            }
+        }
+    }
+
+    @objc func pushDisable(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            var result: [String: Any] = [:]
+            if let token = UserDefaults.standard.string(forKey: Self.pushTokenKey) { result["token"] = token }
+            UserDefaults.standard.set(false, forKey: Self.pushOnKey)
+            UIApplication.shared.unregisterForRemoteNotifications()
+            call.resolve(result)
+        }
+    }
+
+    private func finishPush(_ result: [String: Any]) {
+        guard let call = pushCall else { return }
+        pushCall = nil
+        call.resolve(result)
+        bridge?.releaseCall(call)
+    }
+
+    @objc private func didRegisterForPush(_ notification: Notification) {
+        guard let data = notification.object as? Data else { return }
+        let token = data.map { String(format: "%02x", $0) }.joined()
+        UserDefaults.standard.set(token, forKey: Self.pushTokenKey)
+        UserDefaults.standard.set(true, forKey: Self.pushOnKey)
+        DispatchQueue.main.async { [weak self] in self?.finishPush(["status": "granted", "token": token]) }
+    }
+
+    @objc private func didFailToRegisterForPush(_ notification: Notification) {
+        DispatchQueue.main.async { [weak self] in self?.finishPush(["status": "error"]) }
+    }
+
+    /// While the app is open the page already announces new messages.
+    public func willPresent(notification: UNNotification) -> UNNotificationPresentationOptions { [] }
+
+    /// A tapped notification is a new message: open the inbox.
+    public func didReceive(response: UNNotificationResponse) {
+        DispatchQueue.main.async { [weak self] in self?.root?.open(.messages) }
     }
 
     // MARK: - Tab bar and pull to refresh

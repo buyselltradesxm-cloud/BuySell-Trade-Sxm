@@ -12,6 +12,14 @@
 //   VAPID_PRIVATE_KEY  either the private "d" (base64url) or the full private JWK JSON
 //   VAPID_SUBJECT      mailto: or https: contact, e.g. mailto:admin@buyselltradesxm.com
 //   PUSH_FUNCTION_SECRET  shared secret the DB trigger sends in x-push-secret
+//
+// iPhone app: a subscription whose endpoint is "apns:<device token>" is sent
+// through Apple (APNs, token-based auth) instead of Web Push. Optional; without
+// these secrets such rows are skipped and Web Push is unaffected.
+//   APNS_KEY_ID       10-character id of the APNs auth key
+//   APNS_TEAM_ID      Apple developer team id
+//   APNS_PRIVATE_KEY  contents of the AuthKey_XXXXXXXXXX.p8 file
+//   APNS_TOPIC        app bundle id (default below)
 //   SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEYS)
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
@@ -19,6 +27,13 @@ const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY") || "";
 const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY") || "";
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || "mailto:admin@buyselltradesxm.com";
 const PUSH_SECRET = Deno.env.get("PUSH_FUNCTION_SECRET") || "";
+const APNS_KEY_ID = Deno.env.get("APNS_KEY_ID") || "";
+const APNS_TEAM_ID = Deno.env.get("APNS_TEAM_ID") || "";
+const APNS_PRIVATE_KEY = Deno.env.get("APNS_PRIVATE_KEY") || "";
+const APNS_TOPIC = Deno.env.get("APNS_TOPIC") || "com.korekdigitalmarketing.buyselltradesxm";
+const APNS_HOST = Deno.env.get("APNS_HOST") || "https://api.push.apple.com";
+const APNS_PREFIX = "apns:";
+const APNS_READY = !!(APNS_KEY_ID && APNS_TEAM_ID && APNS_PRIVATE_KEY);
 
 function serviceKey(): string {
   const direct = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -154,6 +169,49 @@ async function deleteSubscription(endpoint: string) {
   });
 }
 
+// ---------- Apple Push Notification service ----------
+// Apple asks for the provider token to be reused for 20 to 60 minutes.
+let apnsJwt: { token: string; at: number } | null = null;
+async function apnsProviderToken(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  if (apnsJwt && now - apnsJwt.at < 40 * 60) return apnsJwt.token;
+  const pem = APNS_PRIVATE_KEY.replace(/\\n/g, "\n");
+  const b64 = pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const der = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey("pkcs8", der, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const head = bytesToB64url(enc.encode(JSON.stringify({ alg: "ES256", kid: APNS_KEY_ID })));
+  const claims = bytesToB64url(enc.encode(JSON.stringify({ iss: APNS_TEAM_ID, iat: now })));
+  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, enc.encode(`${head}.${claims}`));
+  apnsJwt = { token: `${head}.${claims}.${bytesToB64url(sig)}`, at: now };
+  return apnsJwt.token;
+}
+
+type ApnsMessage = { title: string; body: string; url: string; tag?: string };
+async function sendApns(deviceToken: string, message: ApnsMessage): Promise<"sent" | "gone" | "failed"> {
+  if (!/^[0-9a-f]{32,200}$/i.test(deviceToken)) return "gone";
+  const res = await fetch(`${APNS_HOST}/3/device/${deviceToken}`, {
+    method: "POST",
+    headers: {
+      authorization: `bearer ${await apnsProviderToken()}`,
+      "apns-topic": APNS_TOPIC,
+      "apns-push-type": "alert",
+      "apns-priority": "10",
+      "apns-expiration": String(Math.floor(Date.now() / 1000) + 86400),
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      aps: { alert: { title: message.title, body: message.body }, sound: "default", "thread-id": message.tag },
+      url: message.url,
+    }),
+  });
+  if (res.ok) return "sent";
+  const reason = await res.text().catch(() => "");
+  // The app was removed, or the token belongs to another app or environment.
+  if (res.status === 410 || (res.status === 400 && /BadDeviceToken|DeviceTokenNotForTopic/.test(reason))) return "gone";
+  console.warn("[send-push] apns", res.status, reason);
+  return "failed";
+}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 }
@@ -197,20 +255,29 @@ Deno.serve(async (req) => {
   try { payload = JSON.parse(raw); } catch { return json({ error: "bad json" }, 400); }
   if (!payload.user_id) return json({ error: "user_id required" }, 400);
 
-  const message = enc.encode(JSON.stringify({
+  const content: ApnsMessage = {
     title: payload.title || "Buy Sell Trade Sxm",
     body: payload.body || "",
     url: payload.url || "/marketplace.html",
     tag: payload.tag || undefined,
-  }));
+  };
+  const message = enc.encode(JSON.stringify(content));
 
   let subs: Array<{ endpoint: string; p256dh: string; auth: string }>;
   try { subs = await getSubscriptions(payload.user_id); }
   catch (e) { return json({ error: String(e) }, 502); }
 
-  let sent = 0, pruned = 0, failed = 0;
+  let sent = 0, pruned = 0, failed = 0, skipped = 0;
   await Promise.all(subs.map(async (s) => {
     try {
+      if (s.endpoint.startsWith(APNS_PREFIX)) {
+        if (!APNS_READY) { skipped++; return; }
+        const outcome = await sendApns(s.endpoint.slice(APNS_PREFIX.length), content);
+        if (outcome === "sent") sent++;
+        else if (outcome === "gone") { await deleteSubscription(s.endpoint); pruned++; }
+        else failed++;
+        return;
+      }
       const cipher = await encryptPayload(message, b64urlToBytes(s.p256dh), b64urlToBytes(s.auth));
       const res = await fetch(s.endpoint, {
         method: "POST",
@@ -232,5 +299,5 @@ Deno.serve(async (req) => {
     }
   }));
 
-  return json({ ok: true, subscriptions: subs.length, sent, pruned, failed });
+  return json({ ok: true, subscriptions: subs.length, sent, pruned, failed, skipped });
 });

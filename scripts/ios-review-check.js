@@ -119,9 +119,13 @@ const server = http.createServer((req, res) => {
       shellPage.on("pageerror", error => shellErrors.push(error.message));
       await shellPage.addInitScript(() => {
         window.calls = []; window.appleFails = false;
-        window.SXMNativeInfo = { shell: 2, tabs: true, appleSignIn: true, refresh: true };
+        window.SXMNativeInfo = { shell: 3, tabs: true, appleSignIn: true, refresh: true, push: true };
+        window.pushState = { status: "prompt", on: false };
         window.Capacitor = { getPlatform: () => "ios", isNativePlatform: () => true, Plugins: { SXMNative: {
           products: async () => ({ products: [] }), pending: async () => ({ transactions: [] }), addListener: async () => ({}),
+          pushStatus: async () => ({ ...pushState }),
+          pushEnable: async () => { pushState = { status: "granted", on: true }; return { status: "granted", token: "abc123" }; },
+          pushDisable: async () => { pushState = { status: "granted", on: false }; return { token: "abc123" }; },
           ready: async () => ({ tab: "messages" }),
           setTabs: async tabs => { calls.push(["tabs", tabs]); },
           refreshDone: async () => { calls.push(["refreshDone"]); },
@@ -176,6 +180,22 @@ const server = http.createServer((req, res) => {
       await shellPage.waitForFunction(() => { const tabs = (calls.filter(x => x[0] === "tabs").pop() || [])[1]; return tabs.badges.messages === 3 && tabs.lang === "en"; });
       await shellPage.evaluate(() => { SB.hydrate = async () => true; window.dispatchEvent(new Event("sxmRefresh")); });
       await shellPage.waitForFunction(() => calls.some(x => x[0] === "refreshDone"));
+      // Push: the app talks to window.Push as in a browser; in this build it is
+      // backed by Apple, and the device token is stored as "apns:<token>".
+      const push = await shellPage.evaluate(async () => {
+        const saved = [], removed = [];
+        SB.savePushSubscription = async sub => { saved.push(sub); return true; };
+        SB.deletePushSubscription = async endpoint => { removed.push(endpoint); return true; };
+        const before = await Push.status();
+        const enabled = await Push.enable();
+        const during = await Push.status();
+        const disabled = await Push.disable();
+        return { supported: Push.supported(), before, enabled, during, disabled, after: await Push.status(), saved, removed };
+      });
+      assert.deepEqual([push.supported, push.before, push.during, push.after], [true, "default", "on", "ready"]);
+      assert.deepEqual(push.enabled, { ok: true, status: "on" });
+      assert.deepEqual(push.saved, [{ endpoint: "apns:abc123", p256dh: "-", auth: "-", user_agent: "ios-app" }]);
+      assert.deepEqual([push.disabled, push.removed], [{ ok: true }, ["apns:abc123"]]);
       assert.deepEqual(shellErrors, []);
       await shellPage.close();
       // The web "add to home screen" hint has no place inside the App Store app;

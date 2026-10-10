@@ -213,8 +213,35 @@
       plugin().ready().then(result => { if (result && result.tab) setTimeout(() => showTab(result.tab), 600); }).catch(() => {});
     } catch (_) {}
   }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startShell);
-  else startShell();
+  /* ---- Push notifications in builds that can register with Apple (APNs) ----
+     Same contract as push-notifications.js, which serves browsers: the rest
+     of the app only knows window.Push. The device token is stored like a
+     browser subscription, as "apns:<token>", and send-push delivers to it. */
+  function nativePush() {
+    const endpoint = token => "apns:" + token;
+    const save = token => SB.savePushSubscription({ endpoint: endpoint(token), p256dh: "-", auth: "-", user_agent: "ios-app" });
+    const state = () => plugin().pushStatus();
+    return {
+      supported: () => true,
+      status: () => state().then(r => r.status === "denied" ? "denied" : r.status !== "granted" ? "default" : r.on ? "on" : "ready").catch(() => "default"),
+      enable: () => plugin().pushEnable().then(async r => {
+        if (!r.token) return { ok: false, status: r.status === "denied" ? "denied" : "error" };
+        if (!(window.SB && SB.savePushSubscription)) return { ok: false, status: "ready", reason: "no-backend" };
+        if (await save(r.token)) return { ok: true, status: "on" };
+        // Without the saved token nothing can be delivered: stay off.
+        await plugin().pushDisable().catch(() => {});
+        return { ok: false, status: "ready", reason: "save-failed" };
+      }).catch(error => ({ ok: false, status: "error", reason: String(error && error.message || error) })),
+      disable: () => plugin().pushDisable().then(r => r.token && window.SB && SB.deletePushSubscription ? SB.deletePushSubscription(endpoint(r.token)) : true)
+        .then(saved => ({ ok: saved !== false })).catch(() => ({ ok: false })),
+      // Apple can change the token: refresh the stored one when notifications are on.
+      syncEndpoint: () => state().then(r => r.on ? plugin().pushEnable().then(x => x.token && window.SB && SB.savePushSubscription ? save(x.token) : null) : null).catch(() => {})
+    };
+  }
+  function startPush() { if (shell().push) window.Push = nativePush(); }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { startShell(); startPush(); });
+  else { startShell(); startPush(); }
 
   window.SXM = { isIOS, shell, plugin, ids, buy, refreshPrices, sync, message,
     restore: () => sync(true),
