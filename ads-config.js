@@ -163,7 +163,7 @@ window.AdsConfig = {
                     en: "Sell what you no longer use" },
         text: { fr: "Publier une annonce est gratuit sur toute l'île.",
                 en: "Posting a listing is free across the island." },
-        cta: { fr: "Déposer une annonce", en: "Post an ad" }
+        cta: { fr: "Publier une annonce", en: "Post an ad" }
       }
     ]
   },
