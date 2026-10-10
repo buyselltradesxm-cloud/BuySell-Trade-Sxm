@@ -4933,7 +4933,7 @@ async function createAccount(e){
         captcha_failed: "La vérification anti-robot a échoué. Actualisez la page et réessayez.",
         service_unavailable: "Le service de création de compte est temporairement indisponible. Réessayez dans quelques instants.",
         invalid_email: "Vérifiez le format de votre adresse email et réessayez.",
-        signup_failed: "Inscription impossible. Cette adresse est peut-être déjà utilisée : essayez la connexion plus bas ou réinitialisez votre mot de passe."
+        signup_failed: "Inscription impossible. Cette adresse a peut-être déjà un compte, y compris créé avec Google ou Apple : connectez-vous de cette façon, ou réinitialisez votre mot de passe."
       } : {
         password_rejected: "The service rejected this password. Try a longer password.",
         email_delivery_failed: "We could not finish creating the account because the verification email was not sent. Please try again later.",
@@ -4941,7 +4941,7 @@ async function createAccount(e){
         captcha_failed: "The anti-robot check failed. Refresh the page and try again.",
         service_unavailable: "Account creation is temporarily unavailable. Please try again shortly.",
         invalid_email: "Check the email address format and try again.",
-        signup_failed: "Signup could not be completed. This address may already have an account; try signing in below or reset the password."
+        signup_failed: "Signup could not be completed. This address may already have an account, including one created with Google or Apple: sign in that way, or reset your password."
       };
       error.textContent = messages[code] || (state.lang === "fr" ? "Inscription non terminée. Essayez la connexion plus bas ou réinitialisez votre mot de passe si cette adresse a déjà un compte." : "Signup could not be completed. Try signing in below, or reset your password if this address already has an account.");
       return false;

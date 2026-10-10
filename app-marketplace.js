@@ -4928,7 +4928,7 @@ async function createAccount(e){
     const { data, error: sbErr } = result || {error:{}};
     if(sbErr){
       // Do not reveal whether an address is already registered.
-      error.textContent = state.lang === "fr" ? "Inscription non terminée. Vérifiez vos informations et réessayez, ou connectez-vous si vous avez déjà un compte." : "Signup could not be completed. Check your details and try again, or sign in if you already have an account.";
+      error.textContent = state.lang === "fr" ? "Inscription non terminée. Vérifiez vos informations et réessayez. Si cette adresse a déjà un compte, y compris créé avec Google ou Apple, connectez-vous de cette façon." : "Signup could not be completed. Check your details and try again. If this address already has an account, including one created with Google or Apple, sign in that way.";
       return false;
     }
     if(data && data.session && data.user){
