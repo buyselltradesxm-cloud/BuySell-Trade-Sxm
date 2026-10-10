@@ -1883,6 +1883,8 @@ function isAndroidApp(){
 if(isAndroidApp()) document.documentElement.classList.add("android-app");
 // Inside either store app the page must not advertise app stores.
 if(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) document.documentElement.classList.add("native-app");
+// The iOS app has no ads or analytics, so it has no cookie choices to offer.
+if(window.SXM && SXM.isIOS()) document.documentElement.classList.add("ios-app");
 function androidPurchaseBlocked(){
   if(!isAndroidApp()) return false;
   showToast(state.lang === "fr" ? "Les offres Pro et les boosts ne sont pas disponibles dans l'application Android." : "Pro plans and boosts are not available in the Android app.");

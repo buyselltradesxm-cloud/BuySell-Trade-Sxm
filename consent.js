@@ -14,7 +14,19 @@
   "use strict";
   var KEY = "bst_consent";
 
+  // The iOS app ships without ads or analytics (see native-admob.js and the
+  // App Privacy answers in App Store Connect). There is nothing to consent
+  // to there: no notice is shown and the answer is always "denied".
+  var IOS_APP = (function () {
+    try {
+      var cap = window.Capacitor;
+      return !!(cap && cap.isNativePlatform && cap.isNativePlatform() &&
+                cap.getPlatform && cap.getPlatform() === "ios");
+    } catch (e) { return false; }
+  })();
+
   function read() {
+    if (IOS_APP) return "denied";
     try { return localStorage.getItem(KEY) || ""; } catch (e) { return ""; }
   }
   function write(v) {
@@ -76,6 +88,7 @@
   function hide() { var el = document.getElementById("bst-consent"); if (el) el.remove(); }
 
   function show(force) {
+    if (IOS_APP) return;
     if (document.getElementById("bst-consent")) return;
     if (!force && read()) return;                       // already chose
     if (!force && window.__tcfapi) return;              // a real CMP is handling it
