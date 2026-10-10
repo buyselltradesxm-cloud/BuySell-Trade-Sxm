@@ -3448,7 +3448,6 @@ function openProfile(){
 }
 
 function openBoostInfo(){
-  if(androidPurchaseBlocked()) return;
   openModal("boostModal");
 }
 
