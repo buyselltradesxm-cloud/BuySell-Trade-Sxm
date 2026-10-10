@@ -83,6 +83,32 @@ window.AdsConfig = {
     banner: {
       android: "ca-app-pub-7816106453580174/5881780931", // "SXM Android Banner"
       ios: "ca-app-pub-3940256099942544/2934735716"       // Google TEST unit; unused while iOS has no ads
+    },
+
+    /* Interstitial (full-screen video / image) ad unit.
+     * Shown at NATURAL TRANSITION POINTS only — never during active
+     * browsing. See native-admob.js for the triggers (closing a listing
+     * detail, after posting, etc.) and the 2-minute cooldown.
+     *
+     * To activate on Android:
+     *   1. admob.google.com → Ads → Ad units → Create → Interstitial
+     *      → name it "SXM Android Interstitial" → Create.
+     *   2. Copy the full "ca-app-pub-…/…" id and paste below as
+     *      interstitial.android.
+     *   3. npx cap sync and rebuild the APK.
+     * Until a real id is pasted, Google's public TEST id is used (safe
+     * to ship — shows a fake ad and can never flag the account). */
+    interstitial: {
+      android: "ca-app-pub-3940256099942544/1033173712", // Google TEST id — replace with real one when ready
+      ios: "ca-app-pub-3940256099942544/4411468910"      // Google TEST id — iOS has no ads yet
+    },
+
+    /* Interstitial throttling. These values are enforced by
+     * native-admob.js and chosen to pass AdMob + Play Store review. */
+    interstitialOptions: {
+      cooldownMs: 120000,          // minimum 2 minutes between any two interstitials
+      firstSessionDelayMs: 60000,  // never show an interstitial in the first 60s of a session
+      maxPerSession: 5             // hard cap per session
     }
     // testingDevices: ["YOUR_DEVICE_ID"], // needed to see real-looking test ads on a physical device
   },

@@ -73,6 +73,57 @@
       }).catch(function () {});
     }
 
+    /* -------- Interstitial ad plumbing ---------------------
+     * Shown at natural transition points (listing detail close,
+     * after a post, etc.) — never during active scrolling.
+     * All throttles are enforced here, in the native layer, so
+     * UI code can call show() freely without caring about limits. */
+    var interstitialAdId = (CFG.interstitial && CFG.interstitial[platform]) || "";
+    var interOpts = CFG.interstitialOptions || {};
+    var COOLDOWN_MS = interOpts.cooldownMs == null ? 120000 : interOpts.cooldownMs;
+    var FIRST_DELAY_MS = interOpts.firstSessionDelayMs == null ? 60000 : interOpts.firstSessionDelayMs;
+    var MAX_PER_SESSION = interOpts.maxPerSession == null ? 5 : interOpts.maxPerSession;
+    var sessionStart = Date.now();
+    var lastShownAt = 0;
+    var shownThisSession = 0;
+    var isPrepared = false;
+    var isPreparing = false;
+
+    function prepareInterstitial() {
+      if (!interstitialAdId || isPrepared || isPreparing) return;
+      isPreparing = true;
+      AdMob.prepareInterstitial({
+        adId: interstitialAdId,
+        isTesting: testing
+      }).then(function () {
+        isPrepared = true;
+        isPreparing = false;
+      }).catch(function () {
+        isPreparing = false;
+        // Soft retry after 30s so a one-off network blip doesn't kill
+        // interstitials for the rest of the session.
+        setTimeout(prepareInterstitial, 30000);
+      });
+    }
+
+    // Expose a single call that the web UI can fire at any transition
+    // point. Returns true if the ad was shown, false if throttled.
+    window.__BST_ADMOB_INTERSTITIAL__ = function () {
+      if (!interstitialAdId || !isPrepared) return false;
+      var now = Date.now();
+      if (now - sessionStart < FIRST_DELAY_MS) return false;
+      if (now - lastShownAt < COOLDOWN_MS) return false;
+      if (shownThisSession >= MAX_PER_SESSION) return false;
+      lastShownAt = now;
+      shownThisSession += 1;
+      isPrepared = false;
+      AdMob.showInterstitial().catch(function () {});
+      // Preload the next one immediately so the following transition
+      // doesn't have to wait on a network round-trip.
+      setTimeout(prepareInterstitial, 1500);
+      return true;
+    };
+
     AdMob.initialize({
       testingDevices: CFG.testingDevices || [],
       initializeForTesting: testing
@@ -98,7 +149,10 @@
       // French Saint-Martin is in the EU). If the consent check itself
       // fails, show no ad rather than one without a valid consent state.
       .then(function (consentInfo) {
-        if (consentInfo && consentInfo.canRequestAds) showBanner();
+        if (consentInfo && consentInfo.canRequestAds) {
+          showBanner();
+          prepareInterstitial();
+        }
       })
       .catch(function () {});
   });

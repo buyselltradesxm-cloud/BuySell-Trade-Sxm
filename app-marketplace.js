@@ -2843,6 +2843,12 @@ function closeModal(id){
   document.getElementById(id).classList.remove("open");
   if(id === "detailModal") clearListingFromUrl();
   if(!document.querySelector(".modal.open")) document.body.style.overflow = "";
+  // Natural transition point for a full-screen interstitial in the
+  // packaged app. native-admob.js enforces cooldown + session cap, so
+  // calling it on every close here is safe.
+  if(id === "detailModal" && typeof window.__BST_ADMOB_INTERSTITIAL__ === "function"){
+    try { window.__BST_ADMOB_INTERSTITIAL__(); } catch(e) {}
+  }
 }
 
 function showToast(msg){
