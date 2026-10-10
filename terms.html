@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
   <script src="/frame-guard.js"></script>
   <title>Terms of Use | Buy Sell Trade Sxm</title>
   <link rel="canonical" href="https://buyselltradesxm.com/terms.html">
@@ -17,69 +17,172 @@
     h2{font-size:1.25rem;margin-top:28px}
     p,li{color:var(--muted)}
     a{color:var(--accent);font-weight:700}
-    .brand{display:flex;justify-content:space-between;gap:16px;align-items:center}
+    .brand{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
     .home{border:2px solid var(--line);border-radius:8px;padding:10px 14px;text-decoration:none;color:var(--ink)}
     footer{border-top:2px solid var(--line);font-size:.95rem}
+    .lang-btn{border:2px solid var(--accent);border-radius:8px;padding:8px 14px;background:none;color:var(--accent);font-weight:700;cursor:pointer;font-size:.9rem}
+    [data-lang="fr"] .en-only{display:none}
+    [data-lang="en"] .fr-only{display:none}
   </style>
+  <script>
+    (function(){
+      var l=localStorage.getItem("lang")||"en";
+      document.documentElement.setAttribute("data-lang",l==="fr"?"fr":"en");
+    })();
+  </script>
 </head>
 <body>
   <header>
     <div class="brand">
       <strong>Buy Sell Trade Sxm</strong>
-      <a class="home" href="/">Back to marketplace</a>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="lang-btn" onclick="toggleLang()">FR / EN</button>
+        <a class="home" href="/">
+          <span class="en-only">Back to marketplace</span>
+          <span class="fr-only">Retour à la marketplace</span>
+        </a>
+      </div>
     </div>
-    <h1>Terms of Use</h1>
-    <p>Last updated: September 29, 2026</p>
+    <h1>
+      <span class="en-only">Terms of Use</span>
+      <span class="fr-only">Conditions d'utilisation</span>
+    </h1>
+    <p>
+      <span class="en-only">Last updated: September 29, 2026</span>
+      <span class="fr-only">Dernière mise à jour : 29 septembre 2026</span>
+    </p>
   </header>
   <main>
-    <p>These terms explain the basic rules for using Buy Sell Trade Sxm.</p>
 
-    <h2>Operator</h2>
-    <p>Buy Sell Trade Sxm is operated by <strong>Association Korek Digital</strong>, a French declared association (SIREN 105 268 098), registered at 17 Résidence des Gémeaux, 94260 Fresnes, France.</p>
+    <!-- ── INTRO ── -->
+    <p class="en-only">These terms explain the basic rules for using Buy Sell Trade Sxm.</p>
+    <p class="fr-only">Ces conditions expliquent les règles de base pour utiliser Buy Sell Trade Sxm.</p>
 
-    <h2 id="hosting">Hosting</h2>
-    <p>The website is hosted by <strong>GitHub, Inc.</strong>, 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, United States (GitHub Pages). Accounts, listings, and messages are stored by <strong>Supabase, Inc.</strong>, 970 Toa Payoh North #07-04, Singapore 318992, on servers located in the European Union (Ireland).</p>
+    <!-- ── OPERATOR ── -->
+    <h2>
+      <span class="en-only">Operator</span>
+      <span class="fr-only">Opérateur</span>
+    </h2>
+    <p class="en-only">Buy Sell Trade Sxm is operated by <strong>Association Korek Digital</strong>, a French declared association (SIREN 105 268 098), registered at 17 Résidence des Gémeaux, 94260 Fresnes, France.</p>
+    <p class="fr-only">Buy Sell Trade Sxm est exploité par <strong>Association Korek Digital</strong>, une association française déclarée (SIREN 105 268 098), dont le siège est au 17 Résidence des Gémeaux, 94260 Fresnes, France.</p>
 
-    <h2>Eligibility</h2>
-    <p>You must be at least 18 years old to create an account or use Buy Sell Trade Sxm. By creating an account, you confirm that you meet this requirement.</p>
+    <!-- ── HOSTING ── -->
+    <h2 id="hosting">
+      <span class="en-only">Hosting</span>
+      <span class="fr-only">Hébergement</span>
+    </h2>
+    <p class="en-only">The website is hosted by <strong>GitHub, Inc.</strong>, 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, United States (GitHub Pages). Accounts, listings, and messages are stored by <strong>Supabase, Inc.</strong>, 970 Toa Payoh North #07-04, Singapore 318992, on servers located in the European Union (Ireland).</p>
+    <p class="fr-only">Le site est hébergé par <strong>GitHub, Inc.</strong>, 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis (GitHub Pages). Les comptes, annonces et messages sont stockés par <strong>Supabase, Inc.</strong>, 970 Toa Payoh North #07-04, Singapour 318992, sur des serveurs situés dans l'Union européenne (Irlande).</p>
 
-    <h2>Accounts</h2>
-    <p>Creating an account is free. Users are responsible for keeping their account information accurate and secure.</p>
+    <!-- ── ELIGIBILITY ── -->
+    <h2>
+      <span class="en-only">Eligibility</span>
+      <span class="fr-only">Conditions d'accès</span>
+    </h2>
+    <p class="en-only">You must be at least 18 years old to create an account or use Buy Sell Trade Sxm. By creating an account, you confirm that you meet this requirement.</p>
+    <p class="fr-only">Vous devez avoir au moins 18 ans pour créer un compte ou utiliser Buy Sell Trade Sxm. En créant un compte, vous confirmez que vous remplissez cette condition.</p>
 
-    <h2>Listings</h2>
-    <p>Posting and selling personal items is free. Paid boosts and Pro subscriptions may be offered for extra visibility or business features.</p>
+    <!-- ── ACCOUNTS ── -->
+    <h2>
+      <span class="en-only">Accounts</span>
+      <span class="fr-only">Comptes</span>
+    </h2>
+    <p class="en-only">Creating an account is free. Users are responsible for keeping their account information accurate and secure.</p>
+    <p class="fr-only">La création d'un compte est gratuite. Les utilisateurs sont responsables de l'exactitude et de la sécurité des informations de leur compte.</p>
 
-    <h2>Payments, Cancellation, and Refunds</h2>
-    <p><!-- Draft/standard terms -- confirm these match your actual policy before relying on them. --></p>
-    <ul>
+    <!-- ── LISTINGS ── -->
+    <h2>
+      <span class="en-only">Listings</span>
+      <span class="fr-only">Annonces</span>
+    </h2>
+    <p class="en-only">Posting and selling personal items is free. Paid boosts and Pro subscriptions may be offered for extra visibility or business features.</p>
+    <p class="fr-only">La publication et la vente d'articles personnels sont gratuites. Des boosts payants et des abonnements Pro peuvent être proposés pour une visibilité accrue ou des fonctionnalités professionnelles.</p>
+
+    <!-- ── PAYMENTS ── -->
+    <h2>
+      <span class="en-only">Payments, Cancellation, and Refunds</span>
+      <span class="fr-only">Paiements, annulation et remboursements</span>
+    </h2>
+    <ul class="en-only">
       <li><strong>Boosts</strong> are a one-time paid activation for a fixed duration. Once a boost is active, it is non-refundable, including if you sell, remove, or edit the listing before the boost period ends.</li>
       <li><strong>Pro subscriptions</strong> renew automatically each billing period until cancelled. You can cancel at any time online from Profile &gt; Manage / cancel (App Store purchases: Settings &gt; Apple ID &gt; Subscriptions), or by emailing us; cancellation takes effect at the end of the current billing period, and we do not refund the unused portion of a period already paid for.</li>
       <li>If a payment fails to process correctly, or a boost/feature you paid for was not applied due to a fault on our side, contact us and we will fix it or refund that specific charge.</li>
     </ul>
+    <ul class="fr-only">
+      <li>Les <strong>boosts</strong> sont une activation payante unique pour une durée déterminée. Une fois un boost activé, il n'est pas remboursable, même si vous vendez, supprimez ou modifiez l'annonce avant la fin de la période de boost.</li>
+      <li>Les <strong>abonnements Pro</strong> se renouvellent automatiquement à chaque période de facturation jusqu'à leur résiliation. Vous pouvez résilier à tout moment en ligne depuis Profil &gt; Gérer / annuler (achats App Store : Réglages &gt; Identifiant Apple &gt; Abonnements), ou en nous contactant par e-mail ; la résiliation prend effet à la fin de la période de facturation en cours, et nous ne remboursons pas la partie non utilisée d'une période déjà payée.</li>
+      <li>Si un paiement n'est pas traité correctement, ou si un boost ou une fonctionnalité pour lequel vous avez payé n'a pas été appliqué en raison d'une erreur de notre part, contactez-nous et nous résoudrons le problème ou rembourserons cette charge spécifique.</li>
+    </ul>
 
-    <h2>Prohibited Content</h2>
-    <p>Illegal items, weapons, drugs, counterfeit goods, stolen products, dangerous items, scams, and abusive content are not allowed. We may remove listings or accounts that break these rules.</p>
+    <!-- ── PROHIBITED CONTENT ── -->
+    <h2>
+      <span class="en-only">Prohibited Content</span>
+      <span class="fr-only">Contenus interdits</span>
+    </h2>
+    <p class="en-only">Illegal items, weapons, drugs, counterfeit goods, stolen products, dangerous items, scams, and abusive content are not allowed. We may remove listings or accounts that break these rules.</p>
+    <p class="fr-only">Les articles illégaux, les armes, les drogues, les contrefaçons, les produits volés, les articles dangereux, les arnaques et les contenus abusifs ne sont pas autorisés. Nous pouvons supprimer les annonces ou les comptes qui enfreignent ces règles.</p>
 
-    <h2>Buyer and Seller Responsibility</h2>
-    <p>Buy Sell Trade Sxm helps people discover listings and communicate. Buyers and sellers are responsible for checking items, prices, payment, pickup, delivery, and safety before completing a transaction.</p>
+    <!-- ── BUYER AND SELLER RESPONSIBILITY ── -->
+    <h2>
+      <span class="en-only">Buyer and Seller Responsibility</span>
+      <span class="fr-only">Responsabilité de l'acheteur et du vendeur</span>
+    </h2>
+    <p class="en-only">Buy Sell Trade Sxm helps people discover listings and communicate. Buyers and sellers are responsible for checking items, prices, payment, pickup, delivery, and safety before completing a transaction.</p>
+    <p class="fr-only">Buy Sell Trade Sxm aide les personnes à découvrir des annonces et à communiquer. Les acheteurs et les vendeurs sont responsables de la vérification des articles, des prix, du paiement, de la collecte, de la livraison et de la sécurité avant de conclure une transaction.</p>
 
-    <h2>Moderation</h2>
-    <p>We may review reports, remove unsafe listings, mark items as sold, or restrict accounts to protect the community.</p>
+    <!-- ── MODERATION ── -->
+    <h2>
+      <span class="en-only">Moderation</span>
+      <span class="fr-only">Modération</span>
+    </h2>
+    <p class="en-only">We may review reports, remove unsafe listings, mark items as sold, or restrict accounts to protect the community.</p>
+    <p class="fr-only">Nous pouvons examiner les signalements, supprimer des annonces non conformes, marquer des articles comme vendus ou restreindre des comptes pour protéger la communauté.</p>
 
-    <h2 id="copyright">Copyright and Illegal Content Notices</h2>
-    <p>Users must only upload photos and text they own or have permission to use. If you believe content on Buy Sell Trade Sxm infringes your copyright or is otherwise illegal, send a notice to our designated agent. We review notices promptly, remove or disable access to infringing or illegal content, and terminate the accounts of repeat infringers.</p>
-    <p><strong>Designated agent:</strong> Association Korek Digital, Copyright Agent, 17 Résidence des Gémeaux, 94260 Fresnes, France &mdash; <a href="mailto:rxmarketing09@gmail.com?subject=Copyright%20notice">rxmarketing09@gmail.com</a> (subject: &ldquo;Copyright notice&rdquo;).</p>
-    <p>Your notice should include: (1) your name and contact details; (2) the work you claim is infringed, or why the content is illegal; (3) the link to the listing or content concerned; (4) a statement that you have a good-faith belief the use is not authorized by the owner, its agent, or the law; (5) a statement that the information in the notice is accurate and, under penalty of perjury, that you are the owner or authorized to act for the owner; and (6) your physical or electronic signature. If your content was removed and you believe this was a mistake, you may send us a counter-notice at the same address.</p>
-    <p>Anyone may also use the in-app &ldquo;Report&rdquo; button to flag a listing. This process also serves as our notice-and-action mechanism under the EU Digital Services Act.</p>
+    <!-- ── COPYRIGHT ── -->
+    <h2 id="copyright">
+      <span class="en-only">Copyright and Illegal Content Notices</span>
+      <span class="fr-only">Droits d'auteur et signalement de contenus illégaux</span>
+    </h2>
+    <p class="en-only">Users must only upload photos and text they own or have permission to use. If you believe content on Buy Sell Trade Sxm infringes your copyright or is otherwise illegal, send a notice to our designated agent. We review notices promptly, remove or disable access to infringing or illegal content, and terminate the accounts of repeat infringers.</p>
+    <p class="fr-only">Les utilisateurs ne doivent télécharger que des photos et des textes dont ils sont propriétaires ou pour lesquels ils ont obtenu l'autorisation. Si vous pensez qu'un contenu sur Buy Sell Trade Sxm enfreint vos droits d'auteur ou est autrement illégal, envoyez un avis à notre agent désigné. Nous examinons les avis rapidement, supprimons ou désactivons l'accès aux contenus illégaux ou en infraction, et résilions les comptes des récidivistes.</p>
+    <p class="en-only"><strong>Designated agent:</strong> Association Korek Digital, Copyright Agent, 17 Résidence des Gémeaux, 94260 Fresnes, France &mdash; <a href="mailto:buyselltradesxm@gmail.com?subject=Copyright%20notice">buyselltradesxm@gmail.com</a> (subject: &ldquo;Copyright notice&rdquo;).</p>
+    <p class="fr-only"><strong>Agent désigné :</strong> Association Korek Digital, Agent droits d'auteur, 17 Résidence des Gémeaux, 94260 Fresnes, France &mdash; <a href="mailto:buyselltradesxm@gmail.com?subject=Avis%20de%20droits%20d%27auteur">buyselltradesxm@gmail.com</a> (objet : &ldquo;Avis de droits d'auteur&rdquo;).</p>
+    <p class="en-only">Your notice should include: (1) your name and contact details; (2) the work you claim is infringed, or why the content is illegal; (3) the link to the listing or content concerned; (4) a statement that you have a good-faith belief the use is not authorized by the owner, its agent, or the law; (5) a statement that the information in the notice is accurate and, under penalty of perjury, that you are the owner or authorized to act for the owner; and (6) your physical or electronic signature. If your content was removed and you believe this was a mistake, you may send us a counter-notice at the same address.</p>
+    <p class="fr-only">Votre avis doit inclure : (1) votre nom et vos coordonnées ; (2) l'œuvre que vous prétendez avoir été violée, ou la raison pour laquelle le contenu est illégal ; (3) le lien vers l'annonce ou le contenu concerné ; (4) une déclaration indiquant que vous avez une conviction sincère que l'utilisation n'est pas autorisée par le propriétaire, son agent ou la loi ; (5) une déclaration attestant que les informations contenues dans l'avis sont exactes et, sous peine de parjure, que vous êtes le propriétaire ou autorisé à agir en son nom ; et (6) votre signature physique ou électronique. Si votre contenu a été supprimé et que vous pensez qu'il s'agissait d'une erreur, vous pouvez nous envoyer un contre-avis à la même adresse.</p>
+    <p class="en-only">Anyone may also use the in-app &ldquo;Report&rdquo; button to flag a listing. This process also serves as our notice-and-action mechanism under the EU Digital Services Act.</p>
+    <p class="fr-only">Toute personne peut également utiliser le bouton &ldquo;Signaler&rdquo; intégré à l'application pour signaler une annonce. Ce processus sert également de mécanisme de notification et d'action au titre du règlement européen sur les services numériques (DSA).</p>
 
-    <h2>Changes</h2>
-    <p>We may update these terms as the service grows. Continued use of the app means you accept the current terms.</p>
+    <!-- ── CHANGES ── -->
+    <h2>
+      <span class="en-only">Changes</span>
+      <span class="fr-only">Modifications</span>
+    </h2>
+    <p class="en-only">We may update these terms as the service grows. Continued use of the app means you accept the current terms.</p>
+    <p class="fr-only">Nous pouvons mettre à jour ces conditions à mesure que le service évolue. L'utilisation continue de l'application signifie que vous acceptez les conditions en vigueur.</p>
 
-    <h2>Contact</h2>
-    <p>For questions, contact <a href="mailto:rxmarketing09@gmail.com">rxmarketing09@gmail.com</a>.</p>
+    <!-- ── CONTACT ── -->
+    <h2>
+      <span class="en-only">Contact</span>
+      <span class="fr-only">Contact</span>
+    </h2>
+    <p class="en-only">For questions, contact <a href="mailto:buyselltradesxm@gmail.com">buyselltradesxm@gmail.com</a>.</p>
+    <p class="fr-only">Pour toute question, contactez <a href="mailto:buyselltradesxm@gmail.com">buyselltradesxm@gmail.com</a>.</p>
+
   </main>
   <footer>
-    <a href="/privacy.html">Privacy Policy</a>
+    <a href="/privacy.html">
+      <span class="en-only">Privacy Policy</span>
+      <span class="fr-only">Politique de confidentialité</span>
+    </a>
   </footer>
+  <script>
+    function toggleLang(){
+      var html=document.documentElement;
+      var next=html.getAttribute("data-lang")==="fr"?"en":"fr";
+      html.setAttribute("data-lang",next);
+      html.lang=next;
+      try{localStorage.setItem("lang",next);}catch(e){}
+    }
+  </script>
 </body>
 </html>

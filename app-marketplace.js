@@ -276,8 +276,12 @@ const SERVICE_SUBCATS = new Set([
 function postFieldProfile(cat, sub){
   const serviceListing = cat === "serv" || cat === "job" || SERVICE_SUBCATS.has(sub);
   if(serviceListing){
-    return {photos:false, photosRequired:false, price:false, condition:false, delivery:false,
-      meetup:false, negotiable:false, urgent:false, safeMeet:false, vehicle:false};
+    return {photos:true, photosRequired:true, price:true, condition:false, delivery:true,
+      meetup:true, negotiable:false, urgent:false, safeMeet:false, vehicle:false};
+  }
+  if(cat === "beauty" && sub !== "beauty-products"){
+    return {photos:true, photosRequired:true, price:true, condition:false, delivery:true,
+      meetup:true, negotiable:true, urgent:false, safeMeet:false, vehicle:false};
   }
   if(cat === "immo"){
     return {photos:true, photosRequired:true, price:true, condition:false, delivery:false,
@@ -1917,8 +1921,8 @@ async function manageSubscription(){
   }
   // Never leave a paying subscriber without a way to cancel.
   showToast(state.lang === "fr"
-    ? "Portail indisponible. Pour annuler, écrivez à rxmarketing09@gmail.com : nous annulons sous 24 h."
-    : "Portal unavailable. To cancel, email rxmarketing09@gmail.com and we will cancel within 24 hours.");
+    ? "Portail indisponible. Pour annuler, écrivez à buyselltradesxm@gmail.com : nous annulons sous 24 h."
+    : "Portal unavailable. To cancel, email buyselltradesxm@gmail.com and we will cancel within 24 hours.");
 }
 // Only ever shows facts this app can actually back: a Pro badge is tied to
 // a real subscription_status check, and every account holder has a
@@ -2034,6 +2038,7 @@ function priceHTML(l){
 }
 
 function agoHTML(h){
+  if(h === 0) return state.lang === "fr" ? "À l'instant" : "Just now";
   return h < 24 ? t().ago_h(h) : t().ago_d(Math.round(h/24));
 }
 
@@ -2882,10 +2887,6 @@ function openListing(id, syncUrl = true){
   document.getElementById("detailTitle").textContent = listingTitle;
   detail.innerHTML = `
     <div class="detail-grid ${profile.photos ? "" : "no-media"}">
-      ${profile.photos ? `<div class="detail-media">
-        <div class="detail-photo"><img id="mainPhoto-${l.id}" src="${esc(media.img)}" alt="${esc(media.alt)}"></div>
-        ${thumbs}
-      </div>` : ""}
       <div class="detail-meta">
         ${ownerActionBarHTML(l)}
         <div class="listing-primary">
@@ -2927,6 +2928,10 @@ function openListing(id, syncUrl = true){
           </details>` : ""}
         <aside class="listing-detail-ad" aria-label="Publicité" data-ad-placement="listing-detail"></aside>
       </div>
+      ${profile.photos ? `<div class="detail-media">
+        <div class="detail-photo"><img id="mainPhoto-${l.id}" src="${esc(media.img)}" alt="${esc(media.alt)}"></div>
+        ${thumbs}
+      </div>` : ""}
     </div>`;
   openModal("detailModal");
   setTimeout(()=>scrollChatToBottom(l.id), 0);
@@ -5567,7 +5572,7 @@ function applyPostFieldProfile(){
   document.getElementById("postOptionsField").hidden = !(profile.negotiable || profile.urgent || profile.safeMeet);
   toggleVehicleFields(cat, sub);
 
-  const service = !profile.price;
+  const service = cat === "serv" || cat === "job" || SERVICE_SUBCATS.has(sub);
   document.getElementById("newTitle").placeholder = service
     ? (state.lang === "fr" ? "Ex: Plombier disponible à Marigot" : "Ex: Plumber available in Marigot")
     : t().titlePh;
@@ -5720,6 +5725,11 @@ async function createListing(e){
     showMissingPostField(document.getElementById("postPhotosField"), t().photoRequired);
     return false;
   }
+  if(!document.getElementById("newDesc").value.trim()){
+    showMissingPostField(document.getElementById("postDescField") || document.getElementById("newDesc"),
+      state.lang === "fr" ? "Ajoutez une description pour publier." : "Add a description before publishing.");
+    return false;
+  }
   const cur = profile.price ? document.getElementById("newCur").value : (state.cur || "usd");
   const price = profile.price ? (parseFloat(document.getElementById("newPrice").value) || 0) : 0;
   const area = document.getElementById("newArea").value;
@@ -5752,7 +5762,7 @@ async function createListing(e){
     meetup:null,
     negotiable:profile.negotiable && document.getElementById("newNegotiable").checked,
     safeMeet:profile.safeMeet && document.getElementById("newSafeMeet").checked,
-    noPrice:!profile.price,
+    noPrice:false,
     salary:cat === "job",
     ph:0, pics:profile.photos ? selectedPostPhotos.length : 0,
     photos:profile.photos ? [...selectedPostPhotos] : [],
