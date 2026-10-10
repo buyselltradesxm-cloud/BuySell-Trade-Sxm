@@ -187,10 +187,10 @@ window.AdsConfig = {
       {
         id: "post",
         action: "openPostModal",
-        headline: { fr: "Vendez ce que vous n'utilisez plus",
-                    en: "Sell what you no longer use" },
-        text: { fr: "Publier une annonce est gratuit sur toute l'île.",
-                en: "Posting a listing is free across the island." },
+        headline: { fr: "Neuf ou d'occasion, vendez-le ici",
+                    en: "New or used, sell it here" },
+        text: { fr: "Particuliers et commerces publient sur toute l'île. Gratuit pour les particuliers.",
+                en: "Individuals and businesses post across the island. Free for individuals." },
         cta: { fr: "Publier une annonce", en: "Post an ad" }
       }
     ]
