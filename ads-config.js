@@ -14,6 +14,7 @@
  *  Slot keys used across the site:
  *    "desktop-leaderboard"  big banner, top of page, desktop only
  *    "content-1"            band between the featured board and the grid (all sizes)
+ *    "content-2"            band under the subcategory panel, before the main layout (all sizes)
  *    "home-top"             mobile banner in the home flow
  *    "feed"                 in-grid card, repeats down the results grid (all sizes)
  *    "listing-detail"       inside the listing detail view (highest dwell time)
@@ -43,7 +44,7 @@ window.AdsConfig = {
     slots: {
       "desktop-leaderboard": "5151891881",   // top band, desktop
       "content-1": "9916686290",             // between featured board and the grid (desktop + mobile)
-      "content-2": "",                       // under the subcategory panel, before the main layout (desktop + mobile) — PASTE SLOT ID TO ACTIVATE
+      "content-2": "6536666291",             // under the subcategory panel, before the main layout (desktop + mobile)
       "home-top": "8398011482",              // mobile banner in the home flow
       "feed": "3399826517",                  // repeats inside the results grid (desktop + mobile)
       "listing-detail": "6995456596",        // inside the listing detail view (high dwell)
