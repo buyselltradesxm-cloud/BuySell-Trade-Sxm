@@ -230,6 +230,21 @@ jobs:
             done < <(find "$FRAMEWORKS" -depth -type d -name '*.framework' -print0)
           fi
 
+      - name: Carry entitlements into the archive
+        run: |
+          # The archive is unsigned, so it holds no entitlements and the export
+          # would sign the app without Sign in with Apple. An ad-hoc signature
+          # is enough to carry them: the export replaces it with the
+          # distribution signature and keeps the entitlements it found.
+          APP="$ARCHIVE_PATH/Products/Applications/App.app"
+          if [ -d "$APP/Frameworks" ]; then
+            while IFS= read -r -d '' framework; do
+              codesign --force --sign - "$framework"
+            done < <(find "$APP/Frameworks" -depth -type d -name '*.framework' -print0)
+          fi
+          codesign --force --sign - --entitlements ios/App/App/App.entitlements "$APP"
+          codesign -d --entitlements - "$APP"
+
       - name: Export signed IPA
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
