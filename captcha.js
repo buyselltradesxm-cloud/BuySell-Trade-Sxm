@@ -45,19 +45,42 @@
     if (err) p.reject(err); else p.resolve(token);
   }
 
+  function isFrench() {
+    return (document.documentElement.lang || "fr").indexOf("fr") === 0;
+  }
+
   function ensureWidget() {
     if (widgetId !== null) return;
     box = document.createElement("div");
     box.id = "bst-captcha";
     // Center the interaction challenge in the visible viewport. Anchoring it
     // to the bottom clipped the checkbox on short screens and inside dialogs.
-    box.style.cssText = "position:fixed;inset:0;z-index:2147483000;display:none;place-items:center;box-sizing:border-box;width:100vw;height:100vh;height:100dvh;padding:16px;background:rgba(15,35,40,.22);backdrop-filter:blur(2px);";
+    box.style.cssText = "position:fixed;inset:0;z-index:2147483000;display:none;place-items:center;place-content:center;gap:14px;box-sizing:border-box;width:100vw;height:100vh;height:100dvh;padding:16px;background:rgba(15,35,40,.22);backdrop-filter:blur(2px);";
+    var slot = document.createElement("div");
+    // The overlay covers the whole screen and the iOS / Android apps have no
+    // reload button, so a challenge that will not complete needs a way out.
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.style.cssText = "min-height:44px;padding:0 22px;border:0;border-radius:999px;background:#fff;color:#132A2E;font:600 15px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-shadow:0 2px 10px rgba(15,35,40,.25);cursor:pointer;";
+    cancel.addEventListener("click", function () { settle(new Error("captcha_cancelled")); });
+    box.appendChild(slot);
+    box.appendChild(cancel);
     document.body.appendChild(box);
-    widgetId = window.turnstile.render(box, {
+    widgetId = window.turnstile.render(slot, {
       sitekey: siteKey,
       execution: "execute",
       appearance: "interaction-only",
-      "before-interactive-callback": function () { box.style.display = "grid"; },
+      // One challenge per token() call. Left on "auto", a failed or expired
+      // challenge restarts by itself and re-opens the overlay with nothing
+      // waiting for its token.
+      retry: "never",
+      "refresh-expired": "never",
+      "refresh-timeout": "never",
+      "before-interactive-callback": function () {
+        if (!pending) return;
+        cancel.textContent = isFrench() ? "Annuler" : "Cancel";
+        box.style.display = "grid";
+      },
       "after-interactive-callback": function () { box.style.display = "none"; },
       callback: function (token) { settle(null, token); },
       "error-callback": function () { settle(new Error("captcha_failed")); return true; },
@@ -83,5 +106,15 @@
     });
   }
 
-  window.Captcha = { token: token };
+  // Shown under the sign-in form when the anti-bot check did not complete, so
+  // it is not mistaken for a wrong password. Google / Apple sign-in never
+  // needs this check, which makes them the way forward when it keeps failing.
+  // TODO(human): adjust the wording for your customers if you want.
+  function failureMessage(lang) {
+    return lang === "fr"
+      ? "La vérification anti-robot n'a pas abouti. Réessayez, ou connectez-vous avec Google ou Apple."
+      : "The anti-bot check did not complete. Try again, or sign in with Google or Apple.";
+  }
+
+  window.Captcha = { token: token, failureMessage: failureMessage };
 })();

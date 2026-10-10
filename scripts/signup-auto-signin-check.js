@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-async function check(pageFile, verification, signIn) {
+async function check(pageFile, verification, signIn, password = 'QA secure password 123') {
   const source = fs.readFileSync(path.join(__dirname, '..', pageFile), 'utf8');
   const start = source.indexOf('async function confirmSignupCode(){');
   const end = source.indexOf('async function resendSignupCode(){', start);
@@ -24,7 +24,7 @@ async function check(pageFile, verification, signIn) {
   const calls = { signIn: [], complete: 0, toast: 0 };
   const state = { lang: 'en', user: null };
   const context = {
-    pendingSignupOtp: { email: 'qa@example.com', password: 'QA secure password 123', userId: 'qa-user' },
+    pendingSignupOtp: { email: 'qa@example.com', password, userId: 'qa-user' },
     document: {
       getElementById: id => elements[id],
       querySelector: selector => selector.includes('confirmSignupCode') ? button : { scrollIntoView() {} }
@@ -40,7 +40,8 @@ async function check(pageFile, verification, signIn) {
     t: () => ({ otpInvalid: 'Invalid code', otpConfirmed: 'Welcome' }),
     applySupabaseUser: async user => { state.user = user; return user; },
     showToast: () => { calls.toast++; },
-    completeAuth: () => { calls.complete++; }
+    completeAuth: () => { calls.complete++; },
+    clearPendingSignup: () => { calls.cleared = (calls.cleared || 0) + 1; }
   };
   vm.runInNewContext(source.slice(start, end), context, { filename: pageFile });
   await vm.runInNewContext('confirmSignupCode()', context);
@@ -77,6 +78,14 @@ async function check(pageFile, verification, signIn) {
     assert.equal(failedSignIn.calls.toast, 0, page + ': failed sign in must not show a welcome toast');
     assert.equal(failedSignIn.elements.loginEmail.value, 'qa@example.com');
     assert.match(failedSignIn.elements.loginError.textContent, /Automatic sign-in/);
+
+    // Signup resumed after leaving the page: the password is not kept, so the
+    // code confirms the address and the login form takes over.
+    const resumed = await check(page, { data: { confirmed: true }, error: null }, null, '');
+    assert.equal(resumed.calls.signIn.length, 0, page + ': a resumed signup has no password to sign in with');
+    assert.equal(resumed.calls.cleared, 1, page + ': the saved pending signup must be cleared');
+    assert.equal(resumed.elements.loginEmail.value, 'qa@example.com');
+    assert.match(resumed.elements.loginError.textContent, /account is ready/);
   }
   console.log('Signup confirmation signs in on both pages; invalid codes and sign-in failures stay safe.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

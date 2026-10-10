@@ -59,7 +59,35 @@ const server = http.createServer((req, res) => {
       assert.equal(calls.find(x => x[0] === "oauth")[1].options.skipBrowserRedirect, true);
       assert.equal(calls.find(x => x[0] === "oauth")[1].options.redirectTo, "https://buyselltradesxm.com/auth-callback.html");
       assert.equal(calls.find(x => x[0] === "exchange")[1], "pkce-test");
-      await page.evaluate(() => { window.calls = []; });
+      // The app stays on this page after provider sign-in, so nothing reloads
+      // the login screen away as it does on the web: it has to close itself.
+      await page.evaluate(() => {
+        window.SUPABASE_OAUTH_PROVIDERS = { google: true, apple: true };
+        const exchange = window.db.auth.exchangeCodeForSession;
+        window.db.auth.exchangeCodeForSession = async code => {
+          await exchange(code);
+          const user = { id: "test-user", email: "reviewer@example.com" };
+          // Stand-in for onAuthChange(), which loads the account a moment later.
+          setTimeout(() => { state.user = normalizeUser({ id: user.id, provider: "supabase", email: user.email, name: "Reviewer" }); }, 300);
+          return { data: { session: { user }, user }, error: null };
+        };
+        openModal("accountModal");
+      });
+      const loginOpen = () => page.locator("#accountModal").evaluate(el => el.classList.contains("open"));
+      assert.equal(await loginOpen(), true);
+      await page.evaluate(() => socialAuth("apple"));
+      assert.equal(await loginOpen(), false, "Login screen must close after in-app sign-in");
+      assert.equal(await page.evaluate(() => state.user && state.user.id), "test-user");
+      // Closing the sheet leaves the login screen as it was, with no error.
+      await page.evaluate(() => {
+        Capacitor.Plugins.SXMNative.authenticate = async () => { throw Object.assign(new Error("Sign-in cancelled"), { code: "CANCELLED" }); };
+        window.toasts = []; const show = showToast; showToast = message => { toasts.push(message); show(message); };
+        openModal("accountModal");
+      });
+      await page.evaluate(() => socialAuth("google"));
+      assert.equal(await loginOpen(), true, "Cancelling sign-in keeps the login screen");
+      assert.deepEqual(await page.evaluate(() => window.toasts), [], "Cancelling sign-in is not an error");
+      await page.evaluate(() => { closeModal("accountModal"); window.calls = []; });
       assert.equal(await page.evaluate(() => SXM.buy("pro-starter")), false);
       calls = await page.evaluate(() => window.calls);
       assert.ok(!calls.some(x => x[0] === "finish" || x[1] === "verify"), "Cancellation cannot grant or finish a purchase");

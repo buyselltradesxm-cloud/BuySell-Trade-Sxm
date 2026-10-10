@@ -298,7 +298,7 @@ const I18N = {
   socialGoogle:"Continuer avec Google",socialApple:"Continuer avec Apple",socialOr:"ou",
   inboxPick:"Choisissez une conversation pour répondre.",inboxSend:"Envoyer",inboxViewListing:"Voir l'annonce",inboxWrite:"Écrivez votre réponse…",
   notifLabel:"Alertes",notifTitle:"Notifications",notifClear:"Tout effacer",pushDefault:"Recevoir les alertes sur cet appareil",pushLogin:"Connectez-vous pour activer les alertes.",pushOn:"Alertes activées sur cet appareil.",pushReady:"Alertes prêtes. Appuyez sur Activer.",pushDenied:"Alertes bloquées dans le navigateur.",pushUnsupported:"Alertes non disponibles sur ce navigateur.",pushEnable:"Activer",pushDisable:"Désactiver",
-      pricingLabel:"Tarifs",loginLabel:"Login",pricingKicker:"Gratuit pour vendre, payant pour les pros",pricingTitle:"Tarifs",pricingIntro:"Créer un compte est gratuit. Publier et vendre vos objets personnels est gratuit. Les plans payants sont des abonnements pour les pros qui veulent plus de visibilité.",pricingPlansTitle:"Types de compte",pricingFreeNote:"Personal Free permet de publier gratuitement vos annonces personnelles. Les abonnements Pro ajoutent des outils business, des boosts et plus de visibilité.",authFreeTitle:"Créer un compte gratuit",authFreeText:"Publier une annonce personnelle reste gratuit. Les options Pro sont séparées dans Tarifs.",authBadge:"Gratuit",createKicker:"Nouveau compte",loginKicker:"Connexion rapide",otpSentText:"Nous avons envoyé un code à votre email. Entrez-le ci-dessous pour activer votre compte et vous connecter.",otpCodeLabel:"Code de confirmation",otpConfirm:"Confirmer le code",otpResend:"Renvoyer le code",otpInvalid:"Code invalide ou expiré.",otpConfirmed:"Compte confirmé - bienvenue.",otpResent:"Nouveau code envoyé.",freeCreateAccount:"Créer un compte est gratuit.",freePostListing:"Publier quelque chose à vendre est gratuit.",freePersonalSelling:"Vendre vos objets personnels est gratuit.",loginWithEmail:"ou connectez-vous avec email",
+      pricingLabel:"Tarifs",loginLabel:"Login",pricingKicker:"Gratuit pour vendre, payant pour les pros",pricingTitle:"Tarifs",pricingIntro:"Créer un compte est gratuit. Publier et vendre vos objets personnels est gratuit. Les plans payants sont des abonnements pour les pros qui veulent plus de visibilité.",pricingPlansTitle:"Types de compte",pricingFreeNote:"Personal Free permet de publier gratuitement vos annonces personnelles. Les abonnements Pro ajoutent des outils business, des boosts et plus de visibilité.",authFreeTitle:"Créer un compte gratuit",authFreeText:"Publier une annonce personnelle reste gratuit. Les options Pro sont séparées dans Tarifs.",authBadge:"Gratuit",createKicker:"Nouveau compte",loginKicker:"Connexion rapide",otpSentText:"Nous avons envoyé un code à votre email. Entrez-le ci-dessous pour activer votre compte et vous connecter.",otpCodeLabel:"Code de confirmation",otpConfirm:"Confirmer le code",otpResend:"Renvoyer le code",otpChangeEmail:"Utiliser un autre email",otpInvalid:"Code invalide ou expiré.",otpConfirmed:"Compte confirmé - bienvenue.",otpResent:"Nouveau code envoyé.",freeCreateAccount:"Créer un compte est gratuit.",freePostListing:"Publier quelque chose à vendre est gratuit.",freePersonalSelling:"Vendre vos objets personnels est gratuit.",loginWithEmail:"ou connectez-vous avec email",
       filters:"Filtres",filtersHint:"Trouvez plus vite l'annonce qui vous convient.",price:"Prix",side:"Côté de l'île",condition:"État",subcategoryLabel:"Sous-catégorie",allSubcategories:"Toutes les sous-catégories",sellerTypeLabel:"Type de vendeur",availabilityLabel:"Disponibilité",handoverFilterLabel:"Remise du produit",moreCriteria:"Autres critères",allSellers:"Tous les vendeurs",individualSeller:"Particuliers",professionalSeller:"Professionnels",allStatuses:"Tous les statuts",availableOnly:"Disponible maintenant",reservedOnly:"Réservé",soldOnly:"Vendu",allHandovers:"Tous les modes",urgentOnly:"Ventes urgentes",negotiableOnly:"Prix négociables",deliveryOnly:"Livraison disponible",resetFilters:"Tout effacer",activeFilters:n=>`${n} actif${n>1?"s":""}`,showResults:n=>`Voir ${n} annonce${n===1?"":"s"}`,filterSearch:"Rechercher",
       allIsland:"Toute l'île",browseLabel:"Parcourir",listingLabel:"Annonce",titleLabel:"Titre",titlePh:"Ex: Scooter 125 en bon état",categoryLabel:"Catégorie",areaLabel:"Zone",currencyLabel:"Devise",photosLabel:"Photos",uploadPhotos:"Ajouter des photos",photosHelp:"Ajoutez jusqu'à 8 photos réelles de l'objet. La première photo sera utilisée comme image principale.",deliveryLabel:"Remise",pickupOnly:"Retrait uniquement",deliveryPossible:"Livraison possible",meetupPossible:"Rendez-vous possible",meetupLabel:"Lieu préféré",publicMeetup:"Lieu public",sellerPlace:"Chez le vendeur",buyerPlace:"Chez l'acheteur",negotiableLabel:"Prix négociable",urgentSaleLabel:"Vente urgente",safeMeetLabel:"Rendez-vous sécurisé",photoRequired:"Ajoutez au moins une photo réelle pour publier.",tooManyPhotos:"Maximum 8 photos par annonce.",sideLabel:"Côté",descLabel:"Description",descPh:"Ajoutez les détails utiles: état, quantité, livraison et point de rendez-vous",postSubmit:"Publier l'annonce",cancelLabel:"Annuler",sellerPro:"Vendeur pro",sellerLocal:"Vendeur local",quickMessage:"Chat avec le vendeur",chatOnline:"Réponse instantanée",chatPlaceholder:"Écrivez votre message au vendeur",chatSend:"Envoyer",sellerTyping:"Le vendeur répond...",instantReply:"Oui, c'est disponible. On peut s'organiser ici dans le chat.",loginToChat:"Connectez-vous pour envoyer un message au vendeur.",shareLabel:"Partager",shareTitle:"Partager cette annonce",shareHelp:"Copiez le lien ou envoyez-le directement pour que quelqu'un ouvre cette annonce.",copyLink:"Copier le lien",linkCopied:"Lien copié",shareText:"Regarde cette annonce sur Buy Sell Trade Sxm",shareFailed:"Impossible de partager. Le lien a été copié.",savedLabel:"Enregistré",saveLabel:"Enregistrer",removedToast:"Retiré",savedToast:"Enregistré",messageReady:"Message envoyé",listingPublished:"Annonce publiée",defaultMessage:"Bonjour, votre annonce est-elle toujours disponible ?",subcatHint:"Affinez sans perdre le fil.",footerMarket:"Marketplace",footerTrust:"Confiance & sécurité",footerLang:"Français et anglais",profileLabel:"Profil",profileTitle:"Mon profil",profileRequired:"Connectez-vous pour voir votre profil.",memberSince:"Membre depuis",verifiedEmail:"Email vérifié",trustedMember:"Membre de confiance",fastReply:"Réponse rapide",profileListings:"Mes annonces",profileNoListings:"Vous n'avez pas encore publié d'annonce.",activeListings:"Annonces",savedItems:"Favoris",conversations:"Messages",ratingLabel:"Note",editProfile:"Modifier le profil",logoutLabel:"Se déconnecter",deleteAccountLabel:"Supprimer mon compte",boostPageTitle:"Boost & Pro",boostKicker:"Visibilité payante",boostHeroTitle:"Faites voir vos annonces aux bons acheteurs",boostHeroText:"Les annonces classiques restent gratuites pour les particuliers. Les boosts et comptes Pro sont des options payantes pour vendre plus vite, afficher plus d'annonces et obtenir plus de contacts.",boostFreeTitle:"Annonce gratuite",boostFreeText:"Pour vendre un objet occasionnellement: photos, prix, quartier, chat avec l'acheteur et partage du lien.",boostPaidTitle:"Boost payant",boostPaidText:"Le vendeur choisit une annonce, sélectionne une durée de mise en avant, paie, puis l'annonce reçoit le badge Sponsorisé et apparaît plus haut sur la page.",boostProTitle:"Compte Pro business",boostProText:"Pour les commerces: page business, badge Pro, plus d'annonces, statistiques, messages centralisés et options de visibilité régulières.",boostStepsTitle:"Comment ça marche",boostStep1:"Choisir l'annonce à promouvoir.",boostStep2:"Choisir la durée: 3, 7 ou 14 jours.",boostStep3:"Payer avant l'activation.",boostStep4:"Suivre les vues, favoris et messages.",boostPaymentTitle:"Paiement requis",boostPaymentText:"Aucune annonce n'est mise en avant sans paiement confirmé. Les prix seront ajoutés avant le lancement officiel.",boostTrustTitle:"Confiance vendeur",boostTrustText:"Après une discussion ou une vente, les acheteurs pourront noter le vendeur. Les profils sérieux seront plus rassurants pour les prochains acheteurs.",boostPriceSoon:"Prix à définir",boostPriceText:"On peut déjà construire le parcours paiement avec des prix temporaires masqués, puis brancher Stripe quand les tarifs sont validés.",accountTitle:"Compte requis",newAccountTitle:"Nouveau sur Buy Sell Trade Sxm",newAccountHelp:"Créez un compte particulier ou professionnel pour publier, gérer vos messages et protéger la communauté.",loginTitle:"J'ai déjà un compte",loginHelp:"Connectez-vous pour reprendre vos annonces, vos favoris et vos conversations.",passwordLabel:"Mot de passe",confirmPasswordLabel:"Confirmer le mot de passe",accountTypeLabel:"Type de compte",personalAccount:"Particulier",businessAccount:"Professionnel",businessNameLabel:"Nom du commerce",passwordMismatch:"Les mots de passe ne correspondent pas.",emailExists:"Un compte existe déjà avec cet email.",invalidLogin:"Email ou mot de passe incorrect.",loginSubmit:"Se connecter",loginToast:"Connexion réussie",accountName:"Nom",accountEmail:"Email",accountHelp:"Un compte est obligatoire pour déposer une annonce, contacter un vendeur et protéger la communauté.",accountSubmit:"Créer mon compte",comingSoon:"Bientôt disponible",storeAvailable:"Disponible",safetyBanner:"Objets illégaux interdits: armes, drogues, contrefaçons et articles dangereux. Toute violation peut entraîner un bannissement définitif.",illegalPolicy:"Les objets illégaux, armes, drogues, contrefaçons, produits volés et articles dangereux sont strictement interdits. Les comptes en infraction peuvent être supprimés et bannis définitivement.",
       saveSearch:"Enregistrer cette recherche",featured:"À la une sur l'île",sortBy:"Trier par",
@@ -325,7 +325,7 @@ const I18N = {
   socialGoogle:"Continue with Google",socialApple:"Continue with Apple",socialOr:"or",
   inboxPick:"Pick a conversation to reply.",inboxSend:"Send",inboxViewListing:"View listing",inboxWrite:"Write your reply…",
   notifLabel:"Alerts",notifTitle:"Notifications",notifClear:"Clear all",pushDefault:"Receive alerts on this device",pushLogin:"Log in to turn on alerts.",pushOn:"Alerts are on for this device.",pushReady:"Alerts are ready. Tap Enable.",pushDenied:"Alerts are blocked in the browser.",pushUnsupported:"Alerts are not available in this browser.",pushEnable:"Enable",pushDisable:"Turn off",
-      pricingLabel:"Pricing",loginLabel:"Login",pricingKicker:"Free to sell, paid for pros",pricingTitle:"Pricing",pricingIntro:"Creating an account is free. Posting and selling your personal items is free. Paid plans are subscriptions for pros who want more visibility.",pricingPlansTitle:"Account types",pricingFreeNote:"Personal Free lets you publish personal listings for free. Pro subscriptions add business tools, boosts, and more visibility.",authFreeTitle:"Create a free account",authFreeText:"Posting a personal listing stays free. Pro options live separately in Pricing.",authBadge:"Free",createKicker:"New account",loginKicker:"Fast login",otpSentText:"We sent a 4-digit verification code. Enter it below to activate your account and sign in.",otpCodeLabel:"Confirmation code",otpConfirm:"Confirm code",otpResend:"Resend code",otpInvalid:"Invalid or expired code.",otpConfirmed:"Account confirmed - welcome.",otpResent:"New code sent.",freeCreateAccount:"Creating an account is free.",freePostListing:"Posting something for sale is free.",freePersonalSelling:"Selling your personal items is free.",loginWithEmail:"or log in with email",
+      pricingLabel:"Pricing",loginLabel:"Login",pricingKicker:"Free to sell, paid for pros",pricingTitle:"Pricing",pricingIntro:"Creating an account is free. Posting and selling your personal items is free. Paid plans are subscriptions for pros who want more visibility.",pricingPlansTitle:"Account types",pricingFreeNote:"Personal Free lets you publish personal listings for free. Pro subscriptions add business tools, boosts, and more visibility.",authFreeTitle:"Create a free account",authFreeText:"Posting a personal listing stays free. Pro options live separately in Pricing.",authBadge:"Free",createKicker:"New account",loginKicker:"Fast login",otpSentText:"We sent a 4-digit verification code. Enter it below to activate your account and sign in.",otpCodeLabel:"Confirmation code",otpConfirm:"Confirm code",otpResend:"Resend code",otpChangeEmail:"Use a different email",otpInvalid:"Invalid or expired code.",otpConfirmed:"Account confirmed - welcome.",otpResent:"New code sent.",freeCreateAccount:"Creating an account is free.",freePostListing:"Posting something for sale is free.",freePersonalSelling:"Selling your personal items is free.",loginWithEmail:"or log in with email",
       filters:"Filters",filtersHint:"Find the right listing faster.",price:"Price",side:"Side of the island",condition:"Condition",subcategoryLabel:"Subcategory",allSubcategories:"All subcategories",sellerTypeLabel:"Seller type",availabilityLabel:"Availability",handoverFilterLabel:"Item handover",moreCriteria:"More criteria",allSellers:"All sellers",individualSeller:"Individuals",professionalSeller:"Businesses",allStatuses:"All statuses",availableOnly:"Available now",reservedOnly:"Reserved",soldOnly:"Sold",allHandovers:"All handover options",urgentOnly:"Urgent listings",negotiableOnly:"Negotiable prices",deliveryOnly:"Delivery available",resetFilters:"Clear all",activeFilters:n=>`${n} active`,showResults:n=>`Show ${n} listing${n!==1?"s":""}`,filterSearch:"Search",
       allIsland:"Whole island",browseLabel:"Browse",listingLabel:"Listing",titleLabel:"Title",titlePh:"Ex: 125cc scooter in good condition",categoryLabel:"Category",areaLabel:"Area",currencyLabel:"Currency",photosLabel:"Photos",uploadPhotos:"Add photos",photosHelp:"Add up to 8 real photos of the item. The first photo becomes the main listing image.",deliveryLabel:"Handover",pickupOnly:"Pickup only",deliveryPossible:"Delivery possible",meetupPossible:"Meetup possible",meetupLabel:"Preferred place",publicMeetup:"Public place",sellerPlace:"Seller's place",buyerPlace:"Buyer's place",negotiableLabel:"Negotiable price",urgentSaleLabel:"Urgent sale",safeMeetLabel:"Safe meetup",photoRequired:"Add at least one real photo before publishing.",tooManyPhotos:"Maximum 8 photos per listing.",sideLabel:"Side",descLabel:"Description",descPh:"Add useful details: condition, quantity, delivery, and meeting point",postSubmit:"Publish listing",cancelLabel:"Cancel",sellerPro:"Professional seller",sellerLocal:"Local seller",quickMessage:"Chat with seller",chatOnline:"Instant reply",chatPlaceholder:"Write your message to the seller",chatSend:"Send",sellerTyping:"Seller is replying...",instantReply:"Yes, it is available. We can arrange everything here in the chat.",loginToChat:"Log in to message the seller.",shareLabel:"Share",shareTitle:"Share this listing",shareHelp:"Copy the link or send it directly so someone can open this listing.",copyLink:"Copy link",linkCopied:"Link copied",shareText:"Look at this listing on Buy Sell Trade Sxm",shareFailed:"Sharing was not available. The link was copied.",savedLabel:"Saved",saveLabel:"Save",removedToast:"Removed",savedToast:"Saved",messageReady:"Message sent",listingPublished:"Listing published",defaultMessage:"Hi, is this listing still available?",subcatHint:"Refine the search without losing your place.",footerMarket:"Marketplace",footerTrust:"Trust & safety",footerLang:"French and English",profileLabel:"Profile",profileTitle:"My profile",profileRequired:"Log in to view your profile.",memberSince:"Member since",verifiedEmail:"Verified email",trustedMember:"Trusted member",fastReply:"Fast reply",profileListings:"My listings",profileNoListings:"You have not posted a listing yet.",activeListings:"Listings",savedItems:"Saved",conversations:"Messages",ratingLabel:"Rating",editProfile:"Edit profile",logoutLabel:"Log out",deleteAccountLabel:"Delete my account",boostPageTitle:"Boost & Pro",boostKicker:"Paid visibility",boostHeroTitle:"Put your listings in front of the right buyers",boostHeroText:"Regular listings stay free for individuals. Boosts and Pro accounts are paid options to sell faster, publish more listings, and get more contacts.",boostFreeTitle:"Free listing",boostFreeText:"For occasional selling: photos, price, area, buyer chat, and shareable listing link.",boostPaidTitle:"Paid boost",boostPaidText:"The seller chooses a listing, selects a promotion duration, pays, then the listing gets a Sponsored badge and appears higher on the page.",boostProTitle:"Pro business account",boostProText:"For local businesses: business page, Pro badge, more listings, analytics, centralized messages, and regular visibility options.",boostStepsTitle:"How it works",boostStep1:"Choose the listing to promote.",boostStep2:"Choose the duration: 3, 7, or 14 days.",boostStep3:"Pay before activation.",boostStep4:"Track views, saves, and messages.",boostPaymentTitle:"Payment required",boostPaymentText:"No listing is featured until payment is confirmed. The price is shown before you pay.",boostTrustTitle:"Seller trust",boostTrustText:"After a chat or sale, buyers can rate the seller. Serious profiles will feel safer for the next buyers.",boostPriceSoon:"Prices shown before payment",boostPriceText:"The selected price is shown before checkout. Your listing is promoted only after Stripe confirms payment.",accountTitle:"Account required",newAccountTitle:"New to Buy Sell Trade Sxm",newAccountHelp:"Create a personal or business account to post, manage messages, and protect the community.",loginTitle:"I already have an account",loginHelp:"Log in to continue with your listings, saved items, and conversations.",passwordLabel:"Password",confirmPasswordLabel:"Confirm password",accountTypeLabel:"Account type",personalAccount:"Personal",businessAccount:"Business",businessNameLabel:"Business name",passwordMismatch:"Passwords do not match.",emailExists:"An account already exists with this email.",invalidLogin:"Incorrect email or password.",loginSubmit:"Log in",loginToast:"Logged in",accountName:"Name",accountEmail:"Email",accountHelp:"An account is required to post a listing, contact a seller, and protect the community.",accountSubmit:"Create my account",comingSoon:"Coming soon",storeAvailable:"Available",safetyBanner:"Illegal items are prohibited: weapons, drugs, counterfeit goods, and dangerous items. Violations may result in a permanent ban.",illegalPolicy:"Illegal items, weapons, drugs, counterfeit goods, stolen products, and dangerous items are strictly prohibited. Accounts that break these rules may be removed and permanently banned.",
       saveSearch:"Save this search",featured:"Featured on the island",sortBy:"Sort by",
@@ -934,6 +934,39 @@ let usersByEmail = {};
 let pendingAuthAction = null;
 let pendingProSignup = null;
 let pendingSignupOtp = null; // { email, name, accountType, accountPlan } en attente du code de confirmation
+// Survit à un rechargement ou à une fermeture d'onglet : sans cela le compte
+// reste non confirmé et l'écran du code ne revient jamais. Le mot de passe
+// n'est jamais stocké ; après confirmation on demande une connexion manuelle.
+const PENDING_SIGNUP_KEY = "bst-pending-signup";
+const PENDING_SIGNUP_MAX_AGE = 60 * 60 * 1000;
+function savePendingSignup(pending){
+  try { localStorage.setItem(PENDING_SIGNUP_KEY, JSON.stringify({ email: pending.email, userId: pending.userId, savedAt: Date.now() })); } catch(e){}
+}
+function clearPendingSignup(){
+  try { localStorage.removeItem(PENDING_SIGNUP_KEY); } catch(e){}
+}
+function restorePendingSignup(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(PENDING_SIGNUP_KEY) || "null");
+    if(saved && saved.email && saved.userId && Date.now() - Number(saved.savedAt || 0) < PENDING_SIGNUP_MAX_AGE){
+      return { email: saved.email, userId: saved.userId, password: "" };
+    }
+  } catch(e){}
+  clearPendingSignup();
+  return null;
+}
+function showSignupOtpStep(visible){
+  document.getElementById("signupFields").hidden = visible;
+  document.getElementById("signupSubmitRow").hidden = visible;
+  document.getElementById("signupOtpStep").hidden = !visible;
+}
+function cancelSignupCode(){
+  pendingSignupOtp = null;
+  clearPendingSignup();
+  document.getElementById("signupOtpError").textContent = "";
+  document.getElementById("signupOtpCode").value = "";
+  showSignupOtpStep(false);
+}
 let pendingPaymentExistingUser = false;
 let pendingAfterPayment = null;
 let pendingSelectedProPlan = null;
@@ -3827,6 +3860,16 @@ function requireAccount(action){
   pendingAuthAction = action;
   document.getElementById("createAccountError").textContent = "";
   document.getElementById("loginError").textContent = "";
+  if(!pendingSignupOtp && !state.user){
+    pendingSignupOtp = restorePendingSignup();
+    if(pendingSignupOtp){
+      showSignupOtpStep(true);
+      document.getElementById("signupOtpCode").value = "";
+      document.getElementById("signupOtpError").textContent = state.lang === "fr"
+        ? `Entrez le code envoyé à ${pendingSignupOtp.email}, ou demandez-en un nouveau.`
+        : `Enter the code sent to ${pendingSignupOtp.email}, or request a new one.`;
+    }
+  }
   openModal("accountModal");
 }
 
@@ -4911,6 +4954,7 @@ async function createAccount(e){
       // bascule le formulaire sur la saisie du code reçu par email.
       error.textContent = "";
       pendingSignupOtp = { email, password, name, accountType, accountPlan: signupPlan, userId: data?.user_id || "" };
+      if(pendingSignupOtp.userId) savePendingSignup(pendingSignupOtp);
       document.getElementById("signupFields").hidden = true;
       document.getElementById("signupSubmitRow").hidden = true;
       document.getElementById("signupOtpStep").hidden = false;
@@ -5109,9 +5153,34 @@ async function socialAuth(provider, mode){
     consent.focus();
     return;
   }
-  const { error } = await SB.signInWithOAuth(provider);
-  if(error) showToast(error.message || (state.lang==="fr" ? "Connexion impossible." : "Could not sign in."));
-  // succès: Supabase redirige vers ce même onglet; onAuthChange() reprend la main au retour.
+  const { data, error } = await SB.signInWithOAuth(provider);
+  if(error){
+    // Closing the sign-in sheet is a choice, not a failure worth a message.
+    if(error.code !== "CANCELLED") showToast(error.message || (state.lang==="fr" ? "Connexion impossible." : "Could not sign in."));
+    return;
+  }
+  // Web: Supabase redirige vers ce même onglet; onAuthChange() reprend la main au retour.
+  // Apps iOS / Android: la connexion se termine sans quitter la page, donc
+  // aucun rechargement ne referme l'écran de connexion.
+  if(data && data.session && data.user) await finishInAppSocialAuth(data.user);
+}
+
+async function finishInAppSocialAuth(sbUser){
+  // onAuthChange() is already loading this account. Loading it again here
+  // would cancel that run and the refreshes that follow it, so only step in
+  // if it has not finished after a few seconds.
+  const deadline = Date.now() + 6000;
+  while(state.user?.id !== sbUser.id && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 100));
+  if(state.user?.id !== sbUser.id){
+    try { await applySupabaseUser(sbUser); } catch(e){}
+  }
+  if(state.user?.id !== sbUser.id){
+    showToast(state.lang==="fr" ? "Connexion impossible." : "Could not sign in.");
+    return;
+  }
+  if(sessionStorage.getItem("bst-auth-intent") === "pro"){ continuePendingProGoogle(); return; }
+  showToast(t().loginToast);
+  completeAuth();
 }
 
 function startProSocialAuth(provider){
@@ -5175,9 +5244,10 @@ async function confirmSignupCode(){
     const { email, password } = pendingSignupOtp;
     if(confirmButton) confirmButton.textContent = state.lang === "fr" ? "Connexion en cours…" : "Signing in…";
     let signInResult;
-    try { signInResult = await SB.signIn(email, password); }
+    try { signInResult = password ? await SB.signIn(email, password) : {error:{code:"password_required"}}; }
     catch(e){ signInResult = {error:e}; }
     pendingSignupOtp = null;
+    clearPendingSignup();
     const form = document.getElementById("signupOtpStep").closest("form");
     if(form) form.reset();
     document.getElementById("signupFields").hidden = false;
@@ -5197,7 +5267,11 @@ async function confirmSignupCode(){
     }
     document.getElementById("loginEmail").value = email;
     document.getElementById("loginPassword").value = "";
-    document.getElementById("loginError").textContent = state.lang === "fr"
+    document.getElementById("loginError").textContent = !password
+      ? (state.lang === "fr"
+        ? "Adresse email confirmée. Votre compte est prêt : connectez-vous avec votre mot de passe ci-dessous."
+        : "Email confirmed. Your account is ready: sign in with your password below.")
+      : state.lang === "fr"
       ? "Adresse email confirmée. La connexion automatique n'a pas abouti : connectez-vous avec votre mot de passe ci-dessous."
       : "Email confirmed. Automatic sign-in could not finish: sign in with your password below.";
     document.querySelector(".email-login-card")?.scrollIntoView({block:"center", behavior:"smooth"});
@@ -5306,9 +5380,13 @@ async function loginAccount(e){
       return false;
     }
     // Production never falls back to browser-stored accounts and never
-    // exposes provider-specific authentication errors.
+    // exposes provider-specific authentication errors. A failed anti-bot
+    // check says nothing about the account, and calling it a wrong password
+    // sends people round the same challenge again.
     if(!isLocalDevHost()){
-      error.textContent = t().invalidLogin;
+      error.textContent = sbErr && sbErr.code === "captcha_failed" && window.Captcha && Captcha.failureMessage
+        ? Captcha.failureMessage(state.lang)
+        : t().invalidLogin;
       return false;
     }
     // Localhost only: retain the demo-account fallback for QA.

@@ -104,6 +104,7 @@
   function friendlyCaptchaError(result) {
     if (result && result.error && /captcha/i.test(result.error.message || "")) {
       var fr = (document.documentElement.lang || "fr").indexOf("fr") === 0;
+      result.error.code = "captcha_failed";
       result.error.message = fr
         ? "Vérification anti-robot échouée. Rechargez la page et réessayez."
         : "Anti-bot check failed. Reload the page and try again.";
