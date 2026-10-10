@@ -1,19 +1,32 @@
 import AuthenticationServices
 import Capacitor
+import CryptoKit
 import StoreKit
+import WebKit
 
 final class SXMBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(SXMNativePlugin())
+        // The site is shared with older builds and with browsers: tell it,
+        // before its scripts run, what this build can do natively.
+        let info = "window.SXMNativeInfo={shell:2,tabs:true,appleSignIn:true,refresh:true};" +
+            "document.documentElement&&document.documentElement.classList.add('sxm-native-tabs');"
+        webView?.configuration.userContentController.addUserScript(
+            WKUserScript(source: info, injectionTime: .atDocumentStart, forMainFrameOnly: true))
     }
 }
 
 @objc(SXMNativePlugin)
-public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresentationContextProviding {
+public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresentationContextProviding,
+                              ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     public let identifier = "SXMNativePlugin"
     public let jsName = "SXMNative"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "authenticate", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "appleSignIn", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "ready", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setTabs", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "refreshDone", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "products", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "pending", returnType: CAPPluginReturnPromise),
@@ -22,6 +35,8 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
         CAPPluginMethod(name: "manageSubscriptions", returnType: CAPPluginReturnPromise)
     ]
     private var authSession: ASWebAuthenticationSession?
+    private var appleCall: CAPPluginCall?
+    private var appleNonce: String?
     private var updates: Task<Void, Never>?
     private let productIDs: Set<String> = Set([
         "pro_starter_monthly", "pro_business_monthly", "pro_premium_monthly",
@@ -66,6 +81,102 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
                 self.authSession = nil
                 call.reject("Unable to open sign-in", "AUTH_FAILED")
             }
+        }
+    }
+
+    // MARK: - Sign in with Apple (system sheet)
+
+    private var root: SXMRootViewController? { bridge?.viewController?.parent as? SXMRootViewController }
+
+    public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        bridge?.viewController?.view.window ?? ASPresentationAnchor()
+    }
+
+    /// Resolves with Apple's identity token and the nonce it was issued for;
+    /// the page exchanges them for a session (signInWithIdToken).
+    @objc func appleSignIn(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            guard self.appleCall == nil else { call.reject("Sign-in is already open", "BUSY"); return }
+            var bytes = [UInt8](repeating: 0, count: 32)
+            guard SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else {
+                call.reject("Unable to open sign-in", "AUTH_FAILED"); return
+            }
+            let nonce = bytes.map { String(format: "%02x", $0) }.joined()
+            let request = ASAuthorizationAppleIDProvider().createRequest()
+            request.requestedScopes = [.fullName, .email]
+            // Apple signs the hash; the backend checks it against the plain nonce.
+            request.nonce = SHA256.hash(data: Data(nonce.utf8)).map { String(format: "%02x", $0) }.joined()
+            let controller = ASAuthorizationController(authorizationRequests: [request])
+            controller.delegate = self
+            controller.presentationContextProvider = self
+            call.keepAlive = true
+            self.appleCall = call
+            self.appleNonce = nonce
+            controller.performRequests()
+        }
+    }
+
+    private func finishApple(_ body: (CAPPluginCall) -> Void) {
+        guard let call = appleCall else { return }
+        appleCall = nil
+        appleNonce = nil
+        body(call)
+        bridge?.releaseCall(call)
+    }
+
+    public func authorizationController(controller: ASAuthorizationController,
+                                        didCompleteWithAuthorization authorization: ASAuthorization) {
+        let nonce = appleNonce
+        finishApple { call in
+            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let data = credential.identityToken, let token = String(data: data, encoding: .utf8),
+                  let nonce = nonce else {
+                call.reject("Unable to complete sign-in", "AUTH_FAILED"); return
+            }
+            // Apple shares the name only the first time; the token never carries it.
+            let name = [credential.fullName?.givenName, credential.fullName?.familyName]
+                .compactMap { $0 }.joined(separator: " ")
+            call.resolve(["identityToken": token, "nonce": nonce, "name": name])
+        }
+    }
+
+    public func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        finishApple { call in
+            if let error = error as? ASAuthorizationError, error.code == .canceled {
+                call.reject("Sign-in cancelled", "CANCELLED")
+            } else { call.reject("Unable to complete sign-in", "AUTH_FAILED") }
+        }
+    }
+
+    // MARK: - Tab bar and pull to refresh
+
+    /// Called once by the page when it can react to tabs.
+    @objc func ready(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [weak self] in
+            var result: [String: Any] = [:]
+            if let tab = self?.root?.takePendingTab() { result["tab"] = tab }
+            call.resolve(result)
+        }
+    }
+
+    @objc func setTabs(_ call: CAPPluginCall) {
+        let selected = call.getString("selected")
+        let french = call.getString("lang").map { $0.hasPrefix("fr") }
+        var badges: [String: Int] = [:]
+        for (name, value) in call.getObject("badges") ?? [:] {
+            if let count = value as? Int { badges[name] = count } else if let count = value as? Double { badges[name] = Int(count) }
+        }
+        DispatchQueue.main.async { [weak self] in
+            self?.root?.update(selected: selected, french: french, badges: badges)
+            call.resolve()
+        }
+    }
+
+    @objc func refreshDone(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [weak self] in
+            self?.root?.finishRefresh()
+            call.resolve()
         }
     }
 

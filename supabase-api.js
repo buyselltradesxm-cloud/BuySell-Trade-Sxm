@@ -533,6 +533,29 @@
     signInWithOAuth: async function (provider) {
       if (!window.db) return { error: { message: "Supabase non configuré" } };
       if (window.SXM && SXM.isIOS()) {
+        // Builds with the system Sign in with Apple sheet need no browser and
+        // no redirect. Anything short of a session falls back to the browser
+        // sheet below, so a build or backend that is not ready still signs in.
+        if (provider === "apple" && SXM.shell && SXM.shell().appleSignIn) {
+          try {
+            const credential = await SXM.plugin().appleSignIn();
+            const native = await window.db.auth.signInWithIdToken({
+              provider: "apple", token: credential.identityToken, nonce: credential.nonce
+            });
+            if (!native.error && native.data && native.data.session) {
+              // Apple gives the name once, outside the token: keep it.
+              const meta = (native.data.user && native.data.user.user_metadata) || {};
+              if (credential.name && !meta.name && !meta.full_name) {
+                try { await window.db.auth.updateUser({ data: { name: credential.name, full_name: credential.name } }); } catch (e) { /* the session stands */ }
+              }
+              return native;
+            }
+            console.warn("[SB] native Apple sign-in:", native.error && native.error.message);
+          } catch (error) {
+            if (error && error.code === "CANCELLED") return { error: { message: "", code: "CANCELLED" } };
+            console.warn("[SB] native Apple sign-in:", error && error.message);
+          }
+        }
         try {
           const result = await window.db.auth.signInWithOAuth({
             provider: provider,

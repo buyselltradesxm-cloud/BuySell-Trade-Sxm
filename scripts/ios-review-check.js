@@ -111,6 +111,72 @@ const server = http.createServer((req, res) => {
       assert.equal(await page.locator("[data-apple-restore]").first().isVisible(), true);
       assert.deepEqual(errors, []);
       await page.close();
+      // Builds with the native tab bar announce it through SXMNativeInfo: the
+      // page hides its own bottom navigation, follows the bar, reports back
+      // what it shows, and uses the system Sign in with Apple sheet.
+      const shellPage = await browser.newPage({ serviceWorkers: "block", viewport: { width: 390, height: 844 } });
+      const shellErrors = [];
+      shellPage.on("pageerror", error => shellErrors.push(error.message));
+      await shellPage.addInitScript(() => {
+        window.calls = []; window.appleFails = false;
+        window.SXMNativeInfo = { shell: 2, tabs: true, appleSignIn: true, refresh: true };
+        window.Capacitor = { getPlatform: () => "ios", isNativePlatform: () => true, Plugins: { SXMNative: {
+          products: async () => ({ products: [] }), pending: async () => ({ transactions: [] }), addListener: async () => ({}),
+          ready: async () => ({ tab: "messages" }),
+          setTabs: async tabs => { calls.push(["tabs", tabs]); },
+          refreshDone: async () => { calls.push(["refreshDone"]); },
+          appleSignIn: async () => { if (appleFails) throw Object.assign(new Error("Unable to complete sign-in"), { code: "AUTH_FAILED" }); return { identityToken: "apple-token", nonce: "raw-nonce", name: "Ada Reviewer" }; },
+          authenticate: async args => { calls.push(["authenticate", args]); return { url: "buyselltradesxm://auth/callback?code=pkce-test" }; }
+        } } };
+      });
+      await shellPage.goto(`http://127.0.0.1:${server.address().port}/${filename}?local=1`);
+      const lastTabs = () => shellPage.evaluate(() => (calls.filter(x => x[0] === "tabs").pop() || [])[1]);
+      const isOpen = id => shellPage.locator("#" + id).evaluate(el => el.classList.contains("open"));
+      const tap = tab => shellPage.evaluate(name => { const event = new Event("sxmTab"); event.tab = name; window.dispatchEvent(event); }, tab);
+      assert.equal(await shellPage.locator(".mobile-nav").evaluate(el => getComputedStyle(el).display), "none", "The native bar replaces the page's bottom navigation");
+      // A tab chosen before the page was ready (home screen shortcut): signed out, it asks to sign in.
+      await shellPage.waitForFunction(() => document.querySelector("#accountModal.open"), null, { timeout: 5000 });
+      assert.equal((await lastTabs()).selected, "messages");
+      await tap("browse");
+      assert.equal(await isOpen("accountModal"), false);
+      assert.equal((await lastTabs()).selected, "browse");
+      await shellPage.evaluate(() => {
+        const user = { id: "test-user", email: "reviewer@example.com" };
+        window.db = { auth: {
+          getSession: async () => ({ data: { session: null } }),
+          signInWithIdToken: async options => { calls.push(["idToken", options]); setTimeout(() => { state.user = normalizeUser({ id: user.id, provider: "local", email: user.email, name: "Reviewer" }); }, 200); return { data: { session: { user }, user }, error: null }; },
+          updateUser: async options => { calls.push(["updateUser", options]); return { data: { user }, error: null }; },
+          signInWithOAuth: async options => { calls.push(["oauth", options]); return { data: { url: "https://szhaxlmronirhnntlwyb.supabase.co/auth/v1/authorize?provider=apple" } }; },
+          exchangeCodeForSession: async code => { calls.push(["exchange", code]); setTimeout(() => { state.user = normalizeUser({ id: user.id, provider: "local", email: user.email, name: "Reviewer" }); }, 200); return { data: { session: { user }, user }, error: null }; }
+        } };
+        window.SUPABASE_OAUTH_PROVIDERS = { google: true, apple: true };
+        applySupabaseUser = async () => {};
+        openModal("accountModal");
+      });
+      await shellPage.evaluate(() => socialAuth("apple"));
+      let shellCalls = await shellPage.evaluate(() => window.calls);
+      assert.deepEqual(shellCalls.find(x => x[0] === "idToken")[1], { provider: "apple", token: "apple-token", nonce: "raw-nonce" });
+      assert.equal(shellCalls.find(x => x[0] === "updateUser")[1].data.name, "Ada Reviewer");
+      assert.ok(!shellCalls.some(x => x[0] === "oauth"), "The system Apple sheet needs no browser sign-in");
+      assert.equal(await isOpen("accountModal"), false, "Login screen must close after the Apple sheet");
+      // If the system sheet cannot finish, the browser sheet still signs in.
+      await shellPage.evaluate(() => { state.user = null; window.calls = []; window.appleFails = true; openModal("accountModal"); });
+      await shellPage.evaluate(() => socialAuth("apple"));
+      shellCalls = await shellPage.evaluate(() => window.calls);
+      assert.ok(shellCalls.some(x => x[0] === "oauth") && shellCalls.some(x => x[0] === "exchange"), "Falls back to the browser sheet");
+      assert.equal(await isOpen("accountModal"), false);
+      // Signed in: tabs open their screens, and closing one in the page moves the bar back.
+      await tap("profile");
+      assert.equal(await isOpen("profileModal"), true);
+      assert.equal((await lastTabs()).selected, "profile");
+      await shellPage.evaluate(() => closeModal("profileModal"));
+      await shellPage.waitForFunction(() => (calls.filter(x => x[0] === "tabs").pop() || [])[1].selected === "browse");
+      await shellPage.evaluate(() => { setUnreadMessageCount(3); setLang("en"); });
+      await shellPage.waitForFunction(() => { const tabs = (calls.filter(x => x[0] === "tabs").pop() || [])[1]; return tabs.badges.messages === 3 && tabs.lang === "en"; });
+      await shellPage.evaluate(() => { SB.hydrate = async () => true; window.dispatchEvent(new Event("sxmRefresh")); });
+      await shellPage.waitForFunction(() => calls.some(x => x[0] === "refreshDone"));
+      assert.deepEqual(shellErrors, []);
+      await shellPage.close();
       // The web "add to home screen" hint has no place inside the App Store app;
       // in Safari on the same iPhone it still appears.
       for (const inApp of [true, false]) {

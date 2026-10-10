@@ -134,7 +134,82 @@
     } catch (error) { if (restore) message(error); }
     finally { syncing = false; }
   }
-  window.SXM = { isIOS, plugin, ids, buy, refreshPrices, sync, message,
+  /* ---- Native shell: tab bar, pull to refresh (SXMRootViewController.swift) ----
+     Builds that have it announce themselves through window.SXMNativeInfo
+     before any script runs; older builds and browsers never set it. */
+  const shell = () => (isIOS() && window.SXMNativeInfo) || {};
+  const tabModals = { postModal: "post", messagesModal: "messages", profileModal: "profile" };
+  let wantedTab = "browse", sentTabs = "";
+  function currentTab() {
+    for (const modal of document.querySelectorAll(".modal.open")) if (tabModals[modal.id]) return tabModals[modal.id];
+    const panel = document.getElementById("notifPanel");
+    if (panel && !panel.hidden) return "alerts";
+    // The login screen opened from a tab keeps that tab lit.
+    if (document.querySelector("#accountModal.open")) return wantedTab;
+    wantedTab = "browse";
+    return "browse";
+  }
+  function unread(id) {
+    const el = document.getElementById(id);
+    return el && !el.hidden ? parseInt(el.textContent, 10) || 0 : 0;
+  }
+  function syncTabs() {
+    const tabs = { selected: currentTab(), lang: document.documentElement.lang || "fr",
+      badges: { messages: unread("msgCount"), alerts: unread("notifCount") } };
+    const key = JSON.stringify(tabs);
+    if (key === sentTabs) return;
+    sentTabs = key;
+    try { plugin().setTabs(tabs).catch(() => {}); } catch (_) {}
+  }
+  function showTab(tab) {
+    document.querySelectorAll(".modal.open").forEach(modal => closeModal(modal.id));
+    const panel = document.getElementById("notifPanel");
+    if (panel && !panel.hidden) toggleNotifPanel();
+    toggleFilters(false);
+    wantedTab = tab;
+    if (tab === "post") openPostModal();
+    else if (tab === "messages") openMessages();
+    else if (tab === "alerts") toggleNotifPanel();
+    else if (tab === "profile") openProfile();
+    else window.scrollTo({ top: 0, behavior: "smooth" });
+    syncTabs();
+  }
+  async function refreshFromPull() {
+    try {
+      if (document.querySelector("#messagesModal.open") && typeof loadInbox === "function") await loadInbox();
+      else if (window.SB) await SB.hydrate();
+      if (typeof refreshMessageBadge === "function") refreshMessageBadge();
+    } catch (_) {}
+    try { plugin().refreshDone().catch(() => {}); } catch (_) {}
+  }
+  function startShell() {
+    if (!shell().tabs) return;
+    // The native bar replaces the page's own bottom navigation.
+    const style = document.createElement("style");
+    style.textContent = "html.sxm-native-tabs .mobile-nav{display:none!important}" +
+      "html.sxm-native-tabs body{padding-bottom:0!important}" +
+      "@media (max-width:900px){html.sxm-native-tabs .notif-panel{bottom:12px!important}}";
+    document.head.appendChild(style);
+    document.documentElement.classList.add("sxm-native-tabs");
+    window.addEventListener("sxmTab", event => { if (event.tab) showTab(event.tab); });
+    window.addEventListener("sxmRefresh", refreshFromPull);
+    const watch = new MutationObserver(syncTabs);
+    document.querySelectorAll(".modal").forEach(modal => watch.observe(modal, { attributes: true, attributeFilter: ["class"] }));
+    ["notifPanel", "msgCount", "notifCount"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) watch.observe(el, { attributes: true, attributeFilter: ["hidden"], childList: true, characterData: true, subtree: true });
+    });
+    watch.observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
+    syncTabs();
+    // A tab chosen before the page was ready (home screen shortcut).
+    try {
+      plugin().ready().then(result => { if (result && result.tab) setTimeout(() => showTab(result.tab), 600); }).catch(() => {});
+    } catch (_) {}
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startShell);
+  else startShell();
+
+  window.SXM = { isIOS, shell, plugin, ids, buy, refreshPrices, sync, message,
     restore: () => sync(true),
     manage: () => plugin().manageSubscriptions().catch(message)
   };

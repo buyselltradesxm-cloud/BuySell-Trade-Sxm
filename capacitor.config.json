@@ -4,10 +4,12 @@
   "webDir": "mobile-shell",
   "server": {
     "url": "https://buyselltradesxm.com",
-    "cleartext": false
+    "cleartext": false,
+    "errorPath": "offline.html"
   },
   "ios": {
-    "includePlugins": []
+    "includePlugins": [],
+    "preferredContentMode": "mobile"
   },
   "plugins": {
     "SplashScreen": {

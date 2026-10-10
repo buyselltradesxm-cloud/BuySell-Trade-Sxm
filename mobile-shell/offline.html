@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Buy Sell Trade Sxm</title>
+  <style>
+    :root{color-scheme:light;--paper:#fbf7ef;--ink:#132a2e;--sea:#0b6e7f;--mute:#5c6b6a}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;text-align:center;padding:24px}
+    main{max-width:340px}
+    h1{font-size:22px;margin:0 0 10px}
+    p{margin:0 0 22px;color:var(--mute);font-size:16px;line-height:1.5}
+    button{min-height:48px;padding:0 26px;border:0;border-radius:999px;background:var(--sea);color:#fff;font-weight:600;font-size:16px;font-family:inherit}
+  </style>
+</head>
+<body>
+  <!-- Shown by the app (capacitor.config.json: server.errorPath) when the
+       marketplace cannot be reached. Bundled in the app, so it needs no network. -->
+  <main>
+    <h1 id="title">Pas de connexion</h1>
+    <p id="text">Impossible de joindre Buy Sell Trade Sxm. Vérifiez votre connexion internet, puis réessayez.</p>
+    <button type="button" id="retry">Réessayer</button>
+  </main>
+  <script>
+    (function () {
+      if ((navigator.language || "").toLowerCase().indexOf("fr") !== 0) {
+        document.documentElement.lang = "en";
+        document.getElementById("title").textContent = "No connection";
+        document.getElementById("text").textContent = "Buy Sell Trade Sxm could not be reached. Check your internet connection, then try again.";
+        document.getElementById("retry").textContent = "Try again";
+      }
+      function retry() { location.replace("https://buyselltradesxm.com/"); }
+      document.getElementById("retry").addEventListener("click", retry);
+      window.addEventListener("online", retry);
+    })();
+  </script>
+</body>
+</html>

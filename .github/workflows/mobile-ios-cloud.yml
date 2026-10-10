@@ -20,6 +20,11 @@ on:
         description: "app-store only: CFBundleShortVersionString, e.g. 1.0.1 (optional)"
         required: false
         type: string
+      smoke_test:
+        description: "simulator only: run the app against this checkout's site and upload screenshots"
+        required: false
+        default: false
+        type: boolean
 
 # The build only reads the repo; signing/publishing use repository secrets.
 permissions:
@@ -43,6 +48,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Point the app at this checkout (smoke test)
+        if: ${{ github.event.inputs.smoke_test == 'true' }}
+        run: |
+          # The simulator shares the runner's network, so the site in this
+          # checkout is served locally and native and page code run together.
+          # Nothing here is committed or shipped.
+          node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('capacitor.config.json','utf8'));c.server.url='http://localhost:8080';c.server.cleartext=true;fs.writeFileSync('capacitor.config.json',JSON.stringify(c,null,2));"
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" \
+            -c "Add :NSAppTransportSecurity:NSAllowsLocalNetworking bool true" ios/App/App/Info.plist
+
       - name: Sync Capacitor iOS
         run: npx cap sync ios
 
@@ -54,7 +69,52 @@ jobs:
             -configuration Debug \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Run in simulators and take screenshots (smoke test)
+        if: ${{ github.event.inputs.smoke_test == 'true' }}
+        run: |
+          npx --yes http-server . -p 8080 -c-1 >/dev/null 2>&1 &
+          APP="$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/App.app"
+          BUNDLE=com.korekdigitalmarketing.buyselltradesxm
+          SHOTS="$RUNNER_TEMP/shots"
+          test -d "$APP"
+          mkdir -p "$SHOTS"
+          for i in $(seq 1 20); do curl -s -o /dev/null http://localhost:8080/index.html && break; sleep 1; done
+          # Newest available device whose name starts with the given prefix.
+          pick() {
+            xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; c=sorted((k,x['name'],x['udid']) for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith(sys.argv[1])); print(c[-1][2] if c else '')" "$1"
+          }
+          for DEVICE in "iPhone 1" "iPad Pro"; do
+            UDID="$(pick "$DEVICE")"
+            test -n "$UDID" || { echo "::warning::no simulator named $DEVICE*"; continue; }
+            NAME="$(echo "$DEVICE" | tr -d ' ' | tr '[:upper:]' '[:lower:]')"
+            xcrun simctl boot "$UDID" || true
+            xcrun simctl bootstatus "$UDID" -b
+            xcrun simctl install "$UDID" "$APP"
+            # A plain launch, then tabs opened the way a home screen shortcut does.
+            for TAB in launch messages alerts; do
+              xcrun simctl terminate "$UDID" "$BUNDLE" >/dev/null 2>&1 || true
+              if [ "$TAB" = launch ]; then
+                xcrun simctl launch "$UDID" "$BUNDLE"
+              else
+                xcrun simctl launch "$UDID" "$BUNDLE" -sxmTab "$TAB"
+              fi
+              sleep 25
+              xcrun simctl io "$UDID" screenshot "$SHOTS/$NAME-$TAB.png"
+            done
+            xcrun simctl shutdown "$UDID" || true
+          done
+          ls -la "$SHOTS"
+
+      - name: Upload simulator screenshots (smoke test)
+        if: ${{ always() && github.event.inputs.smoke_test == 'true' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ios-simulator-screenshots
+          path: ${{ runner.temp }}/shots/*.png
+          if-no-files-found: warn
 
   app-store-ipa:
     name: Signed iOS IPA
@@ -193,6 +253,11 @@ jobs:
           ditto -x -k "$IPA_PATH" "$VERIFY_PATH"
           APP_PATH="$VERIFY_PATH/Payload/App.app"
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          # Sign in with Apple only works if the signed app carries its entitlement.
+          codesign -d --entitlements - --xml "$APP_PATH" > "$RUNNER_TEMP/entitlements.plist"
+          plutil -p "$RUNNER_TEMP/entitlements.plist"
+          grep -q "com.apple.developer.applesignin" "$RUNNER_TEMP/entitlements.plist" || {
+            echo "::error::the exported app is missing the Sign in with Apple entitlement"; exit 1; }
           REQUIREMENT='anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.1] exists and certificate leaf[field.1.2.840.113635.100.6.1.4] exists'
           codesign --verify -R="$REQUIREMENT" "$APP_PATH"
           while IFS= read -r -d '' framework; do
