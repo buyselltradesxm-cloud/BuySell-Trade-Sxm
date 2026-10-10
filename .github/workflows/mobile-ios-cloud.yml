@@ -75,7 +75,7 @@ jobs:
       - name: Run in simulators and take screenshots (smoke test)
         if: ${{ github.event.inputs.smoke_test == 'true' }}
         run: |
-          npx --yes http-server . -p 8080 -c-1 >/dev/null 2>&1 &
+          node scripts/ios-smoke-server.js 8080 >/dev/null 2>&1 &
           APP="$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/App.app"
           BUNDLE=com.korekdigitalmarketing.buyselltradesxm
           SHOTS="$RUNNER_TEMP/shots"
@@ -101,7 +101,7 @@ jobs:
               else
                 xcrun simctl launch "$UDID" "$BUNDLE" -sxmTab "$TAB"
               fi
-              sleep 25
+              sleep 20
               xcrun simctl io "$UDID" screenshot "$SHOTS/$NAME-$TAB.png"
             done
             xcrun simctl shutdown "$UDID" || true
