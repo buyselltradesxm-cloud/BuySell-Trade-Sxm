@@ -96,9 +96,10 @@
   function ensureAdsense(cb) {
     var client = CFG && CFG.adsense && CFG.adsense.client;
     if (!client) { if (cb) cb(false); return; }
-    // Always request contextual, non-personalized ads, before loading Google
-    // and before each unit request. This does not replace a consent platform.
-    (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 1;
+    // Request personalized ads once consent is granted (higher CPM); otherwise
+    // request contextual, non-personalized ads. BstConsent is set by consent.js.
+    var consented = !!(window.BstConsent && window.BstConsent.granted && window.BstConsent.granted());
+    (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = consented ? 0 : 1;
     if (adsenseState === "ready") { if (cb) cb(true); return; }
     if (adsenseState === "failed") { if (cb) cb(false); return; }
     if (adsenseState === "loading") {
@@ -446,6 +447,11 @@
       if (sticky && sticky.getAttribute("data-ad-state") !== "filled") {
         sticky.removeAttribute("data-ad-state");
         scan(document);
+      }
+      // Flip the NPA flag on consent change so future ad requests use the
+      // personalized path. adsbygoogle.push accepts a per-request override.
+      if (window.adsbygoogle) {
+        window.adsbygoogle.requestNonPersonalizedAds = (e.detail && e.detail.state === "granted") ? 0 : 1;
       }
     });
     if (!NATIVE_ADS && CFG.adsense && CFG.adsense.client && CFG.adsense.pageLevel) ensureAdsense();
