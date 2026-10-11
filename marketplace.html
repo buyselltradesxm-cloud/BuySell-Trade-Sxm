@@ -136,13 +136,18 @@
   }
   .search .go:hover{background:var(--sea-deep);}
 
-  .bar-actions{display:flex;align-items:center;gap:6px;min-width:0;justify-content:flex-end;}
+  .bar-actions{display:flex;align-items:center;gap:4px;min-width:0;justify-content:flex-end;}
   .lang{display:flex;border:2px solid var(--line);border-radius:8px;overflow:hidden;margin-right:6px;}
   .lang button{padding:5px 8px;font-size:12px;font-weight:600;color:var(--mute);}
   .lang button[aria-pressed=true]{background:var(--sea);color:var(--white);}
+  /* Icon-only on desktop too (not just mobile): at the bar-inner's 1320px cap,
+     showing full text labels here starves the search bar down to an unusable
+     ~28px-wide input. Icons + the unread/fav count badges stay, same meaning,
+     far less width. */
+  .bar-actions .label{display:none;}
   .icon-btn{
-    display:flex;align-items:center;gap:6px;
-    padding:8px 10px;border-radius:8px;font-weight:500;color:var(--ink);
+    display:flex;align-items:center;gap:4px;
+    padding:8px 9px;border-radius:8px;font-weight:500;color:var(--ink);
     white-space:nowrap;
   }
   .icon-btn:hover{background:var(--paper-deep);}
@@ -768,13 +773,34 @@
   .getapp p{color:#AFC3C1;max-width:46ch;margin:0 auto 26px;line-height:1.55;}
   .getapp .stores{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
   .getapp .store{
+    position:relative;overflow:hidden;
     text-align:left;
     background:var(--paper);color:var(--ink);
     border:2px solid var(--paper);border-radius:11px;padding:10px 22px;
+    animation:storeBlink 1.6s ease-in-out infinite;
+  }
+  .getapp .store::after{
+    content:"";
+    position:absolute;inset:0;
+    background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,.75) 48%,rgba(255,255,255,.95) 50%,rgba(255,255,255,.75) 52%,transparent 75%);
+    transform:translateX(-130%);
+    animation:storeShine 1.6s ease-in-out infinite;
+    pointer-events:none;
   }
   .getapp .store:hover{background:var(--sun);border-color:var(--sun);}
-  .getapp .store .sm{font-size:10.5px;color:var(--mute);display:block;}
-  .getapp .store .big{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;}
+  .getapp .store .sm{font-size:10.5px;color:var(--mute);display:block;position:relative;}
+  .getapp .store .big{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;position:relative;}
+  @keyframes storeShine{
+    0%,35%{transform:translateX(-130%);}
+    65%,100%{transform:translateX(130%);}
+  }
+  @keyframes storeBlink{
+    0%,100%{box-shadow:0 0 0 rgba(242,183,5,0);border-color:var(--paper);}
+    50%{box-shadow:0 0 22px 5px rgba(242,183,5,.85);border-color:var(--sun);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .getapp .store,.getapp .store::after{animation:none;}
+  }
 
   /* ---------------- FOOTER ---------------- */
   footer{border-top:2px solid var(--line);background:var(--ink);color:var(--paper);}

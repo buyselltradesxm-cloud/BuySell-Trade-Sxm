@@ -513,6 +513,14 @@
       "  text-transform:uppercase;color:var(--mute,#5b6b6e);border:1px solid rgba(19,42,46,.2);",
       "  border-radius:5px;padding:2px 5px;background:rgba(19,42,46,.03);}",
       ".ad-flag-house{color:var(--sea,#0a7d8c);border-color:var(--sea,#0a7d8c);}",
+      /* house promos (Boost/Pro/Post): warmer, brighter card so they stand
+         out from the plain white network/campaign ad units around them. */
+      ".ad-house{background:linear-gradient(135deg,#FFF8E1 0%,#FFFFFF 60%);",
+      "  border-color:rgba(242,183,5,.55);",
+      "  box-shadow:0 0 0 1px rgba(242,183,5,.12),0 6px 20px rgba(242,183,5,.18);}",
+      ".ad-house:hover{border-color:var(--sun,#F2B705);",
+      "  box-shadow:0 0 0 1px rgba(242,183,5,.25),0 8px 26px rgba(242,183,5,.3);}",
+      ".ad-house .ad-cta{color:#B8860B;}",
       ".ad-media{width:100%;max-height:140px;object-fit:cover;border-radius:9px;display:block;}",
       ".ad-body{display:flex;flex-direction:column;gap:3px;}",
       ".ad-head{font-family:'Space Grotesk',sans-serif;font-size:16px;line-height:1.15;}",
