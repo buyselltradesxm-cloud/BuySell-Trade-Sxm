@@ -181,6 +181,10 @@ alter table listings add column if not exists boost_source     text;
 alter table listings add column if not exists boost_month      text;
 alter table listings add column if not exists boost_plan       text;
 alter table listings add column if not exists seller_name      text;
+-- Grid/card thumbnails (~480px), one per entry in `photos`, same order.
+-- Nullable/empty for listings posted before this existed — the app falls
+-- back to the full photo per-index when a thumbnail is missing.
+alter table listings add column if not exists thumb_photos     text[] default '{}';
 
 create or replace function set_listing_seller_name()
 returns trigger language plpgsql security definer set search_path = public as $$
@@ -396,7 +400,12 @@ $$;
 -- côté JS :  await db.rpc("mark_message_read", { msg_id: id })
 
 create index if not exists messages_listing_idx on messages (listing_id);
-create index if not exists messages_parties_idx on messages (sender_id, recipient_id);
+-- Replaces messages_parties_idx (sender_id, recipient_id): that index only
+-- helps an equality lookup on both columns at once. The real query is
+-- "my messages (as sender OR recipient), newest first" — these two match it.
+drop index if exists messages_parties_idx;
+create index if not exists messages_sender_created_idx on messages (sender_id, created_at desc);
+create index if not exists messages_recipient_created_idx on messages (recipient_id, created_at desc);
 
 -- ------------------------------------------------------------
 --  DATA API GRANTS  (RLS still controls row-level access)

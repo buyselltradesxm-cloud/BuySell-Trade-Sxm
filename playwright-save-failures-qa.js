@@ -78,7 +78,7 @@ const { chromium } = require("playwright");
           for (const editing of [false, true]) {
             const listing = setup(mode);
             SB.insertListing = SB.updateListing;
-            SB.uploadPhotos = async () => [];
+            SB.uploadPhotos = async () => ({ full: [], thumbs: [] });
             editingListingId = editing ? listing.id : null;
             buildPostForm(editing ? listing : null);
             openModal("postModal");
@@ -129,7 +129,7 @@ const { chromium } = require("playwright");
         selectedPostPhotos = ["https://example.com/photo.jpg"];
         selectedPostFiles = [new File(["test"], "photo.png", { type: "image/png" })];
         let wroteListing = false;
-        SB.uploadPhotos = async () => [];
+        SB.uploadPhotos = async () => ({ full: [], thumbs: [] });
         SB.updateListing = async candidate => { wroteListing = true; return candidate; };
         await createListing({ preventDefault() {}, target: document.getElementById("postForm") });
         record("upload/partial: do not save missing photos", !wroteListing && selectedPostFiles.length === 1);

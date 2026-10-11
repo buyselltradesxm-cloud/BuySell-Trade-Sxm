@@ -55,6 +55,10 @@ function check(name, ok, detail) {
       aspectKept: Math.abs((r.width / r.height) - (4032 / 3024)) < 0.02,
       smallOptimized: rs.optimized,
       smallW: rs.width,
+      thumbIsFile: r.thumbFile instanceof File,
+      thumbBytes: r.thumbBytes,
+      thumbW: r.thumbWidth, thumbH: r.thumbHeight,
+      thumbAspectKept: Math.abs((r.thumbWidth / r.thumbHeight) - (4032 / 3024)) < 0.02,
     };
   });
 
@@ -69,6 +73,10 @@ function check(name, ok, detail) {
   check('large photo flagged optimized', out.optimized === true);
   check('tiny photo passes through (not optimized)', out.smallOptimized === false);
   check('tiny photo keeps its size', out.smallW === 320, String(out.smallW));
+  check('thumb output is a File', out.thumbIsFile);
+  check('thumb longest edge capped at 480', out.thumbW === 480 && out.thumbH <= 480, out.thumbW + 'x' + out.thumbH);
+  check('thumb aspect ratio preserved', out.thumbAspectKept);
+  check('thumb much smaller than full photo', out.thumbBytes < out.outBytes, out.thumbBytes + ' vs ' + out.outBytes + ' bytes');
 
   await browser.close();
   const failed = results.filter((r) => !r.ok);

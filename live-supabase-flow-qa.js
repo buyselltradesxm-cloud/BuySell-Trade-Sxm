@@ -100,7 +100,8 @@ const siteUrl = "https://buyselltradesxm.com/";
       0,0,0,13,73,68,65,84,120,156,99,248,207,192,240,31,0,5,0,1,255,137,153,61,29,0,0,0,0,73,69,78,68,174,66,96,130
     ]);
     const file = new File([pngBytes], `qa-${stamp}.png`, { type: "image/png" });
-    const photos = await window.SB.uploadPhotos([file]);
+    const uploaded = await window.SB.uploadPhotos([file]);
+    const photos = uploaded.full;
     out.uploadedPhotos = photos.length;
 
     const listing = await window.SB.insertListing({

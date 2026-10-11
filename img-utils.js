@@ -6,9 +6,15 @@
  * the localStorage quota in demo mode, and makes the buyer feed crawl.
  *
  * window.ImgUtils.compressForListing(file, opts) -> Promise<{
- *   file:File, dataUrl:string, width, height, bytes, optimized:boolean
+ *   file:File, dataUrl:string, width, height, bytes, optimized:boolean,
+ *   thumbFile:File|null, thumbDataUrl:string|null, thumbWidth, thumbHeight, thumbBytes
  * }>
  * window.ImgUtils.compressMany(files, opts) -> Promise<Array<same>>
+ *
+ * Every photo also gets a small "thumb" variant (~480px) alongside the full
+ * ~1600px one, from the same decode pass. Listing grids/cards should use the
+ * thumb — it's a fraction of the size — and only load the full file on the
+ * detail view. See mediaFor() in app-index.js / app-marketplace.js.
  */
 (function () {
   'use strict';
@@ -17,7 +23,10 @@
     maxEdge: 1600,          // longest side, px — plenty for a full-screen detail view
     quality: 0.82,          // JPEG quality
     mime: 'image/jpeg',
-    skipBelowBytes: 320 * 1024  // don't bother re-encoding an already-small photo
+    skipBelowBytes: 320 * 1024,  // don't bother re-encoding an already-small photo
+    thumbMaxEdge: 480,      // longest side, px — grid/card thumbnail
+    thumbQuality: 0.68,
+    thumbMime: 'image/jpeg'
   };
 
   function blobToDataUrl(blob) {
@@ -68,6 +77,20 @@
     return String(name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
   }
 
+  function drawnBlob(src, target, mime, quality) {
+    var canvas = document.createElement('canvas');
+    canvas.width = target.w;
+    canvas.height = target.h;
+    var ctx = canvas.getContext('2d');
+    if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(src, 0, 0, target.w, target.h);
+    return new Promise(function (resolve, reject) {
+      canvas.toBlob(function (blob) {
+        blob ? resolve(blob) : reject(new Error('encode failed'));
+      }, mime, quality);
+    });
+  }
+
   function compressForListing(file, opts) {
     var o = Object.assign({}, DEFAULTS, opts || {});
     if (!file || !/^image\//.test(file.type || '')) {
@@ -77,44 +100,58 @@
     return decode(file).then(function (src) {
       var sw = src.width, sh = src.height;
       var target = fitWithin(sw, sh, o.maxEdge);
+      var thumbTarget = fitWithin(sw, sh, o.thumbMaxEdge);
       var sameSize = target.w === sw && target.h === sh;
 
-      // Already small and no resize needed — ship it as-is.
+      var fullPromise;
       if (sameSize && file.size <= o.skipBelowBytes) {
-        closeBitmap(src);
-        return blobToDataUrl(file).then(function (dataUrl) {
-          return { file: file, dataUrl: dataUrl, width: sw, height: sh, bytes: file.size, optimized: false };
+        // Already small and no resize needed — ship it as-is.
+        fullPromise = blobToDataUrl(file).then(function (dataUrl) {
+          return { blob: file, dataUrl: dataUrl, width: sw, height: sh, bytes: file.size, optimized: false, keepOriginal: true };
+        });
+      } else {
+        fullPromise = drawnBlob(src, target, o.mime, o.quality).then(function (blob) {
+          // If re-encoding didn't actually help (small already-JPEG), keep original.
+          var keepOriginal = sameSize && blob.size >= file.size;
+          var finalBlob = keepOriginal ? file : blob;
+          return blobToDataUrl(finalBlob).then(function (dataUrl) {
+            return { blob: finalBlob, dataUrl: dataUrl, width: target.w, height: target.h, bytes: finalBlob.size, optimized: !keepOriginal, keepOriginal: keepOriginal };
+          });
         });
       }
 
-      var canvas = document.createElement('canvas');
-      canvas.width = target.w;
-      canvas.height = target.h;
-      var ctx = canvas.getContext('2d');
-      if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(src, 0, 0, target.w, target.h);
-      closeBitmap(src);
-
-      return new Promise(function (resolve, reject) {
-        canvas.toBlob(function (blob) {
-          blob ? resolve(blob) : reject(new Error('encode failed'));
-        }, o.mime, o.quality);
-      }).then(function (blob) {
-        // If re-encoding didn't actually help (small already-JPEG), keep original.
-        var keepOriginal = sameSize && blob.size >= file.size;
-        var finalBlob = keepOriginal ? file : blob;
-        var outFile = new File(
-          [finalBlob],
-          keepOriginal ? (file.name || 'photo.jpg') : renameToJpg(file.name),
-          { type: finalBlob.type || o.mime, lastModified: Date.now() }
-        );
-        return blobToDataUrl(finalBlob).then(function (dataUrl) {
-          return {
-            file: outFile, dataUrl: dataUrl,
-            width: target.w, height: target.h,
-            bytes: finalBlob.size, optimized: !keepOriginal
-          };
+      // Thumb is always a fresh small render — there's no "ship as-is" case.
+      var thumbPromise = drawnBlob(src, thumbTarget, o.thumbMime, o.thumbQuality).then(function (blob) {
+        return blobToDataUrl(blob).then(function (dataUrl) {
+          return { blob: blob, dataUrl: dataUrl, width: thumbTarget.w, height: thumbTarget.h, bytes: blob.size };
         });
+      }).catch(function (err) {
+        console.warn('[img-utils] thumb encode failed, grid will fall back to the full photo:', err);
+        return null;
+      });
+
+      return Promise.all([fullPromise, thumbPromise]).then(function (results) {
+        closeBitmap(src);
+        var full = results[0], thumb = results[1];
+        var outFile = new File(
+          [full.blob],
+          full.keepOriginal ? (file.name || 'photo.jpg') : renameToJpg(file.name),
+          { type: full.blob.type || o.mime, lastModified: Date.now() }
+        );
+        var out = {
+          file: outFile, dataUrl: full.dataUrl,
+          width: full.width, height: full.height,
+          bytes: full.bytes, optimized: full.optimized,
+          thumbFile: null, thumbDataUrl: null, thumbWidth: 0, thumbHeight: 0, thumbBytes: 0
+        };
+        if (thumb) {
+          out.thumbFile = new File([thumb.blob], 'thumb.jpg', { type: thumb.blob.type || o.thumbMime, lastModified: Date.now() });
+          out.thumbDataUrl = thumb.dataUrl;
+          out.thumbWidth = thumb.width;
+          out.thumbHeight = thumb.height;
+          out.thumbBytes = thumb.bytes;
+        }
+        return out;
       });
     });
   }
@@ -128,7 +165,7 @@
           function (err) {
             console.warn('[img-utils] compress failed, using original:', err);
             return blobToDataUrl(f).catch(function () { return ''; }).then(function (dataUrl) {
-              acc.push({ file: f, dataUrl: dataUrl, width: 0, height: 0, bytes: f.size || 0, optimized: false });
+              acc.push({ file: f, dataUrl: dataUrl, width: 0, height: 0, bytes: f.size || 0, optimized: false, thumbFile: null, thumbDataUrl: null, thumbWidth: 0, thumbHeight: 0, thumbBytes: 0 });
               return acc;
             });
           }

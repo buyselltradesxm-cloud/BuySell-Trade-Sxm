@@ -934,6 +934,7 @@ let adminListingSearch = "";
 let adminUserSearch = "";
 let selectedPostPhotos = [];   // aperçus (data URL) pour l'affichage
 let selectedPostFiles = [];    // File d'origine, pour l'upload Supabase Storage
+let selectedPostThumbFiles = []; // miniature ~480px par photo (même ordre), pour uploadPhotos
 let usersByEmail = {};
 let pendingAuthAction = null;
 let pendingProSignup = null;
@@ -1981,6 +1982,11 @@ function vehicleDetailsHTML(l){
     </section>`;
 }
 function mediaFor(l){
+  // Grid/card thumbnail: prefer the small (~480px) thumb over the full
+  // ~1600px photo — this is the main lever on photo egress at scale.
+  // Falls back to the full photo for listings posted before thumbnails
+  // existed (thumbPhotos shorter than/missing relative to photos).
+  if(l.thumbPhotos?.[0]) return {img:l.thumbPhotos[0], alt:titleFor(l)};
   if(l.photos?.length) return {img:l.photos[0], alt:titleFor(l)};
   if(l.img) return {img:l.img, alt:l.alt || G[l.cat]?.alt || l.t};
   if(LISTING_PHOTOS[l.id]) return LISTING_PHOTOS[l.id];
@@ -5367,6 +5373,7 @@ function buildPostForm(listing=null){
   if(form) form.reset();
   selectedPostPhotos = listing?.photos ? [...listing.photos] : [];
   selectedPostFiles = [];
+  selectedPostThumbFiles = [];
   document.getElementById("photoPreview").innerHTML = "";
   document.getElementById("newPhotos").value = "";
   wirePostFormEvents();
@@ -5522,6 +5529,7 @@ async function restoreSavedDraft(){
   fillPostForm(d);
   selectedPostPhotos = Array.isArray(d.photos) ? [...d.photos] : [];
   selectedPostFiles = [];
+  selectedPostThumbFiles = []; // drafts only persist the full preview; no thumbnail to restore
   renderPhotoPreview();
   if(selectedPostPhotos.length && Drafts.dataUrlToFile){
     Promise.all(selectedPostPhotos.map((u,i)=>Drafts.dataUrlToFile(u, `photo-${i+1}.jpg`)))
@@ -5685,11 +5693,14 @@ async function handlePhotoUpload(e){
   if(picked.length !== Math.min(all.length, 8)) showToast(state.lang === "fr" ? "Seules les images JPG, PNG ou WebP de 5 Mo maximum sont acceptées." : "Only JPG, PNG, or WebP images up to 5 MB are accepted.");
   selectedPostPhotos = [];
   selectedPostFiles = [];
+  selectedPostThumbFiles = [];
   const preview = document.getElementById("photoPreview");
   preview.innerHTML = "";
   if(!picked.length) return;
   // Compress/resize on-device before anything is stored or uploaded: keeps a
   // listing upload in the low-MB range instead of 30–90 MB from phone cameras.
+  // Also generates a small ~480px thumbnail per photo (selectedPostThumbFiles)
+  // so the listing grid never has to load the full-size file.
   preview.innerHTML = `<p style="padding:12px 4px;color:var(--mute);font-size:13px">${state.lang==="fr" ? "Optimisation des photos…" : "Optimizing photos…"}</p>`;
   let results = null;
   try {
@@ -5697,9 +5708,11 @@ async function handlePhotoUpload(e){
   } catch(err){ console.warn("[post] compression KO, envoi des originaux:", err); }
   if(results){
     selectedPostFiles = results.map(r=>r.file);
+    selectedPostThumbFiles = results.map(r=>r.thumbFile);
     selectedPostPhotos = results.map(r=>r.dataUrl);
   } else {
     selectedPostFiles = picked;
+    selectedPostThumbFiles = picked.map(()=>null);
     selectedPostPhotos = await Promise.all(picked.map(file => new Promise(resolve=>{
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
@@ -5721,6 +5734,7 @@ function renderPhotoPreview(){
 function removePostPhoto(index){
   selectedPostPhotos.splice(index, 1);
   selectedPostFiles.splice(index, 1);
+  selectedPostThumbFiles.splice(index, 1);
   renderPhotoPreview();
   scheduleDraftSave();
 }
@@ -5801,11 +5815,13 @@ async function createListing(e){
     if(submitBtn){ submitBtn.disabled = true; }
     try {
       if(!(window.SB && SB.enabled())) throw new Error("Backend unavailable");
-      const urls = profile.photos && selectedPostFiles.length ? await SB.uploadPhotos(selectedPostFiles) : [];
-      if(profile.photos && selectedPostFiles.length && urls.length !== selectedPostFiles.length){
+      const uploaded = profile.photos && selectedPostFiles.length
+        ? await SB.uploadPhotos(selectedPostFiles, selectedPostThumbFiles)
+        : { full: [], thumbs: [] };
+      if(profile.photos && selectedPostFiles.length && uploaded.full.length !== selectedPostFiles.length){
         throw new Error("Not all listing photos were uploaded");
       }
-      if(urls.length) listing.photos = urls;
+      if(uploaded.full.length){ listing.photos = uploaded.full; listing.thumbPhotos = uploaded.thumbs; }
       published = editing ? await SB.updateListing(listing) : await SB.insertListing(listing);
     } catch(err){ console.warn("[post] Supabase save failed:", err); }
     if(submitBtn){ submitBtn.disabled = false; }
@@ -5833,6 +5849,7 @@ async function createListing(e){
   e.target.reset();
   selectedPostPhotos = [];
   selectedPostFiles = [];
+  selectedPostThumbFiles = [];
   editingListingId = null;
   clearPostDraft();
   setPostModalMode(false);

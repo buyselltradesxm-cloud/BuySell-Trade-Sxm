@@ -122,6 +122,10 @@
     var created = r.created_at ? new Date(r.created_at).getTime() : Date.now();
     var hours = Math.max(1, Math.round((Date.now() - created) / 3600000));
     var photos = Array.isArray(r.photos) ? r.photos : [];
+    // Grid/card thumbnails (~480px) uploaded alongside the full photos. May be
+    // shorter than `photos` or empty for listings posted before this existed
+    // — mediaFor() falls back to the full photo per-index in that case.
+    var thumbPhotos = Array.isArray(r.thumb_photos) ? r.thumb_photos : [];
     return {
       id: r.id,
       t: r.title,
@@ -136,6 +140,7 @@
       ph: hours,
       pics: photos.length,
       photos: photos,
+      thumbPhotos: thumbPhotos,
       desc: r.description || "",
       expiresAt: r.expires_at || null,
       renewalRequestedAt: r.renewal_requested_at || null,
@@ -203,6 +208,7 @@
       boost_month: o.boost && o.boost.month ? o.boost.month : null,
       boost_plan: o.boost && o.boost.plan ? o.boost.plan : null,
       photos: o.photos || [],
+      thumb_photos: o.thumbPhotos || [],
       status: o.sold ? "sold" : o.reserved ? "reserved" : (o.status || "active")
     };
     if (o.expiresAt) row.expires_at = o.expiresAt;
@@ -213,14 +219,35 @@
     return row;
   }
 
-  function withoutSellerName(row) {
+  // Lets a write degrade gracefully when the target column hasn't been
+  // migrated onto the live project yet (e.g. thumb_photos before the
+  // schema change has been applied) instead of failing the whole write.
+  // PostgREST reports this as something like "Could not find the
+  // 'thumb_photos' column of 'listings' in the schema cache".
+  function missingColumnFromError(error) {
+    var m = /['"]([a-zA-Z_]+)['"]\s*column/i.exec((error && error.message) || "");
+    return m ? m[1] : null;
+  }
+
+  function withoutColumn(row, col) {
     var copy = Object.assign({}, row);
-    delete copy.seller_name;
+    delete copy[col];
     return copy;
   }
 
-  function isMissingSellerNameColumn(error) {
-    return !!error && /seller_name|column/i.test(error.message || "");
+  // Runs a Supabase write, retrying with one offending column stripped at a
+  // time (up to 2 rounds — enough for seller_name and thumb_photos both
+  // possibly being ahead of the live schema) until it succeeds or the error
+  // is unrelated to a missing column.
+  async function writeWithColumnFallback(row, run) {
+    var res = await run(row);
+    for (var attempts = 0; attempts < 2 && res.error; attempts++) {
+      var col = missingColumnFromError(res.error);
+      if (!col || !(col in row)) break;
+      row = withoutColumn(row, col);
+      res = await run(row);
+    }
+    return res;
   }
 
   var SB = {
@@ -268,12 +295,21 @@
 
     // upload d'un lot de fichiers image dans le bucket public "listing-photos".
     // Reçoit des File (input type=file) ; renvoie un tableau d'URLs publiques.
-    uploadPhotos: async function (files) {
-      if (!window.db || !files || !files.length) return [];
+    //
+    // thumbFiles (optionnel, même longueur/ordre que files, entrées falsy
+    // autorisées) : petite variante ~480px générée par ImgUtils, uploadée à
+    // côté du fichier plein format. Le mur d'annonces charge cette variante
+    // au lieu de la photo pleine taille — gros poste d'économie de transfert.
+    // Renvoie { full:[urls], thumbs:[urls|""] } ; thumbs[i] === "" si cette
+    // photo n'a pas de miniature (échec génération, ou appelant sans ImgUtils) —
+    // mediaFor() retombe alors sur full[i].
+    uploadPhotos: async function (files, thumbFiles) {
+      if (!window.db || !files || !files.length) return { full: [], thumbs: [] };
       var user = await SB.currentUser();
-      if (!user) return [];
+      if (!user) return { full: [], thumbs: [] };
       var bucket = window.db.storage.from("listing-photos");
-      var urls = [];
+      var full = [];
+      var thumbs = [];
       for (var i = 0; i < files.length; i++) {
         var file = files[i];
         if (!isAllowedImage(file)) {
@@ -282,11 +318,14 @@
         }
         // Never derive a stored extension from attacker-controlled filenames.
         var ext = file.type === "image/png" ? "png" : (file.type === "image/webp" ? "webp" : "jpg");
-        var path =
-          user.id + "/" + Date.now() + "-" + i + "-" +
-          Math.random().toString(36).slice(2, 8) + "." + ext;
+        var token = Date.now() + "-" + i + "-" + Math.random().toString(36).slice(2, 8);
+        var path = user.id + "/" + token + "." + ext;
         var up = await bucket.upload(path, file, {
-          cacheControl: "3600",
+          // Path already carries a random/timestamp token and is never
+          // overwritten (upsert:false), so it's content-immutable: safe to
+          // cache for a year. Cached egress is billed at a third of
+          // uncached on Supabase, so this is pure cost reduction.
+          cacheControl: "31536000, immutable",
           upsert: false,
           contentType: file.type || "image/jpeg"
         });
@@ -294,9 +333,24 @@
           console.warn("[SB] uploadPhotos:", up.error.message);
           continue;
         }
-        urls.push(bucket.getPublicUrl(path).data.publicUrl);
+        full.push(bucket.getPublicUrl(path).data.publicUrl);
+
+        var thumbFile = thumbFiles && thumbFiles[i];
+        if (!thumbFile) { thumbs.push(""); continue; }
+        var thumbPath = user.id + "/" + token + "-thumb.jpg";
+        var upThumb = await bucket.upload(thumbPath, thumbFile, {
+          cacheControl: "31536000, immutable",
+          upsert: false,
+          contentType: thumbFile.type || "image/jpeg"
+        });
+        if (upThumb.error) {
+          console.warn("[SB] uploadPhotos (thumb):", upThumb.error.message);
+          thumbs.push("");
+          continue;
+        }
+        thumbs.push(bucket.getPublicUrl(thumbPath).data.publicUrl);
       }
-      return urls;
+      return { full: full, thumbs: thumbs };
     },
 
     // upload (remplace) la photo de profil de l'utilisateur connecté dans le
@@ -311,7 +365,7 @@
       var version = typeof crypto.randomUUID === "function" ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2);
       var path = user.id + "/avatar-" + version + ".jpg";
       var up = await bucket.upload(path, blob, {
-        cacheControl: "3600",
+        cacheControl: "31536000, immutable",
         upsert: false,
         contentType: "image/jpeg"
       });
@@ -331,18 +385,9 @@
         return null;
       }
       var row = listingToRow(listingObj, user.id);
-      var res = await window.db
-        .from("listings")
-        .insert(row)
-        .select()
-        .single();
-      if (res.error && isMissingSellerNameColumn(res.error)) {
-        res = await window.db
-          .from("listings")
-          .insert(withoutSellerName(row))
-          .select()
-          .single();
-      }
+      var res = await writeWithColumnFallback(row, function (r) {
+        return window.db.from("listings").insert(r).select().single();
+      });
       if (res.error) {
         console.warn("[SB] insertListing:", res.error.message);
         return null;
@@ -357,20 +402,9 @@
       var user = await SB.currentUser();
       if (!user) return null;
       var row = listingToRow(listingObj, listingObj.sellerId || listingObj.ownerId || null);
-      var res = await window.db
-        .from("listings")
-        .update(row)
-        .eq("id", listingObj.id)
-        .select()
-        .single();
-      if (res.error && isMissingSellerNameColumn(res.error)) {
-        res = await window.db
-          .from("listings")
-          .update(withoutSellerName(row))
-          .eq("id", listingObj.id)
-          .select()
-          .single();
-      }
+      var res = await writeWithColumnFallback(row, function (r) {
+        return window.db.from("listings").update(r).eq("id", listingObj.id).select().single();
+      });
       if (res.error) {
         console.warn("[SB] updateListing:", res.error.message);
         return null;
@@ -1061,20 +1095,27 @@
       return res.data;
     },
 
-    // tous les messages où l'utilisateur est impliqué, ordre chronologique
-    fetchMessages: async function () {
+    // les messages les plus récents où l'utilisateur est impliqué (RLS fait le
+    // filtre), ordre chronologique. Plafonné : sans ça, chaque ouverture de la
+    // boîte de réception relit TOUT l'historique, et le coût de lecture grossit
+    // avec la durée de vie du compte plutôt qu'avec ce qui est affiché à l'écran.
+    // 100 reste largement suffisant pour l'usage actuel tout en gardant la
+    // boîte de réception rapide ; une vraie pagination par conversation
+    // (curseur "messages plus anciens") est un chantier à part.
+    fetchMessages: async function (limit) {
       if (!window.db) return null;
       var user = await SB.currentUser();
       if (!user) return null;
       var res = await window.db
         .from("messages")
         .select("*")
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false })
+        .limit(limit || 100);
       if (res.error) {
         console.warn("[SB] fetchMessages:", res.error.message);
         return null;
       }
-      return res.data;
+      return (res.data || []).reverse();
     },
 
     // regroupe les messages en conversations { key, listingId, otherId, messages[], unread }
