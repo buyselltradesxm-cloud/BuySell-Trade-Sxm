@@ -1022,6 +1022,29 @@
       return res.data;
     },
 
+    // Pro plan given by an admin for a set number of months, without payment.
+    // The rules (never over a paid subscription, ends on its date) live in
+    // supabase/granted-plans.sql; both calls return the updated profile row.
+    grantPlan: async function (userId, plan, months) {
+      if (!window.db || !userId || !plan || !months) return null;
+      var res = await window.db.rpc("admin_grant_plan", { target: userId, plan: plan, months: months });
+      if (res.error) {
+        console.warn("[SB] grantPlan:", res.error.message);
+        return null;
+      }
+      return res.data || null;
+    },
+
+    revokeGrantedPlan: async function (userId) {
+      if (!window.db || !userId) return null;
+      var res = await window.db.rpc("admin_revoke_granted_plan", { target: userId });
+      if (res.error) {
+        console.warn("[SB] revokeGrantedPlan:", res.error.message);
+        return null;
+      }
+      return res.data || null;
+    },
+
     fetchAdminSettings: async function (key) {
       if (!window.db || !key) return null;
       var res = await window.db

@@ -3949,6 +3949,8 @@ function profileFromRow(row){
     accountType:row.account_type || "personal",
     accountPlan:row.account_plan || "personal-free",
     subscriptionStatus:row.subscription_status || (row.account_type === "business" ? "inactive" : "free"),
+    subscriptionCurrentPeriodEnd:row.subscription_current_period_end || null,
+    planGrantedUntil:row.plan_granted_until || null,
     businessName:row.business_name || "",
     businessPhone:row.business_phone || row.phone || "",
     role:row.role || "user"
@@ -4250,17 +4252,57 @@ async function scanListingPhotosAdmin(id, btn){
   }
 }
 
+// A plan is still the one an admin granted while its end date equals the
+// grant marker; a paid subscription that starts later moves the end date.
+function isGrantedPlan(u){
+  return !!(u?.planGrantedUntil && hasActiveProSubscription(u) &&
+    new Date(u.planGrantedUntil).getTime() === new Date(u.subscriptionCurrentPeriodEnd).getTime());
+}
+function adminPlanLabel(u){
+  if(!hasActiveProSubscription(u)) return "";
+  const plan = accountPlan(u.accountPlan)[state.lang];
+  if(!isGrantedPlan(u)) return ` · ${plan}`;
+  const until = new Date(u.planGrantedUntil).toLocaleDateString(state.lang==="fr" ? "fr-FR" : "en-US");
+  return ` · ${plan} ${state.lang==="fr" ? "offert jusqu'au" : "granted until"} ${until}`;
+}
+function adminGrantFormHTML(u){
+  const plans = Object.keys(ACCOUNT_PLANS).filter(isPaidPlan);
+  const months = [1, 3, 6, 12];
+  return `<div class="admin-grant">
+    <select id="grantPlanSelect" aria-label="${state.lang==="fr" ? "Plan à offrir" : "Plan to grant"}">${plans.map(p=>`<option value="${esc(p)}" ${p === "pro-business" ? "selected" : ""}>${esc(accountPlan(p)[state.lang])} · ${listingLimitLabel(p)}</option>`).join("")}</select>
+    <select id="grantMonthsSelect" aria-label="${state.lang==="fr" ? "Durée" : "Duration"}">${months.map(m=>`<option value="${m}" ${m === 3 ? "selected" : ""}>${m} ${state.lang==="fr" ? "mois" : (m === 1 ? "month" : "months")}</option>`).join("")}</select>
+    <button type="button" class="primary" data-click="confirmGrantPlanAdmin" data-click-args='${dataArgs([String(u.id)])}'>${state.lang==="fr" ? "Confirmer" : "Confirm"}</button>
+    <button type="button" data-click="openGrantPlanAdmin" data-click-args='${dataArgs([String(u.id)])}'>${state.lang==="fr" ? "Annuler" : "Cancel"}</button>
+  </div>`;
+}
+function listingLimitLabel(plan){
+  const limit = accountPlan(plan).limit;
+  if(limit === Infinity) return state.lang==="fr" ? "annonces illimitées" : "unlimited listings";
+  return `${limit} ${state.lang==="fr" ? "annonces" : "listings"}`;
+}
+function adminGrantButtonHTML(u){
+  if(!canUseSupabaseAdmin() || !isUuid(u.id)) return "";
+  if(isGrantedPlan(u)){
+    return `<button type="button" class="danger" data-click="revokeGrantedPlanAdmin" data-click-args='${dataArgs([String(u.id)])}'>${state.lang==="fr" ? "Retirer le plan offert" : "Remove granted plan"}</button>`;
+  }
+  // Someone paying for a plan is left alone.
+  if(hasActiveProSubscription(u)) return "";
+  return `<button type="button" class="primary" data-click="openGrantPlanAdmin" data-click-args='${dataArgs([String(u.id)])}'>${state.lang==="fr" ? "Offrir un plan Pro" : "Grant a Pro plan"}</button>`;
+}
+
 function adminUserRows(list){
   return list.map(u=>{
     const banned = adminBanned.includes(String(u.id));
     const canManage = !canUseSupabaseAdmin() || isUuid(u.id);
     return `<div class="admin-row no-img">
-      <div><b>${esc(u.businessName || u.name || u.email)}</b><br><small>${esc(u.email || "")} · ${esc(u.accountType || "personal")} · ${u.listings || 0} listings · ${banned ? "Banned" : "Active"}${u.role === "admin" ? " · Admin" : ""}</small></div>
+      <div><b>${esc(u.businessName || u.name || u.email)}</b><br><small>${esc(u.email || "")} · ${esc(u.accountType || "personal")}${esc(adminPlanLabel(u))} · ${u.listings || 0} listings · ${banned ? "Banned" : "Active"}${u.role === "admin" ? " · Admin" : ""}</small></div>
       <div class="admin-actions">
+        ${adminGrantButtonHTML(u)}
         <button type="button" data-click="toggleAdminRole" data-click-args='${dataArgs([String(u.id)])}' ${canManage ? "" : "disabled"}>${u.role === "admin" ? "User" : "Admin"}</button>
         <button type="button" class="danger" data-click="toggleBanUser" data-click-args='${dataArgs([String(u.id)])}' ${canManage ? "" : "disabled"}>${banned ? (state.lang==="fr" ? "Débloquer" : "Unban") : (state.lang==="fr" ? "Bannir" : "Ban")}</button>
         <button type="button" class="danger" data-click="deleteUserAdmin" data-click-args='${dataArgs([String(u.id)])}' ${canUseSupabaseAdmin() && isUuid(u.id) ? "" : "disabled"}>${state.lang==="fr" ? "Supprimer le compte" : "Delete account"}</button>
       </div>
+      ${adminGrantFor === String(u.id) && !hasActiveProSubscription(u) ? adminGrantFormHTML(u) : ""}
     </div>`;
   }).join("") || `<p>${state.lang==="fr" ? "Aucun utilisateur." : "No users."}</p>`;
 }
@@ -4537,6 +4579,40 @@ async function toggleBanUser(id){
   } else {
     adminBanned = adminBanned.includes(key) ? adminBanned.filter(x=>x!==key) : [...adminBanned, key];
   }
+  refreshAdmin();
+}
+
+let adminGrantFor = null;
+function openGrantPlanAdmin(id){
+  adminGrantFor = adminGrantFor === String(id) ? null : String(id);
+  filterAdminUsers(adminUserSearch);
+}
+
+function applyAdminProfileRow(row){
+  adminProfiles = adminProfiles.map(u=>String(u.id) === String(row.id) ? profileFromRow(row) : u);
+}
+
+async function confirmGrantPlanAdmin(id){
+  const key = String(id);
+  if(!canUseSupabaseAdmin() || !isUuid(key)) return;
+  const plan = document.getElementById("grantPlanSelect")?.value;
+  const months = Number(document.getElementById("grantMonthsSelect")?.value);
+  const row = await confirmedAdminWrite(()=>SB.grantPlan(key, plan, months));
+  if(!row) return;
+  adminGrantFor = null;
+  applyAdminProfileRow(row);
+  showToast(state.lang==="fr" ? "Plan Pro offert." : "Pro plan granted.");
+  refreshAdmin();
+}
+
+async function revokeGrantedPlanAdmin(id){
+  const key = String(id);
+  if(!canUseSupabaseAdmin() || !isUuid(key)) return;
+  if(!confirm(state.lang==="fr" ? "Retirer le plan offert à ce compte ? Il repasse en compte gratuit tout de suite." : "Remove the granted plan from this account? It goes back to a free account right away.")) return;
+  const row = await confirmedAdminWrite(()=>SB.revokeGrantedPlan(key));
+  if(!row) return;
+  applyAdminProfileRow(row);
+  showToast(state.lang==="fr" ? "Plan offert retiré." : "Granted plan removed.");
   refreshAdmin();
 }
 
