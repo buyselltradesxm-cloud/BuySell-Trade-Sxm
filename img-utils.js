@@ -25,8 +25,10 @@
     mime: 'image/jpeg',
     skipBelowBytes: 320 * 1024,  // don't bother re-encoding an already-small photo
     thumbMaxEdge: 480,      // longest side, px — grid/card thumbnail
-    thumbQuality: 0.68,
-    thumbMime: 'image/jpeg'
+    thumbQuality: 0.7,
+    thumbMime: 'image/webp',
+    thumbFallbackQuality: 0.68,
+    thumbFallbackMime: 'image/jpeg'
   };
 
   function blobToDataUrl(blob) {
@@ -91,6 +93,16 @@
     });
   }
 
+  // A browser that cannot encode the requested type (Safari and WebP) does
+  // not fail: it hands back a PNG, several times heavier than the JPEG this
+  // replaced. So the result's type is checked instead of assumed.
+  function thumbBlob(src, target, o) {
+    return drawnBlob(src, target, o.thumbMime, o.thumbQuality).then(function (blob) {
+      if (blob.type === o.thumbMime) return blob;
+      return drawnBlob(src, target, o.thumbFallbackMime, o.thumbFallbackQuality);
+    });
+  }
+
   function compressForListing(file, opts) {
     var o = Object.assign({}, DEFAULTS, opts || {});
     if (!file || !/^image\//.test(file.type || '')) {
@@ -121,7 +133,7 @@
       }
 
       // Thumb is always a fresh small render — there's no "ship as-is" case.
-      var thumbPromise = drawnBlob(src, thumbTarget, o.thumbMime, o.thumbQuality).then(function (blob) {
+      var thumbPromise = thumbBlob(src, thumbTarget, o).then(function (blob) {
         return blobToDataUrl(blob).then(function (dataUrl) {
           return { blob: blob, dataUrl: dataUrl, width: thumbTarget.w, height: thumbTarget.h, bytes: blob.size };
         });
@@ -145,7 +157,8 @@
           thumbFile: null, thumbDataUrl: null, thumbWidth: 0, thumbHeight: 0, thumbBytes: 0
         };
         if (thumb) {
-          out.thumbFile = new File([thumb.blob], 'thumb.jpg', { type: thumb.blob.type || o.thumbMime, lastModified: Date.now() });
+          var thumbType = thumb.blob.type || o.thumbFallbackMime;
+          out.thumbFile = new File([thumb.blob], thumbType === 'image/webp' ? 'thumb.webp' : 'thumb.jpg', { type: thumbType, lastModified: Date.now() });
           out.thumbDataUrl = thumb.dataUrl;
           out.thumbWidth = thumb.width;
           out.thumbHeight = thumb.height;

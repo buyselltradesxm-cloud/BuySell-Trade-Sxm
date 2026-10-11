@@ -136,7 +136,8 @@ const { chromium } = require("playwright");
 
         window.SB = api;
         for (const status of ["active", "reserved", "sold", "expired"]) {
-          window.db = { from: () => ({ select: () => ({ order: async () => ({ data: [{ id: 123, title: "QA", status }] }) }) }) };
+          const query = { select: () => query, order: () => query, range: async () => ({ data: [{ id: 123, title: "QA", status }], count: 1 }) };
+          window.db = { from: () => query };
           const [mapped] = await api.fetchListings();
           record(`adapter/${status}: preserve database status`, mapped.status === status);
         }

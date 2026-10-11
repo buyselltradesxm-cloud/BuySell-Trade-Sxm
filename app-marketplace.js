@@ -1998,6 +1998,16 @@ function mediaFor(l){
   return choices[Math.abs(Number(l.id) || 0) % choices.length];
 }
 
+// Card-sized image. Deliberately not listingGallery()[0]: for a listing with
+// uploaded photos that is the full ~1600px file, which only the detail view
+// needs. Example photos come from Unsplash at 900px and are asked for at
+// card width instead.
+const UNSPLASH_DETAIL_WIDTH = /^(https:\/\/images\.unsplash\.com\/[^?]+\?(?:[^#]*&)?w=)900\b/;
+function cardMediaFor(l){
+  const media = mediaFor(l);
+  return {...media, img:String(media.img || "").replace(UNSPLASH_DETAIL_WIDTH, "$1480")};
+}
+
 function listingGallery(l){
   const main = mediaFor(l);
   const photos = [];
@@ -2160,8 +2170,7 @@ function chatHTML(id){
 function cardHTML(l, pinned, idx){
   const idParam = idKey(l.id);
   const profile = postFieldProfile(l.cat, l.sub || "");
-  const gallery = listingGallery(l);
-  const media = gallery[0] || mediaFor(l);
+  const media = cardMediaFor(l);
   const photoCount = l.photos?.length || l.pics || 1;
   const status = l.sold ? t().sold : l.reserved ? t().reserved : "";
   const badges = [];
@@ -2315,11 +2324,62 @@ function sortList(arr){
 }
 
 function categoryGuideHTML(){
-  const title = state.lang === "fr" ? "Commencez par une cat�gorie" : "Start with a category";
-  const text = state.lang === "fr" ? "Les vendeurs arrivent bient�t. Explorez les cat�gories pour voir ce qui pourra �tre publi� ici." : "Sellers are joining soon. Explore the categories to see what can be posted here.";
+  const title = state.lang === "fr" ? "Commencez par une catégorie" : "Start with a category";
+  const text = state.lang === "fr" ? "Les vendeurs arrivent bientôt. Explorez les catégories pour voir ce qui pourra être publié ici." : "Sellers are joining soon. Explore the categories to see what can be posted here.";
   const cta = state.lang === "fr" ? "Parcourir" : "Browse";
   const visibleCats = CATS.filter(c=>c.id !== "all" && !adminCategoryStatus[c.id]?.hidden);
-  return `<section class="category-guide" aria-labelledby="categoryGuideTitle"><div class="category-guide-copy"><h3 id="categoryGuideTitle">${title}</h3><p>${text}</p></div><div class="category-guide-grid">${visibleCats.map(c=>`<button type="button" class="category-guide-tile" data-click="filterByCategory" data-click-args='${dataArgs([c.id])}' aria-label="${esc(cta + ': ' + c[state.lang])}"><img src="${esc(G[c.id].img)}" alt="${esc(c[state.lang])}" loading="lazy"><span>${esc(c[state.lang])}</span></button>`).join("")}</div></section>`;
+  return `<section class="category-guide" aria-labelledby="categoryGuideTitle"><div class="category-guide-copy"><h3 id="categoryGuideTitle">${title}</h3><p>${text}</p></div><div class="category-guide-grid">${visibleCats.map(c=>`<button type="button" class="category-guide-tile" data-click="filterByCategory" data-click-args='${dataArgs([c.id])}' aria-label="${esc(cta + ': ' + c[state.lang])}"><img src="${esc(G[c.id].img.replace(UNSPLASH_DETAIL_WIDTH, "$1480"))}" alt="${esc(c[state.lang])}" loading="lazy"><span>${esc(c[state.lang])}</span></button>`).join("")}</div></section>`;
+}
+
+// The grid draws GRID_PAGE cards and adds the next page as the visitor nears
+// the end, so a render costs the same with 40 listings or 4,000. gridShown
+// survives re-renders and only resets when the search or filters change.
+const GRID_PAGE = 24;
+let gridList = [];
+let gridShown = GRID_PAGE;
+let gridFilterKey = "";
+let gridMoreObserver = null;
+
+function gridCardsHTML(from, to){
+  // One ad slot every FEED_AD_INTERVAL listings -- deliberately not every
+  // listing (Google AdSense's ad-density policy can get a whole account
+  // suspended for pages that read as mostly ads), but tight enough to
+  // maximize impressions within that limit.
+  const FEED_AD_INTERVAL = 4;
+  let html = "";
+  for(let idx = from; idx < to; idx++){
+    html += cardHTML(gridList[idx], false);
+    if((idx + 1) % FEED_AD_INTERVAL === 0 && idx + 1 < gridList.length){
+      html += mobileAdHTML("feed-after-" + (idx + 1));
+    }
+  }
+  return html;
+}
+
+function gridMoreHTML(){
+  if(gridShown >= gridList.length) return "";
+  return `<button type="button" class="grid-more" id="gridMore" data-click="showMoreListings">${state.lang==="fr" ? "Afficher plus d'annonces" : "Show more listings"}</button>`;
+}
+
+function showMoreListings(){
+  if(gridShown >= gridList.length) return;
+  const from = gridShown;
+  gridShown = Math.min(gridList.length, gridShown + GRID_PAGE);
+  const more = document.getElementById("gridMore");
+  if(more) more.remove();
+  document.getElementById("grid").insertAdjacentHTML("beforeend", gridCardsHTML(from, gridShown) + gridMoreHTML());
+  watchGridMore();
+}
+
+function watchGridMore(){
+  if(gridMoreObserver) gridMoreObserver.disconnect();
+  gridMoreObserver = null;
+  const more = document.getElementById("gridMore");
+  if(!more || !("IntersectionObserver" in window)) return;
+  gridMoreObserver = new IntersectionObserver(entries=>{
+    if(entries.some(entry=>entry.isIntersecting)) showMoreListings();
+  }, {rootMargin:"800px 0px"});
+  gridMoreObserver.observe(more);
 }
 
 function render(){
@@ -2333,28 +2393,23 @@ function render(){
     feat.length ? `${feat.length} · ${t().onIsland}` : "";
 
   // main grid
-  const list = sortList(L.filter(passesFilters));
+  gridList = sortList(L.filter(passesFilters));
+  const filterKey = JSON.stringify([state.cat, state.subcat, state.q, state.area, state.sort, state.cur,
+    document.getElementById("pmin").value, document.getElementById("pmax").value]);
+  if(filterKey !== gridFilterKey){
+    gridFilterKey = filterKey;
+    gridShown = GRID_PAGE;
+  }
+  gridShown = Math.max(GRID_PAGE, Math.min(gridShown, gridList.length));
   const grid = document.getElementById("grid");
   grid.className = "grid" + (state.view==="list" ? " list" : "");
-  const listingCards = list.map(l=>cardHTML(l,false));
-  // One ad slot every FEED_AD_INTERVAL listings -- deliberately not every
-  // listing (Google AdSense's ad-density policy can get a whole account
-  // suspended for pages that read as mostly ads), but tight enough to
-  // maximize impressions within that limit.
-  const FEED_AD_INTERVAL = 4;
-  const listingCardsWithAds = [];
-  listingCards.forEach((card, idx) => {
-    listingCardsWithAds.push(card);
-    if((idx + 1) % FEED_AD_INTERVAL === 0 && idx + 1 < listingCards.length){
-      listingCardsWithAds.push(mobileAdHTML("feed-after-" + (idx + 1)));
-    }
-  });
-  grid.innerHTML = list.length
-    ? listingCardsWithAds.join("")
+  grid.innerHTML = gridList.length
+    ? gridCardsHTML(0, Math.min(gridShown, gridList.length)) + gridMoreHTML()
     : `<div class="no-results"><b>${t().noneT}</b>${t().noneB}</div>${L.length ? "" : categoryGuideHTML()}`;
+  watchGridMore();
 
   document.getElementById("count").innerHTML =
-    `${t().results(list.length)} <small>${state.cat==="all" ? "" : "· " + CATS.find(c=>c.id===state.cat)[state.lang]}</small>`;
+    `${t().results(gridList.length)} <small>${state.cat==="all" ? "" : "· " + CATS.find(c=>c.id===state.cat)[state.lang]}</small>`;
 
   document.getElementById("favCount").textContent = state.favs.size;
   setUnreadMessageCount(unreadMessageCount);
@@ -2557,6 +2612,8 @@ function toggleFav(id, btn){
   persistState();
 }
 function scrollFavs(){
+  const favIndex = gridList.findIndex(l=>state.favs.has(idKey(l.id)));
+  while(favIndex >= gridShown && gridShown < gridList.length) showMoreListings();
   const first = [...document.querySelectorAll(".fav[aria-pressed=true]")][0];
   if(first){
     first.closest(".card").scrollIntoView({behavior:"smooth", block:"center"});
@@ -3739,11 +3796,11 @@ function subscriptionDashboardHTML(user, own){
 function miniListingHTML(l){
   const idParam = idKey(l.id);
   const profile = postFieldProfile(l.cat, l.sub || "");
-  const media = mediaFor(l);
+  const media = cardMediaFor(l);
   const status = l.sold ? t().sold : l.reserved ? t().reserved : state.lang==="fr" ? "Active" : "Active";
   return `
     <div class="mini-row ${profile.photos ? "" : "no-media"}">
-      ${profile.photos ? `<img src="${esc(media.img)}" alt="">` : ""}
+      ${profile.photos ? `<img src="${esc(media.img)}" alt="" loading="lazy">` : ""}
       <button type="button" class="mini-main" data-click="closeProfileModalThenOpenListing" data-click-args='${dataArgs([idParam])}'>
         <b>${esc(titleFor(l))}</b><br><small>${esc(l.area)}${profile.price ? " · " + priceHTML(l).replace(/<[^>]*>/g," ") : ""}</small>
       </button>
@@ -4060,7 +4117,7 @@ function adminPanelHTML(tab){
 function adminListingRows(items){
   return `<div class="admin-table">${items.map(l=>`
     <div class="admin-row">
-      <img src="${esc(mediaFor(l).img)}" alt="">
+      <img src="${esc(cardMediaFor(l).img)}" alt="" loading="lazy">
       <div><b>${esc(titleFor(l))}</b><br><small>${esc(l.area || "SXM")} · ${esc(adminPrice(l))} · ${esc(l.cat)}${l.boosted ? " · Boost" : ""}${l.sold ? " · Sold" : ""}${l.moderationStatus && l.moderationStatus !== "approved" ? " · " + (l.moderationStatus === "pending" ? (state.lang==="fr" ? "À valider" : "Pending") : (state.lang==="fr" ? "Rejetée" : "Rejected")) : ""}</small></div>
       <div class="admin-actions">
         <button type="button" data-click="openListingFromAdmin" data-click-args='${dataArgs([l.id])}'>${state.lang==="fr" ? "Voir" : "View"}</button>
@@ -4101,7 +4158,7 @@ function adminReportRows(items){
   return `<div class="admin-table">${items.map(r=>{
     const l = L.find(x=>String(x.id) === String(r.listingId));
     return `<div class="admin-row ${l ? "" : "no-img"}">
-      ${l ? `<img src="${esc(mediaFor(l).img)}" alt="">` : ""}
+      ${l ? `<img src="${esc(cardMediaFor(l).img)}" alt="" loading="lazy">` : ""}
       <div><b>${esc(l ? titleFor(l) : "Listing removed")}</b><br><small>${esc(r.reason)} · ${r.createdAt ? new Date(r.createdAt).toLocaleDateString(state.lang==="fr"?"fr-FR":"en-US") : ""} · ${esc(r.status)}</small>${r.notes ? `<br><small>${esc(r.notes)}</small>` : ""}</div>
       <div class="admin-actions">
         ${l ? `<button type="button" data-click="openListingFromAdmin" data-click-args='${dataArgs([l.id])}'>${state.lang==="fr" ? "Voir" : "View"}</button><button type="button" class="danger" data-click="removeListingAdmin" data-click-args='${dataArgs([l.id])}'>${state.lang==="fr" ? "Supprimer" : "Remove"}</button>` : ""}
@@ -4126,7 +4183,7 @@ function adminModerationHTML(){
     <div class="admin-table">
       ${pending.map(l=>`
         <div class="admin-row">
-          <img src="${esc(mediaFor(l).img)}" alt="">
+          <img src="${esc(cardMediaFor(l).img)}" alt="" loading="lazy">
           <div>
             <b>${esc(titleFor(l))}</b><br>
             <small>${esc(l.area || "SXM")} · ${esc(adminPrice(l))} · ${esc(l.cat)} · ${esc(sellerName(l))}</small>

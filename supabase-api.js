@@ -18,6 +18,9 @@
   };
   var MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+  var LISTINGS_PAGE = 1000;
+  var LISTINGS_MAX_PAGES = 20;
+
   // ids the signed-in user has blocked; kept in step by fetchBlocks /
   // blockUser / unblockUser so fetchInbox can drop those conversations.
   var blockedIds = {};
@@ -259,17 +262,47 @@
     /* --------- ANNONCES --------- */
 
     // renvoie un tableau d'objets "annonce" prêts pour l'app, ou null
-    fetchListings: async function () {
+    //
+    // Supabase truncates a response at its "Max rows" setting (1000 by
+    // default) without reporting an error, so the table is read in ranges
+    // until the exact count is reached. The id tiebreak keeps the range
+    // boundaries stable when two listings share a created_at.
+    //
+    // opts.realOnly leaves out the seed examples (no seller_id) on the
+    // server, so a visitor does not download rows that are never shown.
+    fetchListings: async function (opts) {
       if (!window.db) return null;
-      var res = await window.db
-        .from("listings")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (res.error) {
-        console.warn("[SB] fetchListings:", res.error.message);
-        return null;
+      var realOnly = !!(opts && opts.realOnly);
+      var rows = [];
+      var seen = {};
+      var offset = 0;
+      var total = null;
+      for (var page = 0; page < LISTINGS_MAX_PAGES; page++) {
+        var query = window.db
+          .from("listings")
+          .select("*", { count: page === 0 ? "exact" : undefined });
+        if (realOnly) query = query.not("seller_id", "is", null);
+        var res = await query
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .range(offset, offset + LISTINGS_PAGE - 1);
+        if (res.error) {
+          console.warn("[SB] fetchListings:", res.error.message);
+          if (page === 0) return null;
+          break;
+        }
+        var batch = res.data || [];
+        if (page === 0 && typeof res.count === "number") total = res.count;
+        offset += batch.length;
+        var before = rows.length;
+        batch.forEach(function (r) {
+          if (seen[r.id]) return;
+          seen[r.id] = true;
+          rows.push(r);
+        });
+        // No new row means the end, or a server that ignored the range.
+        if (rows.length === before || (total !== null && offset >= total)) break;
       }
-      var rows = res.data || [];
       var listings = rows.map(function (r) { return rowToListing(r); });
       var missingSellerIds = rows
         .filter(function (r) { return r.seller_id && !r.seller_name; })
@@ -337,7 +370,7 @@
 
         var thumbFile = thumbFiles && thumbFiles[i];
         if (!thumbFile) { thumbs.push(""); continue; }
-        var thumbPath = user.id + "/" + token + "-thumb.jpg";
+        var thumbPath = user.id + "/" + token + "-thumb." + (thumbFile.type === "image/webp" ? "webp" : "jpg");
         var upThumb = await bucket.upload(thumbPath, thumbFile, {
           cacheControl: "31536000, immutable",
           upsert: false,
@@ -484,13 +517,13 @@
 
     // recharge L depuis la base puis rafraîchit l'affichage
     hydrate: async function () {
-      var rows = await SB.fetchListings();
-      if (!rows || typeof L === "undefined") return false;
       // Optional seed records have no seller_id and cannot receive real
-      // messages or ownership actions. Keep them available for administration
-      // but never expose them to customers on the production domain.
+      // messages or ownership actions. They are never exposed to customers on
+      // the production domain, so there they are not requested at all.
       var host = String(window.location.hostname || "").toLowerCase();
       var productionHost = host === "buyselltradesxm.com" || host === "www.buyselltradesxm.com";
+      var rows = await SB.fetchListings({ realOnly: productionHost });
+      if (!rows || typeof L === "undefined") return false;
       if (productionHost) rows = rows.filter(function (listing) { return !!listing.sellerId; });
       L.length = 0;
       rows.forEach(function (r) { L.push(r); });

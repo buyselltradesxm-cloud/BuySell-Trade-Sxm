@@ -44,7 +44,17 @@ function check(name, ok, detail) {
     const small = await makePhoto(320, 240);
     const rs = await window.ImgUtils.compressForListing(small, { maxEdge: 1600 });
 
+    // Same photo, thumb forced to JPEG, and thumb asked for in a type no
+    // browser can encode (what Safari does with WebP).
+    const rJpeg = await window.ImgUtils.compressForListing(big, { thumbMime: 'image/jpeg', thumbQuality: 0.68 });
+    const rUnsupported = await window.ImgUtils.compressForListing(big, { thumbMime: 'image/x-not-a-real-type' });
+
     return {
+      thumbType: r.thumbFile.type,
+      thumbName: r.thumbFile.name,
+      jpegThumbBytes: rJpeg.thumbBytes,
+      fallbackThumbType: rUnsupported.thumbFile.type,
+      fallbackThumbName: rUnsupported.thumbFile.name,
       inBytes: big.size,
       outBytes: r.bytes,
       outW: r.width, outH: r.height,
@@ -77,6 +87,9 @@ function check(name, ok, detail) {
   check('thumb longest edge capped at 480', out.thumbW === 480 && out.thumbH <= 480, out.thumbW + 'x' + out.thumbH);
   check('thumb aspect ratio preserved', out.thumbAspectKept);
   check('thumb much smaller than full photo', out.thumbBytes < out.outBytes, out.thumbBytes + ' vs ' + out.outBytes + ' bytes');
+  check('thumb encoded as WebP', out.thumbType === 'image/webp' && out.thumbName === 'thumb.webp', out.thumbType + ' ' + out.thumbName);
+  check('WebP thumb smaller than the JPEG thumb', out.thumbBytes < out.jpegThumbBytes, out.thumbBytes + ' vs ' + out.jpegThumbBytes + ' bytes');
+  check('unsupported thumb type falls back to JPEG', out.fallbackThumbType === 'image/jpeg' && out.fallbackThumbName === 'thumb.jpg', out.fallbackThumbType + ' ' + out.fallbackThumbName);
 
   await browser.close();
   const failed = results.filter((r) => !r.ok);
