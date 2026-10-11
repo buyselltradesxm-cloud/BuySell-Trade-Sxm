@@ -54,6 +54,7 @@ Deno.serve(async (req) => {
   if (health.emails_failed_24h > 0) problems.push(`${health.emails_failed_24h} email(s) failed in the last 24h`);
   if (health.emails_stuck_pending > 0) problems.push(`${health.emails_stuck_pending} email(s) pending for over 2h`);
   if (health.stripe_events_failed_24h > 0) problems.push(`${health.stripe_events_failed_24h} Stripe webhook event(s) failed in the last 24h`);
+  if (health.high_traffic_day) problems.push(`growth signal: ${health.high_traffic_day.visits} visits on ${health.high_traffic_day.day} (>= 2500) — consider the Supabase Pro plan`);
 
   return json({ healthy: problems.length === 0, problems, health }, problems.length ? 503 : 200);
 });

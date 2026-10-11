@@ -28,6 +28,16 @@ as $$
     'emails_failed_24h', (select count(*) from public.email_queue where status = 'failed' and created_at > now() - interval '24 hours'),
     'emails_stuck_pending', (select count(*) from public.email_queue where status = 'pending' and created_at < now() - interval '2 hours'),
     'stripe_events_failed_24h', (select count(*) from public.payment_webhook_events where status = 'failed' and received_at > now() - interval '24 hours'),
+    -- Supabase Free-plan growth signal: yesterday's visits (summed across web/
+    -- pwa/android/ios) crossing this threshold is a cue to reconsider the
+    -- plan, not an outage. Threshold picked by the project owner (2026-10-11).
+    'high_traffic_day', (
+      select case when sum(visits) >= 2500
+        then jsonb_build_object('day', current_date - 1, 'visits', sum(visits))
+      end
+        from public.site_daily_stats
+       where day = current_date - 1
+    ),
     'checked_at', now()
   );
 $$;
