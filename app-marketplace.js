@@ -2596,6 +2596,12 @@ function setCat(id, btn){
   renderSubcats();
   buildFilters();
   render();
+  // The panel fills a good part of a phone screen: bring what the tap changed
+  // into view, the sub-categories if this category has some, else the listings.
+  if(catPhoneLayout.matches){
+    const next = document.querySelector("#subcatPanel.show") || document.querySelector(".layout");
+    if(next) next.scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start"});
+  }
 }
 
 function filterByCategory(id){
@@ -6086,12 +6092,28 @@ function buildAreas(){
   ogfr.innerHTML = AREAS.fr.map(a=>`<option value="${a}">${a}</option>`).join("");
   ognl.innerHTML = AREAS.nl.map(a=>`<option value="${a}">${a}</option>`).join("");
 }
+// On a phone the categories sit together in one square panel, five tiles
+// to a row, so all of them show at once. A tile there is about 60px wide,
+// so it carries a short name; a soft hyphen (\u00AD) marks where a long
+// word may break onto a second line. The full name stays the button's label.
+const CAT_SHORT = {
+  all:{fr:"Tout",en:"All"}, voit:{fr:"Véhi\u00ADcules",en:"Vehicles"}, immo:{fr:"Immo\u00ADbilier",en:"Property"},
+  elec:{fr:"Électro\u00ADnique",en:"Elec\u00ADtronics"}, meub:{fr:"Maison",en:"Home"}, mode:{fr:"Mode",en:"Fashion"},
+  job:{fr:"Emploi",en:"Jobs"}, serv:{fr:"Services",en:"Services"}, pets:{fr:"Animaux",en:"Pets"},
+  bat:{fr:"Bateaux",en:"Boats"}, gaming:{fr:"Gaming",en:"Gaming"}, beauty:{fr:"Beauté",en:"Beauty"},
+  scoot:{fr:"Motos",en:"Motor\u00ADbikes"}, locvoit:{fr:"Location auto",en:"Car rental"}, menag:{fr:"Électro\u00ADménager",en:"Appli\u00ADances"},
+  food:{fr:"Alimen\u00ADtation",en:"Food"}, lois:{fr:"Loisirs",en:"Leisure"}, billet:{fr:"Billet\u00ADterie",en:"Tickets"},
+  pro:{fr:"Matériel pro",en:"Pro gear"}, bonplan:{fr:"Bons plans",en:"Deals"}, autres:{fr:"Plus",en:"More"}
+};
+const catPhoneLayout = window.matchMedia("(max-width:620px)");
+
 function buildCats(){
   const visibleCats = CATS.filter(c=>c.id === "all" || !adminCategoryStatus[c.id]?.hidden);
   document.getElementById("catrail").innerHTML = visibleCats.map(c=>
-    `<button type="button" class="cat" aria-pressed="${c.id===state.cat}" data-click="setCat" data-click-args='${dataArgs([c.id, "__THIS__"])}'>
-      <img src="${G[c.id].img}" alt="" loading="lazy">
-      <span>${c[state.lang]}</span>
+    `<button type="button" class="cat" aria-pressed="${c.id===state.cat}" aria-label="${esc(c[state.lang])}" data-click="setCat" data-click-args='${dataArgs([c.id, "__THIS__"])}'>
+      <img src="${esc(G[c.id].img.replace(UNSPLASH_DETAIL_WIDTH, "$1120"))}" alt="" loading="lazy">
+      <span class="cat-name">${c[state.lang]}</span>
+      <span class="cat-short" aria-hidden="true">${(CAT_SHORT[c.id] || c)[state.lang]}</span>
     </button>`
   ).join("");
   renderSubcats();
