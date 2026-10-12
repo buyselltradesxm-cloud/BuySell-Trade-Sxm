@@ -1,4 +1,4 @@
-/* iOS-only authentication and StoreKit bridge. Web and Android keep their own flows. */
+/* Native store bridge: StoreKit on iOS, Google Play Billing on Android. */
 (function () {
   "use strict";
   const prefix = "com.korekdigitalmarketing.buyselltradesxm.";
@@ -12,9 +12,27 @@
     "boost-7": prefix + "boost_7_days",
     "boost-14": prefix + "boost_14_days"
   };
+  // Play limits product IDs to 40 characters. Keep its catalog IDs short while
+  // preserving the existing App Store IDs and the same plan keys in the UI.
+  const playIds = {
+    "pro-starter": "pro_starter_monthly",
+    "pro-business": "pro_business_monthly",
+    "pro-premium": "pro_premium_monthly",
+    "pro-elite": "pro_elite_monthly",
+    "pro-unlimited": "pro_unlimited_monthly"
+  };
+  const productId = key => isAndroid() ? playIds[key] : ids[key];
   let bridge, catalog, catalogRequest, buying = false, syncing = false, listening = false;
   const fr = () => document.documentElement.lang === "fr";
   const isIOS = () => !!(window.Capacitor && Capacitor.getPlatform() === "ios");
+  const isAndroid = () => !!(window.Capacitor && Capacitor.getPlatform() === "android");
+  const isStore = () => isIOS() || isAndroid();
+  function playPlugin() {
+    if (!isAndroid()) throw new Error("Android is required");
+    const native = Capacitor.Plugins?.PlayBilling || (Capacitor.registerPlugin && Capacitor.registerPlugin("PlayBilling"));
+    if (!native) throw new Error(fr() ? "Mettez l'application à jour pour continuer." : "Please update the app to continue.");
+    return native;
+  }
   function plugin() {
     if (!isIOS()) throw new Error("iOS is required");
     if (!bridge) bridge = Capacitor.Plugins?.SXMNative || (Capacitor.registerPlugin && Capacitor.registerPlugin("SXMNative"));
@@ -38,22 +56,34 @@
     if (!response.ok) throw new Error(result.error || "Purchase verification is temporarily unavailable. Use Restore Purchases to retry.");
     return result;
   }
+  async function playApi(body) {
+    const session = await window.db?.auth.getSession();
+    const token = session?.data?.session?.access_token;
+    if (!token) throw new Error(fr() ? "Connectez-vous avant de continuer." : "Please sign in first.");
+    const response = await fetch(window.SUPABASE_URL + "/functions/v1/google-play-purchases", {
+      method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY, Authorization: "Bearer " + token }, body: JSON.stringify(body)
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Google Play purchase verification is temporarily unavailable.");
+    return result;
+  }
   async function products() {
     if (catalog) return catalog;
-    if (!catalogRequest) catalogRequest = plugin().products().then(result => {
+    if (!catalogRequest) catalogRequest = (isAndroid() ? playPlugin() : plugin()).products().then(result => {
       catalog = Object.fromEntries(result.products.map(product => [product.id, product]));
       return catalog;
     }).finally(() => { catalogRequest = null; });
     return catalogRequest;
   }
   function price(key) {
-    const product = catalog?.[ids[key]];
+    const product = catalog?.[productId(key)];
     return product ? product.price + (key.startsWith("pro-") ? (fr() ? " / mois" : " / month") : "")
-      : (fr() ? "Indisponible sur l’App Store" : "Unavailable in the App Store");
+      : (fr() ? (isAndroid() ? "Indisponible dans Google Play" : "Indisponible sur l'App Store") : (isAndroid() ? "Unavailable in Google Play" : "Unavailable in the App Store"));
   }
   async function refreshPrices() {
-    if (!isIOS()) return;
-    const loading = fr() ? "Chargement du prix Apple…" : "Loading Apple price…";
+    if (!isStore()) return;
+    const store = isAndroid() ? "Google Play" : "Apple";
+    const loading = fr() ? `Chargement du prix ${store}…` : `Loading ${store} price…`;
     const update = () => {
       document.querySelectorAll('[data-click="chooseProPlan"]').forEach(button => {
         let key; try { key = JSON.parse(button.dataset.clickArgs)[0]; } catch (_) { return; }
@@ -70,11 +100,16 @@
       }
       const boostAmount = document.getElementById("boostCheckoutAmount");
       if (boostAmount) boostAmount.textContent = catalog ? price("boost-" + (typeof pendingBoostDays !== "undefined" ? pendingBoostDays : 7)) : loading;
-      document.querySelectorAll('[data-i18n="paymentDemoTitle"]').forEach(el => { el.textContent = fr() ? "Paiement Apple" : "Apple payment"; });
+      document.querySelectorAll('[data-i18n="paymentDemoTitle"]').forEach(el => { el.textContent = fr() ? `Paiement ${store}` : `${store} payment`; });
+      document.querySelectorAll('[data-i18n="paymentDemoText"]').forEach(el => { el.textContent = fr() ? `Abonnement mensuel avec renouvellement automatique. Paiement via votre compte ${store}. Annulez dans les réglages ${store} avant le renouvellement.` : `Monthly auto-renewing subscription. Payment is charged to your ${store} account. Cancel in ${store} subscription settings before renewal.`; });
+      document.querySelectorAll('[data-i18n="paymentDemoText"]').forEach(el => { el.textContent = fr() ? `Abonnement mensuel avec renouvellement automatique. Paiement via votre compte ${store}. Annulez dans les réglages ${store} avant le renouvellement.` : `Monthly auto-renewing subscription. Payment is charged to your ${store} account. Cancel in ${store} subscription settings before renewal.`; });
       document.querySelectorAll('[data-i18n="paymentDemoText"]').forEach(el => {
         el.textContent = fr() ? "Abonnement mensuel à renouvellement automatique. Paiement via votre compte Apple. Annulez dans les réglages Apple avant le renouvellement." : "Monthly auto-renewing subscription. Payment is charged to your Apple account. Cancel in Apple settings before renewal.";
       });
-      document.querySelectorAll('[data-i18n="paymentConfirm"], [data-i18n="boostConfirm"]').forEach(el => { el.textContent = fr() ? "Acheter avec Apple" : "Buy with Apple"; });
+      document.querySelectorAll('[data-i18n="paymentConfirm"]').forEach(el => { el.textContent = fr() ? `S'abonner avec ${store}` : `Subscribe with ${store}`; });
+      document.querySelectorAll('[data-i18n="paymentDemoText"]').forEach(el => { el.textContent = fr() ? `Abonnement mensuel, renouvelé automatiquement. Paiement via votre compte ${store}. Annulez dans les réglages ${store} avant le renouvellement.` : `Monthly subscription, renewed automatically. Payment is charged to your ${store} account. Cancel in ${store} subscription settings before renewal.`; });
+      document.querySelectorAll("[data-apple-restore]").forEach(el => { el.textContent = fr() ? "Restaurer les achats" : "Restore purchases"; });
+      document.querySelectorAll("[data-apple-manage]").forEach(el => { el.textContent = fr() ? `Gérer les abonnements ${store}` : `Manage ${store} subscriptions`; });
       document.querySelectorAll("[data-apple-only]").forEach(el => { el.hidden = false; });
     };
     update();
@@ -97,11 +132,25 @@
     if (buying) return false;
     buying = true;
     try {
-      if (!ids[key]) throw new Error("Unknown product");
+      if (!productId(key)) throw new Error("Unknown product");
       const available = await products();
-      if (!available[ids[key]]) throw new Error(fr() ? "Produit indisponible sur l’App Store." : "Product unavailable in the App Store.");
-      const intent = await api({ action: "prepare", productId: ids[key], listingId: listingId == null ? null : String(listingId) });
-      const result = await plugin().purchase({ productId: ids[key], appAccountToken: intent.appAccountToken });
+      if (!available[productId(key)]) throw new Error(fr() ? `Produit indisponible dans ${isAndroid() ? "Google Play" : "l'App Store"}.` : `Product unavailable in ${isAndroid() ? "Google Play" : "the App Store"}.`);
+      if (isAndroid()) {
+        const session = await window.db?.auth.getSession();
+        const userId = session?.data?.session?.user?.id;
+        if (!userId) throw new Error(fr() ? "Connectez-vous avant de continuer." : "Please sign in first.");
+        await playApi({ action: "ready" });
+        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(userId));
+        const obfuscatedAccountId = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+        const purchase = await playPlugin().purchase({ productId: productId(key), obfuscatedAccountId });
+        if (purchase.cancelled) return false;
+        if (purchase.pending) { message({ message: fr() ? "Achat en attente de validation Google Play." : "Purchase is awaiting Google Play approval." }); return false; }
+        await playApi({ action: "verify", productId: productId(key), purchaseToken: purchase.purchaseToken });
+        await refreshAccount();
+        return true;
+      }
+      const intent = await api({ action: "prepare", productId: productId(key), listingId: listingId == null ? null : String(listingId) });
+      const result = await plugin().purchase({ productId: productId(key), appAccountToken: intent.appAccountToken });
       if (result.cancelled) return false;
       if (result.pending) { message({ message: fr() ? "Achat en attente d’approbation Apple." : "Purchase is awaiting Apple approval." }); return false; }
       await deliver(result.signedTransaction);
@@ -111,11 +160,23 @@
     finally { buying = false; }
   }
   async function sync(restore = false) {
-    if (!isIOS() || syncing) return;
+    if (!isStore() || syncing) return;
     syncing = true;
     try {
       const session = await window.db?.auth.getSession();
       if (!session?.data?.session) return;
+      if (isAndroid()) {
+        await playApi({ action: "sync" });
+        const result = await playPlugin().ownedPurchases();
+        let failed = false;
+        for (const purchase of result.purchases || []) for (const productId of purchase.products || []) {
+          try { await playApi({ action: "verify", productId, purchaseToken: purchase.purchaseToken }); }
+          catch (error) { failed = true; if (restore) message(error); }
+        }
+        if (result.purchases?.length) await refreshAccount();
+        if (restore && !failed) message({ message: result.purchases?.length ? (fr() ? "Achats restaurés." : "Purchases restored.") : (fr() ? "Aucun achat à restaurer pour ce compte Google." : "No purchases to restore for this Google account.") });
+        return;
+      }
       if (!listening) {
         listening = true;
         await plugin().addListener("transaction", async result => {
@@ -243,9 +304,9 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { startShell(); startPush(); });
   else { startShell(); startPush(); }
 
-  window.SXM = { isIOS, shell, plugin, ids, buy, refreshPrices, sync, message,
+  window.SXM = { isIOS, isAndroid, isStore, shell, plugin, ids, buy, refreshPrices, sync, message,
     restore: () => sync(true),
-    manage: () => plugin().manageSubscriptions().catch(message)
+    manage: () => (isAndroid() ? playPlugin().manageSubscriptions() : plugin().manageSubscriptions()).catch(message)
   };
   document.addEventListener("click", event => {
     if (event.target.closest("[data-apple-restore]")) SXM.restore();

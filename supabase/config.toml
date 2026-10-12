@@ -50,6 +50,9 @@ verify_jwt = false
 [functions.apple-purchases]
 verify_jwt = false
 
+[functions.google-play-purchases]
+verify_jwt = false
+
 [functions.apple-notifications]
 verify_jwt = false
 
