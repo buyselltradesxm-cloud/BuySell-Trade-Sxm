@@ -2053,7 +2053,9 @@ function listingMoney(n, cur){
 
 function priceHTML(l){
   if(l.salary) return `<span class="alt">${t().sort_recent?"":""}</span><span>${state.lang==="fr"?"Salaire à convenir":"Pay negotiable"}</span>`;
-  const listingCur = l.cur || (l.side==="fr" ? "eur" : "usd");
+  // The currency comes from the listing's row, which the data API stores as
+  // free text, and it ends up in a class name: only the two known values pass.
+  const listingCur = l.cur==="eur" || l.cur==="usd" ? l.cur : (l.side==="fr" ? "eur" : "usd");
   const otherCur = listingCur==="eur" ? "usd" : "eur";
   const primary = listingMoney(l[listingCur], listingCur);
   const secondary = listingMoney(l[otherCur], otherCur);
