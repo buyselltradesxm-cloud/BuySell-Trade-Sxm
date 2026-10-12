@@ -35,6 +35,18 @@ always on. Reference: https://support.google.com/adsense/answer/9007336?hl=en
   privacy URL `https://buyselltradesxm.com/privacy.html`, add FR + EN → Publish.
   It then shows to EEA/UK visitors only; `consent.js` steps aside for them.
 
+## Website full-screen ads (vignettes)
+
+The website loads AdSense Auto ads (`adsense.pageLevel: true` in
+`ads-config.js`), which can show Google's full-screen vignette between page
+navigation events. Vignette enablement and frequency are account settings,
+not a site timer: in AdSense, open **Ads → By site → Edit buyselltradesxm.com
+→ Overlay formats → Vignette ads**. Google offers one repeat interval from 1
+minute to 1 hour; there is no separate 90-second first-ad setting. The site
+must be approved and the vignette setting applied before these ads can serve.
+For this app's 90-second first / 3-minute later cadence, use AdMob in the
+native Android app; don't add a custom timed overlay to the website.
+
 The HTML blocks below are AdSense placements. Native AdMob (app) IDs
 (`ca-app-pub-7816106453580174~2891833705`, banner `.../9133808428`) need a
 separate SDK integration and are not used by this web setup.

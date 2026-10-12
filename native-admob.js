@@ -44,8 +44,10 @@
     }
 
     var platform = (window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || "android";
-    // iOS ships without ads for now: no AdMob, no tracking prompt. The flag
-    // above still keeps AdSense out of the app's web view. See Info.plist.
+    // The iOS AdMob app ID is registered, but the native plugin is excluded
+    // from that target and there is no production iOS interstitial unit yet.
+    // Keep AdSense suppressed in the WebView and avoid shipping Google's
+    // sample interstitial as if it were a live iOS placement.
     if (platform === "ios") return;
 
     var Plugins = window.Capacitor && window.Capacitor.Plugins;
@@ -80,11 +82,21 @@
      * UI code can call show() freely without caring about limits. */
     var interstitialAdId = (CFG.interstitial && CFG.interstitial[platform]) || "";
     var interOpts = CFG.interstitialOptions || {};
-    var COOLDOWN_MS = interOpts.cooldownMs == null ? 120000 : interOpts.cooldownMs;
-    var FIRST_DELAY_MS = interOpts.firstSessionDelayMs == null ? 60000 : interOpts.firstSessionDelayMs;
+    var COOLDOWN_MS = interOpts.cooldownMs == null ? 180000 : interOpts.cooldownMs;
+    var FIRST_DELAY_MS = interOpts.firstSessionDelayMs == null ? 90000 : interOpts.firstSessionDelayMs;
     var MAX_PER_SESSION = interOpts.maxPerSession == null ? 5 : interOpts.maxPerSession;
-    var sessionStart = Date.now();
-    var lastShownAt = 0;
+    // Count foreground time only; an app left in the background must not
+    // make an interstitial immediately eligible when the user returns.
+    var activeMs = 0;
+    var lastTickAt = Date.now();
+    function accrueActiveTime() {
+      var now = Date.now();
+      if (document.visibilityState !== "hidden") activeMs += Math.max(0, now - lastTickAt);
+      lastTickAt = now;
+    }
+    document.addEventListener("visibilitychange", accrueActiveTime);
+    setInterval(accrueActiveTime, 1000);
+    var lastShownActiveMs = -COOLDOWN_MS;
     var shownThisSession = 0;
     var isPrepared = false;
     var isPreparing = false;
@@ -110,11 +122,11 @@
     // point. Returns true if the ad was shown, false if throttled.
     window.__BST_ADMOB_INTERSTITIAL__ = function () {
       if (!interstitialAdId || !isPrepared) return false;
-      var now = Date.now();
-      if (now - sessionStart < FIRST_DELAY_MS) return false;
-      if (now - lastShownAt < COOLDOWN_MS) return false;
+      accrueActiveTime();
+      if (activeMs < FIRST_DELAY_MS) return false;
+      if (activeMs - lastShownActiveMs < COOLDOWN_MS) return false;
       if (shownThisSession >= MAX_PER_SESSION) return false;
-      lastShownAt = now;
+      lastShownActiveMs = activeMs;
       shownThisSession += 1;
       isPrepared = false;
       AdMob.showInterstitial().catch(function () {});

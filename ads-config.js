@@ -103,11 +103,13 @@ window.AdsConfig = {
       ios: "ca-app-pub-3940256099942544/4411468910"      // Google TEST id — iOS has no ads yet
     },
 
-    /* Interstitial throttling. These values are enforced by
-     * native-admob.js and chosen to pass AdMob + Play Store review. */
+    /* Interstitial eligibility is checked only at natural transitions
+     * (closing a listing), never by a background timer. Foreground time
+     * must reach 90s before the first ad and another 3m before each later
+     * ad. */
     interstitialOptions: {
-      cooldownMs: 120000,          // minimum 2 minutes between any two interstitials
-      firstSessionDelayMs: 60000,  // never show an interstitial in the first 60s of a session
+      cooldownMs: 180000,          // 3 minutes of foreground use between ads
+      firstSessionDelayMs: 90000,  // first ad only after 90 seconds of foreground use
       maxPerSession: 5             // hard cap per session
     }
     // testingDevices: ["YOUR_DEVICE_ID"], // needed to see real-looking test ads on a physical device
