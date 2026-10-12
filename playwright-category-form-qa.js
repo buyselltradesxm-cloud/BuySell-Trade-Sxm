@@ -1,4 +1,5 @@
 const { chromium } = require("playwright");
+const base = process.env.APP_QA_BASE_URL || "http://localhost:5173";
 
 // Goods need a price and at least one photo. Jobs and services (optional:true)
 // show the same two fields but may be posted without them, and drop the
@@ -25,7 +26,7 @@ const cases = [
   for (const path of ["/", "/marketplace.html"]) {
     const page = await browser.newPage({ viewport:{ width:1280, height:900 } });
     page.on("pageerror", error => errors.push(`${path}: ${error.message}`));
-    await page.goto(`http://localhost:5173${path}?local=1&admin=1`, { waitUntil:"domcontentloaded" });
+    await page.goto(`${base}${path}?local=1&admin=1`, { waitUntil:"domcontentloaded" });
     await page.evaluate(() => openPostModal());
     await page.locator("#postModal.open").waitFor();
 
