@@ -44,14 +44,11 @@
     }
 
     var platform = (window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || "android";
-    // The iOS AdMob app ID is registered, but the native plugin is excluded
-    // from that target and there is no production iOS interstitial unit yet.
-    // Keep AdSense suppressed in the WebView and avoid shipping Google's
-    // sample interstitial as if it were a live iOS placement.
-    if (platform === "ios") return;
-
+    // The app shell is hosted remotely, so the npm plugin needs a small
+    // bundled registration script (admob-plugin.js) before this file runs.
+    // Keep the legacy registry fallback for already-published app shells.
     var Plugins = window.Capacitor && window.Capacitor.Plugins;
-    var AdMob = Plugins && Plugins.AdMob;
+    var AdMob = window.BSTAdMob || (Plugins && Plugins.AdMob);
     if (!AdMob) return; // plugin not installed in this native build yet
 
     // GDPR: let users change or withdraw their ads consent later. The app's
@@ -140,16 +137,6 @@
       testingDevices: CFG.testingDevices || [],
       initializeForTesting: testing
     })
-      .then(function () {
-        // iOS 14+: ask App Tracking Transparency before requesting consent,
-        // so personalised ads can be considered where the user allows it.
-        return AdMob.trackingAuthorizationStatus().catch(function () { return null; });
-      })
-      .then(function (t) {
-        if (t && t.status === "notDetermined") {
-          return AdMob.requestTrackingAuthorization().catch(function () {});
-        }
-      })
       .then(function () { return AdMob.requestConsentInfo(); })
       .then(function (consentInfo) {
         if (consentInfo && !consentInfo.canRequestAds && consentInfo.isConsentFormAvailable) {
@@ -162,6 +149,17 @@
       // fails, show no ad rather than one without a valid consent state.
       .then(function (consentInfo) {
         if (consentInfo && consentInfo.canRequestAds) {
+          // ATT is optional; ask only after Google's privacy choices. If
+          // declined, consent-eligible contextual ads can still be requested.
+          if (platform === "ios") {
+            return AdMob.trackingAuthorizationStatus().catch(function () { return null; })
+              .then(function (status) {
+                if (status && status.status === "notDetermined") {
+                  return AdMob.requestTrackingAuthorization().catch(function () {});
+                }
+              })
+              .then(function () { showBanner(); prepareInterstitial(); });
+          }
           showBanner();
           prepareInterstitial();
         }

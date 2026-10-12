@@ -68,39 +68,26 @@ window.AdsConfig = {
    *   Android → android/app/src/main/res/values/strings.xml  (admob_app_id)
    *   iOS     → ios/App/App/Info.plist  (GADApplicationIdentifier)
    *
-   * Steps once you have a live AdMob account:
-   *   1. admob.google.com → Apps → add this app (Android, then iOS).
-   *   2. Ads > Ad units → create one Banner per platform.
-   *   3. Paste both App IDs into the native files above, and both
-   *      Banner unit ids into `banner` below.
-   *   4. Set `testing: false`.
-   *   5. `npx cap sync` and rebuild.
-   * Until then, Google's public TEST ids below are safe to ship —
-   * they show fake ads and can never get the account flagged. */
+   * Production App IDs and Banner units are configured in the native projects and below.
+   * Keep testing disabled in production; use Google sample units only in a dedicated
+   * test build. Sync and rebuild native targets after changes. */
   admob: {
-    // Live since 2026-10-04 for Android (iOS ships without ads for now).
+    // Both native apps have production App IDs and banner units in AdMob.
     testing: false,
     banner: {
       android: "ca-app-pub-7816106453580174/5881780931", // "SXM Android Banner"
-      ios: "ca-app-pub-3940256099942544/2934735716"       // Google TEST unit; unused while iOS has no ads
+      ios: "ca-app-pub-7816106453580174/9133808428"       // SXM iOS Banner
     },
 
     /* Interstitial (full-screen video / image) ad unit.
      * Shown at NATURAL TRANSITION POINTS only — never during active
      * browsing. See native-admob.js for the triggers (closing a listing
-     * detail, after posting, etc.) and the 2-minute cooldown.
+     * detail, after posting, etc.) and the 3-minute cooldown.
      *
-     * To activate on Android:
-     *   1. admob.google.com → Ads → Ad units → Create → Interstitial
-     *      → name it "SXM Android Interstitial" → Create.
-     *   2. Copy the full "ca-app-pub-…/…" id and paste below as
-     *      interstitial.android.
-     *   3. npx cap sync and rebuild the APK.
-     * Until a real id is pasted, Google's public TEST id is used (safe
-     * to ship — shows a fake ad and can never flag the account). */
+     * Production interstitial units are configured in AdMob for both platforms. */
     interstitial: {
       android: "ca-app-pub-7816106453580174/8561114276", // SXM Android Interstitial
-      ios: "ca-app-pub-3940256099942544/4411468910"      // Google TEST id — iOS has no ads yet
+      ios: "ca-app-pub-7816106453580174/9429125770" // SXM iOS Interstitial
     },
 
     /* Interstitial eligibility is checked only at natural transitions

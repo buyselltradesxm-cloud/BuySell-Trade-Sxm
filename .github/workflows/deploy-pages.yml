@@ -26,9 +26,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - name: Install build dependencies
+        run: npm ci
       - uses: actions/configure-pages@v5
       - name: Version app assets to avoid stale CDN releases
         run: |
+          npm run build:admob-plugin
           node scripts/version-assets.js
           node scripts/version-assets.js --check
           node --check app-index.js

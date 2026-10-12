@@ -29,11 +29,11 @@
 	</dict></array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<!-- No ad SDK in the iOS app for now: the AdMob plugin is excluded from
-	     iOS (capacitor.config.json → ios.includePlugins) and native-admob.js
-	     skips iOS. To bring ads back, restore GADApplicationIdentifier,
-	     SKAdNetworkItems and NSUserTrackingUsageDescription here with real
-	     AdMob ids, and update the App Privacy answers in App Store Connect. -->
+	<!-- AdMob App ID for Buy Sell Trade SXM iOS. -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-7816106453580174~2891833705</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Allow tracking to help show more relevant ads and measure their performance. The app still works if you decline.</string>
 	<!-- Required for the "Take Photo" / "Photo Library" choices iOS shows on
 	     the listing and avatar photo pickers. Without the camera string iOS
 	     terminates the app as soon as the camera opens. -->

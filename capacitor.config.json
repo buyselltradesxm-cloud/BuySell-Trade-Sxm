@@ -8,7 +8,7 @@
     "errorPath": "offline.html"
   },
   "ios": {
-    "includePlugins": [],
+    "includePlugins": ["@capacitor-community/admob"],
     "preferredContentMode": "mobile"
   },
   "plugins": {

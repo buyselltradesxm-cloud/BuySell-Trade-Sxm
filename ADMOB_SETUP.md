@@ -22,14 +22,17 @@ vraie bannière AdMob ancrée au-dessus de la barre d'onglets mobile. Le
 reste de la page (`ads.js`) désactive AdSense partout quand ce mode est
 actif, mais garde les promos maison et les campagnes vendues en direct.
 
-The Android interstitial is checked only when a listing detail closes. It
-becomes eligible after 90 seconds of foreground use, then after each further
-3 minutes of foreground use. This avoids timed interruptions while someone is
-reading. iOS interstitials remain disabled until the AdMob plugin is included
-in the iOS target and a production iOS interstitial unit is configured.
+The Android and iOS interstitials are checked only when a listing detail
+closes. They become eligible after 90 seconds of foreground use, then after
+each further 3 minutes of foreground use. This avoids interrupting people
+while they are reading. Both platforms use production AdMob units.
 
-Actuellement les identifiants sont ceux de **TEST** de Google — des
-fausses pubs sans danger, aucun risque pour le compte.
+The hosted app shell bundles the Capacitor AdMob JavaScript registration in
+`admob-plugin.js`; the native plugin must also be included in each store build.
+Users in regulated regions see Google's consent form and can choose whether to
+allow personalized ads. On iOS, the IDFA explainer precedes Apple's tracking
+permission prompt. Ads must still work with a non-personalized or limited mode
+when a user declines.
 
 ## Étapes pour passer en argent réel
 
