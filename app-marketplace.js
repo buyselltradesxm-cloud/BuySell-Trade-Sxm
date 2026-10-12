@@ -2042,15 +2042,24 @@ function setMainListingPhoto(id, src, alt, btn){
   btn?.classList.add("active");
 }
 
+// A listing price is written the way the page language writes money, like
+// the Pro plans: "850 €" and "920 $" in French, "€850" and "$920" in English.
+function listingMoney(n, cur){
+  const fr = state.lang === "fr";
+  const amount = Number(n || 0).toLocaleString(fr ? "fr-FR" : "en-US");
+  const sign = cur === "eur" ? "€" : "$";
+  return fr ? `${amount}\u00A0${sign}` : `${sign}${amount}`;
+}
+
 function priceHTML(l){
   if(l.salary) return `<span class="alt">${t().sort_recent?"":""}</span><span>${state.lang==="fr"?"Salaire à convenir":"Pay negotiable"}</span>`;
-  const eur = money(l.eur,"eur"), usd = money(l.usd,"usd");
   const listingCur = l.cur || (l.side==="fr" ? "eur" : "usd");
-  const primary = listingCur==="eur" ? eur : usd;
-  const secondary = listingCur==="eur" ? usd : eur;
+  const otherCur = listingCur==="eur" ? "usd" : "eur";
+  const primary = listingMoney(l[listingCur], listingCur);
+  const secondary = listingMoney(l[otherCur], otherCur);
   const dropLbl = state.lang==="en"?"price dropped":"prix en baisse";
   const drop = l.drop ? `<span class="drop" title="${dropLbl}" aria-label="${dropLbl}">&#8595;</span>` : "";
-  return `<span class="amt">${primary}</span><span class="alt">≈ ${secondary}</span>${drop}`;
+  return `<span class="amt cur-${listingCur}">${primary}</span><span class="alt cur-${otherCur}">≈ ${secondary}</span>${drop}`;
 }
 
 function agoHTML(h){

@@ -76,7 +76,8 @@ const { chromium } = require("playwright");
     if (result.desc !== "Updated seller description") errors.push(`${path}: description was not updated`);
     if (result.count !== 1) errors.push(`${path}: edit created a duplicate listing`);
     if (result.detailTitle !== "Edited listing title") errors.push(`${path}: detail modal did not reopen edited listing`);
-    if (!/\$125/.test(result.detailPriceText) || !/€115/.test(result.detailPriceText)) {
+    // The sign follows the page language: "$125" / "€115" in English, "125 $" / "115 €" in French.
+    if (!/\$125|125\s\$/.test(result.detailPriceText) || !/€115|115\s€/.test(result.detailPriceText)) {
       errors.push(`${path}: detail price did not show both clean currencies: ${result.detailPriceText}`);
     }
 

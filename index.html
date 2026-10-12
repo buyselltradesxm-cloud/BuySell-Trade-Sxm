@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=9e5a9e95e6a51653"></script>
-<script src="/telemetry.js?v=9e5a9e95e6a51653"></script>
-<script src="/pwa.js?v=9e5a9e95e6a51653" defer></script>
-<link href="/fonts/fonts.css?v=9e5a9e95e6a51653" rel="stylesheet">
+<script src="/frame-guard.js?v=1eae02143f3af9b4"></script>
+<script src="/telemetry.js?v=1eae02143f3af9b4"></script>
+<script src="/pwa.js?v=1eae02143f3af9b4" defer></script>
+<link href="/fonts/fonts.css?v=1eae02143f3af9b4" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -74,6 +74,8 @@
     --coral:#E4572E;
     --fr:#C1443B;
     --nl:#1E5AA8;
+    --eur:#1E5AA8;
+    --usd:#1B7A3E;
     --white:#FFFFFF;
     --mute:#5C6B6A;
     --line:#132A2E;
@@ -654,8 +656,10 @@
   @keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.35);}100%{transform:scale(1);}}
 
   .card .body{padding:11px 12px 13px;display:flex;flex-direction:column;gap:5px;flex:1;}
-  .card .price{font-weight:700;font-size:16px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-variant-numeric:tabular-nums;}
-  .card .price .alt{font-size:12px;font-weight:800;color:var(--sea-deep);background:var(--paper);border:1.5px solid rgba(19,42,46,.18);border-radius:999px;padding:2px 7px;}
+  .card .price{font-weight:700;font-size:16px;display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;font-variant-numeric:tabular-nums;}
+  .cur-eur{color:var(--eur);}
+  .cur-usd{color:var(--usd);}
+  .card .price .alt{font-size:12px;font-weight:800;background:var(--paper);border:1.5px solid currentColor;border-radius:999px;padding:2px 8px;}
   .card .price .drop{
     font-size:12px;font-weight:700;color:var(--white);background:var(--coral);
     width:17px;height:17px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
@@ -966,9 +970,9 @@
   .detail-photo img{width:100%;height:100%;min-height:300px;object-fit:cover;display:block;}
   .detail-media{align-self:start;order:-1;}
   .detail-meta{display:flex;flex-direction:column;gap:12px;}
-  .detail-price{font-family:'Space Grotesk',sans-serif;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-variant-numeric:tabular-nums;}
+  .detail-price{font-family:'Space Grotesk',sans-serif;display:flex;align-items:baseline;gap:8px 16px;flex-wrap:wrap;font-variant-numeric:tabular-nums;}
   .detail-price .amt{font-size:30px;font-weight:800;line-height:1;}
-  .detail-price .alt{font-size:15px;font-weight:800;color:var(--sea-deep);background:var(--paper);border:1.5px solid rgba(19,42,46,.18);border-radius:999px;padding:5px 10px;}
+  .detail-price .alt{font-size:15px;font-weight:800;background:var(--paper);border:1.5px solid currentColor;border-radius:999px;padding:5px 11px;}
   .listing-primary{border-bottom:1.5px solid rgba(19,42,46,.18);padding-bottom:10px;}
   .listing-primary p{margin-top:4px;}
   .listing-extra{
@@ -3000,20 +3004,20 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=9e5a9e95e6a51653" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=9e5a9e95e6a51653"></script>
-<script src="native-ios.js?v=9e5a9e95e6a51653"></script>
-<script src="captcha.js?v=9e5a9e95e6a51653"></script>
-<script src="supabase-api.js?v=9e5a9e95e6a51653"></script>
-<script src="img-utils.js?v=9e5a9e95e6a51653"></script>
-<script src="draft-store.js?v=9e5a9e95e6a51653"></script>
-<script src="push-config.js?v=9e5a9e95e6a51653"></script>
-<script src="push-notifications.js?v=9e5a9e95e6a51653"></script>
-<script src="consent.js?v=9e5a9e95e6a51653" defer></script>
-<script src="native-admob.js?v=9e5a9e95e6a51653"></script>
-<script src="ads-config.js?v=9e5a9e95e6a51653"></script>
-<script src="ads.js?v=9e5a9e95e6a51653" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=1eae02143f3af9b4" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=1eae02143f3af9b4"></script>
+<script src="native-ios.js?v=1eae02143f3af9b4"></script>
+<script src="captcha.js?v=1eae02143f3af9b4"></script>
+<script src="supabase-api.js?v=1eae02143f3af9b4"></script>
+<script src="img-utils.js?v=1eae02143f3af9b4"></script>
+<script src="draft-store.js?v=1eae02143f3af9b4"></script>
+<script src="push-config.js?v=1eae02143f3af9b4"></script>
+<script src="push-notifications.js?v=1eae02143f3af9b4"></script>
+<script src="consent.js?v=1eae02143f3af9b4" defer></script>
+<script src="native-admob.js?v=1eae02143f3af9b4"></script>
+<script src="ads-config.js?v=1eae02143f3af9b4"></script>
+<script src="ads.js?v=1eae02143f3af9b4" defer></script>
 
-<script src="app-index.js?v=9e5a9e95e6a51653"></script>
+<script src="app-index.js?v=1eae02143f3af9b4"></script>
 </body>
 </html>
