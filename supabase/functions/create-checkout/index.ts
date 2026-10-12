@@ -126,7 +126,25 @@ Deno.serve(async (req) => {
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST", headers: { Authorization: `Bearer ${STRIPE_KEY}`, "Content-Type": "application/x-www-form-urlencoded" }, body: form,
   });
-  if (!response.ok) return json({ error: "checkout unavailable" }, 502, headers);
+  if (!response.ok) {
+    // Keep Stripe's response body out of client responses and logs: it can
+    // contain request details. Record only stable diagnostic fields so a
+    // misconfigured key/price can be corrected without exposing secrets.
+    let stripeError: Record<string, unknown> = {};
+    try {
+      const payload = await response.json();
+      if (payload?.error && typeof payload.error === "object") stripeError = payload.error;
+    } catch (_) { /* Stripe did not return JSON */ }
+    const diagnostic = {
+      status: response.status,
+      type: typeof stripeError.type === "string" ? stripeError.type : "unknown",
+      code: typeof stripeError.code === "string" ? stripeError.code : "unknown",
+      param: typeof stripeError.param === "string" ? stripeError.param : null,
+      requestId: response.headers.get("request-id") || null,
+    };
+    console.error("[create-checkout] Stripe rejected Checkout Session", JSON.stringify(diagnostic));
+    return json({ error: "checkout unavailable", stripe: diagnostic }, 502, headers);
+  }
   const session = await response.json();
   return json({ url: session.url }, 200, headers);
 });

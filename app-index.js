@@ -5354,7 +5354,10 @@ async function confirmDemoPayment(e){
     }
     const checkout = await SB.createSecureCheckout(plan);
     if(checkout?.data?.url){ location.assign(checkout.data.url); return false; }
-    showToast(state.lang === "fr" ? "Paiement sécurisé indisponible pour le moment." : "Secure checkout is unavailable right now.");
+    const stripeDiagnostic = checkout?.error?.stripe;
+    const stripeReason = stripeDiagnostic && stripeDiagnostic.code && stripeDiagnostic.code !== "unknown"
+      ? " (Stripe: " + stripeDiagnostic.code + ")" : "";
+    showToast((state.lang === "fr" ? "Paiement sécurisé indisponible pour le moment." : "Secure checkout is unavailable right now.") + stripeReason);
     return false;
   }
   if(pendingProSignup){

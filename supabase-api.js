@@ -737,7 +737,7 @@
         body: JSON.stringify({ plan: plan })
       });
       var body = await response.json().catch(function () { return {}; });
-      return response.ok && body.url ? { data: body, error: null } : { data: null, error: { message: "Checkout unavailable" } };
+      return response.ok && body.url ? { data: body, error: null } : { data: null, error: { message: "Checkout unavailable", stripe: body.stripe || null } };
     },
 
     // One-time Stripe payment for a boost on one of the caller's listings.
