@@ -873,8 +873,8 @@ const L = [
   {id:6, t:"Yamaha 4x4 Kodiak 450, entretien à jour",         cat:"scoot", sub:"motorbike-sale", side:"nl", area:"Dutch Quarter", cond:"tbe",  cur:"usd", eur:4800, usd:5150, ph:30, pics:10,pro:false, urgent:false},
   {id:7, t:"Frigo américain Samsung, froid ventilé",          cat:"menag", side:"fr", area:"Cul-de-Sac",    cond:"bon",  cur:"eur", eur:290,  usd:315,  ph:14, pics:3, pro:false, urgent:false, delivery:"delivery"},
   {id:8, t:"Serveur / barman expérimenté - Baie Orientale",   cat:"job", sub:"hospitality",  side:"fr", area:"Baie Orientale",cond:"neuf", cur:"eur", eur:0, usd:0, ph:5, pics:1, pro:true, urgent:true, salary:true},
-  {id:9, t:"Kitesurf Duotone 10m + barre, pack complet",      cat:"lois",  side:"nl", area:"Cupecoy",       cond:"tbe",  cur:"usd", eur:640,  usd:690,  ph:26, pics:7, pro:false, urgent:false},
-  {id:10,t:"Suzuki Jimny 2019, clim, 62 000 km",              cat:"voit",  sub:"car-sale", side:"nl", area:"Philipsburg", cond:"tbe", cur:"usd", eur:14500,usd:15600,ph:3, pics:14,pro:true, urgent:false, drop:true, delivery:"pickup", negotiable:true},
+  {id:9, t:"Kitesurf Duotone 10m + barre, pack complet",      cat:"lois",  side:"nl", area:"Cupecoy",       cond:"tbe",  cur:"usd", eur:640,  usd:690,  ph:26, pics:7, pro:false, urgent:false, feat:true},
+  {id:10,t:"Suzuki Jimny 2019, clim, 62 000 km",              cat:"voit",  sub:"car-sale", side:"nl", area:"Philipsburg", cond:"tbe", cur:"usd", eur:14500,usd:15600,ph:3, pics:14,pro:true, urgent:false, drop:true, delivery:"pickup", negotiable:true, feat:true},
   {id:11,t:"MacBook Air M1, 8/256, clavier AZERTY",           cat:"elec", sub:"laptops", side:"fr", area:"Marigot",       cond:"tbe",  cur:"eur", eur:560,  usd:605,  ph:7,  pics:6, pro:false, urgent:false, delivery:"meetup", negotiable:true},
   {id:12,t:"Studio Grand Case, pieds dans l'eau, courte durée",cat:"immo", sub:"rent-apartment", side:"fr", area:"Grand Case", cond:"bon", cur:"eur", eur:900, usd:970, ph:11, pics:9, pro:true, urgent:false},
   {id:13,t:"Annexe 3,10 m + moteur Tohatsu 9.8, révisé",      cat:"bat",   side:"nl", area:"Simpson Bay",   cond:"bon",  eur:2100, usd:2260, ph:19, pics:5, pro:false, urgent:false},
@@ -899,12 +899,12 @@ const L = [
   {id:32,t:"Panier de fruits et légumes locaux", te:"Local fruit and vegetable box", cat:"food", sub:"fresh-produce", side:"nl", area:"Philipsburg", cond:"neuf", cur:"usd", eur:23, usd:25, ph:4, pics:5, pro:true, urgent:false, delivery:"delivery", desc:"Produits locaux de saison. Réservez votre panier dans le chat et récupérez-le à Philipsburg.", desce:"Seasonal local produce. Reserve your box in chat and collect it in Philipsburg."},
   {id:33,t:"Viennoiseries fraîches - boîte de 8", te:"Fresh pastries - box of 8", cat:"food", sub:"bakery", side:"fr", area:"Grand Case", cond:"neuf", cur:"eur", eur:16, usd:18, ph:5, pics:4, pro:true, urgent:false, delivery:"pickup", desc:"Croissants et pains au chocolat préparés le matin. Réservation recommandée.", desce:"Croissants and pain au chocolat baked in the morning. Pre-ordering is recommended."},
   {id:34,t:"Toyota Hilux double cabine - inventaire concessionnaire", te:"Toyota Hilux double cab - dealer inventory", cat:"voit", sub:"dealer-inventory", side:"nl", area:"Philipsburg", cond:"tbe", cur:"usd", eur:25200, usd:27200, ph:3, pics:16, pro:true, urgent:false, feat:true, delivery:"pickup", desc:"Véhicule visible chez le concessionnaire. Financement et reprise possibles sur demande.", desce:"Vehicle available at the dealership. Financing and trade-in available on request."},
-  {id:35,t:"Jet ski Yamaha VX Cruiser 2021", te:"2021 Yamaha VX Cruiser jet ski", cat:"bat", sub:"jet-ski-sale", side:"fr", area:"Baie Nettlé", cond:"bon", cur:"eur", eur:7600, usd:8200, ph:18, pics:9, pro:false, urgent:false, delivery:"meetup", negotiable:true},
-  {id:36,t:"Villa 2 chambres - location vacances Orient Bay", te:"2-bedroom villa - Orient Bay vacation rental", cat:"immo", sub:"vacation-rental", side:"fr", area:"Baie Orientale", cond:"tbe", cur:"eur", eur:185, usd:200, ph:12, pics:14, pro:true, urgent:false, delivery:"meetup"},
+  {id:35,t:"Jet ski Yamaha VX Cruiser 2021", te:"2021 Yamaha VX Cruiser jet ski", cat:"bat", sub:"jet-ski-sale", side:"fr", area:"Baie Nettlé", cond:"bon", cur:"eur", eur:7600, usd:8200, ph:18, pics:9, pro:false, urgent:false, delivery:"meetup", negotiable:true, feat:true},
+  {id:36,t:"Villa 2 chambres - location vacances Orient Bay", te:"2-bedroom villa - Orient Bay vacation rental", cat:"immo", sub:"vacation-rental", side:"fr", area:"Baie Orientale", cond:"tbe", cur:"eur", eur:185, usd:200, ph:12, pics:14, pro:true, urgent:false, delivery:"meetup", feat:true},
   {id:37,t:"Offre d'emploi: réceptionniste hôtel - Maho", te:"Job offer: hotel receptionist - Maho", cat:"job", sub:"paid-job-post", side:"nl", area:"Maho", cond:"neuf", cur:"usd", eur:0, usd:0, ph:4, pics:1, pro:true, urgent:true, salary:true},
   {id:38,t:"Service nettoyage villas - check-in / check-out", te:"Villa cleaning service - check-in / check-out", cat:"serv", sub:"cleaning", side:"fr", area:"Terres Basses", cond:"neuf", cur:"eur", eur:0, usd:0, ph:9, pics:4, pro:true, urgent:false, salary:true, delivery:"delivery"},
-  {id:39,t:"Coiffure braids & brushing à domicile", te:"Braids and blowout at-home hair service", cat:"beauty", sub:"hairdresser", side:"nl", area:"Cole Bay", cond:"neuf", cur:"usd", eur:0, usd:0, ph:7, pics:5, pro:true, urgent:false, salary:true, delivery:"meetup"},
-  {id:40,t:"Nintendo Switch OLED + 3 jeux", te:"Nintendo Switch OLED + 3 games", cat:"gaming", sub:"nintendo", side:"fr", area:"Marigot", cond:"tbe", cur:"eur", eur:240, usd:260, ph:6, pics:5, pro:false, urgent:true, delivery:"meetup", negotiable:true},
+  {id:39,t:"Coiffure braids & brushing à domicile", te:"Braids and blowout at-home hair service", cat:"beauty", sub:"hairdresser", side:"nl", area:"Cole Bay", cond:"neuf", cur:"usd", eur:0, usd:0, ph:7, pics:5, pro:true, urgent:false, salary:true, delivery:"meetup", feat:true},
+  {id:40,t:"Nintendo Switch OLED + 3 jeux", te:"Nintendo Switch OLED + 3 games", cat:"gaming", sub:"nintendo", side:"fr", area:"Marigot", cond:"tbe", cur:"eur", eur:240, usd:260, ph:6, pics:5, pro:false, urgent:true, delivery:"meetup", negotiable:true, feat:true},
   {id:41,t:"Accessoires chien: panier, laisse, gamelles", te:"Dog accessories: bed, leash, bowls", cat:"pets", sub:"pet-supplies", side:"nl", area:"Simpson Bay", cond:"bon", cur:"usd", eur:42, usd:45, ph:16, pics:4, pro:false, urgent:false, delivery:"pickup", negotiable:true}
 ];
 
@@ -2382,6 +2382,94 @@ function watchGridMore(){
   gridMoreObserver.observe(more);
 }
 
+/* ---------------- FEATURED BOARD CAROUSEL ----------------
+ * The board is a row that already scrolls sideways. Every BOARD_STEP_MS it
+ * also moves by itself to the next card, left to right through the list,
+ * and goes back to the first card after the last one.
+ * It holds still while someone is using it (mouse over it, finger on it,
+ * keyboard focus inside), while a window is open over the page, while the
+ * board is off screen or the tab is hidden, and for visitors whose device
+ * asks for less motion. The pause button stops it for good. */
+const BOARD_STEP_MS = 3500;
+const BOARD_RESUME_AFTER_TOUCH_MS = 4000;
+const boardLessMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+let boardTimer = null;
+let boardPaused = false;   // the visitor pressed pause
+let boardHeld = false;     // mouse or keyboard focus is on the board
+let boardTouchedAt = 0;
+let boardOnScreen = true;
+
+function boardStep(dir){
+  const board = document.getElementById("board");
+  const card = board.querySelector(".card");
+  if(!card) return;
+  const max = board.scrollWidth - board.clientWidth;
+  if(max <= 4) return;
+  const step = card.offsetWidth + (parseFloat(getComputedStyle(board).columnGap) || 0);
+  const at = board.scrollLeft;
+  let left = at + dir * step;
+  if(dir > 0 && at >= max - 4) left = 0;
+  if(dir < 0 && at <= 4) left = max;
+  board.scrollTo({left:Math.max(0, Math.min(max, left)), behavior:boardLessMotion.matches ? "auto" : "smooth"});
+}
+
+function boardTick(){
+  if(boardPaused || boardHeld || !boardOnScreen || document.hidden || boardLessMotion.matches) return;
+  if(Date.now() - boardTouchedAt < BOARD_RESUME_AFTER_TOUCH_MS) return;
+  if(document.querySelector(".modal.open")) return;
+  boardStep(1);
+}
+
+function restartBoardTimer(){
+  clearInterval(boardTimer);
+  boardTimer = setInterval(boardTick, BOARD_STEP_MS);
+}
+
+// An arrow press also restarts the wait, so the board does not move again
+// a moment after the visitor chose where to look.
+function boardPrev(){ boardStep(-1); restartBoardTimer(); }
+function boardNext(){ boardStep(1); restartBoardTimer(); }
+
+function toggleBoardAuto(){
+  boardPaused = !boardPaused;
+  syncBoardNav();
+}
+
+// Called on every render: the controls only make sense when the cards do
+// not all fit, and their labels follow the language.
+function syncBoardNav(){
+  const board = document.getElementById("board");
+  const nav = document.getElementById("boardNav");
+  if(!board || !nav) return;
+  const fr = state.lang === "fr";
+  nav.hidden = !(board.querySelector(".card") && board.scrollWidth - board.clientWidth > 4);
+  const pause = document.getElementById("boardPause");
+  pause.hidden = boardLessMotion.matches;
+  pause.setAttribute("aria-pressed", String(boardPaused));
+  pause.setAttribute("aria-label", boardPaused
+    ? (fr ? "Relancer le défilement" : "Resume scrolling")
+    : (fr ? "Mettre le défilement en pause" : "Pause scrolling"));
+  document.getElementById("boardPrev").setAttribute("aria-label", fr ? "Annonces précédentes" : "Previous listings");
+  document.getElementById("boardNext").setAttribute("aria-label", fr ? "Annonces suivantes" : "Next listings");
+}
+
+(function startBoardCarousel(){
+  const board = document.getElementById("board");
+  if(!board) return;
+  board.addEventListener("pointerenter", e=>{ if(e.pointerType === "mouse") boardHeld = true; });
+  board.addEventListener("pointerleave", e=>{ if(e.pointerType === "mouse") boardHeld = false; });
+  board.addEventListener("focusin", ()=>{ boardHeld = true; });
+  board.addEventListener("focusout", ()=>{ boardHeld = false; });
+  ["touchstart","touchmove","touchend","wheel"].forEach(type=>
+    board.addEventListener(type, ()=>{ boardTouchedAt = Date.now(); }, {passive:true}));
+  if("IntersectionObserver" in window){
+    new IntersectionObserver(entries=>{ boardOnScreen = entries[entries.length - 1].isIntersecting; }).observe(board);
+  }
+  window.addEventListener("resize", syncBoardNav);
+  boardLessMotion.addEventListener("change", syncBoardNav);
+  restartBoardTimer();
+})();
+
 function render(){
   restoreListingsIfNeeded();
   // featured board
@@ -2391,6 +2479,7 @@ function render(){
     `<p style="padding:24px;color:var(--mute)">${t().noneB}</p>`;
   document.getElementById("boardTally").textContent =
     feat.length ? `${feat.length} · ${t().onIsland}` : "";
+  syncBoardNav();
 
   // main grid
   gridList = sortList(L.filter(passesFilters));

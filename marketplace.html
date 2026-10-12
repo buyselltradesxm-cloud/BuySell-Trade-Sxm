@@ -32,10 +32,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=686ce9e5b9f21b20"></script>
-<script src="/telemetry.js?v=686ce9e5b9f21b20"></script>
-<script src="/pwa.js?v=686ce9e5b9f21b20" defer></script>
-<link href="/fonts/fonts.css?v=686ce9e5b9f21b20" rel="stylesheet">
+<script src="/frame-guard.js?v=43b64bd4e816fceb"></script>
+<script src="/telemetry.js?v=43b64bd4e816fceb"></script>
+<script src="/pwa.js?v=43b64bd4e816fceb" defer></script>
+<link href="/fonts/fonts.css?v=43b64bd4e816fceb" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -515,6 +515,13 @@
   .board-head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;}
   .board-head h2{font-size:19px;font-weight:700;}
   .board-head .tally{font-size:12px;color:var(--mute);}
+  .board-nav{margin-left:auto;align-self:center;display:flex;gap:6px;}
+  .board-nav[hidden],.board-btn[hidden]{display:none;}
+  .board-btn{width:36px;height:36px;display:grid;place-items:center;border:2px solid var(--line);border-radius:50%;background:var(--white);color:var(--ink);cursor:pointer;transition:border-color .18s ease;}
+  .board-btn:hover,.board-btn:focus-visible{border-color:var(--sea);outline:none;}
+  .board-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+  .board-btn .i-play,.board-btn[aria-pressed="true"] .i-pause{display:none;}
+  .board-btn[aria-pressed="true"] .i-play{display:block;}
 
   .board{
     display:flex;gap:16px;
@@ -530,7 +537,8 @@
     border-radius:16px;
     scrollbar-width:thin;
   }
-  .board .card{flex:0 0 262px;}
+  .board{scroll-snap-type:x proximity;scroll-padding-left:16px;}
+  .board .card{flex:0 0 262px;scroll-snap-align:start;}
 
   .results-head{
     display:flex;align-items:center;justify-content:space-between;
@@ -1687,6 +1695,8 @@
     .grid{grid-template-columns:repeat(2,1fr);gap:12px 10px;}
     .card .ttl{font-size:12.5px;}
     .board .card{flex-basis:220px;}
+    .board-btn{width:44px;height:44px;}
+    #boardPrev,#boardNext{display:none;}
     .trust{grid-template-columns:1fr;}
     .hero h1{font-size:24px;}
     .search{display:grid;grid-template-columns:minmax(0,1fr) auto;width:100%;}
@@ -2239,6 +2249,11 @@
     <div class="board-head">
       <h2 data-i18n="featured">À la une sur l'île</h2>
       <span class="tally" id="boardTally"></span>
+      <div class="board-nav" id="boardNav" hidden>
+        <button type="button" class="board-btn" id="boardPrev" data-click="boardPrev" aria-label="Annonces précédentes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button type="button" class="board-btn" id="boardPause" data-click="toggleBoardAuto" aria-pressed="false" aria-label="Mettre le défilement en pause"><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg></button>
+        <button type="button" class="board-btn" id="boardNext" data-click="boardNext" aria-label="Annonces suivantes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
     </div>
     <div class="board" id="board"></div>
 
@@ -2955,20 +2970,20 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=686ce9e5b9f21b20" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=686ce9e5b9f21b20"></script>
-<script src="native-ios.js?v=686ce9e5b9f21b20"></script>
-<script src="captcha.js?v=686ce9e5b9f21b20"></script>
-<script src="supabase-api.js?v=686ce9e5b9f21b20"></script>
-<script src="img-utils.js?v=686ce9e5b9f21b20"></script>
-<script src="draft-store.js?v=686ce9e5b9f21b20"></script>
-<script src="push-config.js?v=686ce9e5b9f21b20"></script>
-<script src="push-notifications.js?v=686ce9e5b9f21b20"></script>
-<script src="consent.js?v=686ce9e5b9f21b20" defer></script>
-<script src="native-admob.js?v=686ce9e5b9f21b20"></script>
-<script src="ads-config.js?v=686ce9e5b9f21b20"></script>
-<script src="ads.js?v=686ce9e5b9f21b20" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=43b64bd4e816fceb" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=43b64bd4e816fceb"></script>
+<script src="native-ios.js?v=43b64bd4e816fceb"></script>
+<script src="captcha.js?v=43b64bd4e816fceb"></script>
+<script src="supabase-api.js?v=43b64bd4e816fceb"></script>
+<script src="img-utils.js?v=43b64bd4e816fceb"></script>
+<script src="draft-store.js?v=43b64bd4e816fceb"></script>
+<script src="push-config.js?v=43b64bd4e816fceb"></script>
+<script src="push-notifications.js?v=43b64bd4e816fceb"></script>
+<script src="consent.js?v=43b64bd4e816fceb" defer></script>
+<script src="native-admob.js?v=43b64bd4e816fceb"></script>
+<script src="ads-config.js?v=43b64bd4e816fceb"></script>
+<script src="ads.js?v=43b64bd4e816fceb" defer></script>
 
-<script src="app-marketplace.js?v=686ce9e5b9f21b20"></script>
+<script src="app-marketplace.js?v=43b64bd4e816fceb"></script>
 </body>
 </html>
