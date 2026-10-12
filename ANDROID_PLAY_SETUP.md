@@ -163,3 +163,5 @@ Actions → **Mobile Android Cloud Build** → **Run workflow**:
   `IOS_CLOUD_BUILD.md`.
 - Store listing assets (screenshots, feature graphic, short/long
   description) — done in Play Console, not in the repo.
+
+Database migration is also versioned at `supabase/migrations/20261012120000_google_play_purchases.sql` for future deployments.
