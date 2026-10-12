@@ -6389,6 +6389,7 @@ function openListingFromUrl(dataLoaded = false){
 }
 
 Object.assign(window, {
+  confirmDemoPayment,
   openAdmin,
   openPricingInfo,
   openListingFromAdmin,
