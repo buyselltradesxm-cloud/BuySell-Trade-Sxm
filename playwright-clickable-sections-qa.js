@@ -50,9 +50,14 @@ const { chromium } = require("playwright");
     });
 
     const profileModal = page.locator("#profileModal");
-    await profileModal.getByRole("button", { name:/Email vérifié|Verified email/i }).click();
+    // This demo account never confirmed an email address, so it must not wear
+    // the "verified email" badge. Its Pro badge is the clickable one.
+    if(await profileModal.getByRole("button", { name:/Email vérifié|Verified email/i }).count()){
+      errors.push(`${path}: an unverified account shows the verified-email badge`);
+    }
+    await profileModal.getByRole("button", { name:/^(Compte Pro|Pro account)$/i }).click();
     let toast = await page.locator("#toast").innerText({ timeout:2000 }).catch(() => "");
-    if(!/Email|email/.test(toast)) errors.push(`${path}: trust badge did not show email info`);
+    if(!/Compte Pro|Pro account/.test(toast)) errors.push(`${path}: trust badge did not show its info`);
 
     await profileModal.getByRole("button", { name:/Messages/i }).first().click();
     const messagesOpen = await page.locator("#messagesModal.open").count();

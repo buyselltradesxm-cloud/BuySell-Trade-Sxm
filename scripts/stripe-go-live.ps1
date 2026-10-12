@@ -27,11 +27,11 @@ $DefaultEvents = @(
 # Monthly USD amount in cents -> Supabase secret name. Keep in step with
 # ACCOUNT_PLANS in the app and account_listing_limit() in the database.
 $SecretByAmount = [ordered]@{
-  2900  = "STRIPE_PRICE_PRO_STARTER"
-  5900  = "STRIPE_PRICE_PRO_BUSINESS"
-  9900  = "STRIPE_PRICE_PRO_PREMIUM"
-  14900 = "STRIPE_PRICE_PRO_ELITE"
-  19900 = "STRIPE_PRICE_PRO_UNLIMITED"
+  2499  = "STRIPE_PRICE_PRO_STARTER"
+  4599  = "STRIPE_PRICE_PRO_BUSINESS"
+  8099  = "STRIPE_PRICE_PRO_PREMIUM"
+  11999 = "STRIPE_PRICE_PRO_ELITE"
+  15099 = "STRIPE_PRICE_PRO_UNLIMITED"
 }
 
 $key = Read-Host "Stripe LIVE secret key (sk_live_... or rk_live_..., input hidden)" -AsSecureString
@@ -47,11 +47,16 @@ function Stripe($Method, $Path, $Body) {
 $prices = (Stripe Get "prices?active=true&type=recurring&limit=100").data |
   Where-Object { $_.livemode -and $_.currency -eq "usd" -and $_.recurring.interval -eq "month" -and $_.recurring.interval_count -eq 1 }
 $secrets = [ordered]@{}
-foreach ($amount in $SecretByAmount.Keys) {
+# An [ordered] table indexed with a number reads a POSITION, not a key
+# ($SecretByAmount[2900] is "the 2901st entry", which is null), so the secret
+# name is taken from the entry itself.
+foreach ($plan in $SecretByAmount.GetEnumerator()) {
+  $amount = $plan.Key
+  $name = $plan.Value
   $match = @($prices | Where-Object { $_.unit_amount -eq $amount })
   if ($match.Count -ne 1) { throw "Expected exactly one active live monthly USD price of $($amount / 100) USD, found $($match.Count). Nothing was changed." }
-  $secrets[$SecretByAmount[$amount]] = $match[0].id
-  Write-Host ("  {0,-28} {1}" -f $SecretByAmount[$amount], $match[0].id)
+  $secrets[$name] = $match[0].id
+  Write-Host ("  {0,-28} {1}" -f $name, $match[0].id)
 }
 
 $old = @((Stripe Get "webhook_endpoints?limit=100").data | Where-Object { $_.url -like "*.supabase.co/functions/v1/stripe-webhook" })   # also catches a mistyped project ref

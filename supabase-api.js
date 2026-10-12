@@ -807,6 +807,25 @@
       return res.data;
     },
 
+    // After a profile name change: rewrites the public seller name on the
+    // signed-in user's own listings. The database fills the value from the
+    // profile row (set_listing_seller_name), whatever is sent here.
+    refreshOwnListingSellerName: async function (displayName) {
+      if (!window.db) return false;
+      var user = await SB.currentUser();
+      if (!user) return false;
+      var res = await window.db
+        .from("listings")
+        .update({ seller_name: displayName || null })
+        .eq("seller_id", user.id)
+        .select("id");
+      if (res.error) {
+        console.warn("[SB] refreshOwnListingSellerName:", res.error.message);
+        return false;
+      }
+      return true;
+    },
+
     /* --------- ADMIN / MODERATION --------- */
 
     logAdminEvent: async function (action, targetType, targetId, metadata) {

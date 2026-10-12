@@ -7,11 +7,11 @@ will accept: a **signed release AAB** built and uploaded by CI.
 - App / package ID: `com.korekdigitalmarketing.buyselltradesxm`
 - Play subscription product IDs (Play limits IDs to 40 characters; these map to
   the same five plan tiers as iOS):
-  - `pro_starter_monthly` — Pro Starter — $29/month
-  - `pro_business_monthly` — Pro Business — $59/month
-  - `pro_premium_monthly` — Premium — $99/month
-  - `pro_elite_monthly` — Elite — $149/month
-  - `pro_unlimited_monthly` — Unlimited — $199/month
+  - `pro_starter_monthly` — Pro Starter — $24.99/month
+  - `pro_business_monthly` — Pro Business — $45.99/month
+  - `pro_premium_monthly` — Premium — $80.99/month
+  - `pro_elite_monthly` — Elite — $119.99/month
+  - `pro_unlimited_monthly` — Unlimited — $150.99/month
 - GitHub repo: https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm
 - Play + Apple are the same pro account: `korekdigitalmarketing@gmail.com`
 - Build/publish workflow: `.github/workflows/mobile-android-cloud.yml`

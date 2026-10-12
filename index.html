@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="google-adsense-account" content="ca-pub-7816106453580174">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://*.googlesyndication.com https://partner.googleadservices.com https://www.googletagservices.com https://adservice.google.com https://*.adtrafficquality.google https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googlesyndication.com https://*.g.doubleclick.net https://*.adtrafficquality.google https://www.google.com https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src https://challenges.cloudflare.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google https://www.google.com; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://fundingchoicesmessages.google.com https://*.googlesyndication.com https://partner.googleadservices.com https://www.googletagservices.com https://adservice.google.com https://*.adtrafficquality.google https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fundingchoicesmessages.google.com https://csi.gstatic.com https://*.googlesyndication.com https://*.g.doubleclick.net https://*.adtrafficquality.google https://www.google.com https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src https://challenges.cloudflare.com https://fundingchoicesmessages.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google https://www.google.com; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Petites annonces Saint-Martin &amp; Sint Maarten | Buy Sell Trade SXM</title>
 <link rel="canonical" href="https://buyselltradesxm.com/">
@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=04571c68b983b39d"></script>
-<script src="/telemetry.js?v=04571c68b983b39d"></script>
-<script src="/pwa.js?v=04571c68b983b39d" defer></script>
-<link href="/fonts/fonts.css?v=04571c68b983b39d" rel="stylesheet">
+<script src="/frame-guard.js?v=6453ca1e7eabd52a"></script>
+<script src="/telemetry.js?v=6453ca1e7eabd52a"></script>
+<script src="/pwa.js?v=6453ca1e7eabd52a" defer></script>
+<link href="/fonts/fonts.css?v=6453ca1e7eabd52a" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -173,8 +173,9 @@
   /* Icon-only on desktop too (not just mobile): at the bar-inner's 1320px cap,
      showing full text labels here starves the search bar down to an unusable
      ~28px-wide input. Icons + the unread/fav count badges stay, same meaning,
-     far less width. */
-  .bar-actions .label{display:none;}
+     far less width. The labels stay in the page, hidden from view only, so
+     each button keeps its name for screen readers and its tooltip. */
+  .bar-actions .label{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0;}
   .icon-btn{
     display:flex;align-items:center;gap:4px;
     padding:8px 9px;border-radius:8px;font-weight:500;color:var(--ink);
@@ -593,6 +594,7 @@
     grid-template-columns:repeat(4,1fr);
     gap:18px 16px;
   }
+  .grid > *{min-width:0;}
 
   /* ---------------- CARD ---------------- */
   .card{
@@ -1515,6 +1517,15 @@
   .pf-id h3{font-size:20px;line-height:1.2;margin:0 0 3px;overflow-wrap:anywhere;}
   .pf-id p{color:var(--mute);font-size:13.5px;line-height:1.45;overflow-wrap:anywhere;}
   .pf-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .pf-edit{display:grid;gap:6px;margin:12px 2px 0;padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);}
+  .pf-edit label{font-size:12.5px;font-weight:800;color:var(--ink);}
+  .pf-edit input{width:100%;min-height:44px;padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;background:var(--white);color:var(--ink);font:inherit;font-size:16px;}
+  .pf-edit-note{color:var(--mute);font-size:12.5px;line-height:1.4;}
+  .pf-edit-error{color:#b3261e;font-size:13px;font-weight:700;}
+  .pf-edit-error:empty{display:none;}
+  .pf-edit-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+  .pf-edit-actions button{min-height:44px;padding:9px 16px;border:1.5px solid var(--line);border-radius:9px;background:var(--white);color:var(--ink);font-weight:800;cursor:pointer;}
+  .pf-edit-actions button.primary{background:var(--sea);border-color:var(--sea);color:var(--white);}
   .pf-chips:empty{display:none;}
   .pf-chips button{
     border:1px solid var(--pf-rule);border-radius:999px;background:var(--white);
@@ -1656,7 +1667,6 @@
     .logo .mark{font-size:18px;max-width:170px;}
     .logo .sub{font-size:10px;max-width:170px;}
     .bar-actions{gap:4px;}
-    .bar-actions .label{display:none;}
     .bar-actions .icon-btn{padding:7px 8px;}
     .bar-actions .icon-btn:not(#profileBtn){display:none;}
     .bar-actions .post{display:inline-flex;align-items:center;justify-content:center;max-width:92px;min-height:40px;padding:9px 10px;font-size:0;}
@@ -1721,7 +1731,7 @@
     .logo .sub{font-size:10px;max-width:116px;}
     .bar-actions{gap:2px;}
     .bar-actions .lang{display:none;}
-    .bar-actions .label{display:none;}
+
     .bar-actions .icon-btn{display:none;}
     .bar-actions .post{display:none;}
     .icon-btn{padding:7px 6px;}
@@ -2762,23 +2772,23 @@
               <ul><li data-en="5 free listings per month">5 annonces gratuites par mois</li><li data-en="Standard listings">Annonces standards</li><li data-en="Chat, saved items and ratings">Chat, favoris et évaluations</li></ul><span class="pricing-cta" data-en="Post for free">Publier gratuitement</span>
             </button>
             <button type="button" class="pricing-card" data-click="chooseProPlan" data-click-args='["pro-starter"]'>
-              <span class="pricing-price" data-en="$29 / month">29 $ / mois</span><h4 data-en="Pro Starter">Pro Starter</h4><p data-en="To start selling regularly.">Pour commencer à vendre régulièrement.</p>
+              <span class="pricing-price" data-en="$24.99 / month">24.99 $ / mois</span><h4 data-en="Pro Starter">Pro Starter</h4><p data-en="To start selling regularly.">Pour commencer à vendre régulièrement.</p>
               <ul><li data-en="10 active listings">10 annonces actives</li><li data-en="Business page">Page entreprise</li><li data-en="Pro badge">Badge Pro</li><li data-en="1 automatic boost per month">1 boost automatique par mois</li></ul><span class="pricing-cta" data-en="Choose Starter">Choisir Starter</span>
             </button>
             <button type="button" class="pricing-card" data-click="chooseProPlan" data-click-args='["pro-business"]'>
-              <span class="pricing-price" data-en="$59 / month">59 $ / mois</span><h4 data-en="Pro Business">Pro Business</h4><p data-en="More volume and measurable results.">Plus de volume et des résultats mesurables.</p>
+              <span class="pricing-price" data-en="$45.99 / month">45.99 $ / mois</span><h4 data-en="Pro Business">Pro Business</h4><p data-en="More volume and measurable results.">Plus de volume et des résultats mesurables.</p>
               <ul><li data-en="30 active listings">30 annonces actives</li><li data-en="Statistics">Statistiques</li><li data-en="2 automatic boosts per month">2 boosts automatiques par mois</li></ul><span class="pricing-cta" data-en="Choose Pro Business">Choisir Pro Business</span>
             </button>
             <button type="button" class="pricing-card featured" data-click="chooseProPlan" data-click-args='["pro-premium"]'>
-              <span class="pricing-price" data-en="$99 / month">99 $ / mois</span><h4 data-en="Premium">Premium</h4><p data-en="For an active catalog and more contacts.">Pour un catalogue actif et plus de contacts.</p>
+              <span class="pricing-price" data-en="$80.99 / month">80.99 $ / mois</span><h4 data-en="Premium">Premium</h4><p data-en="For an active catalog and more contacts.">Pour un catalogue actif et plus de contacts.</p>
               <ul><li data-en="75 active listings">75 annonces actives</li><li data-en="5 automatic boosts per month">5 boosts automatiques par mois</li><li data-en="Automatic bumps">Remontées automatiques</li><li data-en="WhatsApp and catalog">WhatsApp et catalogue</li></ul><span class="pricing-cta" data-en="Choose Premium">Choisir Premium</span>
             </button>
             <button type="button" class="pricing-card" data-click="chooseProPlan" data-click-args='["pro-elite"]'>
-              <span class="pricing-price" data-en="$149 / month">149 $ / mois</span><h4 data-en="Elite">Elite</h4><p data-en="A real storefront for established businesses.">Une vraie vitrine pour les entreprises établies.</p>
+              <span class="pricing-price" data-en="$119.99 / month">119.99 $ / mois</span><h4 data-en="Elite">Elite</h4><p data-en="A real storefront for established businesses.">Une vraie vitrine pour les entreprises établies.</p>
               <ul><li data-en="150 active listings">150 annonces actives</li><li data-en="10 automatic boosts per month">10 boosts automatiques par mois</li><li data-en="Business storefront">Vitrine entreprise</li><li data-en="Priority in results">Priorité dans les résultats</li></ul><span class="pricing-cta" data-en="Choose Elite">Choisir Elite</span>
             </button>
             <button type="button" class="pricing-card" data-click="chooseProPlan" data-click-args='["pro-unlimited"]'>
-              <span class="pricing-price" data-en="$199 / month">199 $ / mois</span><h4 data-en="Unlimited">Unlimited</h4><p data-en="Maximum capacity and visibility.">Capacité et visibilité maximales.</p>
+              <span class="pricing-price" data-en="$150.99 / month">150.99 $ / mois</span><h4 data-en="Unlimited">Unlimited</h4><p data-en="Maximum capacity and visibility.">Capacité et visibilité maximales.</p>
               <ul><li data-en="Unlimited listings">Annonces illimitées</li><li data-en="Premium storefront">Vitrine premium</li><li data-en="20 automatic boosts per month">20 boosts automatiques par mois</li><li data-en="Advanced statistics">Statistiques avancées</li></ul><span class="pricing-cta" data-en="Choose Pro Unlimited">Choisir Pro Unlimited</span>
             </button>
           </div>
@@ -2973,8 +2983,8 @@
     <h2 data-i18n="getH">Publiez votre première annonce aujourd'hui</h2>
     <p data-i18n="getP">C'est gratuit, c'est local, et votre voisin cherche sans doute déjà ce que vous vendez.</p>
     <div class="stores">
-      <button type="button" class="store" disabled><span class="sm" data-i18n="storeAvailable">Disponible</span><span class="big">App&nbsp;Store</span></button>
-      <button type="button" class="store" disabled><span class="sm" data-i18n="storeAvailable">Disponible</span><span class="big">Google&nbsp;Play</span></button>
+      <button type="button" class="store" disabled><span class="sm" data-i18n="storeAvailable">Bientôt sur</span><span class="big">App&nbsp;Store</span></button>
+      <button type="button" class="store" disabled><span class="sm" data-i18n="storeAvailable">Bientôt sur</span><span class="big">Google&nbsp;Play</span></button>
     </div>
   </div>
 </section>
@@ -3023,20 +3033,20 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=04571c68b983b39d" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=04571c68b983b39d"></script>
-<script src="native-ios.js?v=04571c68b983b39d"></script>
-<script src="captcha.js?v=04571c68b983b39d"></script>
-<script src="supabase-api.js?v=04571c68b983b39d"></script>
-<script src="img-utils.js?v=04571c68b983b39d"></script>
-<script src="draft-store.js?v=04571c68b983b39d"></script>
-<script src="push-config.js?v=04571c68b983b39d"></script>
-<script src="push-notifications.js?v=04571c68b983b39d"></script>
-<script src="consent.js?v=04571c68b983b39d" defer></script>
-<script src="native-admob.js?v=04571c68b983b39d"></script>
-<script src="ads-config.js?v=04571c68b983b39d"></script>
-<script src="ads.js?v=04571c68b983b39d" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=6453ca1e7eabd52a" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=6453ca1e7eabd52a"></script>
+<script src="native-ios.js?v=6453ca1e7eabd52a"></script>
+<script src="captcha.js?v=6453ca1e7eabd52a"></script>
+<script src="supabase-api.js?v=6453ca1e7eabd52a"></script>
+<script src="img-utils.js?v=6453ca1e7eabd52a"></script>
+<script src="draft-store.js?v=6453ca1e7eabd52a"></script>
+<script src="push-config.js?v=6453ca1e7eabd52a"></script>
+<script src="push-notifications.js?v=6453ca1e7eabd52a"></script>
+<script src="consent.js?v=6453ca1e7eabd52a" defer></script>
+<script src="native-admob.js?v=6453ca1e7eabd52a"></script>
+<script src="ads-config.js?v=6453ca1e7eabd52a"></script>
+<script src="ads.js?v=6453ca1e7eabd52a" defer></script>
 
-<script src="app-index.js?v=04571c68b983b39d"></script>
+<script src="app-index.js?v=6453ca1e7eabd52a"></script>
 </body>
 </html>

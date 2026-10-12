@@ -107,7 +107,7 @@ const server = http.createServer((req, res) => {
       const renewalText = await page.locator('#paymentRenewalTerms').innerText();
       const localizedPrice = (await page.locator('#paymentPlanPrice').innerText()).replace(/\s*\/\s*month$/, '');
       assert.ok(renewalText.includes(localizedPrice), `Renewal disclosure must match the Apple localized price: ${renewalText}`);
-      assert.ok(!renewalText.includes('$29'), "Apple renewal disclosure must not quote the web Stripe price");
+      assert.ok(!renewalText.includes('$24.99'), "Apple renewal disclosure must not quote the web Stripe price");
       assert.equal(await page.locator("[data-apple-restore]").first().isVisible(), true);
       assert.deepEqual(errors, []);
       await page.close();

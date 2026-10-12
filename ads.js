@@ -117,9 +117,10 @@
             encodeURIComponent(client);
     s.onload = function () {
       adsenseState = "ready";
-      if (CFG.adsense.pageLevel) {
-        try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
-      }
+      // No push here for Auto ads: loading the script with ?client= is what
+      // turns them on (per-format control is in the AdSense dashboard). An
+      // empty push({}) means "fill the next slot", so one here took a slot
+      // away from its own request and the last request threw "no_div".
       document.dispatchEvent(new Event("bst:adsense"));
       if (cb) cb(true);
     };
@@ -245,10 +246,15 @@
     wrap.appendChild(ins);
     mount(container, wrap, "network", unit);
     ensureAdsense(function (ok) {
+      // The grid or the listing modal may have been redrawn while the AdSense
+      // script was loading. Asking AdSense to fill a slot that is no longer
+      // in the page makes its script throw "no_div".
+      if (!ins.isConnected) return;
       if (!ok) { renderHouse(container, key, pickHouse()); return; }
       try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
       // fall back to a house promo if AdSense returns no ad
       setTimeout(function () {
+        if (!ins.isConnected) return;
         if (ins.getAttribute("data-ad-status") === "unfilled" ||
             (ins.getBoundingClientRect().height < 8 && ins.getAttribute("data-ad-status") !== "filled")) {
           renderHouse(container, key, pickHouse());

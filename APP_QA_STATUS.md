@@ -7,7 +7,7 @@ Checked: 2026-10-05. Repository: `buyselltradesxm-cloud/BuySell-Trade-Sxm`.
 ## Latest code hardening (2026-10-05)
 
 - Stripe subscription deletion handling was hardened in `supabase/functions/stripe-webhook/index.ts`: if Stripe no longer returns a deleted subscription, the signed deletion event metadata is used to revoke the user's Pro entitlement.
-- Pricing copy now matches the configured $29/$59/$99/$149/$199 monthly plans and $6/$11/$20 boost prices.
+- Pricing copy now matches the configured $24.99/$45.99/$80.99/$119.99/$150.99 monthly plans and $6/$11/$20 boost prices.
 - The webhook fix is deployed from the owner session and is ACTIVE in Supabase.
 - Supabase's built-in email OTP cannot be configured below six digits. A dedicated `signup-code` Edge Function now creates unconfirmed users, sends a four-digit code through Resend, expires it after 15 minutes, limits attempts, and confirms the account only after the code is correct. It is deployed and ACTIVE.
 checks pass, but the real authenticated and payment journeys still need acceptance

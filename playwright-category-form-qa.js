@@ -1,16 +1,19 @@
 const { chromium } = require("playwright");
 
+// Goods need a price and at least one photo. Jobs and services (optional:true)
+// show the same two fields but may be posted without them, and drop the
+// condition, options and vehicle fields.
 const cases = [
-  { cat:"serv", sub:"plumber", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField","vehicleFields"] },
-  { cat:"job", sub:"hiring", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField","vehicleFields"] },
+  { cat:"serv", sub:"plumber", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
+  { cat:"job", sub:"hiring", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
   { cat:"voit", sub:"car-sale", visible:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField","vehicleFields"] },
   { cat:"voit", sub:"auto-parts", visible:["postPhotosField","postPriceField","postConditionField"], hidden:["vehicleFields"] },
   { cat:"immo", sub:"sale-house", visible:["postPhotosField","postPriceField","postCurrencyField","postOptionsField"], hidden:["postConditionField","vehicleFields"] },
-  { cat:"beauty", sub:"hairdresser", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField"] },
+  { cat:"beauty", sub:"hairdresser", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
   { cat:"beauty", sub:"beauty-products", visible:["postPhotosField","postPriceField","postConditionField"] },
-  { cat:"food", sub:"catering", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField"] },
+  { cat:"food", sub:"catering", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
   { cat:"food", sub:"prepared-food", visible:["postPhotosField","postPriceField"], hidden:["postConditionField"] },
-  { cat:"pets", sub:"pet-services", hidden:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField"] },
+  { cat:"pets", sub:"pet-services", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
   { cat:"pets", sub:"pet-supplies", visible:["postPhotosField","postPriceField","postConditionField"] }
 ];
 
@@ -41,8 +44,9 @@ const cases = [
       }), testCase);
       Object.entries(state.visible).forEach(([id, ok]) => { if(!ok) errors.push(`${path} ${testCase.cat}/${testCase.sub}: ${id} should be visible`); });
       Object.entries(state.hidden).forEach(([id, ok]) => { if(!ok) errors.push(`${path} ${testCase.cat}/${testCase.sub}: ${id} should be hidden`); });
-      const expectsPrice = (testCase.visible || []).includes("postPriceField");
+      const expectsPrice = (testCase.visible || []).includes("postPriceField") && !testCase.optional;
       if(state.priceRequired !== expectsPrice) errors.push(`${path} ${testCase.cat}/${testCase.sub}: incorrect price requirement`);
+      if(state.photoRequired !== !testCase.optional) errors.push(`${path} ${testCase.cat}/${testCase.sub}: incorrect photo requirement`);
       if(state.hasVisibleSideField) errors.push(`${path} ${testCase.cat}/${testCase.sub}: side field should not be visible`);
       if(!state.removedFieldsMissing) errors.push(`${path} ${testCase.cat}/${testCase.sub}: removed fields should not exist`);
       if(!state.hasFrenchArea) errors.push(`${path} ${testCase.cat}/${testCase.sub}: missing French side areas`);
