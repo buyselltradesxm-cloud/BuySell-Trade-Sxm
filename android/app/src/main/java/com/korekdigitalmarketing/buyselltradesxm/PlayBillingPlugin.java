@@ -30,11 +30,10 @@ import java.util.Map;
 
 @CapacitorPlugin(name = "PlayBilling")
 public class PlayBillingPlugin extends Plugin implements PurchasesUpdatedListener {
-    private static final String BUNDLE = "com.korekdigitalmarketing.buyselltradesxm.";
     private static final List<String> SUBSCRIPTION_IDS = Arrays.asList(
-        BUNDLE + "pro_starter_monthly", BUNDLE + "pro_business_monthly",
-        BUNDLE + "pro_premium_monthly", BUNDLE + "pro_elite_monthly",
-        BUNDLE + "pro_unlimited_monthly"
+        "pro_starter_monthly", "pro_business_monthly",
+        "pro_premium_monthly", "pro_elite_monthly",
+        "pro_unlimited_monthly"
     );
     private BillingClient client;
     private final Map<String, ProductDetails> products = new HashMap<>();
