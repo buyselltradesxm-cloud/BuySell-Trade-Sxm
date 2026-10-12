@@ -5,6 +5,13 @@ The Android project (`android/`) is a Capacitor webview wrapper around
 will accept: a **signed release AAB** built and uploaded by CI.
 
 - App / package ID: `com.korekdigitalmarketing.buyselltradesxm`
+- Play subscription product IDs (Play limits IDs to 40 characters; these map to
+  the same five plan tiers as iOS):
+  - `pro_starter_monthly` — Pro Starter — $29/month
+  - `pro_business_monthly` — Pro Business — $59/month
+  - `pro_premium_monthly` — Premium — $99/month
+  - `pro_elite_monthly` — Elite — $149/month
+  - `pro_unlimited_monthly` — Unlimited — $199/month
 - GitHub repo: https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm
 - Play + Apple are the same pro account: `korekdigitalmarketing@gmail.com`
 - Build/publish workflow: `.github/workflows/mobile-android-cloud.yml`
@@ -63,18 +70,22 @@ With only the first four set, the workflow builds and signs the AAB but skips
 the Play upload (choose track `none`, or leave `PLAY_SERVICE_ACCOUNT_JSON`
 unset). Add the fifth to enable publishing.
 
-Local builds: instead of env vars you can drop a **git-ignored**
-`keystore.properties` at the repo root:
+Local builds: instead of env vars, place a **git-ignored**
+`android/keystore.properties` file (next to `android/build.gradle`):
 
 ```properties
-storeFile=/absolute/path/buyselltradesxm-upload.jks
+storeFile=C:/secure/buyselltradesxm-upload.jks
 storePassword=...
 keyAlias=upload
 keyPassword=...
 ```
 
-`android/app/build.gradle` reads env vars first, then this file, then falls
-back to an unsigned release.
+Use the existing upload keystore for this app. `android/app/build.gradle` reads
+environment variables first, then this file, then falls back to an unsigned
+release. After building, verify the AAB with `jarsigner -verify -verbose -certs
+android/app/build/outputs/bundle/release/app-release.aab`; it must not report
+`jar is unsigned`. Compare the certificate with Play Console > Test and release
+> App integrity > Upload key certificate.
 
 ---
 
@@ -136,6 +147,13 @@ Actions → **Mobile Android Cloud Build** → **Run workflow**:
 ---
 
 ## What this does NOT set up
+
+- **Play Billing entitlements** require these Play Console subscription IDs
+  (Android IDs differ from the longer iOS IDs) and a Play Developer API service account.
+  Set its JSON as the Supabase Edge Function secret
+  `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`, then apply
+  `supabase/google-play-purchases.sql` and deploy the purchase-verification
+  function before enabling paid subscriptions in a store release.
 
 - **Native FCM push** for the Android app. Browser/PWA push already works
   (`push-notifications.js` + `send-push` function). A native app needs

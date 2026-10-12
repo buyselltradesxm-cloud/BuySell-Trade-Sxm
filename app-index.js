@@ -1899,12 +1899,12 @@ if(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform(
 if(window.SXM && SXM.isIOS()) document.documentElement.classList.add("ios-app");
 function androidPurchaseBlocked(){
   if(!isAndroidApp()) return false;
-  showToast(state.lang === "fr" ? "Les offres Pro et les boosts ne sont pas disponibles dans l'application Android." : "Pro plans and boosts are not available in the Android app.");
+  showToast(state.lang === "fr" ? "Les boosts payants ne sont pas encore disponibles dans l'application Android." : "Paid boosts are not available in the Android app yet.");
   return true;
 }
 async function manageSubscription(){
   if(window.SXM && SXM.isIOS()) { SXM.manage(); return; }
-  if(androidPurchaseBlocked()) return;
+  if(window.SXM && SXM.isAndroid()) { SXM.manage(); return; }
   const user = normalizeUser(state.user);
   if(!user) return;
   if(user.accountType !== "business"){
@@ -3732,23 +3732,23 @@ async function confirmListingBoost(e){
 // billing period, that it renews until cancelled, and how to cancel.
 // Rebuilt on every open so the price always matches the selected plan.
 function renewalDisclosure(plan, price=accountPlan(plan).price){
-  const ios = !!(window.SXM && SXM.isIOS());
+  const store = !!(window.SXM && SXM.isStore());
+  const storeName = window.SXM && SXM.isAndroid() ? "Google Play" : "Apple";
   if(state.lang === "fr"){
     return `Votre abonnement ${planLabel(plan)} coûte ${price.replace(/\s*\/\s*(month|mois)\b/i, " par mois")} et se renouvelle automatiquement chaque mois, au même prix, jusqu'à ce que vous l'annuliez. `
-      + (ios
-        ? "Annulez à tout moment dans Réglages > Apple ID > Abonnements, au moins 24 h avant la date de renouvellement. "
+      + (store
+        ? `Annulez à tout moment dans les réglages ${storeName} > Abonnements, au moins 24 h avant la date de renouvellement. `
         : "Annulez à tout moment en ligne depuis Profil > Gérer / annuler ; l'annulation prend effet à la fin de la période payée. ")
       + "Pas de remboursement pour la période en cours.";
   }
   return `Your ${planLabel(plan)} subscription costs ${price.replace(/\s*\/\s*(month|mois)\b/i, " per month")} and renews automatically every month at the same price until you cancel. `
-    + (ios
-      ? "Cancel anytime in Settings > Apple ID > Subscriptions, at least 24 hours before the renewal date. "
+    + (store
+      ? `Cancel anytime in ${storeName} subscription settings, at least 24 hours before the renewal date. `
       : "Cancel anytime online from Profile > Manage / cancel; cancellation takes effect at the end of the paid period. ")
     + "No refund for the current period.";
 }
 
 function openPaymentModal({existingUser=false, plan=null, after=null} = {}){
-  if(androidPurchaseBlocked()) return;
   pendingPaymentExistingUser = existingUser;
   pendingAfterPayment = after;
   const selectedPlan = plan || pendingProSignup?.accountPlan || state.user?.accountPlan || "pro-starter";
@@ -3762,7 +3762,6 @@ function openPaymentModal({existingUser=false, plan=null, after=null} = {}){
 
 function chooseProPlan(plan){
   if(!ACCOUNT_PLANS[plan] || plan === "personal-free") return;
-  if(androidPurchaseBlocked()) return;
   closeModal("boostModal");
   sessionStorage.setItem("bst-selected-pro-plan", plan);
   if(!state.user){
@@ -3834,7 +3833,7 @@ function renderProfile(){
     <div class="mini-listing">${own.map(l=>miniListingHTML(l)).join("")}</div>` : ""}
     ${blockedUsersHTML()}
     <div class="pf-group pf-gap">
-      ${window.SXM && SXM.isIOS() ? row(fr ? "Restaurer les achats" : "Restore purchases", "data-apple-restore") + (isBusiness ? "" : row(fr ? "Gérer les abonnements Apple" : "Manage Apple subscriptions", "data-apple-manage")) : ""}
+      ${window.SXM && SXM.isStore() ? row(fr ? "Restaurer les achats" : "Restore purchases", "data-apple-restore") + (isBusiness ? "" : row(fr ? `Gérer les abonnements ${SXM.isAndroid() ? "Google Play" : "Apple"}` : `Manage ${SXM.isAndroid() ? "Google Play" : "Apple"} subscriptions`, "data-apple-manage")) : ""}
       ${row(t().logoutLabel, 'data-click="logoutUser"', "plain")}
       ${row(t().deleteAccountLabel, 'data-click="deleteMyAccountConfirmed"', "plain danger")}
     </div>`;
@@ -3865,7 +3864,7 @@ function subscriptionDashboardHTML(user, own){
           <b>${esc(planLabel(user.accountPlan))}</b>${isBusiness && !(window.SXM && SXM.isIOS()) ? `<small>${esc(planPriceLabel(user.accountPlan))}</small>` : ""}
           <div class="subscription-badges"><span class="${statusClass}">${esc(statusText)}</span></div>
         </div>
-        <button type="button" class="pf-link" data-click="closeProfileModalThenPricing">${fr ? "Changer de plan" : "Change plan"}</button>
+      <button type="button" class="pf-link" data-click="closeProfileModalThenPricing">${fr ? "Changer de plan" : "Change plan"}</button>
       </div>
       ${isBusiness && !proActive ? `<p class="pf-note">${fr ? "Paiement requis avant publication Pro." : "Payment is required before Pro publishing."}</p>` : ""}
       <div class="pf-usage">
@@ -5181,8 +5180,7 @@ async function createAccount(e){
 
 async function confirmDemoPayment(e){
   e.preventDefault();
-  if(androidPurchaseBlocked()) return false;
-  if(window.SXM && SXM.isIOS()){
+  if(window.SXM && SXM.isStore()){
     const plan = pendingSelectedProPlan || state.user?.accountPlan;
     if(await SXM.buy(plan)){ closeModal("paymentModal"); closeModal("accountModal"); showToast(t().paymentSuccess); }
     return false;

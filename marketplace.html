@@ -32,10 +32,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=43b64bd4e816fceb"></script>
-<script src="/telemetry.js?v=43b64bd4e816fceb"></script>
-<script src="/pwa.js?v=43b64bd4e816fceb" defer></script>
-<link href="/fonts/fonts.css?v=43b64bd4e816fceb" rel="stylesheet">
+<script src="/frame-guard.js?v=9e5a9e95e6a51653"></script>
+<script src="/telemetry.js?v=9e5a9e95e6a51653"></script>
+<script src="/pwa.js?v=9e5a9e95e6a51653" defer></script>
+<link href="/fonts/fonts.css?v=9e5a9e95e6a51653" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -1289,7 +1289,7 @@
   .pro-explainer small{color:var(--mute);font-weight:700;line-height:1.4;}
   .plan-picker{display:grid;gap:9px;margin:12px 0;}
   /* Android app: no in-app sale of Pro plans or boosts (Google Play Billing policy). */
-  .android-app .pro-card,.android-app .sponsored-card,.android-app [data-click="openPricingInfo"],.android-app [data-click="openPricingInfoPreventDefault"],.android-app [data-click="openBoostInfo"],.android-app [data-click="startBoostFlow"],.android-app [data-click="openBoostCheckout"],.android-app [data-click="chooseProPlan"],.android-app [data-click="closeAccountModalThenPricing"],.android-app [data-click="closeProfileModalThenPricing"],.android-app [data-click="closeProfileModalThenBoostInfo"],.android-app [data-click="manageSubscription"]{display:none!important;}
+  .android-app [data-click="openBoostInfo"],.android-app [data-click="startBoostFlow"],.android-app [data-click="openBoostCheckout"],.android-app [data-click="closeProfileModalThenBoostInfo"]{display:none!important;}
   .native-app .getapp .stores{display:none;}
   .ios-app [data-click="openCookieConsentPreventDefault"]{display:none;}
   .plan-card{
@@ -1657,7 +1657,10 @@
     .detail-grid{grid-template-columns:1fr;}
     .guide-hero{grid-template-columns:1fr;}
     .guide-grid{grid-template-columns:1fr;}
-    .boost-price-grid,.boost-flow,.pricing-grid,.pricing-extras{grid-template-columns:1fr;}
+    .boost-price-grid,.boost-flow,.pricing-extras{grid-template-columns:1fr;}
+    /* Keep paid tiers visible beside Personal on phones instead of burying
+       every Pro option below a full-screen free-plan card. */
+    .pricing-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
     .revenue-grid,.revenue-list{grid-template-columns:1fr;}
     .vehicle-grid,.vehicle-spec-grid{grid-template-columns:1fr 1fr;}
     .guide-note{align-items:flex-start;flex-direction:column;}
@@ -2970,20 +2973,20 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=43b64bd4e816fceb" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=43b64bd4e816fceb"></script>
-<script src="native-ios.js?v=43b64bd4e816fceb"></script>
-<script src="captcha.js?v=43b64bd4e816fceb"></script>
-<script src="supabase-api.js?v=43b64bd4e816fceb"></script>
-<script src="img-utils.js?v=43b64bd4e816fceb"></script>
-<script src="draft-store.js?v=43b64bd4e816fceb"></script>
-<script src="push-config.js?v=43b64bd4e816fceb"></script>
-<script src="push-notifications.js?v=43b64bd4e816fceb"></script>
-<script src="consent.js?v=43b64bd4e816fceb" defer></script>
-<script src="native-admob.js?v=43b64bd4e816fceb"></script>
-<script src="ads-config.js?v=43b64bd4e816fceb"></script>
-<script src="ads.js?v=43b64bd4e816fceb" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=9e5a9e95e6a51653" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=9e5a9e95e6a51653"></script>
+<script src="native-ios.js?v=9e5a9e95e6a51653"></script>
+<script src="captcha.js?v=9e5a9e95e6a51653"></script>
+<script src="supabase-api.js?v=9e5a9e95e6a51653"></script>
+<script src="img-utils.js?v=9e5a9e95e6a51653"></script>
+<script src="draft-store.js?v=9e5a9e95e6a51653"></script>
+<script src="push-config.js?v=9e5a9e95e6a51653"></script>
+<script src="push-notifications.js?v=9e5a9e95e6a51653"></script>
+<script src="consent.js?v=9e5a9e95e6a51653" defer></script>
+<script src="native-admob.js?v=9e5a9e95e6a51653"></script>
+<script src="ads-config.js?v=9e5a9e95e6a51653"></script>
+<script src="ads.js?v=9e5a9e95e6a51653" defer></script>
 
-<script src="app-marketplace.js?v=43b64bd4e816fceb"></script>
+<script src="app-marketplace.js?v=9e5a9e95e6a51653"></script>
 </body>
 </html>
