@@ -112,4 +112,4 @@ jobs:
           packageName: com.korekdigitalmarketing.buyselltradesxm
           releaseFiles: android/app/build/outputs/bundle/release/*.aab
           track: ${{ github.event.inputs.track }}
-          status: draft
+          status: completed
