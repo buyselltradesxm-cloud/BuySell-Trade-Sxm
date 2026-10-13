@@ -177,7 +177,8 @@
       sellerId: r.seller_id || null,
       // l'app filtre "mes annonces" sur `ownerId` : on aligne les deux noms
       ownerId: r.seller_id || null,
-      sellerName: (r.profiles && r.profiles.name) || r.seller_name || undefined
+      sellerName: (r.profiles && r.profiles.name) || r.seller_name || undefined,
+      sellerPhone: r.seller_phone || ""
     };
   }
 
@@ -219,6 +220,7 @@
     if (o.renewalResponseAt !== undefined) row.renewal_response_at = o.renewalResponseAt;
     if (o.expiredAt !== undefined) row.expired_at = o.expiredAt;
     row.seller_name = o.sellerName || null;
+    row.seller_phone = o.sellerPhone || null;
     return row;
   }
 

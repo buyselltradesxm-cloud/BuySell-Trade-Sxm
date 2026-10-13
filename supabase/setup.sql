@@ -190,6 +190,7 @@ alter table listings add column if not exists boost_source     text;
 alter table listings add column if not exists boost_month      text;
 alter table listings add column if not exists boost_plan       text;
 alter table listings add column if not exists seller_name      text;
+alter table listings add column if not exists seller_phone     text;
 
 create or replace function set_listing_seller_name()
 returns trigger language plpgsql security definer set search_path = public as $$

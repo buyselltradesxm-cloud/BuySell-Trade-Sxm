@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=ecb6a54069fe1694"></script>
-<script src="/telemetry.js?v=ecb6a54069fe1694"></script>
-<script src="/pwa.js?v=ecb6a54069fe1694" defer></script>
-<link href="/fonts/fonts.css?v=ecb6a54069fe1694" rel="stylesheet">
+<script src="/frame-guard.js?v=ecf26884786890d9"></script>
+<script src="/telemetry.js?v=ecf26884786890d9"></script>
+<script src="/pwa.js?v=ecf26884786890d9" defer></script>
+<link href="/fonts/fonts.css?v=ecf26884786890d9" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -1020,6 +1020,7 @@
   }
   .chat-action:hover{background:var(--paper-deep);}
   .seller-trust{display:grid;gap:8px;margin-top:10px;}
+  .seller-phone-link{display:inline-block;margin-top:6px;color:var(--sea-deep);font-weight:800;text-decoration:underline;text-underline-offset:2px;}
   .seller-score{display:flex;align-items:center;gap:8px;font-weight:900;}
   .seller-score b{font-family:'Space Grotesk',sans-serif;font-size:20px;}
   .seller-trust-grid{display:flex;flex-wrap:wrap;gap:6px;}
@@ -2459,6 +2460,11 @@
               </div>
             </div>
           </section>
+          <div class="field full" id="postSellerPhoneField">
+            <label for="newSellerPhone"><span data-i18n="sellerPhoneLabel">Téléphone du vendeur (facultatif)</span></label>
+            <input id="newSellerPhone" type="tel" maxlength="32" autocomplete="tel" data-i18n-ph="sellerPhonePh" placeholder="Ex. +590 690 12 34 56">
+            <small data-i18n="sellerPhoneHelp">Ce numéro sera visible par les acheteurs sur cette annonce.</small>
+          </div>
           <input id="newSide" type="hidden" value="fr">
           <div class="field full" id="postOptionsField">
             <div class="post-options">
@@ -3031,21 +3037,21 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=ecb6a54069fe1694" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=ecb6a54069fe1694"></script>
-<script src="native-ios.js?v=ecb6a54069fe1694"></script>
-<script src="captcha.js?v=ecb6a54069fe1694"></script>
-<script src="supabase-api.js?v=ecb6a54069fe1694"></script>
-<script src="img-utils.js?v=ecb6a54069fe1694"></script>
-<script src="draft-store.js?v=ecb6a54069fe1694"></script>
-<script src="push-config.js?v=ecb6a54069fe1694"></script>
-<script src="push-notifications.js?v=ecb6a54069fe1694"></script>
-<script src="consent.js?v=ecb6a54069fe1694" defer></script>
-<script src="admob-plugin.js?v=ecb6a54069fe1694"></script>
-<script src="native-admob.js?v=ecb6a54069fe1694"></script>
-<script src="ads-config.js?v=ecb6a54069fe1694"></script>
-<script src="ads.js?v=ecb6a54069fe1694" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=ecf26884786890d9" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=ecf26884786890d9"></script>
+<script src="native-ios.js?v=ecf26884786890d9"></script>
+<script src="captcha.js?v=ecf26884786890d9"></script>
+<script src="supabase-api.js?v=ecf26884786890d9"></script>
+<script src="img-utils.js?v=ecf26884786890d9"></script>
+<script src="draft-store.js?v=ecf26884786890d9"></script>
+<script src="push-config.js?v=ecf26884786890d9"></script>
+<script src="push-notifications.js?v=ecf26884786890d9"></script>
+<script src="consent.js?v=ecf26884786890d9" defer></script>
+<script src="admob-plugin.js?v=ecf26884786890d9"></script>
+<script src="native-admob.js?v=ecf26884786890d9"></script>
+<script src="ads-config.js?v=ecf26884786890d9"></script>
+<script src="ads.js?v=ecf26884786890d9" defer></script>
 
-<script src="app-index.js?v=ecb6a54069fe1694"></script>
+<script src="app-index.js?v=ecf26884786890d9"></script>
 </body>
 </html>

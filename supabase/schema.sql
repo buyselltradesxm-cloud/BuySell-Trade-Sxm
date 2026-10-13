@@ -181,6 +181,7 @@ alter table listings add column if not exists boost_source     text;
 alter table listings add column if not exists boost_month      text;
 alter table listings add column if not exists boost_plan       text;
 alter table listings add column if not exists seller_name      text;
+alter table listings add column if not exists seller_phone     text;
 -- Grid/card thumbnails (~480px), one per entry in `photos`, same order.
 -- Nullable/empty for listings posted before this existed — the app falls
 -- back to the full photo per-index when a thumbnail is missing.
