@@ -82,11 +82,46 @@ revoke all on function public.message_rate_ok(uuid) from public, anon, authentic
 
 create or replace function public.enforce_message_rate_limit()
 returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  free_messages integer;
+  paid_active boolean;
 begin
   -- Service-role / cron writes (auth.uid() is null) and admins are exempt.
   if auth.uid() is null or public.is_admin() then
     return new;
   end if;
+
+  -- Serialize sends by sender and listing so concurrent free-user requests
+  -- cannot race past the five-message-per-listing limit.
+  perform pg_advisory_xact_lock(
+    hashtext(new.sender_id::text),
+    hashtext(coalesce(new.listing_id::text, 'no-listing'))
+  );
+
+  -- Every active paid business tier is unlimited: Starter, Business,
+  -- Premium, Elite, and Unlimited. Expired or pending subscriptions are free.
+  select (p.account_type = 'business'
+      and coalesce(p.subscription_status, '') = 'active'
+      and (p.subscription_current_period_end is null
+           or p.subscription_current_period_end > now()))
+    into paid_active
+    from public.profiles p
+   where p.id = new.sender_id;
+
+  if not coalesce(paid_active, false) then
+    select count(*)::integer
+      into free_messages
+      from public.messages m
+     where m.sender_id = new.sender_id
+       and m.listing_id is not distinct from new.listing_id;
+
+    if free_messages >= 5 then
+      raise exception 'free_listing_message_limit_reached'
+        using errcode = 'P0001';
+    end if;
+  end if;
+
+  -- Retain the short-term abuse throttle for all plans.
   if not public.message_rate_ok(new.sender_id) then
     raise exception 'message rate limit reached' using errcode = 'P0001';
   end if;
