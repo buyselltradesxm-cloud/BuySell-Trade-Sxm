@@ -1766,10 +1766,10 @@ function isPaidPlan(plan){
 const ACCOUNT_PLANS = {
   "personal-free":{fr:"Particulier",en:"Personal",price:"Gratuit",limit:5,includedBoosts:0},
   "pro-starter":{fr:"Pro Starter",en:"Pro Starter",price:"$24.99/month",limit:10,includedBoosts:1},
-  "pro-business":{fr:"Pro Business",en:"Pro Business",price:"$45.99/month",limit:30,includedBoosts:2},
-  "pro-premium":{fr:"Premium",en:"Premium",price:"$80.99/month",limit:75,includedBoosts:5},
-  "pro-elite":{fr:"Elite",en:"Elite",price:"$119.99/month",limit:150,includedBoosts:10},
-  "pro-unlimited":{fr:"Unlimited",en:"Unlimited",price:"$150.99/month",limit:Infinity,includedBoosts:20}
+  "pro-business":{fr:"Pro Business",en:"Pro Business",price:"$59.00/month",limit:30,includedBoosts:2},
+  "pro-premium":{fr:"Premium",en:"Premium",price:"$99.00/month",limit:75,includedBoosts:5},
+  "pro-elite":{fr:"Elite",en:"Elite",price:"$149.00/month",limit:150,includedBoosts:10},
+  "pro-unlimited":{fr:"Unlimited",en:"Unlimited",price:"$199.00/month",limit:Infinity,includedBoosts:20}
 };
 function accountPlan(plan){ return ACCOUNT_PLANS[plan] || ACCOUNT_PLANS["personal-free"]; }
 // Plan prices are stored in one form; show them in the reader's language.
