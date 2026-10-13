@@ -1164,6 +1164,9 @@
         res = await window.db.from("messages").insert(base).select().single();
       }
       if (res.error) {
+        if (res.error.code === "P0001" && /free_listing_message_limit_reached/.test(res.error.message || "")) {
+          return { error_code: "free_listing_message_limit_reached" };
+        }
         console.warn("[SB] sendMessage:", res.error.message);
         return null;
       }
