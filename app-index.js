@@ -5352,11 +5352,9 @@ async function confirmDemoPayment(e){
       closeModal("paymentModal");
       return false;
     }
-    const status = document.getElementById("paymentStatusText");
     const error = document.getElementById("paymentStatusError");
     const button = e.submitter || e.currentTarget.querySelector('button[type="submit"]');
     if(error){ error.hidden = true; error.textContent = ""; }
-    if(status) status.textContent = state.lang === "fr" ? "Connexion à Stripe…" : "Connecting to Stripe…";
     if(button){ button.disabled = true; button.setAttribute("aria-busy", "true"); }
     try {
       const checkout = await SB.createSecureCheckout(plan);
@@ -5375,12 +5373,10 @@ async function confirmDemoPayment(e){
       } else {
         message += state.lang === "fr" ? " Vérifiez votre connexion et réessayez." : " Check your connection and retry.";
       }
-      if(status) status.textContent = state.lang === "fr" ? "Paiement non démarré" : "Payment not started";
       if(error){ error.textContent = message; error.hidden = false; }
       else showToast(message);
     } catch (checkoutFailure) {
       console.warn("[checkout] Could not start Stripe Checkout.", checkoutFailure?.message || "network error");
-      if(status) status.textContent = state.lang === "fr" ? "Service de paiement injoignable" : "Payment service unavailable";
       if(error){
         error.textContent = state.lang === "fr"
           ? "Impossible de joindre le service de paiement. Vérifiez votre connexion et réessayez."
