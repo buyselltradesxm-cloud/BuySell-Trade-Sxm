@@ -80,6 +80,42 @@ Deno.serve(async (req) => {
   if (!boost && !price) return json({ error: "invalid plan" }, 400, headers);
   if (!(await consume(user.id))) return json({ error: "try again later" }, 429, headers);
 
+  // Verify that the configured recurring price is visible to this Stripe key
+  // before creating a Checkout Session. A price from a different Stripe
+  // account or mode otherwise surfaces only as line_items[0][price] missing.
+  if (!boost) {
+    const [accountResponse, priceResponse] = await Promise.all([
+      fetch("https://api.stripe.com/v1/account", { headers: { Authorization: `Bearer ${STRIPE_KEY}` } }),
+      fetch(`https://api.stripe.com/v1/prices/${encodeURIComponent(price)}`, { headers: { Authorization: `Bearer ${STRIPE_KEY}` } }),
+    ]);
+    let accountId: string | null = null;
+    let liveMode: boolean | null = null;
+    if (accountResponse.ok) {
+      const account = await accountResponse.json();
+      accountId = typeof account.id === "string" ? account.id : null;
+      liveMode = typeof account.livemode === "boolean" ? account.livemode : null;
+    }
+    if (!priceResponse.ok) {
+      let stripeError: Record<string, unknown> = {};
+      try {
+        const payload = await priceResponse.json();
+        if (payload?.error && typeof payload.error === "object") stripeError = payload.error;
+      } catch (_) { /* Stripe did not return JSON */ }
+      const diagnostic = {
+        status: priceResponse.status,
+        type: typeof stripeError.type === "string" ? stripeError.type : "unknown",
+        code: typeof stripeError.code === "string" ? stripeError.code : "unknown",
+        param: typeof stripeError.param === "string" ? stripeError.param : null,
+        accountId,
+        liveMode,
+        priceId: price,
+        requestId: priceResponse.headers.get("request-id") || null,
+      };
+      console.error("[create-checkout] Configured Stripe price is unavailable", JSON.stringify(diagnostic));
+      return json({ error: "checkout unavailable", stripe: diagnostic }, 502, headers);
+    }
+  }
+
   let form: URLSearchParams;
   if (boost) {
     const listing = await ownListing(boostListingId, user.id);
