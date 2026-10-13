@@ -28,10 +28,10 @@ $DefaultEvents = @(
 # ACCOUNT_PLANS in the app and account_listing_limit() in the database.
 $SecretByAmount = [ordered]@{
   2499  = "STRIPE_PRICE_PRO_STARTER"
-  4599  = "STRIPE_PRICE_PRO_BUSINESS"
-  8099  = "STRIPE_PRICE_PRO_PREMIUM"
-  11999 = "STRIPE_PRICE_PRO_ELITE"
-  15099 = "STRIPE_PRICE_PRO_UNLIMITED"
+  5900  = "STRIPE_PRICE_PRO_BUSINESS"
+  9900  = "STRIPE_PRICE_PRO_PREMIUM"
+  14900 = "STRIPE_PRICE_PRO_ELITE"
+  19900 = "STRIPE_PRICE_PRO_UNLIMITED"
 }
 
 $key = Read-Host "Stripe LIVE secret key (sk_live_... or rk_live_..., input hidden)" -AsSecureString

@@ -55,7 +55,7 @@ const { chromium } = require("playwright");
     if (!pricingText.includes(expected)) errors.push(`Pricing modal is missing ${expected}.`);
   }
   // The page opens in French: prices read "24.99 $ / mois" (English: "$24.99 / month").
-  for (const price of ["24.99 $ / mois", "45.99 $ / mois", "80.99 $ / mois", "119.99 $ / mois", "150.99 $ / mois"]) {
+  for (const price of ["24.99 $ / mois", "59.00 $ / mois", "99.00 $ / mois", "149.00 $ / mois", "199.00 $ / mois"]) {
     if (!pricingText.includes(price)) errors.push(`Pricing modal is missing ${price}.`);
   }
   if (!/Créer un compte est gratuit|Creating an account is free/.test(pricingText)) {
@@ -104,7 +104,7 @@ const { chromium } = require("playwright");
     const paymentPlan = await page.locator("#paymentPlanName").innerText();
     const paymentPrice = await page.locator("#paymentPlanPrice").innerText();
     if (paymentPlan !== "Pro Business") errors.push(`Selected payment plan is incorrect: ${paymentPlan}.`);
-    if (paymentPrice !== "45.99 $ / mois") errors.push(`Selected payment price is incorrect: ${paymentPrice}.`);
+    if (paymentPrice !== "59.00 $ / mois") errors.push(`Selected payment price is incorrect: ${paymentPrice}.`);
     await page.getByRole("button", { name: /continuer vers le paiement|continue to payment/i }).click();
     const proState = await page.evaluate(() => ({
       type: window.__bstState.user?.accountType,

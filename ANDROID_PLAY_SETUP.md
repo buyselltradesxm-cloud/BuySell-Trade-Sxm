@@ -7,11 +7,15 @@ will accept: a **signed release AAB** built and uploaded by CI.
 - App / package ID: `com.korekdigitalmarketing.buyselltradesxm`
 - Play subscription product IDs (Play limits IDs to 40 characters; these map to
   the same five plan tiers as iOS):
-  - `pro_starter_monthly` — Pro Starter — $24.99/month
-  - `pro_business_monthly` — Pro Business — $45.99/month
-  - `pro_premium_monthly` — Premium — $80.99/month
-  - `pro_elite_monthly` — Elite — $119.99/month
-  - `pro_unlimited_monthly` — Unlimited — $150.99/month
+  - `pro_starter_monthly` - Pro Starter - $24.99 USD/month
+  - `pro_business_monthly` - Pro Business - $59.00 USD/month
+  - `pro_premium_monthly` - Premium - $99.00 USD/month
+  - `pro_elite_monthly` - Elite - $149.00 USD/month
+  - `pro_unlimited_monthly` - Unlimited - $199.00 USD/month
+- Google Play base prices are maintained in USD to match Stripe. Play localizes
+  prices by country, currency and applicable taxes; Charm pricing may adjust
+  the cart price. Existing subscribers retain their current price until a
+  separate migration is explicitly started.
 - GitHub repo: https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm
 - Play + Apple are the same pro account: `korekdigitalmarketing@gmail.com`
 - Build/publish workflow: `.github/workflows/mobile-android-cloud.yml`
