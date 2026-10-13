@@ -2264,6 +2264,10 @@ function mobileAdHTML(slot){
 // Les annonces d'exemple (sans vendeur) remplissent le site au lancement. Elles
 // sortent du fil des qu'il y a assez de vraies annonces actives.
 const SAMPLE_RETIRE_AT = 20;
+function demoListingsAllowed(){
+  const nativeApp = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+  return isLocalDevHost() && !nativeApp;
+}
 function samplesRetired(){
   let real = 0;
   for(const l of L){
@@ -2273,6 +2277,10 @@ function samplesRetired(){
 }
 
 function passesFilters(l){
+  // Never present a seed/demo listing as a real seller on the public site.
+  // The Supabase filter below is the primary guard; this also covers the
+  // static demo data when Supabase is unavailable or still loading.
+  if(!demoListingsAllowed() && !l.sellerId) return false;
   if(!l.sellerId && !isOwnListing(l) && samplesRetired()) return false;
   // Les annonces vendues/expirees sortent du fil principal, sauf pour leur propre vendeur
   // (qui doit pouvoir les retrouver pour les remettre en vente).
@@ -3148,6 +3156,7 @@ function openListing(id, syncUrl = true){
   restoreListingsIfNeeded();
   const l = L.find(x=>String(x.id)===String(id));
   if(!l) return;
+  if(!demoListingsAllowed() && !l.sellerId) return;
   const profile = postFieldProfile(l.cat, l.sub || "");
   if(syncUrl) syncListingToUrl(l.id);
   const gallery = listingGallery(l);
