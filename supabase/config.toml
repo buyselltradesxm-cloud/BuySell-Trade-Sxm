@@ -46,6 +46,10 @@ verify_jwt = false
 [functions.stripe-webhook]
 verify_jwt = false
 
+# PayPal subscriptions are activated only by signed PayPal webhook deliveries.
+[functions.paypal-webhook]
+verify_jwt = false
+
 # apple-purchases validates the bearer through Auth; notifications verify Apple's JWS.
 [functions.apple-purchases]
 verify_jwt = false

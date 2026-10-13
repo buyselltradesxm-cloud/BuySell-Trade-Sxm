@@ -80,6 +80,16 @@ Deno.serve(async (req) => {
   if (!boost && !price) return json({ error: "invalid plan" }, 400, headers);
   if (!(await consume(user.id))) return json({ error: "try again later" }, 429, headers);
 
+  // Avoid starting another recurring checkout while any provider already has
+  // an active subscription or the buyer is midway through PayPal approval.
+  if (!boost) {
+    const profileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=subscription_status,subscription_current_period_end,subscription_provider`, { headers:{ apikey:SERVICE_KEY, Authorization:`Bearer ${SERVICE_KEY}` } });
+    if (!profileResponse.ok) return json({ error:"checkout unavailable" },503,headers);
+    const [profile] = await profileResponse.json();
+    const periodValid = !profile?.subscription_current_period_end || new Date(profile.subscription_current_period_end).getTime() > Date.now();
+    if (profile?.subscription_status === "active" && periodValid || profile?.subscription_status === "pending" && profile?.subscription_provider === "paypal") return json({ error:"subscription already active or pending" },409,headers);
+  }
+
   // Verify that the configured recurring price is visible to this Stripe key
   // before creating a Checkout Session. A price from a different Stripe
   // account or mode otherwise surfaces only as line_items[0][price] missing.

@@ -742,6 +742,32 @@
       return response.ok && body.url ? { data: body, error: null } : { data: null, error: { message: "Checkout unavailable", status: response.status, stripe: body.stripe || null } };
     },
 
+    createPaypalSubscription: async function (plan) {
+      if (!window.db) return { error: { message: "Authentication unavailable" } };
+      var session = await SB.currentSession();
+      if (!session || !session.access_token) return { error: { message: "Not authenticated" } };
+      var response = await fetch(window.SUPABASE_URL + "/functions/v1/create-paypal-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY, Authorization: "Bearer " + session.access_token },
+        body: JSON.stringify({ plan: plan })
+      });
+      var body = await response.json().catch(function () { return {}; });
+      return response.ok && body.url ? { data: body, error: null } : { data: null, error: { message: "PayPal checkout unavailable", status: response.status } };
+    },
+
+    cancelPaypalSubscription: async function () {
+      if (!window.db) return { error: { message: "Authentication unavailable" } };
+      var session = await SB.currentSession();
+      if (!session || !session.access_token) return { error: { message: "Not authenticated" } };
+      var response = await fetch(window.SUPABASE_URL + "/functions/v1/cancel-paypal-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY, Authorization: "Bearer " + session.access_token },
+        body: "{}"
+      });
+      var body = await response.json().catch(function () { return {}; });
+      return response.ok && body.cancelled ? { data: body, error: null } : { data: null, error: { message: "PayPal cancellation unavailable", status: response.status } };
+    },
+
     // One-time Stripe payment for a boost on one of the caller's listings.
     // The boost itself is applied by the webhook once Stripe confirms payment.
     createBoostCheckout: async function (listingId, days) {

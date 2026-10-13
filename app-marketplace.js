@@ -1651,6 +1651,8 @@ function createUserProfile({name, email, accountType="personal", accountPlan="pe
     subscriptionCurrentPeriodEnd:null,
     subscriptionCancelAtPeriodEnd:false,
     stripeCustomerId:null,
+    paypalSubscriptionId:null,
+    subscriptionProvider:null,
     role:"user",
     verifiedEmail:true,
     trusted:true
@@ -1673,6 +1675,8 @@ function normalizeUser(user){
     subscriptionCurrentPeriodEnd:user.subscriptionCurrentPeriodEnd || null,
     subscriptionCancelAtPeriodEnd:!!user.subscriptionCancelAtPeriodEnd,
     stripeCustomerId:user.stripeCustomerId || null,
+    paypalSubscriptionId:user.paypalSubscriptionId || null,
+    subscriptionProvider:user.subscriptionProvider || null,
     verifiedEmail:user.verifiedEmail !== false,
     trusted:user.trusted !== false
   };
@@ -1912,6 +1916,14 @@ async function manageSubscription(){
     closeModal("profileModal");
     openPricingInfo();
     return;
+  }
+  if(user.subscriptionProvider === "paypal" && user.paypalSubscriptionId && window.SB && SB.cancelPaypalSubscription){
+    const result = await SB.cancelPaypalSubscription();
+    if(result?.data){
+      showToast(state.lang === "fr" ? "Abonnement PayPal annulé. L’accès Pro reste actif jusqu’à la fin de la période payée." : "PayPal subscription cancelled. Pro access remains until the paid period ends.");
+      setTimeout(()=>location.reload(), 1200);
+      return;
+    }
   }
   if(user.stripeCustomerId && window.SB && SB.openBillingPortal){
     const portal = await SB.openBillingPortal();
@@ -4206,6 +4218,8 @@ function profileFromRow(row){
     accountPlan:row.account_plan || "personal-free",
     subscriptionStatus:row.subscription_status || (row.account_type === "business" ? "inactive" : "free"),
     subscriptionCurrentPeriodEnd:row.subscription_current_period_end || null,
+    subscriptionProvider:row.subscription_provider || null,
+    paypalSubscriptionId:row.paypal_subscription_id || null,
     planGrantedUntil:row.plan_granted_until || null,
     businessName:row.business_name || "",
     businessPhone:row.business_phone || row.phone || "",
@@ -5190,6 +5204,8 @@ async function applySupabaseUser(sbUser){
     subscriptionCurrentPeriodEnd: profile && profile.subscription_current_period_end,
     subscriptionCancelAtPeriodEnd: profile && profile.subscription_cancel_at_period_end,
     stripeCustomerId: profile && profile.stripe_customer_id,
+    paypalSubscriptionId: profile && profile.paypal_subscription_id,
+    subscriptionProvider: profile && profile.subscription_provider,
     businessName: (profile && profile.business_name) || "",
     businessPhone: (profile && profile.phone) || "",
     role: (profile && profile.role) || "user",
@@ -5490,6 +5506,33 @@ async function confirmDemoPayment(e){
     if(next === "post") openPostModal();
   }
   return false;
+}
+
+async function startPaypalSubscription(){
+  const plan = pendingProSignup?.accountPlan || pendingSelectedProPlan || state.user?.accountPlan;
+  const error = document.getElementById("paymentStatusError");
+  const button = document.querySelector('[data-click="startPaypalSubscription"]');
+  if(error){ error.hidden = true; error.textContent = ""; }
+  if(!state.user || state.user.provider !== "supabase" || !window.SB || !SB.createPaypalSubscription){
+    if(error){ error.textContent = state.lang === "fr" ? "Connectez-vous avec un compte vérifié avant de payer." : "Sign in with a verified account before paying."; error.hidden = false; }
+    return;
+  }
+  if(button){ button.disabled = true; button.setAttribute("aria-busy","true"); }
+  try {
+    const checkout = await SB.createPaypalSubscription(plan);
+    if(checkout?.data?.url){ location.assign(checkout.data.url); return; }
+    const status = checkout?.error?.status;
+    let message = state.lang === "fr" ? "PayPal n'a pas pu démarrer le paiement." : "PayPal could not start checkout.";
+    if(status === 409) message = state.lang === "fr" ? "Un abonnement Pro est déjà actif sur ce compte." : "A Pro subscription is already active on this account.";
+    else if(status === 401) message += state.lang === "fr" ? " Reconnectez-vous puis réessayez." : " Sign in again and retry.";
+    else if(status === 429) message += state.lang === "fr" ? " Trop d'essais. Réessayez plus tard." : " Too many attempts. Try again later.";
+    else if(status) message += (state.lang === "fr" ? " Code serveur : " : " Server code: ") + status + ".";
+    if(error){ error.textContent = message; error.hidden = false; } else showToast(message);
+  } catch (failure) {
+    if(error){ error.textContent = state.lang === "fr" ? "Impossible de joindre PayPal. Vérifiez votre connexion et réessayez." : "Could not reach PayPal. Check your connection and retry."; error.hidden = false; }
+  } finally {
+    if(button){ button.disabled = false; button.removeAttribute("aria-busy"); }
+  }
 }
 
 async function socialAuth(provider, mode){
@@ -6429,6 +6472,7 @@ function openListingFromUrl(dataLoaded = false){
 
 Object.assign(window, {
   confirmDemoPayment,
+  startPaypalSubscription,
   openAdmin,
   openPricingInfo,
   openListingFromAdmin,

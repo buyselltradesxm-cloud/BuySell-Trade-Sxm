@@ -1327,6 +1327,7 @@
   /* Android app: no in-app sale of Pro plans or boosts (Google Play Billing policy). */
   .android-app [data-click="openBoostInfo"],.android-app [data-click="startBoostFlow"],.android-app [data-click="openBoostCheckout"],.android-app [data-click="closeProfileModalThenBoostInfo"]{display:none!important;}
   .native-app .getapp .stores{display:none;}
+  .native-app .paypal-payment-button{display:none;}
   .ios-app [data-click="openCookieConsentPreventDefault"]{display:none;}
   .plan-card{
     border:2px solid var(--line);border-radius:12px;background:var(--white);
@@ -2681,6 +2682,7 @@
         </div>
         <div class="detail-actions">
           <button type="submit" class="primary-btn" data-i18n="paymentConfirm">S'abonner et continuer vers le paiement</button>
+          <button type="button" class="secondary-btn paypal-payment-button" data-click="startPaypalSubscription" data-en="Subscribe with PayPal">S'abonner avec PayPal</button>
           <button type="button" class="secondary-btn" data-click="cancelPaymentFlow" data-i18n="cancelLabel">Annuler</button>
         </div>
       </form>
