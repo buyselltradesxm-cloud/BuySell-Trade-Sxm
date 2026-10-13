@@ -21,9 +21,11 @@ function StripeGet($Path) {
 }
 
 $account = StripeGet "account"
-if ($account.id -ne $ExpectedAccountId -or -not $account.livemode) {
-  throw "The key does not resolve to the expected live Stripe account. Nothing was changed."
+if ($account.id -ne $ExpectedAccountId) {
+  throw "The key resolves to Stripe account $($account.id), not the expected account. Nothing was changed."
 }
+# Stripe's Account object has no livemode property. Verify live mode on the
+# Price object below, which does expose livemode.
 $price = StripeGet "prices/$StarterPriceId"
 if (-not $price.active -or -not $price.livemode -or $price.currency -ne "usd" -or
     $price.unit_amount -ne 2499 -or $price.recurring.interval -ne "month" -or
