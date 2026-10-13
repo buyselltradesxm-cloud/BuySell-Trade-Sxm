@@ -5352,12 +5352,44 @@ async function confirmDemoPayment(e){
       closeModal("paymentModal");
       return false;
     }
-    const checkout = await SB.createSecureCheckout(plan);
-    if(checkout?.data?.url){ location.assign(checkout.data.url); return false; }
-    const stripeDiagnostic = checkout?.error?.stripe;
-    const stripeReason = stripeDiagnostic && stripeDiagnostic.code && stripeDiagnostic.code !== "unknown"
-      ? " (Stripe: " + stripeDiagnostic.code + ")" : "";
-    showToast((state.lang === "fr" ? "Paiement sécurisé indisponible pour le moment." : "Secure checkout is unavailable right now.") + stripeReason);
+    const status = document.getElementById("paymentStatusText");
+    const error = document.getElementById("paymentStatusError");
+    const button = e.submitter || e.currentTarget.querySelector('button[type="submit"]');
+    if(error){ error.hidden = true; error.textContent = ""; }
+    if(status) status.textContent = state.lang === "fr" ? "Connexion à Stripe…" : "Connecting to Stripe…";
+    if(button){ button.disabled = true; button.setAttribute("aria-busy", "true"); }
+    try {
+      const checkout = await SB.createSecureCheckout(plan);
+      if(checkout?.data?.url){ location.assign(checkout.data.url); return false; }
+      const checkoutError = checkout?.error || {};
+      const stripeCode = checkoutError.stripe?.code;
+      let message = state.lang === "fr" ? "Le paiement n'a pas pu démarrer." : "Payment could not be started.";
+      if(checkoutError.status === 401 || checkoutError.status === 403){
+        message += state.lang === "fr" ? " Reconnectez-vous à votre compte, puis réessayez." : " Sign in again, then retry.";
+      } else if(checkoutError.status === 429){
+        message += state.lang === "fr" ? " Trop d'essais récents. Attendez quelques minutes avant de réessayer." : " Too many recent attempts. Wait a few minutes before retrying.";
+      } else if(stripeCode && stripeCode !== "unknown"){
+        message += (state.lang === "fr" ? " Réponse Stripe : " : " Stripe response: ") + stripeCode + ".";
+      } else if(checkoutError.status){
+        message += (state.lang === "fr" ? " Réponse du serveur : " : " Server response: ") + checkoutError.status + ".";
+      } else {
+        message += state.lang === "fr" ? " Vérifiez votre connexion et réessayez." : " Check your connection and retry.";
+      }
+      if(status) status.textContent = state.lang === "fr" ? "Paiement non démarré" : "Payment not started";
+      if(error){ error.textContent = message; error.hidden = false; }
+      else showToast(message);
+    } catch (checkoutFailure) {
+      console.warn("[checkout] Could not start Stripe Checkout.", checkoutFailure?.message || "network error");
+      if(status) status.textContent = state.lang === "fr" ? "Service de paiement injoignable" : "Payment service unavailable";
+      if(error){
+        error.textContent = state.lang === "fr"
+          ? "Impossible de joindre le service de paiement. Vérifiez votre connexion et réessayez."
+          : "Could not reach the payment service. Check your connection and retry.";
+        error.hidden = false;
+      } else showToast(state.lang === "fr" ? "Impossible de joindre le service de paiement." : "Could not reach the payment service.");
+    } finally {
+      if(button){ button.disabled = false; button.removeAttribute("aria-busy"); }
+    }
     return false;
   }
   if(pendingProSignup){

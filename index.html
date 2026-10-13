@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=8877404ed623bafb"></script>
-<script src="/telemetry.js?v=8877404ed623bafb"></script>
-<script src="/pwa.js?v=8877404ed623bafb" defer></script>
-<link href="/fonts/fonts.css?v=8877404ed623bafb" rel="stylesheet">
+<script src="/frame-guard.js?v=7f6738a4774cc448"></script>
+<script src="/telemetry.js?v=7f6738a4774cc448"></script>
+<script src="/pwa.js?v=7f6738a4774cc448" defer></script>
+<link href="/fonts/fonts.css?v=7f6738a4774cc448" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -2667,10 +2667,11 @@
           </div>
           <div class="payment-line">
             <span data-i18n="paymentStatusLabel">Statut</span>
-            <b data-i18n="paymentWaiting">En attente de paiement</b>
+            <b id="paymentStatusText" data-i18n="paymentWaiting">En attente de paiement</b>
           </div>
         </div>
         <div data-apple-only hidden><p><a href="terms.html" target="_self" data-en="Terms of Use">Conditions d'utilisation</a> · <a href="privacy.html" target="_self" data-en="Privacy Policy">Politique de confidentialité</a></p><button type="button" class="secondary-btn" data-apple-restore data-en="Restore purchases">Restaurer les achats</button><button type="button" class="secondary-btn" data-apple-manage data-en="Manage subscriptions">Gérer les abonnements</button></div>
+        <p class="field-error" id="paymentStatusError" role="alert" aria-live="polite" hidden></p>
         <div class="payment-demo">
           <strong data-i18n="paymentDemoTitle">Renouvellement automatique</strong>
           <p id="paymentRenewalTerms"></p>
@@ -3033,21 +3034,21 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=8877404ed623bafb" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=8877404ed623bafb"></script>
-<script src="native-ios.js?v=8877404ed623bafb"></script>
-<script src="captcha.js?v=8877404ed623bafb"></script>
-<script src="supabase-api.js?v=8877404ed623bafb"></script>
-<script src="img-utils.js?v=8877404ed623bafb"></script>
-<script src="draft-store.js?v=8877404ed623bafb"></script>
-<script src="push-config.js?v=8877404ed623bafb"></script>
-<script src="push-notifications.js?v=8877404ed623bafb"></script>
-<script src="consent.js?v=8877404ed623bafb" defer></script>
-<script src="admob-plugin.js?v=8877404ed623bafb"></script>
-<script src="native-admob.js?v=8877404ed623bafb"></script>
-<script src="ads-config.js?v=8877404ed623bafb"></script>
-<script src="ads.js?v=8877404ed623bafb" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=7f6738a4774cc448" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=7f6738a4774cc448"></script>
+<script src="native-ios.js?v=7f6738a4774cc448"></script>
+<script src="captcha.js?v=7f6738a4774cc448"></script>
+<script src="supabase-api.js?v=7f6738a4774cc448"></script>
+<script src="img-utils.js?v=7f6738a4774cc448"></script>
+<script src="draft-store.js?v=7f6738a4774cc448"></script>
+<script src="push-config.js?v=7f6738a4774cc448"></script>
+<script src="push-notifications.js?v=7f6738a4774cc448"></script>
+<script src="consent.js?v=7f6738a4774cc448" defer></script>
+<script src="admob-plugin.js?v=7f6738a4774cc448"></script>
+<script src="native-admob.js?v=7f6738a4774cc448"></script>
+<script src="ads-config.js?v=7f6738a4774cc448"></script>
+<script src="ads.js?v=7f6738a4774cc448" defer></script>
 
-<script src="app-index.js?v=8877404ed623bafb"></script>
+<script src="app-index.js?v=7f6738a4774cc448"></script>
 </body>
 </html>
