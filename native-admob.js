@@ -62,6 +62,30 @@
     var adId = (CFG.banner && CFG.banner[platform]) ||
                "ca-app-pub-3940256099942544/6300978111"; // Google TEST banner unit
 
+    // The banner is a native overlay drawn on top of the page, so no page
+    // layout can keep it off a window. While a purchase window is open it
+    // would sit on the pay button: hide it there and bring it back after.
+    var PURCHASE_MODALS = ["paymentModal", "boostCheckoutModal"];
+    var bannerShown = false;
+    var bannerHidden = false;
+    function purchaseOpen() {
+      return PURCHASE_MODALS.some(function (id) {
+        var modal = document.getElementById(id);
+        return !!(modal && modal.classList.contains("open"));
+      });
+    }
+    function syncBanner() {
+      var hide = purchaseOpen();
+      if (!bannerShown || hide === bannerHidden) return;
+      bannerHidden = hide;
+      (hide ? AdMob.hideBanner() : AdMob.resumeBanner()).catch(function () {});
+    }
+    var purchaseWatch = new MutationObserver(syncBanner);
+    PURCHASE_MODALS.forEach(function (id) {
+      var modal = document.getElementById(id);
+      if (modal) purchaseWatch.observe(modal, { attributes: true, attributeFilter: ["class"] });
+    });
+
     function showBanner() {
       AdMob.showBanner({
         adId: adId,
@@ -69,6 +93,10 @@
         position: "BOTTOM_CENTER",
         margin: 64, // clears the mobile-nav tab bar; adjust after a real-device check
         isTesting: testing
+      }).then(function () {
+        // A purchase window may already be open by the time the banner arrives.
+        bannerShown = true;
+        syncBanner();
       }).catch(function () {});
     }
 

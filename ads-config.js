@@ -15,6 +15,7 @@
  *    "desktop-leaderboard"  big banner, top of page, desktop only
  *    "content-1"            band between the featured board and the grid (all sizes)
  *    "content-2"            band under the subcategory panel, before the main layout (all sizes)
+ *    "content-3"            band under the grid, before the mobile nav (all sizes)
  *    "home-top"             mobile banner in the home flow
  *    "feed"                 in-grid card, repeats down the results grid (all sizes)
  *    "listing-detail"       inside the listing detail view (highest dwell time)
@@ -45,6 +46,7 @@ window.AdsConfig = {
       "desktop-leaderboard": "5151891881",   // top band, desktop
       "content-1": "9916686290",             // between featured board and the grid (desktop + mobile)
       "content-2": "6536666291",             // under the subcategory panel, before the main layout (desktop + mobile)
+      "content-3": "",                       // under the grid, before the mobile nav (create a new AdSense unit and paste the 10-digit id here; blank = house promo)
       "home-top": "8398011482",              // mobile banner in the home flow
       "feed": "3399826517",                  // repeats inside the results grid (desktop + mobile)
       "listing-detail": "6995456596",        // inside the listing detail view (high dwell)
@@ -91,13 +93,13 @@ window.AdsConfig = {
     },
 
     /* Interstitial eligibility is checked only at natural transitions
-     * (closing a listing), never by a background timer. Foreground time
-     * must reach 90s before the first ad and another 3m before each later
-     * ad. */
+     * (closing a listing, finishing a post), never by a background timer.
+     * Foreground time must reach firstSessionDelayMs before the first ad
+     * and cooldownMs between each later ad. */
     interstitialOptions: {
-      cooldownMs: 180000,          // 3 minutes of foreground use between ads
-      firstSessionDelayMs: 90000,  // first ad only after 90 seconds of foreground use
-      maxPerSession: 5             // hard cap per session
+      cooldownMs: 120000,          // 2 minutes of foreground use between ads
+      firstSessionDelayMs: 60000,  // first ad only after 60 seconds of foreground use
+      maxPerSession: 7             // hard cap per session
     }
     // testingDevices: ["YOUR_DEVICE_ID"], // needed to see real-looking test ads on a physical device
   },

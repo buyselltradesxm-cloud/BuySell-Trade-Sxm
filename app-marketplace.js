@@ -2392,7 +2392,7 @@ function gridCardsHTML(from, to){
   // listing (Google AdSense's ad-density policy can get a whole account
   // suspended for pages that read as mostly ads), but tight enough to
   // maximize impressions within that limit.
-  const FEED_AD_INTERVAL = 4;
+  const FEED_AD_INTERVAL = 3;
   let html = "";
   for(let idx = from; idx < to; idx++){
     html += cardHTML(gridList[idx], false);
@@ -4630,7 +4630,7 @@ function adminBoostsHTML(){
   </section>`;
 }
 
-const ADMIN_AD_PLACEMENTS = ["desktop-leaderboard","content-1","home-top","feed","listing-detail","sticky-bottom"];
+const ADMIN_AD_PLACEMENTS = ["desktop-leaderboard","content-1","content-2","content-3","home-top","feed","listing-detail","sticky-bottom"];
 
 function adminAdRowHTML(c){
   const id = c.id;
@@ -6337,6 +6337,12 @@ async function createListing(e){
   await applyAutomaticIncludedBoosts({silent:!hasActiveProSubscription(state.user)});
   render();
   showToast(editing ? (state.lang==="fr" ? "Annonce modifiée" : "Listing updated") : t().listingPublished);
+  // Natural transition point in the packaged app: a brand-new listing was
+  // just created. Fire a throttled AdMob interstitial (native-admob.js
+  // enforces cooldown, session cap, first-delay). No-op on the web.
+  if(!editing && typeof window.__BST_ADMOB_INTERSTITIAL__ === "function"){
+    try { window.__BST_ADMOB_INTERSTITIAL__(); } catch(e) {}
+  }
   setTimeout(()=>openListing(finalListing.id), 250);
   return false;
 }
