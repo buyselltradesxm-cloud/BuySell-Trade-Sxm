@@ -47,11 +47,11 @@ window.AdsConfig = {
       "desktop-leaderboard": "5151891881",   // top band, desktop
       "content-1": "9916686290",             // between featured board and the grid (desktop + mobile)
       "content-2": "6536666291",             // under the subcategory panel, before the main layout (desktop + mobile)
-      "content-3": "",                       // under the grid, before the mobile nav (create a new AdSense unit and paste the 10-digit id here; blank = house promo)
+      "content-3": "6189315386",             // under the grid, before the mobile nav (BST content-3)
       "home-top": "8398011482",              // mobile banner in the home flow
       "feed": "3399826517",                  // repeats inside the results grid (desktop + mobile)
       "listing-detail": "6995456596",        // inside the listing detail view (high dwell)
-      "inbox": "",                           // messages modal empty state (create a new AdSense unit and paste the 10-digit id here; blank = house promo)
+      "inbox": "2250070370",                 // messages modal empty state (BST inbox)
       "sticky-bottom": "2086744840"          // dismissible mobile banner above the tab bar
     },
 
