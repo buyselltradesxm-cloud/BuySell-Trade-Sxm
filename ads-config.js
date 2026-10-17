@@ -19,6 +19,7 @@
  *    "home-top"             mobile banner in the home flow
  *    "feed"                 in-grid card, repeats down the results grid (all sizes)
  *    "listing-detail"       inside the listing detail view (highest dwell time)
+ *    "inbox"                in the messages modal, shown only when no thread is selected
  *    "sticky-bottom"        dismissible mobile banner above the tab bar
  * ============================================================ */
 window.AdsConfig = {
@@ -50,6 +51,7 @@ window.AdsConfig = {
       "home-top": "8398011482",              // mobile banner in the home flow
       "feed": "3399826517",                  // repeats inside the results grid (desktop + mobile)
       "listing-detail": "6995456596",        // inside the listing detail view (high dwell)
+      "inbox": "",                           // messages modal empty state (create a new AdSense unit and paste the 10-digit id here; blank = house promo)
       "sticky-bottom": "2086744840"          // dismissible mobile banner above the tab bar
     },
 

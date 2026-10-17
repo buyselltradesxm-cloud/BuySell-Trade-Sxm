@@ -4630,7 +4630,7 @@ function adminBoostsHTML(){
   </section>`;
 }
 
-const ADMIN_AD_PLACEMENTS = ["desktop-leaderboard","content-1","content-2","content-3","home-top","feed","listing-detail","sticky-bottom"];
+const ADMIN_AD_PLACEMENTS = ["desktop-leaderboard","content-1","content-2","content-3","home-top","feed","listing-detail","inbox","sticky-bottom"];
 
 function adminAdRowHTML(c){
   const id = c.id;
