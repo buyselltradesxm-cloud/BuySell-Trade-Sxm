@@ -72,6 +72,8 @@ async function fetchListings() {
 }
 
 function priceOf(l) {
+  // Food & Drinks listings are menus: the app shows no price for them, so neither do these pages.
+  if (l.category === "food") return null;
   const usd = l.currency === "usd";
   const amount = Number(usd ? l.price_usd : l.price_eur) || 0;
   if (amount <= 0) return null;

@@ -274,6 +274,12 @@ const SERVICE_SUBCATS = new Set([
 ]);
 
 function postFieldProfile(cat, sub){
+  const profile = basePostFieldProfile(cat, sub);
+  // Restaurants and food sellers list whole menus, so Food & Drinks listings have no price.
+  return cat === "food" ? {...profile, price:false} : profile;
+}
+
+function basePostFieldProfile(cat, sub){
   const serviceListing = cat === "serv" || cat === "job" || SERVICE_SUBCATS.has(sub);
   if(serviceListing){
     // A job offer or a service can be posted without a photo or a price.

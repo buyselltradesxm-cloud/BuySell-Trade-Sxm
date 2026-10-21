@@ -12,8 +12,8 @@ const cases = [
   { cat:"immo", sub:"sale-house", visible:["postPhotosField","postPriceField","postCurrencyField","postOptionsField"], hidden:["postConditionField","vehicleFields"] },
   { cat:"beauty", sub:"hairdresser", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
   { cat:"beauty", sub:"beauty-products", visible:["postPhotosField","postPriceField","postConditionField"] },
-  { cat:"food", sub:"catering", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
-  { cat:"food", sub:"prepared-food", visible:["postPhotosField","postPriceField"], hidden:["postConditionField"] },
+  { cat:"food", sub:"catering", visible:["postPhotosField"], hidden:["postPriceField","postCurrencyField","postConditionField","postOptionsField","vehicleFields"], optional:true },
+  { cat:"food", sub:"prepared-food", visible:["postPhotosField"], hidden:["postPriceField","postCurrencyField","postConditionField"] },
   { cat:"pets", sub:"pet-services", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
   { cat:"pets", sub:"pet-supplies", visible:["postPhotosField","postPriceField","postConditionField"] }
 ];
