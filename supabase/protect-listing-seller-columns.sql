@@ -65,10 +65,12 @@ begin
 
   -- A photo (or thumbnail) that was not on the approved listing sends it
   -- back to the admin queue. Removing or reordering photos does not.
-  if exists (select 1 from unnest(coalesce(new.photos, '{}'::text[])) p
-              where p <> all (coalesce(old.photos, '{}'::text[])))
-     or exists (select 1 from unnest(coalesce(new.thumb_photos, '{}'::text[])) p
-                 where p <> all (coalesce(old.thumb_photos, '{}'::text[]))) then
+  -- EXCEPT, not "<> all": one NULL element in the old array makes every
+  -- "<> all" comparison NULL, which would let later swaps through.
+  if exists (select unnest(coalesce(new.photos, '{}'::text[]))
+             except select unnest(coalesce(old.photos, '{}'::text[])))
+     or exists (select unnest(coalesce(new.thumb_photos, '{}'::text[]))
+                except select unnest(coalesce(old.thumb_photos, '{}'::text[]))) then
     new.moderation_status := 'pending';
   end if;
 
