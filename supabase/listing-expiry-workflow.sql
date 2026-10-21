@@ -127,7 +127,7 @@ begin
   end if;
 
   delete from public.app_notifications
-   where listing_id = confirm_listing_available.listing_id
+   where app_notifications.listing_id = confirm_listing_available.listing_id
      and user_id = auth.uid()
      and kind = 'listing_renewal_required';
 
