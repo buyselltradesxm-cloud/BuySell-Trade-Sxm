@@ -32,10 +32,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=a3532d6021f1132b"></script>
-<script src="/telemetry.js?v=a3532d6021f1132b"></script>
-<script src="/pwa.js?v=a3532d6021f1132b" defer></script>
-<link href="/fonts/fonts.css?v=a3532d6021f1132b" rel="stylesheet">
+<script src="/frame-guard.js?v=1fe173badc38f4a4"></script>
+<script src="/telemetry.js?v=1fe173badc38f4a4"></script>
+<script src="/pwa.js?v=1fe173badc38f4a4" defer></script>
+<link href="/fonts/fonts.css?v=1fe173badc38f4a4" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -46,6 +46,7 @@
     --sun:#F2B705;
     --coral:#E4572E;
     --fr:#C1443B;
+    --signin:#C1443B;
     --nl:#1E5AA8;
     --eur:#1E5AA8;
     --usd:#1B7A3E;
@@ -227,6 +228,11 @@
     display:inline-grid;place-content:center;
     font-size:11px;font-weight:800;text-transform:uppercase;
   }
+  /* Signed-out visitors: the profile/login button is red so signing in stands out. */
+  #profileBtn:not(.on){background:var(--signin);color:var(--white);}
+  #profileBtn:not(.on):hover{background:#A63830;}
+  #profileBtn:not(.on) .avatar-dot{background:rgba(255,255,255,.22);}
+  .mobile-nav .nav-login:not(.is-auth){background:var(--signin);}
   .post{
     background:var(--sun);color:var(--ink);
     font-weight:700;
@@ -3037,21 +3043,21 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=a3532d6021f1132b" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=a3532d6021f1132b"></script>
-<script src="native-ios.js?v=a3532d6021f1132b"></script>
-<script src="captcha.js?v=a3532d6021f1132b"></script>
-<script src="supabase-api.js?v=a3532d6021f1132b"></script>
-<script src="img-utils.js?v=a3532d6021f1132b"></script>
-<script src="draft-store.js?v=a3532d6021f1132b"></script>
-<script src="push-config.js?v=a3532d6021f1132b"></script>
-<script src="push-notifications.js?v=a3532d6021f1132b"></script>
-<script src="consent.js?v=a3532d6021f1132b" defer></script>
-<script src="admob-plugin.js?v=a3532d6021f1132b"></script>
-<script src="native-admob.js?v=a3532d6021f1132b"></script>
-<script src="ads-config.js?v=a3532d6021f1132b"></script>
-<script src="ads.js?v=a3532d6021f1132b" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=1fe173badc38f4a4" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=1fe173badc38f4a4"></script>
+<script src="native-ios.js?v=1fe173badc38f4a4"></script>
+<script src="captcha.js?v=1fe173badc38f4a4"></script>
+<script src="supabase-api.js?v=1fe173badc38f4a4"></script>
+<script src="img-utils.js?v=1fe173badc38f4a4"></script>
+<script src="draft-store.js?v=1fe173badc38f4a4"></script>
+<script src="push-config.js?v=1fe173badc38f4a4"></script>
+<script src="push-notifications.js?v=1fe173badc38f4a4"></script>
+<script src="consent.js?v=1fe173badc38f4a4" defer></script>
+<script src="admob-plugin.js?v=1fe173badc38f4a4"></script>
+<script src="native-admob.js?v=1fe173badc38f4a4"></script>
+<script src="ads-config.js?v=1fe173badc38f4a4"></script>
+<script src="ads.js?v=1fe173badc38f4a4" defer></script>
 
-<script src="app-marketplace.js?v=a3532d6021f1132b"></script>
+<script src="app-marketplace.js?v=1fe173badc38f4a4"></script>
 </body>
 </html>
