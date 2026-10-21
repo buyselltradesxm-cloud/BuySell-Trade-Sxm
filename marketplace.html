@@ -32,10 +32,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=1aeca3ebd3753353"></script>
-<script src="/telemetry.js?v=1aeca3ebd3753353"></script>
-<script src="/pwa.js?v=1aeca3ebd3753353" defer></script>
-<link href="/fonts/fonts.css?v=1aeca3ebd3753353" rel="stylesheet">
+<script src="/frame-guard.js?v=1111cec870329fac"></script>
+<script src="/telemetry.js?v=1111cec870329fac"></script>
+<script src="/pwa.js?v=1111cec870329fac" defer></script>
+<link href="/fonts/fonts.css?v=1111cec870329fac" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -234,6 +234,9 @@
   #profileBtn:hover{background:#A63830;}
   #profileBtn:not(.on) .avatar-dot{background:rgba(255,255,255,.22);}
   #profileBtn.on .avatar-dot{box-shadow:0 0 0 2px var(--white);}
+  /* Unlike the icon-only header buttons, this one shows its label ("Se connecter" / "Profil"). */
+  #profileBtn{gap:7px;padding-right:12px;}
+  #profileBtn .label{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;font-weight:800;}
   .mobile-nav .nav-login:not(.is-auth){background:var(--signin);padding-left:2px;padding-right:2px;}
   .mobile-nav .nav-login:not(.is-auth) span:last-child{font-size:10.5px;line-height:1.1;text-align:center;}
   .post{
@@ -3046,21 +3049,21 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=1aeca3ebd3753353" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=1aeca3ebd3753353"></script>
-<script src="native-ios.js?v=1aeca3ebd3753353"></script>
-<script src="captcha.js?v=1aeca3ebd3753353"></script>
-<script src="supabase-api.js?v=1aeca3ebd3753353"></script>
-<script src="img-utils.js?v=1aeca3ebd3753353"></script>
-<script src="draft-store.js?v=1aeca3ebd3753353"></script>
-<script src="push-config.js?v=1aeca3ebd3753353"></script>
-<script src="push-notifications.js?v=1aeca3ebd3753353"></script>
-<script src="consent.js?v=1aeca3ebd3753353" defer></script>
-<script src="admob-plugin.js?v=1aeca3ebd3753353"></script>
-<script src="native-admob.js?v=1aeca3ebd3753353"></script>
-<script src="ads-config.js?v=1aeca3ebd3753353"></script>
-<script src="ads.js?v=1aeca3ebd3753353" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=1111cec870329fac" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=1111cec870329fac"></script>
+<script src="native-ios.js?v=1111cec870329fac"></script>
+<script src="captcha.js?v=1111cec870329fac"></script>
+<script src="supabase-api.js?v=1111cec870329fac"></script>
+<script src="img-utils.js?v=1111cec870329fac"></script>
+<script src="draft-store.js?v=1111cec870329fac"></script>
+<script src="push-config.js?v=1111cec870329fac"></script>
+<script src="push-notifications.js?v=1111cec870329fac"></script>
+<script src="consent.js?v=1111cec870329fac" defer></script>
+<script src="admob-plugin.js?v=1111cec870329fac"></script>
+<script src="native-admob.js?v=1111cec870329fac"></script>
+<script src="ads-config.js?v=1111cec870329fac"></script>
+<script src="ads.js?v=1111cec870329fac" defer></script>
 
-<script src="app-marketplace.js?v=1aeca3ebd3753353"></script>
+<script src="app-marketplace.js?v=1111cec870329fac"></script>
 </body>
 </html>
