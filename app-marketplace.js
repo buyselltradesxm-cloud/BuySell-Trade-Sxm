@@ -3079,6 +3079,7 @@ function closeModal(id){
  * overlayPopGuard counts our own history.back() calls still in flight. */
 let overlayHistory = 0;
 let overlayPopGuard = 0;
+let pendingOverlayListingId = null;
 function filtersDrawerOpen(){
   return document.getElementById("filters").classList.contains("open");
 }
@@ -3086,7 +3087,7 @@ function anyOverlayOpen(){
   return !!document.querySelector(".modal.open") || filtersDrawerOpen();
 }
 function ensureOverlayHistoryEntry(){
-  if(overlayHistory || !window.history?.pushState) return;
+  if(overlayHistory || overlayPopGuard || !window.history?.pushState) return;
   history.pushState({bstOverlay:true}, "");
   overlayHistory = 1;
 }
@@ -3112,7 +3113,12 @@ window.addEventListener("popstate", ()=>{
   if(overlayPopGuard){
     // Our own history.back() after a window was closed from the page.
     overlayPopGuard--;
-    if(!document.querySelector("#detailModal.open")) clearListingFromUrl();
+    if(anyOverlayOpen()) ensureOverlayHistoryEntry();
+    if(document.querySelector("#detailModal.open") && pendingOverlayListingId !== null){
+      const id = pendingOverlayListingId;
+      pendingOverlayListingId = null;
+      syncListingToUrl(id);
+    }else if(!document.querySelector("#detailModal.open")) clearListingFromUrl();
     return;
   }
   if(overlayHistory){
@@ -3141,6 +3147,7 @@ function showToast(msg){
 }
 
 function clearListingFromUrl(){
+  pendingOverlayListingId = null;
   if(!window.history?.replaceState) return;
   const url = new URL(window.location.href);
   if(!url.searchParams.has("listing")) return;
@@ -3149,6 +3156,7 @@ function clearListingFromUrl(){
 }
 
 function syncListingToUrl(id){
+  if(overlayPopGuard){ pendingOverlayListingId = id; return; }
   if(!window.history?.replaceState) return;
   // The listing address goes on the entry that Back removes, so the entry
   // underneath keeps the plain page address.
@@ -3361,18 +3369,19 @@ function scrollChatToBottom(id){
 
 const pendingMessageInputs = new WeakSet();
 
-async function sendConfirmedMessage(input, opts){
+async function sendConfirmedMessage(input, opts, canClearInput = () => true){
   if(input && pendingMessageInputs.has(input)) return null;
   const userId = state.user?.id;
+  const revision = authProjectionRevision;
   if(input) pendingMessageInputs.add(input);
   try{
     if(!(window.SB && SB.enabled() && SB.sendMessage) || !opts.recipientId || isBlockedUser(opts.recipientId)) throw new Error("Messaging unavailable");
     const sent = await SB.sendMessage(opts);
     if(sent?.error_code === "free_listing_message_limit_reached"){ showToast(t().freeMessageLimit); return null; }
     if(!sent) throw new Error("Message was not saved");
-    if(state.user?.id !== userId) return null;
+    if(state.user?.id !== userId || authProjectionRevision !== revision) return null;
     // Preserve anything typed while this request was in flight.
-    if(input && input.value.trim() === opts.body) input.value = "";
+    if(input && canClearInput() && input.value.trim() === opts.body) input.value = "";
     return sent;
   }catch(e){
     showToast(state.lang==="fr" ? "Envoi non confirmé. Vérifiez la conversation avant de réessayer." : "Message delivery not confirmed. Check the conversation before retrying.");
@@ -3564,6 +3573,11 @@ let inboxConvs = [];
 // Users this account has blocked: [{id, name}]. Loaded from Supabase at sign-in.
 let blockedUsers = [];
 let activeConvKey = null;
+const inboxDrafts = new Map();
+function rememberInboxDraft(){
+  const input = document.getElementById("msgrInput");
+  if(activeConvKey && input) inboxDrafts.set(activeConvKey, input.value);
+}
 let inboxSearchTerm = "";
 
 async function openMessages(){
@@ -3695,6 +3709,11 @@ function renderInboxLog(conv){
 async function openInboxThread(key){
   const conv = inboxConvs.find(x=>x.key === key);
   if(!conv) return;
+  if(activeConvKey !== key){
+    rememberInboxDraft();
+    const composer = document.getElementById("msgrInput");
+    if(composer) composer.value = inboxDrafts.get(key) || "";
+  }
   activeConvKey = key;
   document.getElementById("msgrEmpty").hidden = true;
   document.getElementById("msgrThread").hidden = false;
@@ -3732,7 +3751,10 @@ async function openInboxThread(key){
 }
 
 function inboxBack(){
+  rememberInboxDraft();
   activeConvKey = null;
+  const input = document.getElementById("msgrInput");
+  if(input) input.value = "";
   document.getElementById("messengerBody")?.classList.remove("show-thread");
   const thread = document.getElementById("msgrThread");
   const empty = document.getElementById("msgrEmpty");
@@ -3749,8 +3771,9 @@ async function sendInboxMessage(e){
   const text = input.value.trim();
   if(!text) return false;
   if(conv.real || state.user?.provider === "supabase"){
-    const sent = await sendConfirmedMessage(input, { listingId: conv.listingId, recipientId: conv.otherId, body: text, senderName: state.user?.name });
+    const sent = await sendConfirmedMessage(input, { listingId: conv.listingId, recipientId: conv.otherId, body: text, senderName: state.user?.name }, () => activeConvKey === conv.key);
     if(!sent) return false;
+    if(activeConvKey !== conv.key && (inboxDrafts.get(conv.key) || "").trim() === text) inboxDrafts.delete(conv.key);
     conv.messages.push(sent);
     conv.preview = text;
     conv.at = sent.created_at;
@@ -4014,6 +4037,7 @@ async function saveProfileEdit(e){
     state.user.name = row.name || name;
     state.user.businessName = row.business_name || "";
     try { await SB.refreshOwnListingSellerName(state.user.businessName || state.user.name); } catch(err){}
+    if(state.user?.id !== userId) return false;
   } else {
     state.user.name = name;
     state.user.businessName = businessName;
@@ -6572,6 +6596,9 @@ function clearAccountMessaging(){
   blockedUsers = [];
   inboxConvs = [];
   activeConvKey = null;
+  inboxDrafts.clear();
+  const composer = document.getElementById("msgrInput");
+  if(composer) composer.value = "";
   inboxSearchTerm = "";
   Object.keys(chatThreads).forEach(key=>delete chatThreads[key]);
   receivedMessageIds.clear();

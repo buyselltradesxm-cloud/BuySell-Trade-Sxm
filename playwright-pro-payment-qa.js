@@ -18,7 +18,8 @@ const { chromium } = require("playwright");
   if (!(await headerLogin.isVisible())) errors.push("Login/Profile button is missing from the header.");
   if (!(await headerPricing.isVisible())) errors.push("Pricing button is missing from the header.");
   const headerLoginText = await headerLogin.innerText();
-  if (!/Login/.test(headerLoginText)) errors.push(`Signed-out header should say Login, got "${headerLoginText}".`);
+  const expectedLoginText = await page.evaluate(() => t().loginLabel);
+  if (!headerLoginText.includes(expectedLoginText)) errors.push(`Signed-out header should say ${expectedLoginText}, got "${headerLoginText}".`);
 
   await headerPricing.click();
   await page.locator("#boostModal.open").waitFor();
