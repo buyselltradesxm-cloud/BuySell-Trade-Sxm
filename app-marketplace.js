@@ -2234,7 +2234,8 @@ function cardHTML(l, pinned, idx){
       ${pinned?`<span class="pin" aria-hidden="true"></span>`:""}
       <span class="stripe ${esc(l.side)}" aria-hidden="true"></span>
       <button type="button" class="fav" aria-pressed="${isFav}"
-        aria-label="${state.lang==="fr"?"Ajouter aux favoris":"Add to favourites"}"
+        data-favorite-id="${esc(idParam)}"
+        aria-label="${isFav ? (state.lang === "fr" ? "Retirer des favoris" : "Remove from favourites") : (state.lang === "fr" ? "Ajouter aux favoris" : "Add to favourites")}"
         data-click="toggleFav" data-click-args='${dataArgs([idParam, "__THIS__", "__EVENT__"])}'>${isFav?"&#9829;":"&#9825;"}</button>
       <button type="button" class="share-card" aria-label="${t().shareLabel}" title="${t().shareLabel}"
         data-click="shareListing" data-click-args='${dataArgs([idParam, "__EVENT__"])}'><span aria-hidden="true">&#8599;</span>${t().shareLabel}</button>
@@ -2260,6 +2261,8 @@ function cardHTML(l, pinned, idx){
 }
 
 function cardKey(e, id){
+  // Nested buttons own their keyboard activation; only the card opens details.
+  if(!e.target.matches('.card')) return;
   if(e.key === "Enter" || e.key === " "){
     e.preventDefault();
     openListing(id);
@@ -2610,6 +2613,7 @@ function applySearch(e){
   state.availability = "all";
   state.handover = "all";
   state.features.clear();
+  buildCats();
   buildFilters();
   render();
   if(!L.length){
@@ -2675,6 +2679,7 @@ function filterBySubcategory(id){
 function filterByArea(area){
   state.area = area;
   document.getElementById("area").value = area;
+  document.getElementById("filterArea").value = area;
   render();
 }
 
@@ -2762,14 +2767,21 @@ function toggleFav(id, btn){
   const key = idKey(id);
   if(state.favs.has(key)) state.favs.delete(key); else state.favs.add(key);
   const on = state.favs.has(key);
-  btn.setAttribute("aria-pressed", on);
-  btn.innerHTML = on ? "&#9829;" : "&#9825;";
+  document.querySelectorAll('[data-favorite-id]').forEach(button=>{
+    if(button.dataset.favoriteId !== key) return;
+    button.setAttribute("aria-pressed", on);
+    button.innerHTML = on ? "&#9829;" : "&#9825;";
+    button.setAttribute("aria-label", on
+      ? (state.lang === "fr" ? "Retirer des favoris" : "Remove from favourites")
+      : (state.lang === "fr" ? "Ajouter aux favoris" : "Add to favourites"));
+  });
   btn.classList.remove("pop"); void btn.offsetWidth; btn.classList.add("pop");
   document.getElementById("favCount").textContent = state.favs.size;
   document.getElementById("favBtn").classList.toggle("on", state.favs.size>0);
   persistState();
 }
 function scrollFavs(){
+  if(!gridList.some(l=>state.favs.has(idKey(l.id))) && L.some(l=>state.favs.has(idKey(l.id)))) resetFilters();
   const favIndex = gridList.findIndex(l=>state.favs.has(idKey(l.id)));
   while(favIndex >= gridShown && gridShown < gridList.length) showMoreListings();
   const first = [...document.querySelectorAll(".fav[aria-pressed=true]")][0];

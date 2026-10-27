@@ -8,6 +8,10 @@ const { chromium } = require("playwright");
 
   for (const path of paths) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    // Gallery/search does not test ad delivery. Avoid navigation cancelling an
+    // unrelated ad request and incorrectly failing otherwise successful checks.
+    await page.route('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js*', route =>
+      route.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
     page.on("pageerror", err => errors.push(`${path}: ${err.message}`));
     page.on("console", msg => {
       if (msg.type() === "error" && !msg.text().includes("400")) errors.push(`${path}: ${msg.text()}`);
