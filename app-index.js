@@ -4184,26 +4184,43 @@ function miniListingHTML(l){
     </div>`;
 }
 
+// Serialize destructive account exits per session, including logout vs deletion.
+const pendingAccountExits = new Set();
 async function logoutUser(){
-  if(window.Push && Push.disable && state.user && state.user.provider === "supabase"){
-    try { await Push.disable(); } catch(e){}
-  }
-  if(state.user?.provider === "supabase"){
-    try{
-      if(!(window.SB && SB.enabled() && SB.signOut)) throw new Error("Auth service unavailable");
-      const result = await SB.signOut();
-      if(!result || result.error) throw new Error("Sign-out not confirmed");
-    }catch(e){
-      showToast(state.lang==="fr" ? "Déconnexion non confirmée. Réessayez." : "Sign-out could not be confirmed. Please try again.");
-      return;
+  if(!state.user) return;
+  const userId = state.user.id;
+  const revision = authProjectionRevision;
+  const key = JSON.stringify([revision, userId]);
+  if(pendingAccountExits.has(key)) return;
+  pendingAccountExits.add(key);
+  const current = ()=>state.user?.id === userId && authProjectionRevision === revision;
+  try {
+    if(window.Push && Push.disable && state.user && state.user.provider === "supabase"){
+      try { await Push.disable(); } catch(e){}
     }
+    if(!current()) return;
+    if(state.user?.provider === "supabase"){
+      try{
+        if(!(window.SB && SB.enabled() && SB.signOut)) throw new Error("Auth service unavailable");
+        const result = await SB.signOut();
+        // Auth may have already delivered this operation's signed-out event.
+        if(!current() && !(state.user === null && authProjectionRevision === revision + 1)) return;
+        if(!result || result.error) throw new Error("Sign-out not confirmed");
+      }catch(e){
+        if(!current()) return;
+        showToast(state.lang==="fr" ? "Déconnexion non confirmée. Réessayez." : "Sign-out could not be confirmed. Please try again.");
+        return;
+      }
+    }
+    clearAccountMessaging();
+    state.user = null;
+    persistState();
+    closeModal("profileModal");
+    render();
+    showToast(state.lang==="fr" ? "Déconnecté" : "Logged out");
+  } finally {
+    pendingAccountExits.delete(key);
   }
-  clearAccountMessaging();
-  state.user = null;
-  persistState();
-  closeModal("profileModal");
-  render();
-  showToast(state.lang==="fr" ? "Déconnecté" : "Logged out");
 }
 
 // Self-service account deletion (GDPR right to erasure). Local-only demo
@@ -4211,6 +4228,11 @@ async function logoutUser(){
 // out locally -- real deletion only applies to actual Supabase accounts.
 async function deleteMyAccountConfirmed(){
   if(!state.user) return;
+  const userId = state.user.id;
+  const revision = authProjectionRevision;
+  const key = JSON.stringify([revision, userId]);
+  if(pendingAccountExits.has(key)) return;
+  const current = ()=>state.user?.id === userId && authProjectionRevision === revision;
   if(window.SXM && SXM.isIOS()) alert(state.lang === "fr" ? "La suppression du compte ne résilie pas un abonnement Apple. Vous pouvez le résilier avec le bouton Gérer les abonnements Apple du profil." : "Deleting your account does not cancel an Apple subscription. You can cancel it using Manage Apple subscriptions in your profile.");
   if(!confirm(state.lang==="fr"
     ? "Supprimer définitivement votre compte ? Vos messages seront supprimés et vos annonces resteront visibles sans vendeur associé. Cette action est irréversible."
@@ -4222,23 +4244,31 @@ async function deleteMyAccountConfirmed(){
     return;
   }
 
-  let res;
-  try{ if(window.SB && SB.enabled() && SB.deleteMyAccount) res = await SB.deleteMyAccount(); }catch(e){}
-  if(res && res.ok){
-    if(window.Push && Push.disable){ try { await Push.disable(); } catch(e){} }
-    try { await SB.signOut(); } catch(e){}
-    clearAccountMessaging();
-    state.user = null;
-    persistState();
-    closeModal("profileModal");
-    render();
-    showToast(state.lang==="fr" ? "Votre compte a été supprimé." : "Your account has been deleted.");
-  } else {
-    // The server refuses to delete while a Stripe subscription cannot be
-    // cancelled (it would keep billing with no account left to cancel from).
-    showToast(hasActiveProSubscription(state.user)
-      ? (state.lang==="fr" ? "Suppression impossible : annulez d'abord votre abonnement (Profil > Gérer / annuler), puis réessayez." : "Could not delete: cancel your subscription first (Profile > Manage / cancel), then try again.")
-      : (state.lang==="fr" ? "Échec de la suppression : " : "Deletion failed: ") + (res && res.error ? res.error : "?"));
+  pendingAccountExits.add(key);
+  try {
+    let res;
+    try{ if(window.SB && SB.enabled() && SB.deleteMyAccount) res = await SB.deleteMyAccount(); }catch(e){}
+    if(!current()) return;
+    if(res && res.ok){
+      if(window.Push && Push.disable){ try { await Push.disable(); } catch(e){} }
+      if(!current()) return;
+      try { await SB.signOut(); } catch(e){}
+      if(!current() && !(state.user === null && authProjectionRevision === revision + 1)) return;
+      clearAccountMessaging();
+      state.user = null;
+      persistState();
+      closeModal("profileModal");
+      render();
+      showToast(state.lang==="fr" ? "Votre compte a été supprimé." : "Your account has been deleted.");
+    } else {
+      // The server refuses to delete while a Stripe subscription cannot be
+      // cancelled (it would keep billing with no account left to cancel from).
+      showToast(hasActiveProSubscription(state.user)
+        ? (state.lang==="fr" ? "Suppression impossible : annulez d'abord votre abonnement (Profil > Gérer / annuler), puis réessayez." : "Could not delete: cancel your subscription first (Profile > Manage / cancel), then try again.")
+        : (state.lang==="fr" ? "Échec de la suppression : " : "Deletion failed: ") + (res && res.error ? res.error : "?"));
+    }
+  } finally {
+    pendingAccountExits.delete(key);
   }
 }
 
