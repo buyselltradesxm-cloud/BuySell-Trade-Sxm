@@ -99,7 +99,7 @@ function serve() {
       }));
     }, { listing });
 
-    await page.goto(`http://localhost:${port}${pathName}?local=1&admin=1&email=rxmarketing09@gmail.com&listing=${uuid}`, {
+    await page.goto(`http://localhost:${port}${pathName}?local=1&noads=1&admin=1&email=rxmarketing09@gmail.com&listing=${uuid}`, {
       waitUntil: "domcontentloaded"
     });
     await page.waitForSelector("#detailModal.open", { timeout: 7000 });
