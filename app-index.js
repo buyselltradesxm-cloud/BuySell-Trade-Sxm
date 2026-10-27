@@ -939,6 +939,11 @@ let adminDailyCounts = [];
 let adminSiteStats = {days:[], errors:[]};
 let adminListingSearch = "";
 let adminUserSearch = "";
+let postFormRevision = 0;
+let postPhotoRevision = 0;
+let postPhotosPending = false;
+const pendingPostSaves = new Set();
+let selectedPostThumbnails = [];
 let selectedPostPhotos = [];   // aperçus (data URL) pour l'affichage
 let selectedPostFiles = [];    // File d'origine, pour l'upload Supabase Storage
 let selectedPostThumbFiles = []; // miniature ~480px par photo (même ordre), pour uploadPhotos
@@ -3307,6 +3312,7 @@ async function shareListing(id, e){
 }
 
 let reportingListingId = null;
+const pendingReportForms = new WeakSet();
 
 function openReportModal(id){
   if(!state.user){ showToast(t().reportLoginRequired); return; }
@@ -3338,7 +3344,11 @@ function openReportModal(id){
 async function submitReport(e){
   if(e) e.preventDefault();
   const form = e?.target;
-  if(!form || !reportingListingId) return false;
+  if(!form || !reportingListingId || !state.user || pendingReportForms.has(form)) return false;
+  const listingId = reportingListingId;
+  const userId = state.user.id;
+  const revision = authProjectionRevision;
+  pendingReportForms.add(form);
   const reasonInput = form.querySelector('input[name="reportReason"]:checked');
   const reason = reasonInput ? reasonInput.value : "other";
   const notes = form.querySelector("#reportNotes")?.value?.trim() || "";
@@ -3347,11 +3357,14 @@ async function submitReport(e){
   let ok = false;
   try {
     if(window.SB && SB.enabled() && SB.createReport){
-      const r = await SB.createReport(reportingListingId, reason, notes);
+      const r = await SB.createReport(listingId, reason, notes);
       ok = !!r;
     }
   } catch(err){ console.warn("[report]", err); }
+  pendingReportForms.delete(form);
   if(submitBtn) submitBtn.disabled = false;
+  if(state.user?.id !== userId || revision !== authProjectionRevision ||
+    reportingListingId !== listingId || document.querySelector("#reportBody form") !== form) return false;
   if(ok){
     showToast(t().reportSent);
     closeModal("reportModal");
@@ -5087,22 +5100,34 @@ function syncOwnListingPatch(id, patch){
 // A failed write must leave the listing, reminders, and favorites intact.
 // SB methods return null/false for rejected writes as well as throwing on
 // network failures. Apply local changes only after backend confirmation.
+const pendingOwnListingChanges = new Set();
 async function saveOwnListingChange(listing, patch, {renew=false, remove=false} = {}){
-  if(state.user?.provider !== "supabase") return remove ? true : patch;
+  if(!state.user) return null;
+  if(state.user.provider !== "supabase") return remove ? true : patch;
+  const userId = state.user.id;
+  const revision = authProjectionRevision;
+  const key = JSON.stringify([revision, userId, idKey(listing.id)]);
+  if(pendingOwnListingChanges.has(key)) return null;
+  pendingOwnListingChanges.add(key);
+  const current = ()=>state.user?.id === userId && authProjectionRevision === revision;
   try{
     if(!(window.SB && SB.enabled())) throw new Error("Backend unavailable");
     let saved;
     if(remove) saved = await SB.deleteListing(listing.id);
     else if(renew && SB.confirmListingAvailable) saved = await SB.confirmListingAvailable(listing.id);
     else saved = await SB.updateListing({...listing, ...patch});
+    if(!current()) return null;
     if(!saved) throw new Error("Listing change was not saved");
     return saved;
   }catch(err){
     console.warn("[listing save]", err);
+    if(!current()) return null;
     showToast(state.lang === "fr"
       ? "Échec de l'enregistrement. Vérifiez votre connexion et réessayez."
       : "Save failed. Check your connection and try again.");
     return null;
+  }finally{
+    pendingOwnListingChanges.delete(key);
   }
 }
 
@@ -5927,6 +5952,13 @@ async function loginAccount(e){
 }
 
 function buildPostForm(listing=null){
+  postFormRevision++;
+  clearTimeout(draftSaveTimer);
+  postPhotoRevision++;
+  postPhotosPending = false;
+  selectedPostThumbnails = listing?.photos?.map((src, i)=>listing.thumbPhotos?.[i] || src) || [];
+  const submit = document.getElementById("postSubmitBtn");
+  if(submit) submit.disabled = false;
   const form = document.getElementById("postForm");
   if(form) form.reset();
   selectedPostPhotos = listing?.photos ? [...listing.photos] : [];
@@ -6082,20 +6114,35 @@ function draftAgeText(ts){
 
 async function restoreSavedDraft(){
   if(!window.Drafts) return;
-  const d = await Drafts.load();
-  const bar = document.getElementById("postDraftBar");
-  if(bar) bar.hidden = true;
-  if(!d) return;
-  fillPostForm(d);
-  selectedPostPhotos = Array.isArray(d.photos) ? [...d.photos] : [];
-  selectedPostFiles = [];
-  selectedPostThumbFiles = []; // drafts only persist the full preview; no thumbnail to restore
-  renderPhotoPreview();
-  if(selectedPostPhotos.length && Drafts.dataUrlToFile){
-    Promise.all(selectedPostPhotos.map((u,i)=>Drafts.dataUrlToFile(u, `photo-${i+1}.jpg`)))
-      .then(files=>{ selectedPostFiles = files.filter(Boolean); });
+  const revision = ++postPhotoRevision;
+  const formRevision = postFormRevision;
+  const authRevision = authProjectionRevision;
+  const userId = state.user?.id;
+  const current = ()=>revision === postPhotoRevision && formRevision === postFormRevision &&
+    authRevision === authProjectionRevision && userId === state.user?.id;
+  postPhotosPending = true;
+  try {
+    const d = await Drafts.load();
+    if(!current() || !d) return;
+    const photos = Array.isArray(d.photos) ? [...d.photos] : [];
+    const files = await Promise.all(photos.map((url, i)=>Drafts.dataUrlToFile(url, `photo-${i+1}.jpg`)));
+    if(!current()) return;
+    if(files.some(file=>!file)) throw new Error("Draft photos could not be restored");
+    fillPostForm(d);
+    selectedPostPhotos = photos;
+    selectedPostFiles = files;
+    selectedPostThumbFiles = files.map(()=>null);
+    selectedPostThumbnails = [];
+    const bar = document.getElementById("postDraftBar");
+    if(bar) bar.hidden = true;
+    renderPhotoPreview();
+    showToast(state.lang === "fr" ? "Brouillon restauré" : "Draft restored");
+  } catch(error) {
+    console.warn("[post] draft restore failed:", error);
+    if(current()) showToast(state.lang === "fr" ? "Impossible de restaurer les photos. Réessayez." : "Could not restore draft photos. Please try again.");
+  } finally {
+    if(revision === postPhotoRevision) postPhotosPending = false;
   }
-  showToast(state.lang==="fr" ? "Brouillon restauré" : "Draft restored");
 }
 
 function dismissSavedDraft(){
@@ -6251,6 +6298,13 @@ function meetupLabel(v){
 }
 
 async function handlePhotoUpload(e){
+  const revision = ++postPhotoRevision;
+  const formRevision = postFormRevision;
+  const authRevision = authProjectionRevision;
+  const userId = state.user?.id;
+  const current = ()=>revision === postPhotoRevision && formRevision === postFormRevision &&
+    authRevision === authProjectionRevision && userId === state.user?.id;
+  postPhotosPending = true;
   const allowedTypes = new Set(["image/jpeg","image/png","image/webp"]);
   const all = [...e.target.files];
   const picked = all.filter(file=>allowedTypes.has(file.type) && file.size > 0 && file.size <= 5 * 1024 * 1024).slice(0, 8);
@@ -6261,7 +6315,7 @@ async function handlePhotoUpload(e){
   selectedPostThumbFiles = [];
   const preview = document.getElementById("photoPreview");
   preview.innerHTML = "";
-  if(!picked.length) return;
+  if(!picked.length){ postPhotosPending = false; selectedPostThumbnails = []; return; }
   // Compress/resize on-device before anything is stored or uploaded: keeps a
   // listing upload in the low-MB range instead of 30–90 MB from phone cameras.
   // Also generates a small ~480px thumbnail per photo (selectedPostThumbFiles)
@@ -6271,19 +6325,26 @@ async function handlePhotoUpload(e){
   try {
     if(window.ImgUtils) results = await ImgUtils.compressMany(picked, { maxEdge:1600, quality:0.82 });
   } catch(err){ console.warn("[post] compression KO, envoi des originaux:", err); }
+  if(!current()) return;
   if(results){
+    selectedPostThumbnails = [];
     selectedPostFiles = results.map(r=>r.file);
     selectedPostThumbFiles = results.map(r=>r.thumbFile);
     selectedPostPhotos = results.map(r=>r.dataUrl);
   } else {
-    selectedPostFiles = picked;
-    selectedPostThumbFiles = picked.map(()=>null);
-    selectedPostPhotos = await Promise.all(picked.map(file => new Promise(resolve=>{
+    const photos = await Promise.all(picked.map(file => new Promise(resolve=>{
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
+      reader.onerror = reader.onabort = () => resolve(null);
       reader.readAsDataURL(file);
     })));
+    if(!current()) return;
+    selectedPostThumbnails = [];
+    selectedPostFiles = picked.filter((file, i)=>photos[i]);
+    selectedPostThumbFiles = selectedPostFiles.map(()=>null);
+    selectedPostPhotos = photos.filter(Boolean);
   }
+  postPhotosPending = false;
   renderPhotoPreview();
   scheduleDraftSave();
 }
@@ -6297,6 +6358,7 @@ function renderPhotoPreview(){
 }
 
 function removePostPhoto(index){
+  selectedPostThumbnails.splice(index, 1);
   selectedPostPhotos.splice(index, 1);
   selectedPostFiles.splice(index, 1);
   selectedPostThumbFiles.splice(index, 1);
@@ -6306,6 +6368,18 @@ function removePostPhoto(index){
 
 async function createListing(e){
   e.preventDefault();
+  if(!state.user){ requireAccount("post"); return false; }
+  const formRevision = postFormRevision;
+  const authRevision = authProjectionRevision;
+  const userId = state.user.id;
+  const current = ()=>formRevision === postFormRevision && authRevision === authProjectionRevision && state.user?.id === userId;
+  if(pendingPostSaves.has(formRevision)) return false;
+  if(postPhotosPending){
+    showToast(state.lang === "fr" ? "Veuillez patienter pendant la préparation des photos." : "Please wait while your photos are prepared.");
+    return false;
+  }
+  const photoFiles = [...selectedPostFiles];
+  const thumbFiles = [...selectedPostThumbFiles];
   const editing = editingListingId ? L.find(item=>idKey(item.id)===idKey(editingListingId)) : null;
   if(editingListingId && (!editing || (!isOwnListing(editing) && !isAdminUser()))){
     showToast(state.lang==="fr" ? "Modification impossible." : "Could not edit this listing.");
@@ -6366,6 +6440,7 @@ async function createListing(e){
     salary:cat === "job" && !(price > 0),
     ph:0, pics:profile.photos ? selectedPostPhotos.length : 0,
     photos:profile.photos ? [...selectedPostPhotos] : [],
+    thumbPhotos:profile.photos ? [...selectedPostThumbnails] : [],
     desc:document.getElementById("newDesc").value.trim(),
     vehicle,
     pro:editing?.pro ?? hasActiveProSubscription(state.user),
@@ -6379,18 +6454,24 @@ async function createListing(e){
   if(state.user?.provider === "supabase"){
     const submitBtn = e.target.querySelector("button[type=submit]");
     if(submitBtn){ submitBtn.disabled = true; }
+    pendingPostSaves.add(formRevision);
     try {
       if(!(window.SB && SB.enabled())) throw new Error("Backend unavailable");
-      const uploaded = profile.photos && selectedPostFiles.length
-        ? await SB.uploadPhotos(selectedPostFiles, selectedPostThumbFiles)
+      const uploaded = profile.photos && photoFiles.length
+        ? await SB.uploadPhotos(photoFiles, thumbFiles)
         : { full: [], thumbs: [] };
-      if(profile.photos && selectedPostFiles.length && uploaded.full.length !== selectedPostFiles.length){
+      if(!current()) return false;
+      if(profile.photos && photoFiles.length && uploaded.full.length !== photoFiles.length){
         throw new Error("Not all listing photos were uploaded");
       }
       if(uploaded.full.length){ listing.photos = uploaded.full; listing.thumbPhotos = uploaded.thumbs; }
       published = editing ? await SB.updateListing(listing) : await SB.insertListing(listing);
     } catch(err){ console.warn("[post] Supabase save failed:", err); }
-    if(submitBtn){ submitBtn.disabled = false; }
+    finally {
+      pendingPostSaves.delete(formRevision);
+      if(submitBtn && formRevision === postFormRevision) submitBtn.disabled = false;
+    }
+    if(!current()) return false;
     if(!published){
       showToast(state.lang==="fr" ? "Enregistrement non confirmé. Réessayez ; votre formulaire est conservé." : "Save not confirmed. Please try again; your form has been kept.");
       return false;
@@ -6422,6 +6503,7 @@ async function createListing(e){
   document.getElementById("photoPreview").innerHTML = "";
   closeModal("postModal");
   await applyAutomaticIncludedBoosts({silent:!hasActiveProSubscription(state.user)});
+  if(!current()) return false;
   render();
   showToast(editing ? (state.lang==="fr" ? "Annonce modifiée" : "Listing updated") : t().listingPublished);
   // Natural transition point in the packaged app: a brand-new listing was
@@ -6430,7 +6512,7 @@ async function createListing(e){
   if(!editing && typeof window.__BST_ADMOB_INTERSTITIAL__ === "function"){
     try { window.__BST_ADMOB_INTERSTITIAL__(); } catch(e) {}
   }
-  setTimeout(()=>openListing(finalListing.id), 250);
+  setTimeout(()=>{ if(current()) openListing(finalListing.id); }, 250);
   return false;
 }
 
