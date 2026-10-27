@@ -50,7 +50,7 @@
 </script>
 <!-- PWA -->
 <link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#FBF7EF">
+<meta name="theme-color" content="#101B21">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=4671bf028f7a59ca"></script>
-<script src="/telemetry.js?v=4671bf028f7a59ca"></script>
-<script src="/pwa.js?v=4671bf028f7a59ca" defer></script>
-<link href="/fonts/fonts.css?v=4671bf028f7a59ca" rel="stylesheet">
+<script src="/frame-guard.js?v=50a1ec9d6f5ba14b"></script>
+<script src="/telemetry.js?v=50a1ec9d6f5ba14b"></script>
+<script src="/pwa.js?v=50a1ec9d6f5ba14b" defer></script>
+<link href="/fonts/fonts.css?v=50a1ec9d6f5ba14b" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -2130,6 +2130,37 @@
     *{scroll-behavior:auto;}
   }
 </style>
+<style id="cinematic-redesign">
+  /* Cinematic SXM refresh: a focused midnight / coral / sand system shared by web and app shells. */
+  :root{
+    --ink:#101b21;--sea:#0b6670;--sea-deep:#073b44;--paper:#f4f1eb;--paper-deep:#e6e0d5;
+    --sun:#f4b942;--coral:#ff654d;--line:rgba(16,27,33,.18);--mute:#667277;--white:#fffdf9;
+    --field:#fffdf9;--radius:16px;--signin:#ff654d;
+  }
+  html{background:var(--paper);}
+  body{background:var(--paper);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif;}
+  h1,h2,h3,.grotesk{font-family:'Space Grotesk','Instrument Sans',sans-serif;letter-spacing:-.045em;}
+  .topbar{background:rgba(16,27,33,.96);border-bottom:1px solid rgba(255,255,255,.16);backdrop-filter:blur(16px);}
+  .bar-inner{max-width:1440px;padding-top:14px;padding-bottom:14px;}
+  .logo{color:#fffdf9}.logo .mark{font-size:22px}.logo .mark b{color:var(--coral)}.logo .sub{color:rgba(255,255,255,.62)}
+  .search{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;box-shadow:none;}
+  .search input[type=text],.search select{color:#fffdf9}.search input[type=text]::placeholder{color:rgba(255,255,255,.58)}
+  .search .divide{background:rgba(255,255,255,.16)}.search .go{background:var(--coral);border-left:0;border-radius:999px;margin:4px;padding:0 18px;font-weight:800}.search .go:hover{background:#ff806b}
+  .cur-toggle{background:transparent;color:#fff}.cur-toggle button{color:rgba(255,255,255,.68)}.cur-toggle button[aria-pressed=true]{background:#fff;color:var(--ink)}
+  .lang{border-color:rgba(255,255,255,.3);border-radius:999px}.lang button{color:rgba(255,255,255,.72)}.lang button[aria-pressed=true]{background:var(--coral);color:#fff}
+  .icon-btn{color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:999px}.icon-btn:hover{background:rgba(255,255,255,.12)}
+  #profileBtn{background:var(--coral);border-color:var(--coral);box-shadow:0 8px 24px rgba(255,101,77,.2)}#profileBtn:hover{background:#ff806b}
+  .post{background:var(--coral);border:0;border-radius:999px;box-shadow:0 10px 24px rgba(255,101,77,.2)}.post:hover{background:#ff806b;transform:translateY(-1px)}
+  .catrail{background:var(--ink);border-bottom:0;color:#fff}.catrail .cat{color:rgba(255,255,255,.68)}.catrail .cat:hover,.catrail .cat[aria-pressed=true]{color:#fff}.catrail .cat[aria-pressed=true]::after{background:var(--coral)}.cat img{border-color:rgba(255,255,255,.25)}.cat-arrow{border-color:rgba(255,255,255,.25);background:transparent;color:#fff}.cat-arrow:hover{background:var(--coral)}
+  .desktop-leaderboard-ad{background:var(--ink);padding:24px 24px 0}.leaderboard-card{border:0;border-radius:24px;overflow:hidden;box-shadow:0 22px 60px rgba(16,27,33,.18)}.leaderboard-copy{background:#fffdf9;border-left:0}.leaderboard-copy h2{font-size:clamp(28px,3vw,48px);line-height:.98}.leaderboard-copy p{color:var(--mute)}.leaderboard-link{color:var(--coral)}
+  .hero{position:relative;isolation:isolate;background:var(--ink);color:#fff;overflow:hidden;border:0;padding:0}.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(16,27,33,.98) 0%,rgba(16,27,33,.88) 42%,rgba(16,27,33,.28) 100%),url('/og-image.jpg') center/cover;opacity:.95}.hero-inner{max-width:1440px;min-height:360px;padding:72px 48px 68px;display:grid;align-content:center;justify-items:start}.hero-inner::before{content:"SXM / LOCAL MARKETPLACE";display:inline-block;color:var(--sun);font-size:11px;font-weight:900;letter-spacing:.22em;margin-bottom:18px}.hero h1{max-width:720px;font-size:clamp(42px,6vw,82px);line-height:.92;letter-spacing:-.065em}.hero p{max-width:560px;margin-top:22px;color:rgba(255,255,255,.72);font-size:16px;line-height:1.55}.hero-props{margin-top:28px}.hero-props > *{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;padding:8px 13px;backdrop-filter:blur(8px)}
+  .sponsored-strip{background:var(--paper);border-bottom:1px solid var(--line);padding:18px 24px}.sponsored-card{max-width:1440px;margin:0 auto;border:1px solid var(--line);border-radius:18px;background:#fffdf9;box-shadow:0 12px 32px rgba(16,27,33,.06)}.sponsored-card h2{font-size:30px}.sponsored-card p{color:var(--mute)}
+  .layout{max-width:1440px;padding-top:28px}.filters{border:1px solid var(--line);border-radius:18px;background:#fffdf9;box-shadow:0 12px 28px rgba(16,27,33,.05)}.filter-apply{background:var(--coral);border-color:var(--coral);border-radius:999px}.filter-apply:hover{background:#ff806b}.save-search{border:1px dashed rgba(16,27,33,.25);border-radius:999px}.save-search.saved{background:var(--sea);border-color:var(--sea)}
+  .board-head{border-bottom:1px solid var(--line);padding-bottom:16px}.board-btn{border:1px solid var(--line)}.grid{gap:18px}.card{border:1px solid var(--line);border-radius:18px;background:#fffdf9;box-shadow:0 10px 26px rgba(16,27,33,.06);overflow:hidden;transition:transform .2s ease,box-shadow .2s ease}.card:hover{transform:translateY(-5px);box-shadow:0 18px 38px rgba(16,27,33,.14)}.card .stripe{height:4px}.fav,.share-card{border:1px solid rgba(16,27,33,.18);border-radius:999px}.fav[aria-pressed=true]{color:var(--coral)}.boost-card-action{background:var(--coral);border:0;border-radius:999px}.badge{border-radius:999px}.badge.urgent{background:var(--sun);border:0}.badge.boosted{background:var(--sea);border:0}
+  .mobile-nav{background:rgba(16,27,33,.98);border-top:1px solid rgba(255,255,255,.15)}.mobile-nav button{color:rgba(255,255,255,.7)}.mobile-nav button.active{color:#fff}.mobile-nav .nav-login:not(.is-auth){background:var(--coral);border-radius:999px}
+  @media (max-width:700px){.bar-inner{padding-left:14px;padding-right:14px;gap:8px}.logo-img{width:34px;height:34px}.logo .mark{font-size:17px}.logo .sub{display:none}.search{grid-column:1/-1;grid-row:2;margin-top:4px}.desktop-leaderboard-ad{padding:12px 14px 0}.hero{display:block}.hero-inner{min-height:430px;padding:52px 22px 50px}.hero h1{font-size:clamp(38px,12vw,58px)}.hero p{font-size:14px}.layout{padding-top:16px}.card:hover{transform:none}.sponsored-strip{padding:12px 14px}.sponsored-card{padding:16px}.sponsored-card h2{font-size:24px}}
+  @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
+</style>
 </head>
 <body>
 
@@ -3076,21 +3107,21 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=4671bf028f7a59ca" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=4671bf028f7a59ca"></script>
-<script src="native-ios.js?v=4671bf028f7a59ca"></script>
-<script src="captcha.js?v=4671bf028f7a59ca"></script>
-<script src="supabase-api.js?v=4671bf028f7a59ca"></script>
-<script src="img-utils.js?v=4671bf028f7a59ca"></script>
-<script src="draft-store.js?v=4671bf028f7a59ca"></script>
-<script src="push-config.js?v=4671bf028f7a59ca"></script>
-<script src="push-notifications.js?v=4671bf028f7a59ca"></script>
-<script src="consent.js?v=4671bf028f7a59ca" defer></script>
-<script src="admob-plugin.js?v=4671bf028f7a59ca"></script>
-<script src="native-admob.js?v=4671bf028f7a59ca"></script>
-<script src="ads-config.js?v=4671bf028f7a59ca"></script>
-<script src="ads.js?v=4671bf028f7a59ca" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=50a1ec9d6f5ba14b" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=50a1ec9d6f5ba14b"></script>
+<script src="native-ios.js?v=50a1ec9d6f5ba14b"></script>
+<script src="captcha.js?v=50a1ec9d6f5ba14b"></script>
+<script src="supabase-api.js?v=50a1ec9d6f5ba14b"></script>
+<script src="img-utils.js?v=50a1ec9d6f5ba14b"></script>
+<script src="draft-store.js?v=50a1ec9d6f5ba14b"></script>
+<script src="push-config.js?v=50a1ec9d6f5ba14b"></script>
+<script src="push-notifications.js?v=50a1ec9d6f5ba14b"></script>
+<script src="consent.js?v=50a1ec9d6f5ba14b" defer></script>
+<script src="admob-plugin.js?v=50a1ec9d6f5ba14b"></script>
+<script src="native-admob.js?v=50a1ec9d6f5ba14b"></script>
+<script src="ads-config.js?v=50a1ec9d6f5ba14b"></script>
+<script src="ads.js?v=50a1ec9d6f5ba14b" defer></script>
 
-<script src="app-index.js?v=4671bf028f7a59ca"></script>
+<script src="app-index.js?v=50a1ec9d6f5ba14b"></script>
 </body>
 </html>

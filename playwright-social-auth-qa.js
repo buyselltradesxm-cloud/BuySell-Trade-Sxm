@@ -9,7 +9,7 @@ const { chromium } = require("playwright");
   await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: /login/i }).first().click();
+  await page.getByRole("button", { name: /login|se connecter/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
 
   const results = [];
@@ -28,7 +28,7 @@ const { chromium } = require("playwright");
   }
 
   await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: /login/i }).first().click();
+  await page.getByRole("button", { name: /login|se connecter/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
   // The first Apple button creates an account, which requires the 18+ / Terms box.
   await page.locator("#accountTermsConsent").check();
@@ -43,7 +43,7 @@ const { chromium } = require("playwright");
   }
 
   await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: /login/i }).first().click();
+  await page.getByRole("button", { name: /login|se connecter/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
   const removedSocialProvider = "Face" + "book";
   const removedProviderButtonCount = await page.getByRole("button", { name: new RegExp(removedSocialProvider, "i") }).count();
