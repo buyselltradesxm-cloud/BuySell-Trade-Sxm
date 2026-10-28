@@ -51,6 +51,7 @@ jobs:
           test ! -e _site/scripts
           test ! -e _site/supabase
           test ! -e _site/APP_QA_STATUS.md
+          node scripts/check-site-secrets.js _site
       - uses: actions/upload-pages-artifact@v4
         with:
           path: ./_site

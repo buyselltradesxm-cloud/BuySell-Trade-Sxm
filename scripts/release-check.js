@@ -34,7 +34,8 @@ async function read(url) {
       console.log('PASS published asset: ' + file);
     }));
   }
-  for (const file of ['APP_QA_STATUS.md', 'scripts/version-assets.js', 'supabase/schema.sql']) {
+  for (const file of ['APP_QA_STATUS.md', 'ACCOUNT_OWNERSHIP.md', 'STRIPE_STATUS.md', 'APP_BUG_REVIEW_2026-10-25.md',
+    'scripts/version-assets.js', 'supabase/schema.sql']) {
     const response = await fetch(new URL(file, base), {signal: AbortSignal.timeout(30000)});
     assert.equal(response.status, 404, file + ' must not be served');
     console.log('PASS excluded tooling: ' + file);

@@ -46,7 +46,11 @@ exclude:
   - playwright-social-auth-qa.js
   - playwright-subscription-profile-qa.js
   - playwright-uuid-listing-qa.js
-  # setup / internal docs
+  # setup / internal docs. No page of the site is Markdown, so every .md file
+  # (status notes, ownership, bug reviews) stays off the domain, including
+  # ones added later. scripts/check-site-secrets.js fails the deploy if one
+  # slips through.
+  - "*.md"
   - ADMIN_UPGRADE_SETUP.md
   - ADMOB_SETUP.md
   - ADS_SETUP.md
