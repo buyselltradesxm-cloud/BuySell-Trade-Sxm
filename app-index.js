@@ -6391,10 +6391,18 @@ async function handlePhotoUpload(e){
   scheduleDraftSave();
 }
 
+// Previews mix new uploads (data:/blob:) with stored listing photos, which the
+// listing owner controls, so filter the scheme and escape before innerHTML.
+function previewPhotoSrc(src){
+  if(typeof src !== "string") return "";
+  if(/^(data:image\/|blob:)/i.test(src)) return src;
+  return safeUrl(src);
+}
+
 function renderPhotoPreview(){
   document.getElementById("photoPreview").innerHTML = selectedPostPhotos.map((src,i)=>`
     <figure>
-      <img src="${src}" alt="Photo ${i+1}">
+      <img src="${esc(previewPhotoSrc(src))}" alt="Photo ${i+1}">
       <button type="button" class="photo-remove" data-click="removePostPhoto" data-click-args='${dataArgs([i])}' aria-label="${state.lang==="fr" ? "Supprimer la photo" : "Remove photo"}">x</button>
     </figure>`).join("");
 }
