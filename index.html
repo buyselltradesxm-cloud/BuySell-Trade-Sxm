@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=b5a0658f11d9df5f"></script>
-<script src="/telemetry.js?v=b5a0658f11d9df5f"></script>
-<script src="/pwa.js?v=b5a0658f11d9df5f" defer></script>
-<link href="/fonts/fonts.css?v=b5a0658f11d9df5f" rel="stylesheet">
+<script src="/frame-guard.js?v=7e940dc89decde7a"></script>
+<script src="/telemetry.js?v=7e940dc89decde7a"></script>
+<script src="/pwa.js?v=7e940dc89decde7a" defer></script>
+<link href="/fonts/fonts.css?v=7e940dc89decde7a" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -2159,6 +2159,21 @@
   .board-head{border-bottom:1px solid var(--line);padding-bottom:16px}.board-btn{border:1px solid var(--line)}.grid{gap:18px}.card{border:1px solid var(--line);border-radius:18px;background:#fffdf9;box-shadow:0 10px 26px rgba(16,27,33,.06);overflow:hidden;transition:transform .2s ease,box-shadow .2s ease}.card:hover{transform:translateY(-5px);box-shadow:0 18px 38px rgba(16,27,33,.14)}.card .stripe{height:4px}.fav,.share-card{border:1px solid rgba(16,27,33,.18);border-radius:999px}.fav[aria-pressed=true]{color:var(--coral)}.boost-card-action{background:var(--coral);border:0;border-radius:999px}.badge{border-radius:999px}.badge.urgent{background:var(--sun);border:0}.badge.boosted{background:var(--sea);border:0}
   .mobile-nav{background:rgba(16,27,33,.98);border-top:1px solid rgba(255,255,255,.15)}.mobile-nav button{color:rgba(255,255,255,.7)}.mobile-nav button.active{color:#fff}.mobile-nav .nav-login:not(.is-auth){background:var(--coral);border-radius:999px}
   @media (max-width:700px){.bar-inner{padding-left:14px;padding-right:14px;gap:8px}.logo-img{width:34px;height:34px}.logo .mark{font-size:17px}.logo .sub{display:none}.search{grid-column:1/-1;grid-row:2;margin-top:4px}.desktop-leaderboard-ad{padding:12px 14px 0}.hero{display:block}.hero-inner{min-height:430px;padding:52px 22px 50px}.hero h1{font-size:clamp(38px,12vw,58px)}.hero p{font-size:14px}.layout{padding-top:16px}.card:hover{transform:none}.sponsored-strip{padding:12px 14px}.sponsored-card{padding:16px}.sponsored-card h2{font-size:24px}}
+  /* Phone category panel: the dark desktop rail above paints the names white,
+     which vanished on the light phone panel. Dark labels, larger photos, and
+     each category in its own soft tile. */
+  @media (max-width:620px){
+    .catrail-inner{aspect-ratio:auto;gap:8px 6px;padding:10px;border:1px solid var(--line);border-radius:22px;background:#fffdf9;box-shadow:0 10px 26px rgba(16,27,33,.07)}
+    .catrail .cat{justify-content:flex-start;gap:6px;padding:8px 2px 7px;border-radius:14px;background:var(--paper);color:var(--ink);font-size:11px;font-weight:700;line-height:1.15;letter-spacing:-.01em}
+    .catrail .cat img{width:clamp(38px,11.5vw,48px);height:clamp(38px,11.5vw,48px);border-radius:12px;border:0;box-shadow:0 3px 8px rgba(16,27,33,.16)}
+    .catrail .cat-short{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:normal;hyphens:manual}
+    .catrail .cat:hover{color:var(--ink)}
+    .catrail .cat[aria-pressed=true]{background:var(--ink);color:#fff}
+    .catrail .cat[aria-pressed=true] img{box-shadow:0 0 0 2px var(--sun)}
+    .catrail .cat:first-child{justify-content:center;background:var(--ink);color:#fff;border:0;font-size:15px;min-height:48px;border-radius:16px}
+    .catrail .cat:first-child img{width:30px;height:30px;border-radius:9px;box-shadow:0 0 0 2px var(--sun)}
+    .catrail .cat:first-child:not([aria-pressed=true]){background:var(--paper);color:var(--ink)}
+  }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
 </head>
@@ -3107,21 +3122,21 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=b5a0658f11d9df5f" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=b5a0658f11d9df5f"></script>
-<script src="native-ios.js?v=b5a0658f11d9df5f"></script>
-<script src="captcha.js?v=b5a0658f11d9df5f"></script>
-<script src="supabase-api.js?v=b5a0658f11d9df5f"></script>
-<script src="img-utils.js?v=b5a0658f11d9df5f"></script>
-<script src="draft-store.js?v=b5a0658f11d9df5f"></script>
-<script src="push-config.js?v=b5a0658f11d9df5f"></script>
-<script src="push-notifications.js?v=b5a0658f11d9df5f"></script>
-<script src="consent.js?v=b5a0658f11d9df5f" defer></script>
-<script src="admob-plugin.js?v=b5a0658f11d9df5f"></script>
-<script src="native-admob.js?v=b5a0658f11d9df5f"></script>
-<script src="ads-config.js?v=b5a0658f11d9df5f"></script>
-<script src="ads.js?v=b5a0658f11d9df5f" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=7e940dc89decde7a" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=7e940dc89decde7a"></script>
+<script src="native-ios.js?v=7e940dc89decde7a"></script>
+<script src="captcha.js?v=7e940dc89decde7a"></script>
+<script src="supabase-api.js?v=7e940dc89decde7a"></script>
+<script src="img-utils.js?v=7e940dc89decde7a"></script>
+<script src="draft-store.js?v=7e940dc89decde7a"></script>
+<script src="push-config.js?v=7e940dc89decde7a"></script>
+<script src="push-notifications.js?v=7e940dc89decde7a"></script>
+<script src="consent.js?v=7e940dc89decde7a" defer></script>
+<script src="admob-plugin.js?v=7e940dc89decde7a"></script>
+<script src="native-admob.js?v=7e940dc89decde7a"></script>
+<script src="ads-config.js?v=7e940dc89decde7a"></script>
+<script src="ads.js?v=7e940dc89decde7a" defer></script>
 
-<script src="app-index.js?v=b5a0658f11d9df5f"></script>
+<script src="app-index.js?v=7e940dc89decde7a"></script>
 </body>
 </html>
