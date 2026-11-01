@@ -75,30 +75,34 @@ grant execute on function public.clear_lapsed_pro_flags() to service_role;
 -- Lead 7: the monthly limit of free accounts counts listings CREATED this
 -- month, including ones deleted since. A deleted listing used to free a slot.
 -- ------------------------------------------------------------
+-- Append-only, one row per listing insert, with its own key: nothing here
+-- depends on a value the client could choose or reuse.
 create table if not exists public.listing_creations (
-  listing_id bigint primary key,
+  id bigint generated always as identity primary key,
+  listing_id bigint not null,
   seller_id uuid not null references auth.users(id) on delete cascade,
   created_at timestamptz not null default now()
 );
+create index if not exists listing_creations_listing_idx
+  on public.listing_creations (listing_id);
 create index if not exists listing_creations_seller_created_idx
   on public.listing_creations (seller_id, created_at);
 alter table public.listing_creations enable row level security;
 revoke all on public.listing_creations from public, anon, authenticated;
-grant select, insert, delete on public.listing_creations to service_role;
+grant select, insert on public.listing_creations to service_role;
 
 insert into public.listing_creations (listing_id, seller_id, created_at)
 select l.id, l.seller_id, coalesce(l.created_at, now())
   from public.listings l
  where l.seller_id is not null
-on conflict (listing_id) do nothing;
+   and not exists (select 1 from public.listing_creations c where c.listing_id = l.id);
 
 create or replace function public.record_listing_creation()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if new.seller_id is not null then
     insert into public.listing_creations (listing_id, seller_id, created_at)
-    values (new.id, new.seller_id, coalesce(new.created_at, now()))
-    on conflict (listing_id) do nothing;
+    values (new.id, new.seller_id, now());
   end if;
   return null;
 end;
@@ -110,7 +114,8 @@ create trigger record_listing_creation_trigger
   after insert on public.listings
   for each row execute function public.record_listing_creation();
 
--- Same as security-hardening-v3.sql except the free-account count.
+-- Same as security-hardening-v3.sql, except that every account without an
+-- active plan (personal, or business whose plan ended) counts creations.
 create or replace function public.can_publish_listing(user_id uuid default auth.uid())
 returns boolean
 language plpgsql stable security definer
@@ -139,7 +144,7 @@ begin
     case when pro_active then user_profile.account_plan else 'personal-free' end);
   if listing_limit is null then return true; end if;
 
-  if user_profile.account_type = 'business' then
+  if pro_active then
     select count(*) into used_count
       from public.listings
      where seller_id = user_id
