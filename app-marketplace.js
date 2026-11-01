@@ -5878,7 +5878,14 @@ async function resendSignupCode(){
 }
 
 function openPasswordReset(){
-  const resetMode = new URLSearchParams(location.search).get("reset") === "1";
+  const resetUrl = new URL(location.href);
+  const resetMode = resetUrl.searchParams.get("reset") === "1";
+  // Consume the one-time UI instruction so refreshing does not reopen it.
+  // Preserve the auth code and other query/hash data for session handling.
+  if(resetMode){
+    resetUrl.searchParams.delete("reset");
+    history.replaceState(history.state, "", resetUrl.pathname + resetUrl.search + resetUrl.hash);
+  }
   const requestForm = document.getElementById("passwordResetRequestForm");
   const completeForm = document.getElementById("passwordResetCompleteForm");
   if(requestForm) requestForm.hidden = resetMode;
