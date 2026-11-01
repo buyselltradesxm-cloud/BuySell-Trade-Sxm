@@ -717,14 +717,14 @@ Object.assign(I18N.fr, {
   authFreeTitle:"Choisissez votre compte", authFreeText:"Un compte particulier reste gratuit. Un compte Pro ajoute des outils business avec un abonnement.", authBadge:"Inscription sécurisée",
   createKicker:"Compte particulier", newAccountTitle:"Créer un compte gratuit", newAccountHelp:"Pour vendre vos propres objets, publier gratuitement et discuter avec les acheteurs.", loginKicker:"Connexion", freeGoogle:"Créer gratuitement avec Google", freeApple:"Créer gratuitement avec Apple", createWithEmail:"ou créez votre compte avec email",
   proKicker:"Pour les entreprises", proAccountTitle:"Créer un compte Pro", proAccountHelp:"Pour les commerces et vendeurs réguliers qui veulent plus d'annonces, de visibilité et d'outils.",
-  proBenefit1:"Page business et badge Pro", proBenefit2:"Plus d'annonces et de visibilité", proBenefit3:"Abonnement requis avant publication Pro",
+  proBenefit1:"Page business et badge Pro", proBenefit2:"Plus d'annonces et de visibilité", proBenefit3:"45 jours gratuits, sans carte bancaire",
   proGoogle:"Continuer Pro avec Google", proApple:"Continuer Pro avec Apple", proPlansHint:"Comparez le nombre d'annonces, les boosts et la visibilité avant de choisir.", viewProPlans:"Découvrir tous les comptes Pro"
 });
 Object.assign(I18N.en, {
   authFreeTitle:"Choose your account", authFreeText:"A personal account stays free. A Pro account adds business tools with a subscription.", authBadge:"Secure sign-up",
   createKicker:"Personal account", newAccountTitle:"Create a free account", newAccountHelp:"Sell your own items, post for free, and chat with buyers.", loginKicker:"Log in", freeGoogle:"Create free with Google", freeApple:"Create free with Apple", createWithEmail:"or create your account with email",
   proKicker:"For businesses", proAccountTitle:"Create a Pro account", proAccountHelp:"For businesses and regular sellers who need more listings, visibility, and tools.",
-  proBenefit1:"Business page and Pro badge", proBenefit2:"More listings and visibility", proBenefit3:"Subscription required before Pro publishing",
+  proBenefit1:"Business page and Pro badge", proBenefit2:"More listings and visibility", proBenefit3:"45 days free, no card required",
   proGoogle:"Continue Pro with Google", proApple:"Continue Pro with Apple", proPlansHint:"Compare listing limits, boosts, and visibility before choosing.", viewProPlans:"Explore all Pro accounts"
 });
 
@@ -1733,6 +1733,7 @@ function normalizeUser(user){
     stripeCustomerId:user.stripeCustomerId || null,
     paypalSubscriptionId:user.paypalSubscriptionId || null,
     subscriptionProvider:user.subscriptionProvider || null,
+    proTrialStartedAt:user.proTrialStartedAt || null,
     verifiedEmail:user.verifiedEmail !== false,
     trusted:user.trusted !== false
   };
@@ -1821,9 +1822,10 @@ function hasActiveProSubscription(user = state.user){
     (!user.subscriptionCurrentPeriodEnd || new Date(user.subscriptionCurrentPeriodEnd).getTime() > Date.now());
 }
 function isPaidPlan(plan){
-  return plan && plan !== "personal-free";
+  return plan && plan !== "personal-free" && plan !== "pro-trial";
 }
 const ACCOUNT_PLANS = {
+  "pro-trial":{fr:"Essai Pro 45 jours",en:"45-day Pro trial",price:"Free",limit:20,includedBoosts:0},
   "personal-free":{fr:"Particulier",en:"Personal",price:"Gratuit",limit:5,includedBoosts:0},
   "pro-starter":{fr:"Pro Starter",en:"Pro Starter",price:"$24.99/month",limit:10,includedBoosts:1},
   "pro-business":{fr:"Pro Business",en:"Pro Business",price:"$59.00/month",limit:30,includedBoosts:2},
@@ -2012,6 +2014,41 @@ function sellerTrustHTML(l){
 }
 
 // Business showcases use the public listing catalogue; no private profile data is fetched.
+let proTrialActivationPending = false;
+function proTrialActive(user=state.user){
+  return user?.accountPlan === "pro-trial" && hasActiveProSubscription(user);
+}
+async function activateProTrial(){
+  if(!state.user){ requireAccount("profile"); return; }
+  if(proTrialActivationPending) return;
+  if(hasActiveProSubscription(state.user)){ closeModal("accountModal"); openProfile(); return; }
+  const userId = state.user.id;
+  proTrialActivationPending = true;
+  try{
+    const profile = window.SB && SB.enabled() ? await SB.upsertProfile({account_type:"business"}) : null;
+    if(state.user?.id !== userId) return;
+    if(!profile || profile.account_plan !== "pro-trial" || profile.subscription_status !== "active" ||
+       !(new Date(profile.subscription_current_period_end).getTime() > Date.now())){
+      showToast(state.lang === "fr" ? "Essai indisponible ou déjà utilisé. Votre accès n’a pas été modifié." : "Trial unavailable or already used. Your access has not been changed."); return;
+    }
+    await applySupabaseUser(await SB.currentUser());
+    if(state.user?.id !== userId) return;
+    closeModal("accountModal");closeModal("boostModal");
+    openProfile();
+    showToast(state.lang === "fr" ? "Votre essai Pro de 45 jours est activé." : "Your 45-day Pro trial is active.");
+  }catch(e){showToast(state.lang === "fr" ? "Activation non confirmée. Réessayez." : "Activation not confirmed. Please retry.");}
+  finally{proTrialActivationPending=false;}
+}
+function proTrialOfferHTML(user){
+  const fr=state.lang === "fr";
+  if(proTrialActive(user)){
+    const days=Math.max(0,Math.ceil((new Date(user.subscriptionCurrentPeriodEnd)-Date.now())/86400000));
+    return `<section class="pro-workspace"><span class="pro-eyebrow">${fr ? "ESSAI PRO GRATUIT" : "FREE PRO TRIAL"}</span><h3>${fr ? `${days} jours restants` : `${days} days remaining`}</h3><p>${fr ? "20 annonces actives, votre vitrine et les contacts clients. Aucune carte bancaire, aucun prélèvement automatique." : "20 active offers, your showcase and customer contacts. No card and no automatic charge."}</p></section>`;
+  }
+  if(hasActiveProSubscription(user) || user?.proTrialStartedAt) return "";
+  return `<section class="pro-workspace"><h3>${fr ? "45 jours pour présenter votre entreprise" : "45 days to showcase your business"}</h3><p>${fr ? "Vitrine Pro et 20 annonces actives. Gratuit, sans carte bancaire." : "Pro showcase and 20 active offers. Free, no card required."}</p><button type="button" class="primary-btn" data-click="activateProTrial">${fr ? "Activer mon essai Pro gratuit" : "Start my free Pro trial"}</button></section>`;
+}
+
 function businessWorkspaceHTML(){
   if(state.user?.accountType !== "business") return "";
   const fr = state.lang === "fr";
@@ -4104,7 +4141,7 @@ function openPaymentModal({existingUser=false, plan=null, after=null} = {}){
 }
 
 function chooseProPlan(plan){
-  if(!ACCOUNT_PLANS[plan] || plan === "personal-free") return;
+  if(!ACCOUNT_PLANS[plan] || !isPaidPlan(plan)) return;
   closeModal("boostModal");
   sessionStorage.setItem("bst-selected-pro-plan", plan);
   if(!state.user){
@@ -4232,6 +4269,7 @@ function renderProfile(){
       <button type="button" data-click="openProfileStat" data-click-args='${dataArgs(['saved'])}'><b>${state.favs.size}</b><span>${t().savedItems}</span></button>
       <button type="button" data-click="openProfileStat" data-click-args='${dataArgs(['messages'])}'><b>${Object.keys(chatThreads).length}</b><span>${t().conversations}</span></button>
     </div>
+    ${proTrialOfferHTML(user)}
     ${subscriptionDashboardHTML(user, own)}
     ${businessWorkspaceHTML()}
     <div class="pf-group pf-gap">
@@ -4269,14 +4307,14 @@ function subscriptionDashboardHTML(user, own){
     ? (periodEnd ? formatProfileDate(periodEnd) : (fr ? "Après connexion Stripe" : "After Stripe setup"))
     : (fr ? "Le 1er du mois" : "1st of the month");
   const statusClass = proActive || !isBusiness ? "active" : "pending";
-  const statusText = subscriptionStatusLabel(user);
+  const statusText = proTrialActive(user) ? (fr ? "Essai gratuit" : "Free trial") : subscriptionStatusLabel(user);
   const kv = (label, value) => `<div class="pf-kv"><span>${label}</span><b>${value}</b></div>`;
   return `
     <h3 class="pf-label">${fr ? "Mon abonnement" : "My subscription"}</h3>
     <section class="pf-group">
       <div class="pf-plan">
         <div>
-          <b>${esc(planLabel(user.accountPlan))}</b>${isBusiness && !(window.SXM && SXM.isIOS()) ? `<small>${esc(planPriceLabel(user.accountPlan))}</small>` : ""}
+          <b>${esc(planLabel(user.accountPlan))}</b>${isBusiness && !proTrialActive(user) && !(window.SXM && SXM.isIOS()) ? `<small>${esc(planPriceLabel(user.accountPlan))}</small>` : ""}
           <div class="subscription-badges"><span class="${statusClass}">${esc(statusText)}</span></div>
         </div>
       <button type="button" class="pf-link" data-click="closeProfileModalThenPricing">${fr ? "Changer de plan" : "Change plan"}</button>
@@ -4286,9 +4324,9 @@ function subscriptionDashboardHTML(user, own){
         ${kv(isBusiness ? (fr ? "Annonces actives" : "Active listings") : (fr ? "Annonces ce mois" : "Listings this month"), quota)}
         ${filled === null ? "" : `<div class="pf-meter"><i style="width:${filled}%"></i></div>`}
       </div>
-      ${kv(isBusiness ? (fr ? "Renouvellement" : "Renewal") : (fr ? "Remise à zéro" : "Resets on"), esc(renewal))}
+      ${kv(isBusiness ? (proTrialActive(user) ? (fr ? "Fin de l’essai" : "Trial ends") : (fr ? "Renouvellement" : "Renewal")) : (fr ? "Remise à zéro" : "Resets on"), esc(renewal))}
       ${isBusiness ? kv(fr ? "Boosts auto ce mois" : "Auto boosts this month", `${autoBoostUsedCountFor(user)} / ${includedBoostLimitFor(user)}`) : ""}
-      ${isBusiness ? `<button type="button" class="pf-row" data-click="manageSubscription"><b>${fr ? "Gérer / annuler" : "Manage / cancel"}</b></button>` : ""}
+      ${isBusiness && !proTrialActive(user) ? `<button type="button" class="pf-row" data-click="manageSubscription"><b>${fr ? "Gérer / annuler" : "Manage / cancel"}</b></button>` : ""}
     </section>`;
 }
 
@@ -4484,6 +4522,7 @@ function profileFromRow(row){
     subscriptionStatus:row.subscription_status || (row.account_type === "business" ? "inactive" : "free"),
     subscriptionCurrentPeriodEnd:row.subscription_current_period_end || null,
     subscriptionProvider:row.subscription_provider || null,
+    proTrialStartedAt:row.pro_trial_started_at || null,
     paypalSubscriptionId:row.paypal_subscription_id || null,
     planGrantedUntil:row.plan_granted_until || null,
     businessName:row.business_name || "",
@@ -5468,6 +5507,10 @@ async function applySupabaseUser(sbUser){
   }
   const accountType = (profile && profile.account_type) || meta.account_type || "personal";
   if(revision !== authProjectionRevision) return null;
+  if(profile?.account_type === "business" && !profile.pro_trial_started_at && profile.subscription_status !== "active"){
+    try { const activated = await SB.upsertProfile({account_type:"business"}); if(activated) profile = activated; } catch(e){}
+    if(revision !== authProjectionRevision) return null;
+  }
   state.user = normalizeUser({
     id: sbUser.id,
     provider: "supabase",
@@ -5483,6 +5526,7 @@ async function applySupabaseUser(sbUser){
     stripeCustomerId: profile && profile.stripe_customer_id,
     paypalSubscriptionId: profile && profile.paypal_subscription_id,
     subscriptionProvider: profile && profile.subscription_provider,
+    proTrialStartedAt: profile && profile.pro_trial_started_at,
     businessName: (profile && profile.business_name) || "",
     businessPhone: (profile && profile.phone) || "",
     role: (profile && profile.role) || "user",
@@ -5884,21 +5928,18 @@ function startProGoogleAuth(){
   startProSocialAuth("google");
 }
 
-function continuePendingProGoogle(){
+async function continuePendingProGoogle(){
   if(sessionStorage.getItem("bst-auth-intent") !== "pro") return;
-  const provider = sessionStorage.getItem("bst-auth-provider") || "google";
-  const providerName = provider === "apple" ? "Apple" : "Google";
   sessionStorage.removeItem("bst-auth-intent");
   sessionStorage.removeItem("bst-auth-provider");
-  closeModal("accountModal");
-  openPricingInfo();
-  showToast(state.lang === "fr" ? `Compte ${providerName} connecté. Choisissez maintenant votre abonnement Pro.` : `${providerName} account connected. Now choose your Pro subscription.`);
+  await activateProTrial();
 }
 
 function continueSelectedProPlan(){
   const plan = sessionStorage.getItem("bst-selected-pro-plan");
   if(!plan || !ACCOUNT_PLANS[plan]) return;
   sessionStorage.removeItem("bst-selected-pro-plan");
+  if(proTrialActive()){ openProfile(); return; }
   openPaymentModal({existingUser:true, plan});
 }
 
