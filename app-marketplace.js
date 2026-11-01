@@ -6026,8 +6026,8 @@ function buildPostForm(listing=null){
   const form = document.getElementById("postForm");
   if(form) form.reset();
   selectedPostPhotos = listing?.photos ? [...listing.photos] : [];
-  selectedPostFiles = [];
-  selectedPostThumbFiles = [];
+  selectedPostFiles = selectedPostPhotos.map(()=>null);
+  selectedPostThumbFiles = selectedPostPhotos.map(()=>null);
   document.getElementById("photoPreview").innerHTML = "";
   document.getElementById("newPhotos").value = "";
   wirePostFormEvents();
@@ -6371,15 +6371,17 @@ async function handlePhotoUpload(e){
   postPhotosPending = true;
   const allowedTypes = new Set(["image/jpeg","image/png","image/webp"]);
   const all = [...e.target.files];
-  const picked = all.filter(file=>allowedTypes.has(file.type) && file.size > 0 && file.size <= 5 * 1024 * 1024).slice(0, 8);
-  if(e.target.files.length > 8) showToast(t().tooManyPhotos);
-  if(picked.length !== Math.min(all.length, 8)) showToast(state.lang === "fr" ? "Seules les images JPG, PNG ou WebP de 5 Mo maximum sont acceptées." : "Only JPG, PNG, or WebP images up to 5 MB are accepted.");
-  selectedPostPhotos = [];
-  selectedPostFiles = [];
-  selectedPostThumbFiles = [];
+  const remaining = Math.max(0, 8 - selectedPostPhotos.length);
+  const valid = all.filter(file=>allowedTypes.has(file.type) && file.size > 0 && file.size <= 5 * 1024 * 1024);
+  const picked = valid.slice(0, remaining);
+  if(valid.length > remaining) showToast(t().tooManyPhotos);
+  if(valid.length !== all.length) showToast(state.lang === "fr" ? "Seules les images JPG, PNG ou WebP de 5 Mo maximum sont acceptées." : "Only JPG, PNG, or WebP images up to 5 MB are accepted.");
+  e.target.value = "";
+  if(!picked.length){ postPhotosPending = false; return; }
+  selectedPostFiles = selectedPostPhotos.map((_,i)=>selectedPostFiles[i] || null);
+  selectedPostThumbFiles = selectedPostPhotos.map((_,i)=>selectedPostThumbFiles[i] || null);
+  selectedPostThumbnails = selectedPostPhotos.map((src,i)=>selectedPostThumbnails[i] || src);
   const preview = document.getElementById("photoPreview");
-  preview.innerHTML = "";
-  if(!picked.length){ postPhotosPending = false; selectedPostThumbnails = []; return; }
   // Compress/resize on-device before anything is stored or uploaded: keeps a
   // listing upload in the low-MB range instead of 30–90 MB from phone cameras.
   // Also generates a small ~480px thumbnail per photo (selectedPostThumbFiles)
@@ -6391,10 +6393,10 @@ async function handlePhotoUpload(e){
   } catch(err){ console.warn("[post] compression KO, envoi des originaux:", err); }
   if(!current()) return;
   if(results){
-    selectedPostThumbnails = [];
-    selectedPostFiles = results.map(r=>r.file);
-    selectedPostThumbFiles = results.map(r=>r.thumbFile);
-    selectedPostPhotos = results.map(r=>r.dataUrl);
+    selectedPostThumbnails.push(...results.map(r=>r.dataUrl));
+    selectedPostFiles.push(...results.map(r=>r.file));
+    selectedPostThumbFiles.push(...results.map(r=>r.thumbFile));
+    selectedPostPhotos.push(...results.map(r=>r.dataUrl));
   } else {
     const photos = await Promise.all(picked.map(file => new Promise(resolve=>{
       const reader = new FileReader();
@@ -6403,10 +6405,11 @@ async function handlePhotoUpload(e){
       reader.readAsDataURL(file);
     })));
     if(!current()) return;
-    selectedPostThumbnails = [];
-    selectedPostFiles = picked.filter((file, i)=>photos[i]);
-    selectedPostThumbFiles = selectedPostFiles.map(()=>null);
-    selectedPostPhotos = photos.filter(Boolean);
+    const addedFiles = picked.filter((file, i)=>photos[i]);
+    selectedPostThumbnails.push(...photos.filter(Boolean));
+    selectedPostFiles.push(...addedFiles);
+    selectedPostThumbFiles.push(...addedFiles.map(()=>null));
+    selectedPostPhotos.push(...photos.filter(Boolean));
   }
   postPhotosPending = false;
   renderPhotoPreview();
@@ -6425,11 +6428,23 @@ function renderPhotoPreview(){
   document.getElementById("photoPreview").innerHTML = selectedPostPhotos.map((src,i)=>`
     <figure>
       <img src="${esc(previewPhotoSrc(src))}" alt="Photo ${i+1}">
-      <button type="button" class="photo-remove" data-click="removePostPhoto" data-click-args='${dataArgs([i])}' aria-label="${state.lang==="fr" ? "Supprimer la photo" : "Remove photo"}">x</button>
+      <button type="button" class="photo-remove" data-click="removePostPhoto" data-click-args='${dataArgs([i])}' aria-label="${state.lang==="fr" ? "Supprimer la photo" : "Remove photo"} ${i+1}" ${postPhotosPending ? "disabled" : ""}>x</button>
+      <button type="button" class="photo-cover" data-click="setPostCover" data-click-args='${dataArgs([i])}' aria-pressed="${i===0}" ${postPhotosPending ? "disabled" : ""}>${i===0 ? (state.lang==="fr" ? "Principale" : "Cover") : (state.lang==="fr" ? "Choisir en couverture" : "Set as cover")}</button>
     </figure>`).join("");
 }
 
+function setPostCover(index){
+  if(postPhotosPending || !Number.isInteger(index) || index < 0 || index >= selectedPostPhotos.length) return;
+  for(const items of [selectedPostPhotos, selectedPostThumbnails, selectedPostFiles, selectedPostThumbFiles]){
+    while(items.length < selectedPostPhotos.length) items.push(null);
+    items.unshift(items.splice(index, 1)[0]);
+  }
+  renderPhotoPreview();
+  scheduleDraftSave();
+}
+
 function removePostPhoto(index){
+  if(postPhotosPending || !Number.isInteger(index) || index < 0 || index >= selectedPostPhotos.length) return;
   selectedPostThumbnails.splice(index, 1);
   selectedPostPhotos.splice(index, 1);
   selectedPostFiles.splice(index, 1);
@@ -6450,8 +6465,9 @@ async function createListing(e){
     showToast(state.lang === "fr" ? "Veuillez patienter pendant la préparation des photos." : "Please wait while your photos are prepared.");
     return false;
   }
-  const photoFiles = [...selectedPostFiles];
-  const thumbFiles = [...selectedPostThumbFiles];
+  const uploadIndexes = selectedPostPhotos.map((_,i)=>i).filter(i=>selectedPostFiles[i]);
+  const photoFiles = uploadIndexes.map(i=>selectedPostFiles[i]);
+  const thumbFiles = uploadIndexes.map(i=>selectedPostThumbFiles[i]);
   const editing = editingListingId ? L.find(item=>idKey(item.id)===idKey(editingListingId)) : null;
   if(editingListingId && (!editing || (!isOwnListing(editing) && !isAdminUser()))){
     showToast(state.lang==="fr" ? "Modification impossible." : "Could not edit this listing.");
@@ -6536,7 +6552,10 @@ async function createListing(e){
       if(profile.photos && photoFiles.length && uploaded.full.length !== photoFiles.length){
         throw new Error("Not all listing photos were uploaded");
       }
-      if(uploaded.full.length){ listing.photos = uploaded.full; listing.thumbPhotos = uploaded.thumbs; }
+      uploadIndexes.forEach((photoIndex, uploadIndex)=>{
+        listing.photos[photoIndex] = uploaded.full[uploadIndex];
+        listing.thumbPhotos[photoIndex] = uploaded.thumbs[uploadIndex] || uploaded.full[uploadIndex];
+      });
       published = editing ? await SB.updateListing(listing) : await SB.insertListing(listing);
     } catch(err){ console.warn("[post] Supabase save failed:", err); }
     finally {

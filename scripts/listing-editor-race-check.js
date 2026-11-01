@@ -36,13 +36,32 @@ const { chromium } = require('playwright');
         check('removing first photo also removes its thumbnail', saved?.thumbPhotos?.length === 1 && saved.thumbPhotos[0] === 'thumb-b');
 
         setup();
+        const originals = [...selectedPostPhotos];
+        const addedPhoto = 'data:image/jpeg;base64,eA==';
+        window.ImgUtils = { compressMany: async () => [{ file: new File(['x'], 'new.jpg', {type:'image/jpeg'}), thumbFile: null, dataUrl: addedPhoto }] };
+        await handlePhotoUpload({target:{files:[new File(['x'], 'new.jpg', {type:'image/jpeg'})]}});
+        check('adding a photo keeps every existing preview', selectedPostPhotos.length === 3 && selectedPostPhotos[0] === originals[0]);
+        check('every photo has its own remove and cover controls', document.querySelectorAll('#photoPreview .photo-remove').length === 3 && document.querySelectorAll('#photoPreview .photo-cover').length === 3);
+        document.querySelectorAll('#photoPreview .photo-cover')[2].click();
+        check('cover button moves the chosen upload to first position', selectedPostPhotos[0] === addedPhoto && selectedPostFiles[0]?.name === 'new.jpg');
+        removePostPhoto(1);
+        SB.uploadPhotos = async files => {
+          check('only new files are uploaded', files.length === 1 && files[0].name === 'new.jpg');
+          return {full:['https://example.com/new.jpg'], thumbs:['https://example.com/new-thumb.jpg']};
+        };
+        SB.updateListing = async listing => { saved = listing; return listing; };
+        await submit();
+        check('save preserves order and the remaining stored photo', saved.photos.length === 2 && saved.photos[0] === 'https://example.com/new.jpg' && saved.photos[1] === originals[1]);
+        check('thumbnails stay aligned after cover change and removal', saved.thumbPhotos[0] === 'https://example.com/new-thumb.jpg' && saved.thumbPhotos[1] === 'thumb-b');
+
+        setup();
         let finishUpload;
         window.ImgUtils = { compressMany: () => new Promise(resolve => { finishUpload = resolve; }) };
         const picking = handlePhotoUpload({ target: { files: [new File(['x'], 'a.jpg', { type: 'image/jpeg' })] } });
         buildPostForm({ t: 'New form', photos: [photo] });
         finishUpload([{ file: new File(['x'], 'a.jpg'), thumbFile: null, dataUrl: 'stale-photo' }]);
         await picking;
-        check('late photo compression does not overwrite a newer form', selectedPostPhotos[0] === photo && selectedPostFiles.length === 0);
+        check('late photo compression does not overwrite a newer form', selectedPostPhotos[0] === photo && selectedPostFiles.length === 1 && selectedPostFiles[0] === null);
 
         setup();
         const compressions = [];
@@ -54,7 +73,7 @@ const { chromium } = require('playwright');
         await secondSelection;
         compressions[0]([{ file: new File(['old'], 'old.jpg'), thumbFile: null, dataUrl: 'old-selection' }]);
         await firstSelection;
-        check('latest photo selection wins even when compression finishes out of order', selectedPostFiles[0]?.name === 'new.jpg' && selectedPostPhotos[0] === photo);
+        check('latest photo selection wins even when compression finishes out of order', selectedPostFiles[2]?.name === 'new.jpg' && selectedPostPhotos.length === 3);
 
         setup();
         let finishSave;
