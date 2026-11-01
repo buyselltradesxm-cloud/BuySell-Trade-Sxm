@@ -4146,8 +4146,8 @@ function renderProfile(){
     <div class="pf-group pf-gap">
       ${window.SXM && SXM.isStore() ? row(fr ? "Restaurer les achats" : "Restore purchases", "data-apple-restore") + (isBusiness ? "" : row(fr ? `Gérer les abonnements ${SXM.isAndroid() ? "Google Play" : "Apple"}` : `Manage ${SXM.isAndroid() ? "Google Play" : "Apple"} subscriptions`, "data-apple-manage")) : ""}
       ${row(t().logoutLabel, 'data-click="logoutUser"', "plain")}
-      ${row(t().deleteAccountLabel, 'data-click="deleteMyAccountConfirmed"', "plain danger")}
-    </div>`;
+    </div>
+    <button type="button" class="pf-delete-account" data-click="deleteMyAccountConfirmed">${t().deleteAccountLabel}</button>`;
   refreshPushToolLabel(document.getElementById("pushTool"));
   persistState();
 }
