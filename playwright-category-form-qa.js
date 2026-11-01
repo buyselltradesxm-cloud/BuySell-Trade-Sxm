@@ -12,8 +12,9 @@ const cases = [
   { cat:"immo", sub:"sale-house", visible:["postPhotosField","postPriceField","postCurrencyField","postOptionsField"], hidden:["postConditionField","vehicleFields"] },
   { cat:"beauty", sub:"hairdresser", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
   { cat:"beauty", sub:"beauty-products", visible:["postPhotosField","postPriceField","postConditionField"] },
-  { cat:"food", sub:"catering", visible:["postPhotosField"], hidden:["postPriceField","postCurrencyField","postConditionField","postOptionsField","vehicleFields"], optional:true },
-  { cat:"food", sub:"prepared-food", visible:["postPhotosField"], hidden:["postPriceField","postCurrencyField","postConditionField"] },
+  { cat:"food", sub:"catering", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
+  { cat:"food", sub:"groceries", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField"] },
+  { cat:"food", sub:"prepared-food", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField"] },
   { cat:"pets", sub:"pet-services", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
   { cat:"pets", sub:"pet-supplies", visible:["postPhotosField","postPriceField","postConditionField"] }
 ];
@@ -34,6 +35,7 @@ const cases = [
       await page.selectOption("#newCat", testCase.cat);
       if(testCase.sub) await page.selectOption("#newSubcat", testCase.sub);
       const state = await page.evaluate(({ visible=[], hidden=[] }) => ({
+        negotiableHidden:document.getElementById("postNegotiableOption").hidden,
         visible:Object.fromEntries(visible.map(id => [id, !document.getElementById(id).hidden])),
         hidden:Object.fromEntries(hidden.map(id => [id, document.getElementById(id).hidden])),
         hasVisibleSideField:[...document.querySelectorAll("label")].some(label => label.getAttribute("for") === "newSide" && label.offsetParent !== null),
@@ -45,6 +47,7 @@ const cases = [
       }), testCase);
       Object.entries(state.visible).forEach(([id, ok]) => { if(!ok) errors.push(`${path} ${testCase.cat}/${testCase.sub}: ${id} should be visible`); });
       Object.entries(state.hidden).forEach(([id, ok]) => { if(!ok) errors.push(`${path} ${testCase.cat}/${testCase.sub}: ${id} should be hidden`); });
+      if(!state.negotiableHidden) errors.push(`${path} ${testCase.cat}/${testCase.sub}: negotiable option should be hidden`);
       const expectsPrice = (testCase.visible || []).includes("postPriceField") && !testCase.optional;
       if(state.priceRequired !== expectsPrice) errors.push(`${path} ${testCase.cat}/${testCase.sub}: incorrect price requirement`);
       if(state.photoRequired !== !testCase.optional) errors.push(`${path} ${testCase.cat}/${testCase.sub}: incorrect photo requirement`);
@@ -53,6 +56,25 @@ const cases = [
       if(!state.hasFrenchArea) errors.push(`${path} ${testCase.cat}/${testCase.sub}: missing French side areas`);
       if(!state.hasDutchArea) errors.push(`${path} ${testCase.cat}/${testCase.sub}: missing Dutch side areas`);
       results.push({ path, category:testCase.cat, subcategory:testCase.sub, ...state });
+    }
+    // Check every selectable category/subcategory, including the default selection.
+    const categories = await page.locator("#newCat option").evaluateAll(options => options.map(option => option.value).filter(Boolean));
+    for(const category of categories){
+      await page.selectOption("#newCat", category);
+      const subcategories = await page.locator("#newSubcat option").evaluateAll(options => options.map(option => option.value));
+      for(const subcategory of subcategories){
+        await page.selectOption("#newSubcat", subcategory);
+        const pricing = await page.evaluate(() => ({
+          priceVisible:!document.getElementById("postPriceField").hidden,
+          currencyVisible:!document.getElementById("postCurrencyField").hidden,
+          negotiableHidden:document.getElementById("postNegotiableOption").hidden,
+          priceEnabled:!document.getElementById("newPrice").disabled
+        }));
+        if(!pricing.priceVisible || !pricing.currencyVisible || !pricing.priceEnabled || !pricing.negotiableHidden){
+          errors.push(`${path} ${category}/${subcategory}: missing price/currency or negotiable option still visible`);
+        }
+        results.push({path, category, subcategory, ...pricing});
+      }
     }
     await page.close();
   }

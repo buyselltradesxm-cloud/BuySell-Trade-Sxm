@@ -275,8 +275,8 @@ const SERVICE_SUBCATS = new Set([
 
 function postFieldProfile(cat, sub){
   const profile = basePostFieldProfile(cat, sub);
-  // Restaurants and food sellers list whole menus, so Food & Drinks listings have no price.
-  return cat === "food" ? {...profile, price:false} : profile;
+  // Keep pricing available for goods and optional for services.
+  return {...profile, negotiable:false};
 }
 
 function basePostFieldProfile(cat, sub){
@@ -5952,9 +5952,14 @@ async function loginAccount(e){
     const { data, error: sbErr } = result || {error:{}};
     if(!sbErr && data && data.user){
       await applySupabaseUser(data.user);
-      showToast(t().loginToast);
+      // Auth events can project the same session concurrently. Only finish
+      // once the authenticated identity is actually applied.
+      if(state.user?.id !== data.user.id) return false;
       e.target.reset();
-      completeAuth();
+      if(document.getElementById("accountModal")?.classList.contains("open")){
+        completeAuth();
+        showToast(t().loginToast);
+      }
       return false;
     }
     if(isLocalDevHost() && ADMIN_EMAILS.has(key)){
@@ -6836,6 +6841,13 @@ if (willLoadListingsFromBackend()) {
       if (user) {
         applySupabaseUser(user).then(function (applied) {
           if(!applied) return;
+          // A successful session must dismiss the login window even when
+          // this auth event wins the race with the form's sign-in promise.
+          if(document.getElementById("accountModal")?.classList.contains("open") &&
+             sessionStorage.getItem("bst-auth-intent") !== "pro"){
+            completeAuth();
+            showToast(t().loginToast);
+          }
           applyAutomaticIncludedBoosts({silent:true}).then(function(){ render(); });
           if(window.SXM) SXM.sync();
           refreshMessageBadge();
