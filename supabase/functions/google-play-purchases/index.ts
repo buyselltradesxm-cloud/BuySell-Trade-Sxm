@@ -87,6 +87,28 @@ async function verifyGoogle(productId: string, purchaseToken: string) {
   return { active, plan, expiry: expiry?.toISOString() || null, cancelAtPeriodEnd: purchase.subscriptionState === "SUBSCRIPTION_STATE_CANCELED", accountId: purchase.externalAccountIdentifiers.obfuscatedExternalAccountId };
 }
 
+// shortcut: reuses the scheduled-job secret that pg_cron already holds in Vault; give this job its own secret when one can be set.
+const CRON_SECRET = Deno.env.get("EMAIL_QUEUE_SECRET") || "";
+async function sha256Hex(value: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+type StoredGoogle = { google_play_purchase_token: string; google_play_product_id: string; apple_transaction_id: string | null; stripe_subscription_id: string | null };
+// Re-asks Google about the stored purchase and writes the answer. Returns null when the purchase belongs to another account.
+async function refreshGoogle(owner: string, stored: StoredGoogle) {
+  const current = await verifyGoogle(stored.google_play_product_id, stored.google_play_purchase_token);
+  if (current.accountId !== await sha256Hex(owner)) return null;
+  if (current.active) await db(`profiles?id=eq.${encodeURIComponent(owner)}`, "PATCH", {
+    account_type: "business", account_plan: current.plan, subscription_status: "active",
+    subscription_current_period_end: current.expiry, subscription_cancel_at_period_end: current.cancelAtPeriodEnd,
+  });
+  else if (!stored.apple_transaction_id && !stored.stripe_subscription_id) await db(`profiles?id=eq.${encodeURIComponent(owner)}`, "PATCH", {
+    account_type: "personal", account_plan: "personal-free", subscription_status: "inactive",
+    subscription_current_period_end: current.expiry, google_play_purchase_token: null, google_play_product_id: null,
+  });
+  return current;
+}
+
 Deno.serve(async req => {
   const origin = req.headers.get("origin") || "";
   const allowed = ["https://buyselltradesxm.com", "https://www.buyselltradesxm.com", "http://localhost:5173", "http://127.0.0.1:5173"];
@@ -98,6 +120,18 @@ Deno.serve(async req => {
   if (req.method !== "POST") return reply({ error: "Method not allowed." }, 405);
   if (origin && !allowed.includes(origin)) return reply({ error: "Forbidden." }, 403);
   if (!BASE || !DB_KEY || !SERVICE_JSON) return reply({ error: "Google Play verification is not configured yet." }, 503);
+  // Scheduled check (pg_cron): refunds, revocations and lapses end Pro even if the app is never reopened.
+  const cronHeader = req.headers.get("x-cron-secret") || "";
+  if (cronHeader) {
+    if (!CRON_SECRET || await sha256Hex(cronHeader) !== await sha256Hex(CRON_SECRET)) return reply({ error: "Forbidden." }, 403);
+    // shortcut: 100 subscribers per run, oldest period end first; switch to Real-time developer notifications when there are more.
+    const rows = await db("profiles?google_play_purchase_token=not.is.null&subscription_status=eq.active&select=id,google_play_purchase_token,google_play_product_id,apple_transaction_id,stripe_subscription_id&order=subscription_current_period_end.asc.nullsfirst&limit=100");
+    let ended = 0, failed = 0;
+    for (const row of rows || []) {
+      try { const current = await refreshGoogle(row.id, row); if (current && !current.active) ended++; } catch (_) { failed++; }
+    }
+    return reply({ ok: true, checked: (rows || []).length, ended, failed });
+  }
   try {
     const owner = await currentUser(req);
     if (!owner) return reply({ error: "Please sign in first." }, 401);
@@ -112,18 +146,8 @@ Deno.serve(async req => {
     if (body.action === "sync") {
       const [stored] = await db(`profiles?id=eq.${encodeURIComponent(owner)}&select=google_play_purchase_token,google_play_product_id,apple_transaction_id,stripe_subscription_id`);
       if (!stored?.google_play_purchase_token || !stored?.google_play_product_id) return reply({ ok: true, active: false });
-      const current = await verifyGoogle(stored.google_play_product_id, stored.google_play_purchase_token);
-      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(owner));
-      const accountId = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
-      if (current.accountId !== accountId) return reply({ error: "Purchase account could not be confirmed." }, 403);
-      if (current.active) await db(`profiles?id=eq.${encodeURIComponent(owner)}`, "PATCH", {
-        account_type: "business", account_plan: current.plan, subscription_status: "active",
-        subscription_current_period_end: current.expiry, subscription_cancel_at_period_end: current.cancelAtPeriodEnd,
-      });
-      else if (!stored.apple_transaction_id && !stored.stripe_subscription_id) await db(`profiles?id=eq.${encodeURIComponent(owner)}`, "PATCH", {
-        account_type: "personal", account_plan: "personal-free", subscription_status: "inactive",
-        subscription_current_period_end: current.expiry, google_play_purchase_token: null, google_play_product_id: null,
-      });
+      const current = await refreshGoogle(owner, stored);
+      if (!current) return reply({ error: "Purchase account could not be confirmed." }, 403);
       return reply({ ok: true, active: current.active, plan: current.active ? current.plan : "personal-free", currentPeriodEnd: current.expiry });
     }
     if (body.action !== "verify" || typeof body.productId !== "string" || typeof body.purchaseToken !== "string" || body.purchaseToken.length > 4096) {
