@@ -68,3 +68,7 @@ verify_jwt = false
 
 [functions.signup-code]
 verify_jwt = false
+
+# Called by Google's AdMob servers; trusts only Google's ECDSA signature.
+[functions.admob-reward]
+verify_jwt = false

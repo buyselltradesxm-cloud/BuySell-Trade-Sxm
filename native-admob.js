@@ -66,6 +66,8 @@
     // layout can keep it off a window. While a purchase window is open it
     // would sit on the pay button: hide it there and bring it back after.
     var PURCHASE_MODALS = ["paymentModal", "boostCheckoutModal"];
+    var bannerAllowed = false; // Google's consent SDK said ads may be requested
+    var bannerRequested = false;
     var bannerShown = false;
     var bannerHidden = false;
     function purchaseOpen() {
@@ -74,12 +76,17 @@
         return !!(modal && modal.classList.contains("open"));
       });
     }
+    // Paying Pro members see no ads. The page sets the flag and fires
+    // "bst:ad-free" whenever the signed-in account changes.
+    function adFree() { return window.__BST_AD_FREE__ === true; }
     function syncBanner() {
-      var hide = purchaseOpen();
+      if (bannerAllowed && !bannerRequested && !adFree()) { showBanner(); return; }
+      var hide = purchaseOpen() || adFree();
       if (!bannerShown || hide === bannerHidden) return;
       bannerHidden = hide;
       (hide ? AdMob.hideBanner() : AdMob.resumeBanner()).catch(function () {});
     }
+    window.addEventListener("bst:ad-free", syncBanner);
     var purchaseWatch = new MutationObserver(syncBanner);
     PURCHASE_MODALS.forEach(function (id) {
       var modal = document.getElementById(id);
@@ -87,6 +94,7 @@
     });
 
     function showBanner() {
+      bannerRequested = true;
       AdMob.showBanner({
         adId: adId,
         adSize: "ADAPTIVE_BANNER",
@@ -94,10 +102,11 @@
         margin: 64, // clears the mobile-nav tab bar; adjust after a real-device check
         isTesting: testing
       }).then(function () {
-        // A purchase window may already be open by the time the banner arrives.
+        // A purchase window may already be open, or the account may have
+        // turned Pro, by the time the banner arrives.
         bannerShown = true;
         syncBanner();
-      }).catch(function () {});
+      }).catch(function () { bannerRequested = false; });
     }
 
     /* -------- Interstitial ad plumbing ---------------------
@@ -146,7 +155,7 @@
     // Expose a single call that the web UI can fire at any transition
     // point. Returns true if the ad was shown, false if throttled.
     window.__BST_ADMOB_INTERSTITIAL__ = function () {
-      if (!interstitialAdId || !isPrepared) return false;
+      if (!interstitialAdId || !isPrepared || adFree()) return false;
       accrueActiveTime();
       if (activeMs < FIRST_DELAY_MS) return false;
       if (activeMs - lastShownActiveMs < COOLDOWN_MS) return false;
@@ -186,9 +195,10 @@
                   return AdMob.requestTrackingAuthorization().catch(function () {});
                 }
               })
-              .then(function () { showBanner(); prepareInterstitial(); });
+              .then(function () { bannerAllowed = true; syncBanner(); prepareInterstitial(); });
           }
-          showBanner();
+          bannerAllowed = true;
+          syncBanner();
           prepareInterstitial();
         }
       })

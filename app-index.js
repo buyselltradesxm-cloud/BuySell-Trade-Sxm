@@ -1346,6 +1346,15 @@ function loadLocalState(){
   }catch(e){}
 }
 
+// Paying Pro members get the store apps without ads: native-admob.js reads
+// this flag and listens for the event whenever the signed-in account changes.
+function syncAdFree(){
+  const adFree = hasActiveProSubscription();
+  if(window.__BST_AD_FREE__ === adFree) return;
+  window.__BST_AD_FREE__ = adFree;
+  window.dispatchEvent(new Event("bst:ad-free"));
+}
+
 function restoreListingsIfNeeded(){
   if(L.length) return;
   L.push(...BASE_LISTINGS.map(item=>({...item})));
@@ -1368,6 +1377,7 @@ function persistState(){
     notifications,
     dismissedNotificationIds:[...dismissedNotificationIds]
   }));
+  syncAdFree();
 }
 
 function isLocalDevHost(){
@@ -6804,7 +6814,7 @@ async function handleIncomingMessage(message){
 }
 
 /* ---------------- INIT ---------------- */
-loadLocalState(); setupPasswordVisibilityControls(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); applyAutomaticIncludedBoosts({silent:true}); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(!willLoadListingsFromBackend()); openAdminFromUrl(); handleListingRenewalActionFromUrl(); handleUnsubscribeFromUrl(); if(new URLSearchParams(location.search).get("reset") === "1") setTimeout(openPasswordReset, 250);
+loadLocalState(); syncAdFree(); setupPasswordVisibilityControls(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); applyAutomaticIncludedBoosts({silent:true}); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(!willLoadListingsFromBackend()); openAdminFromUrl(); handleListingRenewalActionFromUrl(); handleUnsubscribeFromUrl(); if(new URLSearchParams(location.search).get("reset") === "1") setTimeout(openPasswordReset, 250);
 
 handlePaymentReturnFromUrl();
 
