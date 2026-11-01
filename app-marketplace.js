@@ -21,6 +21,9 @@ const CATS = [
   {id:"scoot",fr:"Motos & scooters",        en:"Motorcycles & scooters"},
   {id:"locvoit", fr:"Locations de voitures",en:"Car rentals"},
   {id:"menag",fr:"Électroménager",          en:"Appliances"},
+  {id:"dining", fr:"Restaurants, bars & sorties", en:"Restaurants, bars & nightlife"},
+  {id:"tourism", fr:"Excursions & activités", en:"Tours & activities"},
+  {id:"transport", fr:"Taxis & transferts", en:"Taxis & transfers"},
   {id:"food", fr:"Alimentation & Boissons", en:"Food & Drinks"},
   {id:"lois", fr:"Loisirs",                 en:"Leisure"},
   {id:"billet",fr:"Billetterie",            en:"Tickets"},
@@ -38,6 +41,32 @@ const CONDS = [
 ];
 
 const SUBCATS = {
+  dining:{fr:"Restaurants, bars & sorties",en:"Restaurants, bars & nightlife",groups:[
+    {fr:"Manger & boire",en:"Food & drink venues",items:[
+      {id:"restaurants",fr:"Restaurants",en:"Restaurants"},
+      {id:"bars",fr:"Bars & pubs",en:"Bars & pubs"},
+      {id:"beach-clubs",fr:"Beach bars & clubs de plage",en:"Beach bars & beach clubs"},
+      {id:"cafes",fr:"Cafés & salons de thé",en:"Cafés & tea rooms"},
+      {id:"snack-food-trucks",fr:"Snacks & food trucks",en:"Snack bars & food trucks"},
+      {id:"nightclubs",fr:"Clubs & vie nocturne",en:"Clubs & nightlife"}
+    ]}]},
+  tourism:{fr:"Excursions & activités",en:"Tours & activities",groups:[
+    {fr:"Découvrir l'île",en:"Explore the island",items:[
+      {id:"boat-trips",fr:"Sorties bateau & îles voisines",en:"Boat trips & nearby islands"},
+      {id:"diving-snorkeling",fr:"Plongée & snorkeling",en:"Diving & snorkeling"},
+      {id:"watersports",fr:"Sports nautiques & jet-ski",en:"Water sports & jet skis"},
+      {id:"guided-tours",fr:"Visites guidées & excursions",en:"Guided tours & excursions"},
+      {id:"outdoor-adventures",fr:"Randonnées & aventures",en:"Hiking & adventures"},
+      {id:"wellness-spa",fr:"Spa & bien-être",en:"Spa & wellness"}
+    ]}]},
+  transport:{fr:"Taxis & transferts",en:"Taxis & transfers",groups:[
+    {fr:"Se déplacer",en:"Getting around",items:[
+      {id:"taxi-driver",fr:"Taxis & chauffeurs privés",en:"Taxis & private drivers"},
+      {id:"airport-transfer",fr:"Transferts aéroport",en:"Airport transfers"},
+      {id:"port-transfer",fr:"Transferts port & croisières",en:"Port & cruise transfers"},
+      {id:"group-shuttle",fr:"Navettes & transport de groupes",en:"Shuttles & group transport"}
+    ]}]},
+
   immo:{
     fr:"Immobilier",
     en:"Property",
@@ -61,6 +90,7 @@ const SUBCATS = {
         {id:"short-term-villa", fr:"Villa courte durée", en:"Short-term villa"},
         {id:"short-term-house", fr:"Maison courte durée", en:"Short-term house"},
         {id:"short-term-room", fr:"Chambre courte durée", en:"Short-term room"},
+        {id:"hotel-guesthouse", fr:"Hôtels & maisons d’hôtes", en:"Hotels & guesthouses"},
         {id:"rent-apartment", fr:"Appartement", en:"Apartment"},
         {id:"rent-house", fr:"Maison", en:"House"},
         {id:"rent-parking", fr:"Parking", en:"Parking"},
@@ -274,13 +304,15 @@ const SERVICE_SUBCATS = new Set([
 ]);
 
 function postFieldProfile(cat, sub){
+  if(cat === "dining") return {photos:true, photosRequired:true, price:false, priceRequired:false,
+    condition:false, delivery:false, meetup:false, negotiable:false, urgent:false, safeMeet:false, vehicle:false};
   const profile = basePostFieldProfile(cat, sub);
   // Keep pricing available for goods and optional for services.
   return {...profile, negotiable:false};
 }
 
 function basePostFieldProfile(cat, sub){
-  const serviceListing = cat === "serv" || cat === "job" || SERVICE_SUBCATS.has(sub);
+  const serviceListing = ["serv","job","tourism","transport"].includes(cat) || SERVICE_SUBCATS.has(sub);
   if(serviceListing){
     // A job offer or a service can be posted without a photo or a price.
     return {photos:true, photosRequired:false, price:true, priceRequired:false, condition:false, delivery:true,
@@ -707,6 +739,9 @@ const G = {
   meub:{img:"https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=80", alt:"Second-hand sofa for sale"},
   menag:{img:"https://images.unsplash.com/photo-1586208958839-06c17cacdf08?auto=format&fit=crop&w=900&q=80", alt:"Home appliance refrigerator"},
   mode:{img:"https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=900&q=80", alt:"Second-hand clothes on a rack"},
+  dining:{img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80",alt:"Restaurant dining room"},
+  tourism:{img:"https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=900&q=80",alt:"Water sports and island activities"},
+  transport:{img:"https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=900&q=80",alt:"Road transport"},
   food:{img:"https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80", alt:"Fresh fruit and vegetables at a local market"},
   job:{img:"https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80", alt:"People working in a local business"},
   gaming:{img:"https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=900&q=80", alt:"Game console and controller for sale"},
@@ -1975,6 +2010,67 @@ function sellerTrustHTML(l){
       </div>
     </div>`;
 }
+
+// Business showcases use the public listing catalogue; no private profile data is fetched.
+function businessWorkspaceHTML(){
+  if(state.user?.accountType !== "business") return "";
+  const fr = state.lang === "fr";
+  const choices = [
+    ["locvoit", "", fr ? "Voiture à louer" : "Car for rent"],
+    ["voit", "car-sale", fr ? "Véhicule à vendre" : "Vehicle for sale"],
+    ["dining", "restaurants", fr ? "Restaurant ou bar" : "Restaurant or bar"],
+    ["tourism", "guided-tours", fr ? "Excursion ou activité" : "Tour or activity"],
+    ["serv", "", fr ? "Service" : "Service"],
+    ["elec", "", fr ? "Produit" : "Product"]
+  ];
+  return `<section class="pro-workspace"><span class="pro-eyebrow">${fr ? "MON ENTREPRISE SUR SXM" : "MY BUSINESS ON SXM"}</span>
+    <h3>${fr ? "Présentez ce que vous proposez" : "Show what you offer"}</h3>
+    <p>${fr ? "Une offre, ses photos et ses informations. Les clients vous contactent directement." : "Your offer, photos and details. Customers contact you directly."}</p>
+    <div class="pro-choices">${choices.map(([cat,sub,label])=>`<button type="button" data-click="startBusinessOffer" data-click-args='${dataArgs([cat,sub])}'>+ ${esc(label)}</button>`).join("")}</div>
+    <button type="button" class="pf-link" data-click="openBusinessPage" data-click-args='${dataArgs([state.user.id])}'>${fr ? "Voir ma vitrine publique" : "View my public showcase"}</button></section>`;
+}
+function startBusinessOffer(cat, sub){
+  if(state.user?.accountType !== "business") return;
+  closeModal("profileModal");
+  openPostModal(); // Retains the existing subscription and publication-limit checks.
+  if(!document.getElementById("postModal").classList.contains("open")) return;
+  document.getElementById("newCat").value = cat;
+  buildPostSubcats();
+  if(sub) document.getElementById("newSubcat").value = sub;
+  applyPostFieldProfile();
+}
+function businessListings(sellerId){
+  return L.filter(l=>idKey(l.sellerId || l.ownerId) === idKey(sellerId) &&
+    !listingIsSold(l) && (!l.status || ["active","reserved"].includes(l.status)));
+}
+function openBusinessPage(sellerId, syncUrl = true){
+  const fr = state.lang === "fr";
+  const listings = businessListings(sellerId);
+  const own = idKey(state.user?.id) === idKey(sellerId) && state.user?.accountType === "business";
+  if(!listings.length && !own){ showToast(fr ? "Aucune offre publique pour cette entreprise." : "No public offers for this business."); return; }
+  const name = listings.length ? sellerName(listings[0]) : state.user.businessName || state.user.name;
+  const groups = [...new Set(listings.map(l=>l.cat))];
+  const url = new URL(location.origin + location.pathname);
+  url.searchParams.set("business",sellerId);
+  if(syncUrl){ ensureOverlayHistoryEntry(); history.replaceState({bstOverlay:true},"",url); }
+  closeModal("profileModal");
+  document.getElementById("detailTitle").textContent = name;
+  document.getElementById("detailBody").innerHTML = `<section class="business-showcase">
+    <header class="business-hero"><span class="pro-eyebrow">${fr ? "ENTREPRISE LOCALE · SAINT-MARTIN / SINT MAARTEN" : "LOCAL BUSINESS · SAINT-MARTIN / SINT MAARTEN"}</span>
+      <h2>${esc(name)}</h2><p>${fr ? "Découvrez nos offres et contactez-nous pour en savoir plus." : "Explore our offers and get in touch to learn more."}</p>
+      <div class="business-tags">${groups.map(cat=>`<span>${esc((CATS.find(c=>c.id===cat)||{fr:cat,en:cat})[state.lang])}</span>`).join("")}</div>
+      <label for="businessShare">${fr ? "Partager cette entreprise" : "Share this business"}</label><input id="businessShare" readonly value="${esc(url.href)}">
+    </header>
+    <div class="business-catalogue">${listings.map(l=>{const media=mediaFor(l);return `<article class="business-offer">
+      <img src="${esc(safeUrl(media.img))}" alt="${esc(titleFor(l))}" loading="lazy">
+      <div><h3>${esc(titleFor(l))}</h3><p>${esc(l.area || "")}</p>
+      ${postFieldProfile(l.cat,l.sub||"").price ? `<div class="price">${listingPriceHTML(l)}${l.cat==="locvoit" ? `<small> / ${fr ? "jour" : "day"}</small>` : ""}</div>` : ""}
+      ${vehicleDetailsHTML(l)}
+      <button type="button" class="primary-btn" data-click="openListing" data-click-args='${dataArgs([l.id])}'>${fr ? "Voir l’offre et contacter" : "View offer & contact"}</button></div></article>`;}).join("") || `<p>${fr ? "Votre vitrine sera visible dès votre première offre publiée. Choisissez une activité dans votre espace Pro pour commencer." : "Your showcase goes live with your first published offer. Choose an activity in your Pro workspace to get started."}</p>`}</div>
+    </section>`;
+  openModal("detailModal");
+}
+
 function businessContactHTML(user){
   if(user.accountType !== "business") return "";
   const logo = user.businessLogo ? `<span>${state.lang==="fr" ? "Logo ajouté" : "Logo added"}</span>` : "";
@@ -2126,6 +2222,7 @@ function sellerPhoneHTML(l){
 }
 function listingUrl(id){
   const url = new URL(window.location.href);
+  url.searchParams.delete("business");
   url.searchParams.set("listing", id);
   return url.toString();
 }
@@ -2348,7 +2445,10 @@ function searchAliases(l){
     menag:"appliance appliances electromenager frigo refrigerator washer washing",
     job:"job jobs emploi work travail hiring cv resume",
     serv:"service services cleaning plumber plumbing mechanic construction beauty",
-    food:"food foods drinks alimentation boisson restaurant meal repas"
+    dining:"restaurant restaurants bar bars pub beach club café cafe food truck nightlife sortie sorties",
+    tourism:"tour tours excursion excursions activité activités plongee snorkeling diving jet ski spa wellness",
+    transport:"taxi taxis transfert transferts airport aeroport chauffeur navette shuttle cruise croisiere",
+    food:"food foods drinks alimentation boisson meal repas"
   };
   return aliases[l.cat] || "";
 }
@@ -3177,7 +3277,8 @@ function clearListingFromUrl(){
   pendingOverlayListingId = null;
   if(!window.history?.replaceState) return;
   const url = new URL(window.location.href);
-  if(!url.searchParams.has("listing")) return;
+  if(!url.searchParams.has("listing") && !url.searchParams.has("business")) return;
+  url.searchParams.delete("business");
   url.searchParams.delete("listing");
   window.history.replaceState({}, "", url);
 }
@@ -3189,6 +3290,7 @@ function syncListingToUrl(id){
   // underneath keeps the plain page address.
   ensureOverlayHistoryEntry();
   const url = new URL(window.location.href);
+  url.searchParams.delete("business");
   url.searchParams.set("listing", id);
   window.history.replaceState({bstOverlay:true, listing:id}, "", url);
 }
@@ -3222,6 +3324,7 @@ function openListing(id, syncUrl = true){
         <div class="seller-box">
           <b>${esc(sellerName(l))} · ${l.pro ? t().sellerPro : t().sellerLocal}</b>
           <span>${esc(l.area)} · ${side}${profile.condition && l.cond ? " · " + condLabel(l.cond) : ""} · ${agoHTML(l.ph)}</span>
+          ${l.pro && l.sellerId ? `<button type="button" class="pf-link" data-click="openBusinessPage" data-click-args='${dataArgs([l.sellerId])}'>${state.lang==="fr" ? "Voir les offres de cette entreprise" : "View this business’s offers"}</button>` : ""}
           ${sellerPhoneHTML(l)}
           ${profile.delivery && l.delivery ? `<br><span>${deliveryLabel(l.delivery)}${profile.meetup && l.meetup ? " · " + meetupLabel(l.meetup) : ""}${profile.negotiable && l.negotiable ? " · " + t().negotiableLabel : ""}</span>` : ""}
           ${sellerTrustHTML(l)}
@@ -4130,6 +4233,7 @@ function renderProfile(){
       <button type="button" data-click="openProfileStat" data-click-args='${dataArgs(['messages'])}'><b>${Object.keys(chatThreads).length}</b><span>${t().conversations}</span></button>
     </div>
     ${subscriptionDashboardHTML(user, own)}
+    ${businessWorkspaceHTML()}
     <div class="pf-group pf-gap">
       ${row(t().postAd, 'data-click="closeProfileModalThenPostModal"')}
       ${row(fr ? "Répondre aux acheteurs" : "Reply to buyers", 'data-click="closeProfileModalThenMessages"')}
@@ -6267,7 +6371,7 @@ function applyPostFieldProfile(){
   const photosLabel = document.querySelector("#postPhotosField > label");
   if(photosLabel) photosLabel.textContent = t().photosLabel + (profile.photosRequired ? "" : optional);
   const priceLabel = document.querySelector('label[for="newPrice"]');
-  if(priceLabel) priceLabel.textContent = t().price + (profile.priceRequired === false ? optional : "");
+  if(priceLabel) priceLabel.textContent = (cat === "locvoit" ? (state.lang === "fr" ? "Tarif par jour" : "Daily rate") : t().price) + (profile.priceRequired === false ? optional : "");
   setPostFieldVisibility("postCurrencyField", profile.price);
   setPostFieldVisibility("postConditionField", profile.condition, "newCond");
   setPostOptionVisibility("postNegotiableOption", "newNegotiable", profile.negotiable);
@@ -6524,7 +6628,7 @@ async function createListing(e){
     meetup:null,
     negotiable:profile.negotiable && document.getElementById("newNegotiable").checked,
     safeMeet:profile.safeMeet && document.getElementById("newSafeMeet").checked,
-    noPrice:false,
+    noPrice:!profile.price,
     salary:cat === "job" && !(price > 0),
     ph:0, pics:profile.photos ? selectedPostPhotos.length : 0,
     photos:profile.photos ? [...selectedPostPhotos] : [],
@@ -6627,6 +6731,7 @@ const CAT_SHORT = {
   job:{fr:"Emploi",en:"Jobs"}, serv:{fr:"Services",en:"Services"}, pets:{fr:"Animaux",en:"Pets"},
   bat:{fr:"Bateaux",en:"Boats"}, gaming:{fr:"Gaming",en:"Gaming"}, beauty:{fr:"Beauté",en:"Beauty"},
   scoot:{fr:"Motos",en:"Motor\u00ADbikes"}, locvoit:{fr:"Location auto",en:"Car rental"}, menag:{fr:"Électro\u00ADménager",en:"Appli\u00ADances"},
+  dining:{fr:"Restaurants & bars",en:"Dining & bars"}, tourism:{fr:"Excursions",en:"Activities"}, transport:{fr:"Taxis",en:"Transfers"},
   food:{fr:"Alimen\u00ADtation",en:"Food"}, lois:{fr:"Loisirs",en:"Leisure"}, billet:{fr:"Billet\u00ADterie",en:"Tickets"},
   pro:{fr:"Matériel pro",en:"Pro gear"}, bonplan:{fr:"Bons plans",en:"Deals"}, autres:{fr:"Plus",en:"More"}
 };
@@ -6734,7 +6839,11 @@ function willLoadListingsFromBackend(){
 let urlListingOpened = false;
 function openListingFromUrl(dataLoaded = false){
   const id = new URLSearchParams(window.location.search).get("listing");
-  if(!id) return;
+  if(!id){
+    const businessId = new URLSearchParams(location.search).get("business");
+    if(businessId && dataLoaded) setTimeout(()=>openBusinessPage(businessId,false),120);
+    return;
+  }
   const exists = L.some(l=>idKey(l.id)===idKey(id));
   if(exists){
     urlListingOpened = true;

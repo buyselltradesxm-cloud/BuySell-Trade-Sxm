@@ -5,6 +5,10 @@ const base = process.env.APP_QA_BASE_URL || "http://localhost:5173";
 // show the same two fields but may be posted without them, and drop the
 // condition, options and vehicle fields.
 const cases = [
+  {cat:"dining",sub:"restaurants",visible:["postPhotosField"],hidden:["postPriceField","postCurrencyField","postConditionField","postOptionsField","vehicleFields"],noPrice:true},
+  {cat:"dining",sub:"bars",visible:["postPhotosField"],hidden:["postPriceField","postCurrencyField"],noPrice:true},
+  {cat:"tourism",sub:"boat-trips",visible:["postPhotosField","postPriceField","postCurrencyField"],optional:true},
+  {cat:"transport",sub:"airport-transfer",visible:["postPhotosField","postPriceField","postCurrencyField"],optional:true},
   { cat:"serv", sub:"plumber", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
   { cat:"job", sub:"hiring", visible:["postPhotosField","postPriceField","postCurrencyField"], hidden:["postConditionField","postOptionsField","vehicleFields"], optional:true },
   { cat:"voit", sub:"car-sale", visible:["postPhotosField","postPriceField","postCurrencyField","postConditionField","postOptionsField","vehicleFields"] },
@@ -70,7 +74,8 @@ const cases = [
           negotiableHidden:document.getElementById("postNegotiableOption").hidden,
           priceEnabled:!document.getElementById("newPrice").disabled
         }));
-        if(!pricing.priceVisible || !pricing.currencyVisible || !pricing.priceEnabled || !pricing.negotiableHidden){
+        const expectsPricing = category !== "dining";
+        if(pricing.priceVisible !== expectsPricing || pricing.currencyVisible !== expectsPricing || (expectsPricing && !pricing.priceEnabled) || !pricing.negotiableHidden){
           errors.push(`${path} ${category}/${subcategory}: missing price/currency or negotiable option still visible`);
         }
         results.push({path, category, subcategory, ...pricing});

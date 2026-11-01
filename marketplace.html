@@ -32,10 +32,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=69ddf5d55252d881"></script>
-<script src="/telemetry.js?v=69ddf5d55252d881"></script>
-<script src="/pwa.js?v=69ddf5d55252d881" defer></script>
-<link href="/fonts/fonts.css?v=69ddf5d55252d881" rel="stylesheet">
+<script src="/frame-guard.js?v=0347517073be37f8"></script>
+<script src="/telemetry.js?v=0347517073be37f8"></script>
+<script src="/pwa.js?v=0347517073be37f8" defer></script>
+<link href="/fonts/fonts.css?v=0347517073be37f8" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -1504,6 +1504,30 @@
   /* Profile screen: identity, one stats line, then grouped rows. Related
      items share one container with hairline dividers instead of each
      getting its own outlined box. */
+
+  .pro-workspace{margin:20px 0;padding:22px;border:1px solid var(--line);border-left:5px solid var(--sea);border-radius:14px;background:var(--white);}
+  .pro-eyebrow{font-size:11px;letter-spacing:.08em;font-weight:800;}
+  .pro-workspace h3{margin:8px 0;font-size:23px;}
+  .pro-workspace p{color:var(--mute);line-height:1.6;}
+  .pro-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0;}
+  .pro-choices button{padding:12px;text-align:left;border:1px solid var(--line);border-radius:9px;background:var(--paper);font-weight:700;cursor:pointer;}
+  .pro-choices button:hover{border-color:var(--sea);color:var(--sea);}
+  .pro-choices button:focus-visible,.business-offer button:focus-visible{outline:3px solid var(--sun);outline-offset:2px;}
+  .business-hero{padding:28px;background:var(--sea);color:var(--white);border-radius:14px;margin-bottom:22px;}
+  .business-hero h2{font-size:clamp(26px,5vw,42px);margin:12px 0;overflow-wrap:anywhere;}
+  .business-hero p{line-height:1.6;max-width:52ch;}
+  .business-tags{display:flex;flex-wrap:wrap;gap:7px;margin:15px 0;}
+  .business-tags span{border:1px solid currentColor;border-radius:20px;padding:5px 10px;font-size:12px;}
+  .business-hero label{display:block;font-size:12px;margin:18px 0 5px;}
+  .business-hero input{width:100%;min-width:0;box-sizing:border-box;}
+  .business-catalogue{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;}
+  .business-offer{border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0;background:var(--white);}
+  .business-offer>img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;}
+  .business-offer>div{padding:18px;}
+  .business-offer h3{font-size:19px;margin:0 0 8px;overflow-wrap:anywhere;}
+  .business-offer .primary-btn{margin-top:14px;cursor:pointer;}
+  @media(max-width:620px){.business-catalogue{grid-template-columns:1fr;}.business-hero{padding:20px;}.pro-workspace{padding:16px;}}
+
   #profileBody{--pf-rule:rgba(19,42,46,.14);}
   @media (min-width:700px){#profileBody{max-width:640px;margin:0 auto;}}
   .pf-id{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;padding:2px 2px 0;}
@@ -3090,21 +3114,21 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=69ddf5d55252d881" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=69ddf5d55252d881"></script>
-<script src="native-ios.js?v=69ddf5d55252d881"></script>
-<script src="captcha.js?v=69ddf5d55252d881"></script>
-<script src="supabase-api.js?v=69ddf5d55252d881"></script>
-<script src="img-utils.js?v=69ddf5d55252d881"></script>
-<script src="draft-store.js?v=69ddf5d55252d881"></script>
-<script src="push-config.js?v=69ddf5d55252d881"></script>
-<script src="push-notifications.js?v=69ddf5d55252d881"></script>
-<script src="consent.js?v=69ddf5d55252d881" defer></script>
-<script src="admob-plugin.js?v=69ddf5d55252d881"></script>
-<script src="native-admob.js?v=69ddf5d55252d881"></script>
-<script src="ads-config.js?v=69ddf5d55252d881"></script>
-<script src="ads.js?v=69ddf5d55252d881" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=0347517073be37f8" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=0347517073be37f8"></script>
+<script src="native-ios.js?v=0347517073be37f8"></script>
+<script src="captcha.js?v=0347517073be37f8"></script>
+<script src="supabase-api.js?v=0347517073be37f8"></script>
+<script src="img-utils.js?v=0347517073be37f8"></script>
+<script src="draft-store.js?v=0347517073be37f8"></script>
+<script src="push-config.js?v=0347517073be37f8"></script>
+<script src="push-notifications.js?v=0347517073be37f8"></script>
+<script src="consent.js?v=0347517073be37f8" defer></script>
+<script src="admob-plugin.js?v=0347517073be37f8"></script>
+<script src="native-admob.js?v=0347517073be37f8"></script>
+<script src="ads-config.js?v=0347517073be37f8"></script>
+<script src="ads.js?v=0347517073be37f8" defer></script>
 
-<script src="app-marketplace.js?v=69ddf5d55252d881"></script>
+<script src="app-marketplace.js?v=0347517073be37f8"></script>
 </body>
 </html>
