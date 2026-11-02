@@ -93,9 +93,13 @@ function firstPhoto(l) {
 // 1200x630 preview: the whole photo over a blurred copy of itself, logo badge bottom-right
 // of the centre square, so it survives apps that crop the preview to a square.
 async function shareImage(photoUrl) {
-  const res = await fetch(photoUrl);
+  // Listing rows are seller-written: only fetch from our own photo storage, bounded in time and size.
+  if (!photoUrl.startsWith(`${url}/storage/v1/object/public/`)) throw new Error("photo not in project storage");
+  const res = await fetch(photoUrl, { redirect: "error", signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`photo ${res.status}`);
+  if (Number(res.headers.get("content-length")) > 15e6) throw new Error("photo too large");
   const photo = Buffer.from(await res.arrayBuffer());
+  if (photo.length > 15e6) throw new Error("photo too large");
   const W = 1200, H = 630, LOGO = 170, PAD = 24;
   const bg = await sharp(photo).rotate().resize(W, H, { fit: "cover" }).blur(30).modulate({ brightness: 0.7 }).toBuffer();
   const fg = await sharp(photo).rotate().resize(W, H, { fit: "inside" }).toBuffer();
