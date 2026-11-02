@@ -1,16 +1,20 @@
-/* Builds one static page per real listing (l/<id>.html) and the sitemap.
+/* Builds one static page per real listing (l/<id>.html) and the sitemap,
+   plus a share page (s/<id>.html + s/<id>.jpg) whose link preview shows the
+   listing photo with the Buy Sell Trade SXM logo on it.
 
    The marketplace is a single page that loads its listings with JavaScript,
    so a search engine sees no listing at all. This writes a small plain-HTML
    page for every active listing that has a seller, and lists them in
    sitemap.xml. Example listings (no seller) are never published.
 
+   Needs the "sharp" image package (the workflow installs it).
    Run by .github/workflows/listing-pages.yml. Locally:
      node scripts/build-listing-pages.js                 writes into the repo
      node scripts/build-listing-pages.js --out tmp --samples   preview with the examples
 */
 const fs = require("fs");
 const path = require("path");
+const sharp = require("sharp");
 
 const root = path.join(__dirname, "..");
 const args = process.argv.slice(2);
@@ -86,7 +90,56 @@ function firstPhoto(l) {
   return photo || null;
 }
 
-function pageFor(l) {
+// 1200x630 preview: the whole photo over a blurred copy of itself, logo badge bottom-right
+// of the centre square, so it survives apps that crop the preview to a square.
+async function shareImage(photoUrl) {
+  const res = await fetch(photoUrl);
+  if (!res.ok) throw new Error(`photo ${res.status}`);
+  const photo = Buffer.from(await res.arrayBuffer());
+  const W = 1200, H = 630, LOGO = 170, PAD = 24;
+  const bg = await sharp(photo).rotate().resize(W, H, { fit: "cover" }).blur(30).modulate({ brightness: 0.7 }).toBuffer();
+  const fg = await sharp(photo).rotate().resize(W, H, { fit: "inside" }).toBuffer();
+  const circle = Buffer.from(`<svg width="${LOGO}" height="${LOGO}"><circle cx="${LOGO / 2}" cy="${LOGO / 2}" r="${LOGO / 2 - 4}"/></svg>`);
+  const logo = await sharp(path.join(root, "icons", "icon-512.png")).resize(LOGO, LOGO)
+    .composite([{ input: circle, blend: "dest-in" }]).png().toBuffer();
+  return sharp(bg).composite([
+    { input: fg, gravity: "center" },
+    { input: logo, left: (W + H) / 2 - LOGO - PAD, top: H - LOGO - PAD }
+  ]).jpeg({ quality: 82 }).toBuffer();
+}
+
+// Read by WhatsApp/Facebook/etc. for the preview; people are sent straight on to the listing.
+function sharePageFor(l, image) {
+  const appUrl = `/?listing=${encodeURIComponent(l.id)}`;
+  const price = priceOf(l);
+  const title = `${l.title}${price ? ` – ${price.label}` : ""} | Buy Sell Trade SXM`;
+  const place = [l.area, l.side === "nl" ? "Sint Maarten" : "Saint-Martin"].filter(Boolean).join(", ");
+  const summary = [price?.label, place, String(l.description || "").trim().replace(/\s+/g, " ")].filter(Boolean).join(" · ").slice(0, 160);
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="refresh" content="0;url=${esc(appUrl)}">
+<meta name="robots" content="noindex">
+<title>${esc(title)}</title>
+<link rel="canonical" href="${esc(`${SITE}/l/${l.id}.html`)}">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(summary)}">
+<meta property="og:type" content="product">
+<meta property="og:url" content="${esc(`${SITE}/s/${l.id}.html`)}">
+<meta property="og:site_name" content="Buy Sell Trade SXM">
+<meta property="og:image" content="${esc(image)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body><p><a href="${esc(appUrl)}">${esc(l.title)}</a></p></body>
+</html>
+`;
+}
+
+function pageFor(l, shareImg) {
   const pageUrl = `${SITE}/l/${l.id}.html`;
   const appUrl = `/?listing=${encodeURIComponent(l.id)}`;
   const price = priceOf(l);
@@ -96,7 +149,7 @@ function pageFor(l) {
   const description = String(l.description || "").trim();
   const summary = [price?.label, place, description.replace(/\s+/g, " ")].filter(Boolean).join(" · ").slice(0, 160);
   const title = `${l.title}${price ? ` – ${price.label}` : ""} | Buy Sell Trade SXM`;
-  const image = photo || `${SITE}/og-image.jpg`;
+  const image = shareImg || photo || `${SITE}/og-image.jpg`;
 
   const ld = price ? {
     "@context": "https://schema.org",
@@ -171,12 +224,36 @@ function sitemapFor(listings) {
       removed++;
     }
   }
-  for (const l of listings) fs.writeFileSync(path.join(dir, `${l.id}.html`), pageFor(l));
+  const shareDir = path.join(outRoot, "s");
+  fs.mkdirSync(shareDir, { recursive: true });
+  const wantedShare = new Set(listings.flatMap(l => [`${l.id}.html`, `${l.id}.jpg`]));
+  for (const file of fs.readdirSync(shareDir)) {
+    if (!wantedShare.has(file)) fs.unlinkSync(path.join(shareDir, file));
+  }
+
+  let branded = 0;
+  for (const l of listings) {
+    let shareImg = null;
+    const photo = firstPhoto(l);
+    if (photo) {
+      try {
+        fs.writeFileSync(path.join(shareDir, `${l.id}.jpg`), await shareImage(photo));
+        shareImg = `${SITE}/s/${l.id}.jpg`;
+        branded++;
+      } catch (err) {
+        // A broken photo must not stop the other pages; this one falls back to the plain image.
+        console.warn(`listing ${l.id}: no share image (${err.message})`);
+        fs.rmSync(path.join(shareDir, `${l.id}.jpg`), { force: true });
+      }
+    }
+    fs.writeFileSync(path.join(dir, `${l.id}.html`), pageFor(l, shareImg));
+    fs.writeFileSync(path.join(shareDir, `${l.id}.html`), sharePageFor(l, shareImg || photo || `${SITE}/og-image.jpg`));
+  }
   // Git does not track an empty folder; don't leave one behind.
-  if (!fs.readdirSync(dir).length) fs.rmdirSync(dir);
+  for (const d of [dir, shareDir]) if (!fs.readdirSync(d).length) fs.rmdirSync(d);
 
   fs.writeFileSync(path.join(outRoot, "sitemap.xml"), sitemapFor(listings));
-  console.log(`${listings.length} listing page(s) written, ${removed} removed, sitemap has ${STATIC_URLS.length + listings.length} URLs`);
+  console.log(`${listings.length} listing page(s) written (${branded} share image(s)), ${removed} removed, sitemap has ${STATIC_URLS.length + listings.length} URLs`);
 })().catch(err => {
   console.error(err.message || err);
   process.exit(1);

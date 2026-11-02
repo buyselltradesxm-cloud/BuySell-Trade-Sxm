@@ -1,6 +1,7 @@
 name: Listing pages
 
-# Every 6 hours: rebuild the static page of each real listing (l/<id>.html)
+# Every 6 hours: rebuild the static page of each real listing (l/<id>.html),
+# its share page and preview image (s/<id>.html, s/<id>.jpg)
 # and sitemap.xml so search engines can index listings. Commits only when
 # something changed; GitHub Pages then republishes the site.
 on:
@@ -26,12 +27,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: Build listing pages and sitemap
+      - name: Install the image tool
+        run: npm install --prefix /tmp/img sharp@0.33.5 --no-audit --no-fund
+
+      - name: Build listing pages, share pages and sitemap
         run: node scripts/build-listing-pages.js
+        env:
+          NODE_PATH: /tmp/img/node_modules
 
       - name: Commit if changed
         run: |
-          git add -A l sitemap.xml 2>/dev/null || git add sitemap.xml
+          git add -A sitemap.xml $(ls -d l s 2>/dev/null)
           if git diff --cached --quiet; then echo "No change."; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

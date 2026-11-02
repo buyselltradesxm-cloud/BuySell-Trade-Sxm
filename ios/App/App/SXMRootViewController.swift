@@ -1,9 +1,11 @@
 import Capacitor
+import SwiftUI
 import UIKit
 
-/// The app's root screen: the marketplace web view above a native tab bar.
-/// The page still owns every screen; the tab bar tells it which one to show
-/// and mirrors the unread counts it reports back (see native-ios.js).
+/// The app's root screen: a native tab bar under either the native Browse
+/// screen (SXMBrowseView) or the marketplace web view, which owns posting,
+/// messages, alerts and the account. The tab bar mirrors the unread counts
+/// the page reports back (see native-ios.js).
 final class SXMRootViewController: UIViewController, UITabBarDelegate {
     enum Tab: String, CaseIterable {
         case browse, post, messages, alerts, profile
@@ -24,6 +26,12 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     private static let ink = UIColor(red: 19 / 255, green: 42 / 255, blue: 46 / 255, alpha: 1)
 
     let web = SXMBridgeViewController()
+    private lazy var browseModel: SXMBrowseModel = {
+        let model = SXMBrowseModel(french: french)
+        model.contact = { [weak self] listing in self?.showInWeb(listing: listing.id) }
+        return model
+    }()
+    private lazy var browse = UIHostingController(rootView: SXMBrowseView(model: browseModel))
     private let tabBar = UITabBar()
     private let refresh = UIRefreshControl()
     private let feedback = UISelectionFeedbackGenerator()
@@ -57,6 +65,17 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
         ])
         web.didMove(toParent: self)
 
+        addChild(browse)
+        browse.view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(browse.view)
+        NSLayoutConstraint.activate([
+            browse.view.topAnchor.constraint(equalTo: view.topAnchor),
+            browse.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            browse.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            browse.view.bottomAnchor.constraint(equalTo: tabBar.topAnchor)
+        ])
+        browse.didMove(toParent: self)
+
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = Self.paper
@@ -80,7 +99,7 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
         #endif
     }
 
-    override var childForStatusBarStyle: UIViewController? { web }
+    override var childForStatusBarStyle: UIViewController? { browse.view.isHidden ? web : browse }
     override var childForStatusBarHidden: UIViewController? { web }
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask { web.supportedInterfaceOrientations }
 
@@ -120,6 +139,8 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     /// and the page picks the tab up through `takePendingTab()`.
     func open(_ tab: Tab) {
         select(tab)
+        // For Browse the page still closes whatever it had open behind the native screen.
+        showNativeBrowse(tab == .browse)
         guard let webView = web.webView, let bridge = web.bridge else { return }
         let home = bridge.config.serverURL
         let current = webView.url
@@ -133,13 +154,41 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
         }
     }
 
+    private func showNativeBrowse(_ on: Bool) {
+        browse.view.isHidden = !on
+        setNeedsStatusBarAppearanceUpdate()
+    }
+
+    /// "Contact the seller": the page shows the listing with its chat button.
+    func showInWeb(listing id: String) {
+        showNativeBrowse(false)
+        guard let webView = web.webView, let bridge = web.bridge else { return }
+        let home = bridge.config.serverURL
+        let current = webView.url
+        let onAppPage = current?.host == home.host && Self.appPaths.contains(current?.path ?? "-")
+        let json = String(data: (try? JSONSerialization.data(withJSONObject: ["id": id])) ?? Data(), encoding: .utf8) ?? "{}"
+        if onAppPage && !webView.isLoading {
+            bridge.triggerWindowJSEvent(eventName: "sxmListing", data: json)
+        } else {
+            var parts = URLComponents(url: home, resolvingAgainstBaseURL: false)
+            parts?.queryItems = [URLQueryItem(name: "listing", value: id)]
+            if let url = parts?.url { webView.load(URLRequest(url: url)) }
+        }
+    }
+
     func takePendingTab() -> String? {
         defer { pendingTab = nil }
         return pendingTab?.rawValue
     }
 
     /// The page reports what it is showing, in which language, and its unread counts.
-    func update(selected: String?, french: Bool?, badges: [String: Int], titles: [String: String]) {
+    func update(selected: String?, french: Bool?, badges: [String: Int], titles: [String: String], detail: Bool? = nil) {
+        if let french = french, french != browseModel.french { browseModel.french = french }
+        // `detail`: the page has a screen open outside the tabs (a listing from a shared
+        // link or from "Contact the seller", pricing...). It shows over Browse until closed.
+        if let tab = selected.flatMap(Tab.init(rawValue:)), let detail = detail {
+            showNativeBrowse(tab == .browse && !detail)
+        }
         var sent: [Tab: String] = [:]
         for (name, text) in titles where !text.isEmpty {
             if let tab = Tab(rawValue: name) { sent[tab] = text }

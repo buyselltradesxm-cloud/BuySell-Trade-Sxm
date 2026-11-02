@@ -2263,12 +2263,18 @@ function listingUrl(id){
   url.searchParams.set("listing", id);
   return url.toString();
 }
+// Share pages (s/<id>.html: photo + logo preview) are built every 6 h by
+// scripts/build-listing-pages.js; a newer listing keeps the plain link.
+function shareUrlFor(l){
+  const age = Date.now() - Date.parse(l?.createdAt || l?.created_at || "");
+  return age > 7 * 3600e3 ? `${location.origin}/s/${encodeURIComponent(l.id)}.html` : listingUrl(l.id);
+}
 function listingSharePayload(l){
   const title = titleFor(l);
   return {
     title:`${title} | Buy Sell Trade Sxm`,
     text:`${t().shareText}: ${title}`,
-    url:listingUrl(l.id)
+    url:shareUrlFor(l)
   };
 }
 function threadFor(id){
@@ -3343,7 +3349,7 @@ function openListing(id, syncUrl = true){
   const media = gallery[0] || mediaFor(l);
   const listingTitle = titleFor(l);
   const side = l.side === "fr" ? t().frSide : t().nlSide;
-  const shareUrl = listingUrl(l.id);
+  const shareUrl = shareUrlFor(l);
   const detail = document.getElementById("detailBody");
   const thumbs = gallery.length > 1 ? `
     <div class="photo-preview" style="margin-top:10px">

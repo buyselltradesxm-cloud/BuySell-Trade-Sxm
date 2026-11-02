@@ -222,7 +222,10 @@
     return { browse: words.browseLabel, post: words.postShort, messages: words.messages, alerts: words.notifLabel, profile: words.profileLabel };
   }
   function syncTabs() {
-    const tabs = { selected: currentTab(), lang: document.documentElement.lang || "fr",
+    const selected = currentTab();
+    // Builds with a native Browse screen hide it while the page shows anything over its home.
+    const detail = selected === "browse" && !!document.querySelector(".modal.open");
+    const tabs = { selected, detail, lang: document.documentElement.lang || "fr",
       badges: { messages: unread("msgCount"), alerts: unread("notifCount") }, titles: tabTitles() };
     const key = JSON.stringify(tabs);
     if (key === sentTabs) return;
@@ -261,6 +264,13 @@
     document.documentElement.classList.add("sxm-native-tabs");
     window.addEventListener("sxmTab", event => { if (event.tab) showTab(event.tab); });
     window.addEventListener("sxmRefresh", refreshFromPull);
+    // "Contact the seller" on the native Browse screen.
+    window.addEventListener("sxmListing", event => {
+      if (event.id == null) return;
+      const loaded = typeof L !== "undefined" && L.some(l => String(l.id) === String(event.id));
+      if (loaded && typeof openListing === "function") openListing(event.id);
+      else location.href = "/?listing=" + encodeURIComponent(event.id);
+    });
     const watch = new MutationObserver(syncTabs);
     document.querySelectorAll(".modal").forEach(modal => watch.observe(modal, { attributes: true, attributeFilter: ["class"] }));
     ["notifPanel", "msgCount", "notifCount"].forEach(id => {

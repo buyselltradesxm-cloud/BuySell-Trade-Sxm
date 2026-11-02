@@ -32,10 +32,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=a2503cc6ec0e6107"></script>
-<script src="/telemetry.js?v=a2503cc6ec0e6107"></script>
-<script src="/pwa.js?v=a2503cc6ec0e6107" defer></script>
-<link href="/fonts/fonts.css?v=a2503cc6ec0e6107" rel="stylesheet">
+<script src="/frame-guard.js?v=e19326f0ceb3b9ce"></script>
+<script src="/telemetry.js?v=e19326f0ceb3b9ce"></script>
+<script src="/pwa.js?v=e19326f0ceb3b9ce" defer></script>
+<link href="/fonts/fonts.css?v=e19326f0ceb3b9ce" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -1649,6 +1649,7 @@
     background:transparent;color:var(--sea);border-color:var(--sea);box-shadow:none;
   }
   .mobile-nav .nav-login.is-auth .nav-login-ic{background:rgba(19,42,46,.1);}
+  .mobile-nav .nav-ic-big{font-size:26px;line-height:1;}
   .mobile-nav .n{
     min-width:16px;height:16px;border-radius:9px;padding:0 4px;
     display:inline-flex;align-items:center;justify-content:center;
@@ -2413,7 +2414,7 @@
     <a href="#browse"><span aria-hidden="true">&#8962;</span><span data-i18n="browseLabel">Parcourir</span></a>
     <button type="button" data-click="toggleFilters" data-click-args='[true]'><span aria-hidden="true">&#9776;</span><span data-i18n="filters">Filtres</span></button>
     <button type="button" class="hot" data-click="openPostModal"><span aria-hidden="true">+</span><span data-i18n="postShort">Publier</span></button>
-    <button type="button" data-click="openMessages"><span aria-hidden="true">&#9993;</span><span data-i18n="messages">Messages</span></button>
+    <button type="button" data-click="openMessages"><span class="nav-ic-big" aria-hidden="true">&#9993;</span><span data-i18n="messages">Messages</span></button>
     <button type="button" data-click="toggleNotifPanel" data-click-args='["__EVENT__"]'><span aria-hidden="true">&#128276;</span><span data-i18n="notifLabel">Alertes</span><span class="n" id="mobileNotifCount" hidden>0</span></button>
     <button type="button" id="mobileProfileBtn" class="nav-login" data-click="openProfile"><span class="nav-login-ic" aria-hidden="true">&#9673;</span><span id="mobileProfileLabel" data-i18n="profileLabel">Profil</span></button>
   </div>
@@ -3114,21 +3115,21 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=a2503cc6ec0e6107" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=a2503cc6ec0e6107"></script>
-<script src="native-ios.js?v=a2503cc6ec0e6107"></script>
-<script src="captcha.js?v=a2503cc6ec0e6107"></script>
-<script src="supabase-api.js?v=a2503cc6ec0e6107"></script>
-<script src="img-utils.js?v=a2503cc6ec0e6107"></script>
-<script src="draft-store.js?v=a2503cc6ec0e6107"></script>
-<script src="push-config.js?v=a2503cc6ec0e6107"></script>
-<script src="push-notifications.js?v=a2503cc6ec0e6107"></script>
-<script src="consent.js?v=a2503cc6ec0e6107" defer></script>
-<script src="admob-plugin.js?v=a2503cc6ec0e6107"></script>
-<script src="native-admob.js?v=a2503cc6ec0e6107"></script>
-<script src="ads-config.js?v=a2503cc6ec0e6107"></script>
-<script src="ads.js?v=a2503cc6ec0e6107" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=e19326f0ceb3b9ce" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=e19326f0ceb3b9ce"></script>
+<script src="native-ios.js?v=e19326f0ceb3b9ce"></script>
+<script src="captcha.js?v=e19326f0ceb3b9ce"></script>
+<script src="supabase-api.js?v=e19326f0ceb3b9ce"></script>
+<script src="img-utils.js?v=e19326f0ceb3b9ce"></script>
+<script src="draft-store.js?v=e19326f0ceb3b9ce"></script>
+<script src="push-config.js?v=e19326f0ceb3b9ce"></script>
+<script src="push-notifications.js?v=e19326f0ceb3b9ce"></script>
+<script src="consent.js?v=e19326f0ceb3b9ce" defer></script>
+<script src="admob-plugin.js?v=e19326f0ceb3b9ce"></script>
+<script src="native-admob.js?v=e19326f0ceb3b9ce"></script>
+<script src="ads-config.js?v=e19326f0ceb3b9ce"></script>
+<script src="ads.js?v=e19326f0ceb3b9ce" defer></script>
 
-<script src="app-marketplace.js?v=a2503cc6ec0e6107"></script>
+<script src="app-marketplace.js?v=e19326f0ceb3b9ce"></script>
 </body>
 </html>
