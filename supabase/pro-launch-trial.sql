@@ -19,7 +19,7 @@ begin
   -- UPSERT fires BEFORE INSERT even when it will update an existing row.
   -- Defer claiming until the UPDATE sees the stored billing entitlement.
   if tg_op = 'INSERT' and exists(select 1 from public.profiles where id = new.id) then return new; end if;
-  if new.account_type <> 'business' or trial_start is not null then return new; end if;
+  if new.account_type is distinct from 'business' or trial_start is not null then return new; end if;
   if not exists (select 1 from auth.users where id = new.id and email_confirmed_at is not null) then return new; end if;
   -- Existing paid or admin-granted access is not changed or consumed.
   if coalesce(new.subscription_status,'') = 'active'
