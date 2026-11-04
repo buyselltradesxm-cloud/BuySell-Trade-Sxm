@@ -33,15 +33,19 @@
     } else { fn(); }
   }
 
-  ready(function () {
-    // The DOM ad slot is superseded by a real native overlay below —
-    // hide it and mark it handled so ads.js's scan() skips it.
-    var webSlot = document.querySelector('[data-admob-placement="sticky-bottom"]');
-    if (webSlot) {
-      webSlot.setAttribute("data-ad-state", "filled");
-      webSlot.setAttribute("data-ad-kind", "native-admob");
-      webSlot.hidden = true;
-    }
+  // Start the AdMob/consent chain right away; only the DOM work waits for
+  // DOMContentLoaded (which also waits on every deferred page script).
+  (function () {
+    ready(function () {
+      // The DOM ad slot is superseded by a real native overlay below —
+      // hide it and mark it handled so ads.js's scan() skips it.
+      var webSlot = document.querySelector('[data-admob-placement="sticky-bottom"]');
+      if (webSlot) {
+        webSlot.setAttribute("data-ad-state", "filled");
+        webSlot.setAttribute("data-ad-kind", "native-admob");
+        webSlot.hidden = true;
+      }
+    });
 
     var platform = (window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || "android";
     // The app shell is hosted remotely, so the npm plugin needs a small
@@ -87,10 +91,12 @@
       (hide ? AdMob.hideBanner() : AdMob.resumeBanner()).catch(function () {});
     }
     window.addEventListener("bst:ad-free", syncBanner);
-    var purchaseWatch = new MutationObserver(syncBanner);
-    PURCHASE_MODALS.forEach(function (id) {
-      var modal = document.getElementById(id);
-      if (modal) purchaseWatch.observe(modal, { attributes: true, attributeFilter: ["class"] });
+    ready(function () {
+      var purchaseWatch = new MutationObserver(syncBanner);
+      PURCHASE_MODALS.forEach(function (id) {
+        var modal = document.getElementById(id);
+        if (modal) purchaseWatch.observe(modal, { attributes: true, attributeFilter: ["class"] });
+      });
     });
 
     function showBanner() {
@@ -208,5 +214,5 @@
         }
       })
       .catch(function () {});
-  });
+  })();
 })();
