@@ -106,7 +106,12 @@
         // turned Pro, by the time the banner arrives.
         bannerShown = true;
         syncBanner();
-      }).catch(function () { bannerRequested = false; });
+      }).catch(function () {
+        // Usually "no fill" on a young app: try again instead of waiting
+        // for an unrelated modal or account change to call syncBanner.
+        bannerRequested = false;
+        setTimeout(syncBanner, 20000);
+      });
     }
 
     /* -------- Interstitial ad plumbing ---------------------
