@@ -200,13 +200,15 @@
      before any script runs; older builds and browsers never set it. */
   const shell = () => (isIOS() && window.SXMNativeInfo) || {};
   const tabModals = { postModal: "post", messagesModal: "messages", profileModal: "profile" };
-  let wantedTab = "browse", sentTabs = "";
+  let wantedTab = "browse", sentTabs = "", workflowTab = null;
   function currentTab() {
     for (const modal of document.querySelectorAll(".modal.open")) if (tabModals[modal.id]) return tabModals[modal.id];
     const panel = document.getElementById("notifPanel");
     if (panel && !panel.hidden) return "alerts";
     // The login screen opened from a tab keeps that tab lit.
     if (document.querySelector("#accountModal.open")) return wantedTab;
+    if (workflowTab) return workflowTab;
+    if (wantedTab === "saved") return "saved";
     wantedTab = "browse";
     return "browse";
   }
@@ -224,7 +226,7 @@
   function syncTabs() {
     const selected = currentTab();
     // Builds with a native Browse screen hide it while the page shows anything over its home.
-    const detail = selected === "browse" && !!document.querySelector(".modal.open");
+    const detail = (selected === "browse" || selected === "saved") && !!document.querySelector(".modal.open");
     const tabs = { selected, detail, lang: document.documentElement.lang || "fr",
       badges: { messages: unread("msgCount"), alerts: unread("notifCount") }, titles: tabTitles() };
     const key = JSON.stringify(tabs);
@@ -233,6 +235,7 @@
     try { plugin().setTabs(tabs).catch(() => {}); } catch (_) {}
   }
   function showTab(tab) {
+    workflowTab = null;
     document.querySelectorAll(".modal.open").forEach(modal => closeModal(modal.id));
     const panel = document.getElementById("notifPanel");
     if (panel && !panel.hidden) toggleNotifPanel();
@@ -244,6 +247,16 @@
     else if (tab === "profile") openProfile();
     else window.scrollTo({ top: 0, behavior: "smooth" });
     syncTabs();
+  }
+  function openWorkflow(tab, listingId) {
+    if (!shell().nativeWorkflows || !state.user) return false;
+    document.querySelectorAll(".modal.open").forEach(modal => closeModal(modal.id));
+    wantedTab = workflowTab = tab;
+    plugin().openWorkflow({tab, ...(listingId == null ? {} : {listingId:String(listingId)})}).catch(error => {
+      workflowTab = null; wantedTab = "browse"; syncTabs(); message(error);
+    });
+    syncTabs();
+    return true;
   }
   async function refreshFromPull() {
     try {
@@ -264,6 +277,11 @@
     document.documentElement.classList.add("sxm-native-tabs");
     window.addEventListener("sxmTab", event => { if (event.tab) showTab(event.tab); });
     window.addEventListener("sxmRefresh", refreshFromPull);
+    window.addEventListener("sxmContact", event => {
+      if (event.id == null) return;
+      if (state.user) openWorkflow("messages", event.id);
+      else { wantedTab = "messages"; requireAccount("native-contact:" + String(event.id)); syncTabs(); }
+    });
     // "Contact the seller" on the native Browse screen.
     window.addEventListener("sxmListing", event => {
       if (event.id == null) return;
@@ -281,7 +299,11 @@
     syncTabs();
     // A tab chosen before the page was ready (home screen shortcut).
     try {
-      plugin().ready().then(result => { if (result && result.tab) setTimeout(() => showTab(result.tab), 600); }).catch(() => {});
+      plugin().ready().then(result => {
+        if (result?.listingId) {
+          const event = new Event("sxmContact"); event.id = result.listingId; window.dispatchEvent(event);
+        } else if (result?.tab) setTimeout(() => showTab(result.tab), 600);
+      }).catch(() => {});
     } catch (_) {}
   }
   /* ---- Push notifications in builds that can register with Apple (APNs) ----
@@ -314,7 +336,7 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { startShell(); startPush(); });
   else { startShell(); startPush(); }
 
-  window.SXM = { isIOS, isAndroid, isStore, shell, plugin, ids, buy, refreshPrices, sync, message,
+  window.SXM = { isIOS, isAndroid, isStore, shell, plugin, ids, buy, refreshPrices, sync, message, openWorkflow,
     restore: () => sync(true),
     manage: () => (isAndroid() ? playPlugin().manageSubscriptions() : plugin().manageSubscriptions()).catch(message)
   };

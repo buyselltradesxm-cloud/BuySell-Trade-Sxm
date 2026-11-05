@@ -304,6 +304,8 @@ const SERVICE_SUBCATS = new Set([
 ]);
 
 function postFieldProfile(cat, sub){
+  if(cat === "locvoit") return {photos:true, photosRequired:true, price:true, priceRequired:true,
+    condition:false, delivery:true, meetup:true, negotiable:false, urgent:false, safeMeet:false, vehicle:true};
   if(cat === "dining") return {photos:true, photosRequired:true, price:false, priceRequired:false,
     condition:false, delivery:false, meetup:false, negotiable:false, urgent:false, safeMeet:false, vehicle:false};
   const profile = basePostFieldProfile(cat, sub);
@@ -525,7 +527,7 @@ Object.assign(I18N.fr, {
   boostNoListings:"Publiez d'abord une annonce, puis vous pourrez la booster.",
   boostChooseListing:"Choisissez une de vos annonces actives à booster.",
   vehicleInfoTitle:"Informations véhicule",
-  vehicleInfoHelp:"Ajoutez les détails essentiels: année, kilométrage, couleur, motorisation et transmission.",
+  vehicleInfoHelp:"Ajoutez les détails du véhicule: année, motorisation et transmission.",
   vehicleYearLabel:"Année",
   vehicleYearPh:"2020",
   vehicleKmLabel:"Kilométrage",
@@ -685,7 +687,7 @@ Object.assign(I18N.en, {
   boostNoListings:"Post a listing first, then you can boost it.",
   boostChooseListing:"Choose one of your active listings to boost.",
   vehicleInfoTitle:"Vehicle information",
-  vehicleInfoHelp:"Add the essential details: year, mileage, color, engine, and transmission.",
+  vehicleInfoHelp:"Add vehicle details: year, engine, and transmission.",
   vehicleYearLabel:"Year",
   vehicleYearPh:"2020",
   vehicleKmLabel:"Mileage",
@@ -2126,8 +2128,10 @@ function vehicleDetailsHTML(l){
   const v = vehicleDataFor(l);
   const specs = [
     [t().vehicleYearLabel, v.year],
-    [t().vehicleKmLabel, v.km ? `${Number(v.km).toLocaleString(state.lang==="en"?"en-US":"fr-FR")} km` : ""],
-    [t().vehicleColorLabel, v.color],
+    ...(l.cat === "locvoit" ? [] : [
+      [t().vehicleKmLabel, v.km ? `${Number(v.km).toLocaleString(state.lang==="en"?"en-US":"fr-FR")} km` : ""],
+      [t().vehicleColorLabel, v.color]
+    ]),
     [t().vehicleFuelLabel, vehicleOptionLabel(vehicleFuelOptions, v.fuel)],
     [t().vehicleTransmissionLabel, vehicleOptionLabel(vehicleTransmissionOptions, v.transmission)]
   ].filter(([,value])=>value !== undefined && value !== null && value !== "");
@@ -2375,7 +2379,7 @@ function cardHTML(l, pinned, idx){
   const status = l.sold ? t().sold : l.reserved ? t().reserved : "";
   const badges = [];
   if(l.pro) badges.push(`<span class="badge pro">Pro</span>`);
-  if(l.urgent) badges.push(`<span class="badge urgent">${t().urgent}</span>`);
+  if(profile.urgent && l.urgent) badges.push(`<span class="badge urgent">${t().urgent}</span>`);
   if(l.boosted) badges.push(`<span class="badge boosted">${t().boostBadge}</span>`);
   if(!l.sellerId) badges.push(`<span class="badge demo">${state.lang==="fr" ? "Exemple" : "Example"}</span>`);
   const isFav = state.favs.has(idKey(l.id));
@@ -2657,6 +2661,8 @@ function syncBoardNav(){
   if(!board || !nav) return;
   const fr = state.lang === "fr";
   nav.hidden = !(board.querySelector(".card") && board.scrollWidth - board.clientWidth > 4);
+  document.getElementById("boardPrev").hidden = nav.hidden;
+  document.getElementById("boardNext").hidden = nav.hidden;
   const pause = document.getElementById("boardPause");
   pause.hidden = boardLessMotion.matches;
   pause.setAttribute("aria-pressed", String(boardPaused));
@@ -2685,6 +2691,7 @@ function syncBoardNav(){
 })();
 
 function render(){
+  document.querySelectorAll("[data-market-category]").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.marketCategory === state.cat)));
   restoreListingsIfNeeded();
   // featured board
   const feat = L.filter(l => l.feat && passesFilters(l));
@@ -2799,6 +2806,17 @@ function setView(v){
   document.getElementById("v-grid").setAttribute("aria-pressed", v==="grid");
   document.getElementById("v-list").setAttribute("aria-pressed", v==="list");
   render();
+}
+function toggleMarketCategories(){
+  const panel = document.getElementById("marketAllCategories");
+  panel.hidden = !panel.hidden;
+  document.getElementById("marketMore").setAttribute("aria-expanded", String(!panel.hidden));
+}
+function chooseMarketCategory(id){
+  const category = state.cat === id ? "all" : id;
+  setCat(category, document.querySelector(`#catrail [data-click-args='${JSON.stringify([category,"__THIS__"])}']`));
+  document.getElementById("marketAllCategories").hidden = true;
+  document.getElementById("marketMore").setAttribute("aria-expanded", "false");
 }
 function setCat(id, btn){
   state.cat = id;
@@ -3763,6 +3781,7 @@ let inboxSearchTerm = "";
 
 async function openMessages(){
   if(!state.user){ requireAccount("messages"); return; }
+  if(window.SXM?.openWorkflow?.("messages")) return;
   openModal("messagesModal");
   const search = document.getElementById("msgrSearch");
   if(search) search.value = inboxSearchTerm;
@@ -4472,6 +4491,7 @@ function completeAuth(){
   if(action === "post") openPostModal();
   else if(action === "profile") openProfile();
   else if(action === "messages") openMessages();
+  else if(action?.startsWith("native-contact:")) window.SXM?.openWorkflow?.("messages", action.slice("native-contact:".length));
   else if(action === "boost") startBoostFlow();
   else if(action === "admin") openAdmin();
   else if(action?.startsWith("pro-plan:")) openPaymentModal({existingUser:true, plan:action.slice("pro-plan:".length)});
@@ -5247,6 +5267,7 @@ function openPostModal(){
     return;
   }
   editingListingId = null;
+  if(window.SXM?.openWorkflow?.("post")) return;
   buildPostForm();
   openModal("postModal");
   maybeOfferDraftRestore();
@@ -6460,7 +6481,11 @@ function toggleVehicleFields(cat, sub){
   section.hidden = !enabled;
   section.classList.toggle("show", enabled);
   section.querySelectorAll("input,select,textarea").forEach(el=>{
-    el.required = enabled && ["newVehicleYear","newVehicleKm","newVehicleColor"].includes(el.id);
+    const rental = cat === "locvoit";
+    const hiddenForRental = rental && ["newVehicleKm","newVehicleColor"].includes(el.id);
+    const field = el.closest(".field");
+    if(field && ["newVehicleKm","newVehicleColor"].includes(el.id)) field.hidden = hiddenForRental;
+    el.required = enabled && !rental && ["newVehicleYear","newVehicleKm","newVehicleColor"].includes(el.id);
     if(!enabled) el.value = "";
   });
 }

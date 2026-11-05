@@ -6,7 +6,7 @@ import UIKit
 /// public API, searchable and filterable, with a native detail screen
 /// (photo pager, zoom, map, share, saved list). Saved listings and the last
 /// loaded feed are kept on the device, so both still open without a network.
-/// Writing to a seller, posting, the inbox and the account stay in the web view.
+/// Posting and messaging open native workflows; the account stays in the web view.
 
 struct SXMListing: Codable, Identifiable, Equatable {
     let id: String
@@ -109,10 +109,13 @@ final class SXMBrowseModel: ObservableObject {
     @Published var loading = false
     @Published var offline = false
     @Published var french: Bool
+    @Published var showingSaved = false
     private var loadedOnce = false
 
-    /// Opens the listing in the web view, where the buyer writes to the seller.
+    /// Opens the authenticated native conversation with this listing's seller.
     var contact: (SXMListing) -> Void = { _ in }
+    var post: () -> Void = {}
+    var alerts: () -> Void = {}
 
     init(french: Bool) {
         self.french = french
@@ -203,155 +206,176 @@ struct SXMBrowseView: View {
     @State private var query = ""
     @State private var category: String?
     @State private var side: String?
-    @State private var showSaved = false
-
+    @State private var showFilters = false
     private var fr: Bool { model.french }
-
     private var shown: [SXMListing] {
         let q = query.trimmingCharacters(in: .whitespaces).lowercased()
-        return model.listings.filter { l in
+        let source = model.showingSaved ? model.saved : model.listings
+        return source.filter { l in
             (category == nil || l.category == category) &&
             (side == nil || l.side == side) &&
             (q.isEmpty || [l.title, l.description ?? "", l.area ?? ""].joined(separator: " ").lowercased().contains(q))
         }
     }
-
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 24) {
+                    header
+                    search
+                    shortcuts
                     if model.offline {
-                        Label(fr ? "Hors ligne : dernières annonces enregistrées sur l'appareil" : "Offline: last listings saved on this device",
-                              systemImage: "wifi.slash")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundColor(.white)
-                            .padding(10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(RoundedRectangle(cornerRadius: 10).fill(ink))
-                            .padding(.horizontal)
+                        Label(fr ? "Hors ligne : dernières annonces enregistrées" : "Offline: previously saved listings", systemImage: "wifi.slash")
+                            .font(.footnote).foregroundColor(ink).padding(.horizontal, 20)
                     }
-                    sidePicker
-                    categoryChips
-                    if shown.isEmpty && !model.loading {
-                        emptyState
+                    Text(model.showingSaved ? (fr ? "Vos favoris." : "Your saved finds.") : (fr ? "De belles trouvailles.\nTout près de vous." : "Good finds.\nClose by."))
+                        .font(.system(size: 30, weight: .bold, design: .rounded))
+                        .foregroundColor(ink).padding(.horizontal, 20)
+                        .accessibilityAddTraits(.isHeader)
+                    if shown.isEmpty {
+                        VStack(spacing: 12) {
+                            if model.loading { ProgressView() }
+                            else {
+                                Image(systemName: model.showingSaved ? "heart" : "magnifyingglass").font(.largeTitle)
+                                Text(fr ? "Aucune annonce trouvée" : "No listings found").font(.headline)
+                                Button(fr ? "Effacer les filtres" : "Clear filters") { query = ""; category = nil; side = nil }
+                            }
+                        }.foregroundColor(ink).frame(maxWidth: .infinity).padding(24)
                     } else {
                         SXMListingGrid(listings: shown, model: model)
                     }
-                }
-                .padding(.vertical, 8)
+                    Button { model.post() } label: {
+                        Label(fr ? "Un objet à vendre ? Ajoutez vos photos" : "Selling something? Add your photos", systemImage: "camera")
+                            .font(.subheadline.weight(.semibold)).padding(18)
+                            .frame(maxWidth: .infinity).foregroundColor(.white)
+                            .background(RoundedRectangle(cornerRadius: 18).fill(sea))
+                    }.padding(.horizontal, 20)
+                }.padding(.vertical, 20)
             }
             .background(paper.ignoresSafeArea())
             .refreshable { await model.refresh() }
-            .searchable(text: $query, prompt: fr ? "Rechercher une annonce" : "Search listings")
-            .navigationTitle(fr ? "Annonces" : "Listings")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { showSaved = true } label: {
-                        Image(systemName: model.saved.isEmpty ? "heart" : "heart.fill")
-                    }
-                    .accessibilityLabel(fr ? "Annonces enregistrées" : "Saved listings")
-                }
-                ToolbarItem(placement: .navigationBarLeading) {
-                    if model.loading { ProgressView() }
-                }
-            }
-            .sheet(isPresented: $showSaved) { SXMSavedView(model: model) }
+            .navigationBarHidden(true)
+            .sheet(isPresented: $showFilters) { filters }
         }
-        .navigationViewStyle(.stack)
-        .accentColor(sea)
+        .navigationViewStyle(.stack).accentColor(sea)
         .task { await model.loadOnce() }
+        .onChange(of: model.showingSaved) { _ in query = ""; category = nil; side = nil }
     }
-
-    private var sidePicker: some View {
-        Picker("", selection: $side) {
-            Text(fr ? "Toute l'île" : "Whole island").tag(String?.none)
-            Text("Saint-Martin").tag(String?.some("fr"))
-            Text("Sint Maarten").tag(String?.some("nl"))
-        }
-        .pickerStyle(.segmented)
-        .padding(.horizontal)
-    }
-
-    private var categoryChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                chip(id: nil, title: fr ? "Tout" : "All", symbol: "square.grid.2x2")
-                ForEach(SXMCategories.all.filter { c in model.listings.contains { $0.category == c.id } }, id: \.id) { c in
-                    chip(id: c.id, title: fr ? c.fr : c.en, symbol: c.symbol)
+    private var header: some View {
+        HStack(spacing: 12) {
+            Image("MarketLogo").resizable().scaledToFit().frame(width: 44, height: 44).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(fr ? "Découvrez SXM" : "Discover SXM").font(.title2.weight(.bold)).foregroundColor(ink)
+                Button { showFilters = true } label: {
+                    Label(side == "fr" ? "Saint-Martin" : side == "nl" ? "Sint Maarten" : (fr ? "Toute l’île" : "Whole island"), systemImage: "mappin.circle.fill")
+                        .font(.subheadline).foregroundColor(sea)
                 }
             }
-            .padding(.horizontal)
-        }
+            Spacer(minLength: 0)
+            Button { model.alerts() } label: { Image(systemName: "bell").frame(width: 44, height: 44) }
+                .accessibilityLabel(fr ? "Notifications" : "Notifications")
+        }.padding(.horizontal, 20)
     }
-
-    private func chip(id: String?, title: String, symbol: String) -> some View {
-        let on = category == id
-        return Button {
-            UISelectionFeedbackGenerator().selectionChanged()
-            withAnimation(.easeOut(duration: 0.2)) { category = id }
-        } label: {
-            Label(title, systemImage: symbol)
-                .font(.subheadline.weight(.semibold))
-                .padding(.horizontal, 12).padding(.vertical, 8)
-                .foregroundColor(on ? .white : ink)
-                .background(Capsule().fill(on ? sea : Color.white))
-                .overlay(Capsule().stroke(ink.opacity(on ? 0 : 0.15)))
-        }
-        .buttonStyle(.plain)
+    private var search: some View {
+        HStack(spacing: 10) {
+            HStack {
+                Image(systemName: "magnifyingglass").foregroundColor(sea)
+                TextField(fr ? "Que cherchez-vous ?" : "What are you looking for?", text: $query)
+                    .submitLabel(.search)
+                if !query.isEmpty {
+                    Button { query = "" } label: { Image(systemName: "xmark.circle.fill") }
+                        .accessibilityLabel(fr ? "Effacer la recherche" : "Clear search")
+                }
+            }.padding(14).background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+            Button { showFilters = true } label: {
+                Image(systemName: "slider.horizontal.3").font(.title3).frame(width: 50, height: 50)
+                    .foregroundColor(.white).background(RoundedRectangle(cornerRadius: 16).fill(sea))
+            }.accessibilityLabel(fr ? "Filtres et catégories" : "Filters and categories")
+        }.padding(.horizontal, 20)
     }
-
-    private var emptyState: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "magnifyingglass").font(.largeTitle).foregroundColor(ink.opacity(0.4))
-            Text(fr ? "Aucune annonce trouvée" : "No listings found").font(.headline).foregroundColor(ink)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 60)
+    private var shortcuts: some View {
+        HStack(spacing: 0) {
+            shortcut("voit", fr ? "Véhicules" : "Cars", "car")
+            shortcut("immo", fr ? "Logements" : "Homes", "house")
+            shortcut("elec", fr ? "Électronique" : "Electronics", "laptopcomputer")
+            Button { showFilters = true } label: {
+                VStack(spacing: 8) { Image(systemName: "square.grid.2x2").font(.title2); Text(fr ? "Plus" : "More").font(.caption) }
+                    .frame(maxWidth: .infinity, minHeight: 64).foregroundColor(ink)
+            }
+        }.padding(.horizontal, 16)
+    }
+    private func shortcut(_ id: String, _ title: String, _ symbol: String) -> some View {
+        Button { category = category == id ? nil : id } label: {
+            VStack(spacing: 8) { Image(systemName: symbol).font(.title2); Text(title).font(.caption) }
+                .frame(maxWidth: .infinity, minHeight: 64).foregroundColor(category == id ? sea : ink)
+                .background(RoundedRectangle(cornerRadius: 12).fill(category == id ? sea.opacity(0.09) : Color.clear))
+        }.accessibilityAddTraits(category == id ? .isSelected : [])
+    }
+    private var filters: some View {
+        NavigationView {
+            Form {
+                Section(header: Text(fr ? "Secteur" : "Area")) {
+                    Picker(fr ? "Côté de l’île" : "Island side", selection: $side) {
+                        Text(fr ? "Toute l’île" : "Whole island").tag(String?.none)
+                        Text("Saint-Martin").tag(String?.some("fr"))
+                        Text("Sint Maarten").tag(String?.some("nl"))
+                    }
+                }
+                Section(header: Text(fr ? "Catégorie" : "Category")) {
+                    Picker(fr ? "Catégorie" : "Category", selection: $category) {
+                        Text(fr ? "Toutes les catégories" : "All categories").tag(String?.none)
+                        ForEach(SXMCategories.all, id: \.id) { c in Text(fr ? c.fr : c.en).tag(String?.some(c.id)) }
+                    }.pickerStyle(.inline).labelsHidden()
+                }
+                Button(fr ? "Tout effacer" : "Clear all") { category = nil; side = nil; query = "" }
+            }
+            .navigationTitle(fr ? "Affiner la recherche" : "Refine your search")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(fr ? "Afficher" : "Show results") { showFilters = false } } }
+        }.accentColor(sea)
     }
 }
 
 struct SXMListingGrid: View {
     let listings: [SXMListing]
     @ObservedObject var model: SXMBrowseModel
-
+    @Environment(\.sizeCategory) private var sizeCategory
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 12)], spacing: 12) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: sizeCategory.isAccessibilityCategory ? 280 : 150), spacing: 14)], spacing: 24) {
             ForEach(listings) { l in
                 NavigationLink(destination: SXMListingDetail(listing: l, model: model)) {
-                    SXMListingCard(listing: l, saved: model.isSaved(l))
+                    SXMListingCard(listing: l, french: model.french)
                 }
                 .buttonStyle(.plain)
+                .overlay(alignment: .topTrailing) {
+                    Button { model.toggleSaved(l) } label: {
+                        Image(systemName: model.isSaved(l) ? "heart.fill" : "heart")
+                            .font(.system(size: 19, weight: .medium)).foregroundColor(sea)
+                            .frame(width: 44, height: 44).background(Circle().fill(Color.white))
+                    }.buttonStyle(.plain).padding(8)
+                        .accessibilityLabel(model.french ? (model.isSaved(l) ? "Retirer des favoris" : "Enregistrer") : (model.isSaved(l) ? "Remove from saved" : "Save listing"))
+                }
             }
-        }
-        .padding(.horizontal)
+        }.padding(.horizontal, 20)
     }
 }
 
 struct SXMListingCard: View {
     let listing: SXMListing
-    let saved: Bool
-
+    let french: Bool
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Color.clear
-                .aspectRatio(1, contentMode: .fit)
+        VStack(alignment: .leading, spacing: 7) {
+            Color.clear.aspectRatio(1, contentMode: .fit)
                 .overlay(SXMRemoteImage(url: listing.thumbURL, fill: true))
-                .clipped()
-                .overlay(alignment: .topTrailing) {
-                    if saved {
-                        Image(systemName: "heart.fill").foregroundColor(.white)
-                            .padding(6).background(Circle().fill(sea)).padding(6)
-                    }
-                }
+                .clipShape(RoundedRectangle(cornerRadius: 18))
             Text(listing.title).font(.subheadline.weight(.semibold)).foregroundColor(ink).lineLimit(2)
-            if let price = listing.priceLabel { Text(price).font(.subheadline.weight(.heavy)).foregroundColor(sea) }
-            Text(listing.place).font(.caption).foregroundColor(ink.opacity(0.6)).lineLimit(1)
-        }
-        .padding(8)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .shadow(color: ink.opacity(0.08), radius: 6, y: 3)
-        .accessibilityElement(children: .combine)
+            if let price = listing.priceLabel {
+                Text(price + (listing.category == "locvoit" ? (french ? " / jour" : " / day") : ""))
+                    .font(.title3.weight(.bold)).foregroundColor(sea)
+            }
+            Label(listing.area ?? listing.place, systemImage: "mappin.circle")
+                .font(.caption).foregroundColor(ink.opacity(0.7)).lineLimit(1)
+        }.accessibilityElement(children: .combine)
     }
 }
 
@@ -384,6 +408,7 @@ struct SXMListingDetail: View {
     let listing: SXMListing
     @ObservedObject var model: SXMBrowseModel
     @State private var page = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var zoomed: URL?
     @State private var sharing = false
     @State private var region: MKCoordinateRegion?
@@ -440,6 +465,7 @@ struct SXMListingDetail: View {
         }
         .background(paper.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarHidden(false)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 Button { model.toggleSaved(listing) } label: {
@@ -473,6 +499,24 @@ struct SXMListingDetail: View {
         .tabViewStyle(.page(indexDisplayMode: urls.count > 1 ? .always : .never))
         .frame(height: 340)
         .background(Color.black)
+        .overlay {
+            if urls.count > 1 {
+                HStack {
+                    galleryArrow("chevron.left", label: fr ? "Photo précédente" : "Previous photo", delta: -1, count: urls.count)
+                    Spacer()
+                    galleryArrow("chevron.right", label: fr ? "Photo suivante" : "Next photo", delta: 1, count: urls.count)
+                }.padding(.horizontal, 12)
+            }
+        }
+    }
+
+    private func galleryArrow(_ symbol: String, label: String, delta: Int, count: Int) -> some View {
+        Button {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) { page = (page + delta + count) % count }
+        } label: {
+            Image(systemName: symbol).font(.headline).foregroundColor(ink)
+                .frame(width: 44, height: 44).background(Circle().fill(Color.white))
+        }.accessibilityLabel(label)
     }
 
     /// Places the area on a map with Apple's geocoder (no coordinates are stored with listings).
