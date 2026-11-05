@@ -15,7 +15,7 @@ if ($current -ne $branch) {
     git switch -c $branch
     if ($LASTEXITCODE -ne 0) { throw 'Could not create Android preview branch.' }
 }
-git add -- android/app/src/main/java/com/korekdigitalmarketing/buyselltradesxm/MainActivity.java android/app/src/main/java/com/korekdigitalmarketing/buyselltradesxm/SXMBrowseScreen.java .github/workflows/mobile-android-cloud.yml scripts/build-android-preview.ps1
+git add -- android/app/build.gradle android/app/src/main/AndroidManifest.xml android/app/src/main/java/com/korekdigitalmarketing/buyselltradesxm/MainActivity.java android/app/src/main/java/com/korekdigitalmarketing/buyselltradesxm/SXMBrowseScreen.java .github/workflows/mobile-android-cloud.yml scripts/build-android-preview.ps1
 if ($LASTEXITCODE -ne 0) { throw 'Could not stage Android preview files.' }
 git diff --cached --quiet
 if ($LASTEXITCODE -ne 0) {
