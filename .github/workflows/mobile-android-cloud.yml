@@ -53,8 +53,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify shared marketplace workflows
+        run: npm run test:native-workflows
+
       - name: Sync Capacitor Android
         run: npx cap sync android
+
+      - name: Build installable Android preview
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload Android preview APK
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: BuySellTradeSXM-android-preview-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
 
       - name: Decode upload keystore
         env:
