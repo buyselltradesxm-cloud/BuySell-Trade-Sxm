@@ -63,7 +63,9 @@ public class MainActivity extends BridgeActivity {
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             androidx.core.graphics.Insets bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars() | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
             androidx.core.graphics.Insets ime = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime());
-            v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+            // Capacitor's SystemBars listener on the parent may already pad for the keyboard; add only what it left, or the gap doubles.
+            int covered = ((View) v.getParent()).getPaddingBottom();
+            v.setPadding(bars.left, bars.top, bars.right, Math.max(0, Math.max(bars.bottom, ime.bottom) - covered));
             return insets;
         });
         androidx.core.view.WindowCompat.getInsetsController(getWindow(), root).setAppearanceLightStatusBars(true);
