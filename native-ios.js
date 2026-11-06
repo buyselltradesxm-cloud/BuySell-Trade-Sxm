@@ -227,6 +227,7 @@
     const selected = currentTab();
     // Builds with a native Browse screen hide it while the page shows anything over its home.
     const detail = (selected === "browse" || selected === "saved") && !!document.querySelector(".modal.open");
+    window.__BST_ADMOB_SET_BROWSE__?.((selected === "browse" || selected === "saved") && !detail);
     const tabs = { selected, detail, lang: document.documentElement.lang || "fr",
       badges: { messages: unread("msgCount"), alerts: unread("notifCount") }, titles: tabTitles() };
     const key = JSON.stringify(tabs);

@@ -28,6 +28,7 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
         CAPPluginMethod(name: "appleSignIn", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "ready", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setTabs", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "nativeAdsState", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "openWorkflow", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "workflowIdentity", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "refreshDone", returnType: CAPPluginReturnPromise),
@@ -285,6 +286,15 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
         let detail = call.getBool("detail")
         DispatchQueue.main.async { [weak self] in
             self?.root?.update(selected: selected, french: french, badges: badges, titles: titles, detail: detail)
+            call.resolve()
+        }
+    }
+
+    /// The web consent and subscription state also controls the native Discover ad.
+    @objc func nativeAdsState(_ call: CAPPluginCall) {
+        let allowed = call.getBool("allowed") ?? false
+        DispatchQueue.main.async { [weak self] in
+            self?.root?.setNativeAdsAllowed(allowed)
             call.resolve()
         }
     }

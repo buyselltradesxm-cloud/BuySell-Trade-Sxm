@@ -1,4 +1,6 @@
 import MapKit
+import GoogleMobileAds
+import GoogleUserMessagingPlatform
 import SwiftUI
 import UIKit
 
@@ -110,12 +112,14 @@ final class SXMBrowseModel: ObservableObject {
     @Published var offline = false
     @Published var french: Bool
     @Published var showingSaved = false
+    @Published var adsAllowed = false
     private var loadedOnce = false
 
     /// Opens the authenticated native conversation with this listing's seller.
     var contact: (SXMListing) -> Void = { _ in }
     var post: () -> Void = {}
     var alerts: () -> Void = {}
+    var languageChanged: (Bool) -> Void = { _ in }
 
     init(french: Bool) {
         self.french = french
@@ -201,11 +205,17 @@ private let sea = Color(red: 11 / 255, green: 110 / 255, blue: 127 / 255)
 private let ink = Color(red: 19 / 255, green: 42 / 255, blue: 46 / 255)
 private let paper = Color(red: 251 / 255, green: 247 / 255, blue: 239 / 255)
 
+private enum SXMAreas {
+    static let french = ["Marigot", "Concordia", "Agrément", "Galisbay", "Hameau du Pont", "Saint-James", "Bellevue", "Sandy Ground", "Baie Nettlé", "Terres Basses", "Grand Case", "La Savane", "Cul-de-Sac", "Anse Marcel", "Colombier", "Rambaud", "Saint-Louis", "Friar's Bay", "Quartier d'Orléans", "Oyster Pond", "Baie Orientale"]
+    static let dutch = ["Philipsburg", "Simpson Bay", "Cole Bay", "Maho", "Beacon Hill", "Cupecoy", "Mullet Bay", "Lowlands", "Pelican Key", "Cay Bay", "Cay Hill", "Little Bay", "Belair", "Point Blanche", "Guana Bay", "Dawn Beach", "Oyster Pond", "Dutch Quarter", "Middle Region", "Madame Estate", "Sucker Garden", "Belvedere", "Defiance", "St. Peters", "Saunders", "South Reward", "Ebenezer", "Cul de Sac", "St. John's Estate", "Mary's Estate / Mary's Fancy", "Sentry Hill", "Pond Island", "Indigo Bay", "Orange Grove", "Billy Folly", "Point Pirouette"]
+}
+
 struct SXMBrowseView: View {
     @ObservedObject var model: SXMBrowseModel
     @State private var query = ""
     @State private var category: String?
     @State private var side: String?
+    @State private var area: String?
     @State private var showFilters = false
     private var fr: Bool { model.french }
     private var shown: [SXMListing] {
@@ -214,22 +224,25 @@ struct SXMBrowseView: View {
         return source.filter { l in
             (category == nil || l.category == category) &&
             (side == nil || l.side == side) &&
+            (area.map { l.area?.localizedCaseInsensitiveCompare($0) == .orderedSame } ?? true) &&
             (q.isEmpty || [l.title, l.description ?? "", l.area ?? ""].joined(separator: " ").lowercased().contains(q))
         }
     }
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 18) {
                     header
                     search
+                    if !model.showingSaved { spotlight }
                     shortcuts
+                    locationPicker
                     if model.offline {
                         Label(fr ? "Hors ligne : dernières annonces enregistrées" : "Offline: previously saved listings", systemImage: "wifi.slash")
                             .font(.footnote).foregroundColor(ink).padding(.horizontal, 20)
                     }
-                    Text(model.showingSaved ? (fr ? "Vos favoris." : "Your saved finds.") : (fr ? "De belles trouvailles.\nTout près de vous." : "Good finds.\nClose by."))
-                        .font(.system(size: 30, weight: .bold, design: .rounded))
+                    Text(model.showingSaved ? (fr ? "Vos favoris" : "Your saved finds") : (fr ? "Annonces récentes" : "Fresh finds"))
+                        .font(.system(size: 25, weight: .bold, design: .rounded))
                         .foregroundColor(ink).padding(.horizontal, 20)
                         .accessibilityAddTraits(.isHeader)
                     if shown.isEmpty {
@@ -238,7 +251,7 @@ struct SXMBrowseView: View {
                             else {
                                 Image(systemName: model.showingSaved ? "heart" : "magnifyingglass").font(.largeTitle)
                                 Text(fr ? "Aucune annonce trouvée" : "No listings found").font(.headline)
-                                Button(fr ? "Effacer les filtres" : "Clear filters") { query = ""; category = nil; side = nil }
+                                Button(fr ? "Effacer les filtres" : "Clear filters") { query = ""; category = nil; side = nil; area = nil }
                             }
                         }.foregroundColor(ink).frame(maxWidth: .infinity).padding(24)
                     } else {
@@ -259,22 +272,56 @@ struct SXMBrowseView: View {
         }
         .navigationViewStyle(.stack).accentColor(sea)
         .task { await model.loadOnce() }
-        .onChange(of: model.showingSaved) { _ in query = ""; category = nil; side = nil }
+        .onChange(of: model.showingSaved) { _ in query = ""; category = nil; side = nil; area = nil }
     }
     private var header: some View {
         HStack(spacing: 12) {
             Image("MarketLogo").resizable().scaledToFit().frame(width: 44, height: 44).accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(fr ? "Découvrez SXM" : "Discover SXM").font(.title2.weight(.bold)).foregroundColor(ink)
-                Button { showFilters = true } label: {
-                    Label(side == "fr" ? "Saint-Martin" : side == "nl" ? "Sint Maarten" : (fr ? "Toute l’île" : "Whole island"), systemImage: "mappin.circle.fill")
-                        .font(.subheadline).foregroundColor(sea)
-                }
-            }
+            Text(fr ? "Découvrir" : "Discover")
+                .font(.system(size: 22, weight: .bold, design: .rounded)).foregroundColor(ink)
             Spacer(minLength: 0)
-            Button { model.alerts() } label: { Image(systemName: "bell").frame(width: 44, height: 44) }
+            Image(systemName: "globe.americas.fill").foregroundColor(sea)
+                .accessibilityLabel(fr ? "Langue" : "Language")
+            HStack(spacing: 2) {
+                languageButton("FR", french: true)
+                languageButton("EN", french: false)
+            }.padding(3).background(RoundedRectangle(cornerRadius: 14).fill(sea.opacity(0.12)))
+            Button { model.alerts() } label: { Image(systemName: "bell").frame(width: 36, height: 44) }
                 .accessibilityLabel(fr ? "Notifications" : "Notifications")
         }.padding(.horizontal, 20)
+    }
+    private func languageButton(_ label: String, french: Bool) -> some View {
+        Button {
+            guard model.french != french else { return }
+            model.french = french
+            model.languageChanged(french)
+        } label: {
+            Text(label).font(.caption.weight(.bold))
+                .foregroundColor(model.french == french ? .white : ink)
+                .frame(width: 37, height: 34)
+                .background(RoundedRectangle(cornerRadius: 11).fill(model.french == french ? sea : .clear))
+        }.accessibilityAddTraits(model.french == french ? .isSelected : [])
+    }
+    private var spotlight: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(fr ? "LE MARCHÉ LOCAL · SXM" : "THE LOCAL MARKET · SXM")
+                    .font(.system(size: 10, weight: .heavy)).tracking(1.2).foregroundColor(.white.opacity(0.8))
+                Text(fr ? "Deux côtés. Un marché." : "Two sides. One market.")
+                    .font(.system(size: 19, weight: .bold, design: .rounded)).foregroundColor(.white)
+                Text(fr ? "Achetez et vendez sur toute l'île" : "Buy and sell across the island")
+                    .font(.caption).foregroundColor(.white.opacity(0.9))
+            }
+            Spacer(minLength: 0)
+            Button { model.post() } label: {
+                Image(systemName: "arrow.up.right").font(.title3.weight(.bold))
+                    .frame(width: 42, height: 42).background(Circle().fill(.white))
+            }.accessibilityLabel(fr ? "Publier" : "Post")
+        }
+        .padding(18)
+        .background(RoundedRectangle(cornerRadius: 20).fill(
+            LinearGradient(colors: [sea, ink], startPoint: .topLeading, endPoint: .bottomTrailing)))
+        .padding(.horizontal, 20)
     }
     private var search: some View {
         HStack(spacing: 10) {
@@ -295,6 +342,10 @@ struct SXMBrowseView: View {
     }
     private var shortcuts: some View {
         HStack(spacing: 0) {
+            Button { showFilters = true } label: {
+                VStack(spacing: 8) { Image(systemName: "square.grid.2x2").font(.title2); Text(fr ? "Tout" : "All").font(.caption) }
+                    .frame(maxWidth: .infinity, minHeight: 64).foregroundColor(ink)
+            }.accessibilityLabel(fr ? "Toutes les catégories" : "All categories")
             shortcut("voit", fr ? "Véhicules" : "Cars", "car")
             shortcut("immo", fr ? "Logements" : "Homes", "house")
             shortcut("elec", fr ? "Électronique" : "Electronics", "laptopcomputer")
@@ -303,6 +354,38 @@ struct SXMBrowseView: View {
                     .frame(maxWidth: .infinity, minHeight: 64).foregroundColor(ink)
             }
         }.padding(.horizontal, 16)
+    }
+    private var locationPicker: some View {
+        Menu {
+            Button(fr ? "Toute l'île" : "Whole island") { side = nil; area = nil }
+            locationSide(fr ? "Côté français" : "French side", sideCode: "fr", areas: SXMAreas.french)
+            locationSide(fr ? "Côté hollandais" : "Dutch side", sideCode: "nl", areas: SXMAreas.dutch)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "mappin.and.ellipse").font(.title2).foregroundColor(sea)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(fr ? "OÙ CHERCHER ?" : "WHERE TO SEARCH?")
+                        .font(.system(size: 10, weight: .heavy)).tracking(1.2).foregroundColor(sea)
+                    Text(area ?? (side == "fr" ? (fr ? "Côté français" : "French side") : side == "nl" ? (fr ? "Côté hollandais" : "Dutch side") : (fr ? "Toute l'île" : "Whole island")))
+                        .font(.subheadline.weight(.bold)).foregroundColor(ink)
+                }
+                Spacer()
+                Text(fr ? "CHOISIR" : "EXPLORE")
+                    .font(.system(size: 10, weight: .bold)).foregroundColor(sea)
+                Image(systemName: "chevron.down").font(.caption.weight(.bold)).foregroundColor(sea)
+            }
+            .padding(14)
+            .background(RoundedRectangle(cornerRadius: 17).fill(.white))
+            .overlay(RoundedRectangle(cornerRadius: 17).stroke(sea.opacity(0.22)))
+        }.padding(.horizontal, 20)
+    }
+    private func locationSide(_ label: String, sideCode: String, areas: [String]) -> some View {
+        Menu {
+            Button(fr ? "Tous les quartiers" : "All areas") { side = sideCode; area = nil }
+            ForEach(areas, id: \.self) { district in
+                Button(district) { side = sideCode; area = district }
+            }
+        } label: { Label(label, systemImage: sideCode == "fr" ? "f.circle" : "n.circle") }
     }
     private func shortcut(_ id: String, _ title: String, _ symbol: String) -> some View {
         Button { category = category == id ? nil : id } label: {
@@ -315,10 +398,19 @@ struct SXMBrowseView: View {
         NavigationView {
             Form {
                 Section(header: Text(fr ? "Secteur" : "Area")) {
-                    Picker(fr ? "Côté de l’île" : "Island side", selection: $side) {
+                    Picker(fr ? "Côté de l’île" : "Island side", selection: Binding(
+                        get: { side }, set: { side = $0; area = nil })) {
                         Text(fr ? "Toute l’île" : "Whole island").tag(String?.none)
                         Text("Saint-Martin").tag(String?.some("fr"))
                         Text("Sint Maarten").tag(String?.some("nl"))
+                    }
+                    if let side = side {
+                        Picker(fr ? "Quartier" : "District", selection: $area) {
+                            Text(fr ? "Tous les quartiers" : "All areas").tag(String?.none)
+                            ForEach(side == "fr" ? SXMAreas.french : SXMAreas.dutch, id: \.self) { district in
+                                Text(district).tag(String?.some(district))
+                            }
+                        }
                     }
                 }
                 Section(header: Text(fr ? "Catégorie" : "Category")) {
@@ -327,7 +419,7 @@ struct SXMBrowseView: View {
                         ForEach(SXMCategories.all, id: \.id) { c in Text(fr ? c.fr : c.en).tag(String?.some(c.id)) }
                     }.pickerStyle(.inline).labelsHidden()
                 }
-                Button(fr ? "Tout effacer" : "Clear all") { category = nil; side = nil; query = "" }
+                Button(fr ? "Tout effacer" : "Clear all") { category = nil; side = nil; area = nil; query = "" }
             }
             .navigationTitle(fr ? "Affiner la recherche" : "Refine your search")
             .navigationBarTitleDisplayMode(.inline)
@@ -341,8 +433,18 @@ struct SXMListingGrid: View {
     @ObservedObject var model: SXMBrowseModel
     @Environment(\.sizeCategory) private var sizeCategory
     var body: some View {
+        VStack(spacing: 20) {
+            listingRows(Array(listings.prefix(2)))
+            if !model.showingSaved && model.adsAllowed {
+                SXMInlineAdSection(french: model.french)
+            }
+            if listings.count > 2 { listingRows(Array(listings.dropFirst(2))) }
+        }.padding(.horizontal, 20)
+    }
+
+    private func listingRows(_ rows: [SXMListing]) -> some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: sizeCategory.isAccessibilityCategory ? 280 : 150), spacing: 14)], spacing: 24) {
-            ForEach(listings) { l in
+            ForEach(rows) { l in
                 NavigationLink(destination: SXMListingDetail(listing: l, model: model)) {
                     SXMListingCard(listing: l, french: model.french)
                 }
@@ -356,7 +458,80 @@ struct SXMListingGrid: View {
                         .accessibilityLabel(model.french ? (model.isSaved(l) ? "Retirer des favoris" : "Enregistrer") : (model.isSaved(l) ? "Remove from saved" : "Save listing"))
                 }
             }
-        }.padding(.horizontal, 20)
+        }
+    }
+}
+
+/// One clearly labelled native banner between listing rows. It never loads
+/// without consent and the label appears only after an actual ad loads.
+private struct SXMInlineAdSection: View {
+    let french: Bool
+    @State private var adHeight: CGFloat = 0
+    @State private var attempt = 0
+
+    var body: some View {
+        GeometryReader { geometry in
+            let width = max(1, geometry.size.width - 24)
+            VStack(alignment: .leading, spacing: 8) {
+                if adHeight > 0 {
+                    Text(french ? "PUBLICITÉ" : "ADVERTISEMENT")
+                        .font(.system(size: 10, weight: .bold)).tracking(1.2)
+                        .foregroundColor(sea)
+                }
+                SXMInlineAdBanner(width: width, onLoad: { adHeight = $0 }, onFailure: {
+                    adHeight = 0
+                    let failedAttempt = attempt
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
+                        if attempt == failedAttempt { attempt += 1 }
+                    }
+                })
+                .id(attempt)
+                .frame(width: width, height: max(1, adHeight))
+            }
+            .padding(adHeight > 0 ? 12 : 0)
+            .frame(maxWidth: .infinity)
+            .background(adHeight > 0 ? Color.white : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .frame(height: adHeight > 0 ? adHeight + 48 : 1)
+        .accessibilityElement(children: .contain)
+    }
+}
+
+private struct SXMInlineAdBanner: UIViewRepresentable {
+    let width: CGFloat
+    let onLoad: (CGFloat) -> Void
+    let onFailure: () -> Void
+
+    func makeUIView(context: Context) -> BannerView {
+        let banner = BannerView(adSize: inlineAdaptiveBanner(width: width, maxHeight: 110))
+        #if DEBUG
+        banner.adUnitID = "ca-app-pub-3940256099942544/2435281174"
+        #else
+        banner.adUnitID = "ca-app-pub-7816106453580174/9133808428"
+        #endif
+        banner.rootViewController = UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.keyWindow?.rootViewController }.first
+        banner.delegate = context.coordinator
+        if ConsentInformation.shared.canRequestAds { banner.load(Request()) }
+        return banner
+    }
+
+    func updateUIView(_ banner: BannerView, context: Context) {}
+    func makeCoordinator() -> Coordinator { Coordinator(onLoad: onLoad, onFailure: onFailure) }
+
+    final class Coordinator: NSObject, BannerViewDelegate {
+        let onLoad: (CGFloat) -> Void
+        let onFailure: () -> Void
+        init(onLoad: @escaping (CGFloat) -> Void, onFailure: @escaping () -> Void) {
+            self.onLoad = onLoad; self.onFailure = onFailure
+        }
+        func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+            DispatchQueue.main.async { self.onLoad(bannerView.intrinsicContentSize.height) }
+        }
+        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+            DispatchQueue.main.async { self.onFailure() }
+        }
     }
 }
 
