@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=36005dc915431e91"></script>
-<script src="/telemetry.js?v=36005dc915431e91"></script>
-<script src="/pwa.js?v=36005dc915431e91" defer></script>
-<link href="/fonts/fonts.css?v=36005dc915431e91" rel="stylesheet">
+<script src="/frame-guard.js?v=f9cbdca8c5f13815"></script>
+<script src="/telemetry.js?v=f9cbdca8c5f13815"></script>
+<script src="/pwa.js?v=f9cbdca8c5f13815" defer></script>
+<link href="/fonts/fonts.css?v=f9cbdca8c5f13815" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -558,6 +558,11 @@
   .board-head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;}
   .board-head h2{font-size:19px;font-weight:700;}
   .board-head .tally{font-size:12px;color:var(--mute);}
+  .board-shell{position:relative;}
+  .board-shell > .board-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:44px;height:44px;background:var(--white);box-shadow:0 2px 8px rgba(19,42,46,.18);}
+  #boardPrev{left:6px;}
+  #boardNext{right:6px;}
+  .board-shell .board{padding-left:58px;padding-right:58px;scroll-padding-inline:58px;}
   .board-nav{margin-left:auto;align-self:center;display:flex;gap:6px;}
   .board-nav[hidden],.board-btn[hidden]{display:none;}
   .board-btn{width:36px;height:36px;display:grid;place-items:center;border:2px solid var(--line);border-radius:50%;background:var(--white);color:var(--ink);cursor:pointer;transition:border-color .18s ease;}
@@ -1802,7 +1807,6 @@
     .card .ttl{font-size:12.5px;}
     .board .card{flex-basis:220px;}
     .board-btn{width:44px;height:44px;}
-    #boardPrev,#boardNext{display:none;}
     .trust{grid-template-columns:1fr;}
     .hero h1{font-size:24px;}
     .search{display:grid;grid-template-columns:minmax(0,1fr) auto;width:100%;}
@@ -2214,6 +2218,7 @@
   }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
+<link rel="stylesheet" href="market-design.css?v=f9cbdca8c5f13815">
 </head>
 <body>
 
@@ -2222,8 +2227,8 @@
     <a href="#browse" class="logo" aria-label="Buy Sell Trade Sint Maarten, accueil">
       <img class="logo-img" src="BuySellTradeSxm.Logo.png" alt="" aria-hidden="true">
       <span class="logo-text">
-        <span class="mark">Buy<b>·</b>Sell<b>·</b>Trade</span>
-        <span class="sub">SXM Marketplace</span>
+        <span class="mark" data-en="Discover SXM">Découvrez SXM</span>
+        <span class="sub">Buy Sell Trade SXM</span>
       </span>
     </a>
 
@@ -2239,10 +2244,11 @@
         <button type="button" id="cur-eur" aria-pressed="true" data-click="setCurrency" data-click-args='["eur"]'>€</button>
         <button type="button" id="cur-usd" aria-pressed="false" data-click="setCurrency" data-click-args='["usd"]'>$</button>
       </div>
-      <button type="button" class="go" data-click="applySearch" data-click-args='["__EVENT__"]' data-i18n="searchBtn">Rechercher</button>
+      <button type="button" class="go" data-click="applySearch" data-click-args='["__EVENT__"]' aria-label="Rechercher / Search"><img class="market-icon" src="icons/market/search.svg" alt="" aria-hidden="true"></button>
     </form>
 
     <div class="bar-actions">
+      <button type="button" class="market-bell icon-btn" data-click="toggleNotifPanel" data-click-args='["__EVENT__"]' aria-label="Notifications"><img class="market-icon" src="icons/market/bell.svg" alt="" aria-hidden="true"><span class="n" id="mobileNotifCount" hidden>0</span></button>
       <div class="lang" role="group" aria-label="Langue">
         <button type="button" aria-pressed="true" data-click="setLang" data-click-args='["fr"]'>FR</button>
         <button type="button" aria-pressed="false" data-click="setLang" data-click-args='["en"]'>EN</button>
@@ -2356,13 +2362,18 @@
   </div>
 </section>
 
-<nav class="catrail" aria-label="Catégories">
+<nav class="market-shortcuts" aria-label="Catégories principales">
+<button type="button" data-market-category="voit" aria-pressed="false" data-click="chooseMarketCategory" data-click-args='["voit"]'><img class="market-icon" src="icons/market/truck.svg" alt="" aria-hidden="true"><span data-en="Cars">Véhicules</span></button>
+<button type="button" data-market-category="immo" aria-pressed="false" data-click="chooseMarketCategory" data-click-args='["immo"]'><img class="market-icon" src="icons/market/home.svg" alt="" aria-hidden="true"><span data-en="Homes">Logements</span></button>
+<button type="button" data-market-category="elec" aria-pressed="false" data-click="chooseMarketCategory" data-click-args='["elec"]'><img class="market-icon" src="icons/market/smartphone.svg" alt="" aria-hidden="true"><span data-en="Electronics">Électronique</span></button>
+<button type="button" id="marketMore" aria-expanded="false" aria-controls="marketAllCategories" data-click="toggleMarketCategories"><img class="market-icon" src="icons/market/grid.svg" alt="" aria-hidden="true"><span data-en="More">Plus</span></button></nav>
+<div class="market-all-categories" id="marketAllCategories" hidden><nav class="catrail" aria-label="Catégories">
   <div class="catrail-shell">
     <button type="button" class="cat-arrow" data-click="scrollCats" data-click-args='[-1]' aria-label="Catégories précédentes">‹</button>
     <div class="catrail-inner" id="catrail"></div>
     <button type="button" class="cat-arrow" data-click="scrollCats" data-click-args='[1]' aria-label="Catégories suivantes">›</button>
   </div>
-</nav>
+</nav></div>
 
 <section class="subcat-panel" id="subcatPanel" aria-label="Sous-catégories">
   <div class="subcat-inner">
@@ -2416,22 +2427,26 @@
   </aside>
 
   <section class="results" aria-label="Annonces">
+    <h1 class="market-heading" data-en="Good finds. Close by.">De belles trouvailles. Tout près de vous.</h1>
     <div class="board-head">
       <h2 data-i18n="featured">À la une sur l'île</h2>
       <span class="tally" id="boardTally"></span>
       <div class="board-nav" id="boardNav" hidden>
-        <button type="button" class="board-btn" id="boardPrev" data-click="boardPrev" aria-label="Annonces précédentes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
         <button type="button" class="board-btn" id="boardPause" data-click="toggleBoardAuto" aria-pressed="false" aria-label="Mettre le défilement en pause"><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg></button>
-        <button type="button" class="board-btn" id="boardNext" data-click="boardNext" aria-label="Annonces suivantes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
     </div>
-    <div class="board" id="board"></div>
+    <div class="board-shell">
+      <button type="button" class="board-btn" id="boardPrev" hidden aria-controls="board" data-click="boardPrev" aria-label="Annonces précédentes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="board" id="board"></div>
+      <button type="button" class="board-btn" id="boardNext" hidden aria-controls="board" data-click="boardNext" aria-label="Annonces suivantes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
 
     <aside class="content-ad" aria-label="Publicité" data-ad-placement="content-1"></aside>
 
     <div class="results-head">
       <p class="count" id="count"></p>
       <div class="controls">
+        <button type="button" class="market-filter" data-click="toggleFilters" data-click-args='[true]'><img class="market-icon" src="icons/market/sliders.svg" alt="" aria-hidden="true"><span data-i18n="filters">Filtres</span></button>
         <label for="sort" class="visually-hidden" style="position:absolute;left:-9999px;" data-i18n="sortBy">Trier par</label>
         <select id="sort" data-change="setSort" data-change-args='["__VALUE__"]'></select>
         <div class="view-toggle" role="group" aria-label="Affichage">
@@ -2446,6 +2461,7 @@
     </div>
 
     <div class="grid" id="grid"></div>
+    <button type="button" class="market-sell" data-click="openPostModal"><img class="market-icon" src="icons/market/camera.svg" alt="" aria-hidden="true"><span data-en="Selling something? Add your photos">Un objet à vendre ? Ajoutez vos photos</span></button>
 
     <aside class="content-ad" aria-label="Publicité" data-ad-placement="content-3"></aside>
   </section>
@@ -2454,16 +2470,13 @@
 <div class="scrim" id="scrim" data-click="toggleFilters" data-click-args='[false]'></div>
 <button type="button" class="filter-fab" data-click="toggleFilters" data-click-args='[true]' data-i18n="filters">Filtres</button>
 
-<nav class="mobile-nav" aria-label="Navigation mobile">
-  <div class="mobile-nav-inner">
-    <a href="#browse"><span aria-hidden="true">&#8962;</span><span data-i18n="browseLabel">Parcourir</span></a>
-    <button type="button" data-click="toggleFilters" data-click-args='[true]'><span aria-hidden="true">&#9776;</span><span data-i18n="filters">Filtres</span></button>
-    <button type="button" class="hot" data-click="openPostModal"><span aria-hidden="true">+</span><span data-i18n="postShort">Publier</span></button>
-    <button type="button" data-click="openMessages"><span class="nav-ic-big" aria-hidden="true">&#9993;</span><span data-i18n="messages">Messages</span></button>
-    <button type="button" data-click="toggleNotifPanel" data-click-args='["__EVENT__"]'><span aria-hidden="true">&#128276;</span><span data-i18n="notifLabel">Alertes</span><span class="n" id="mobileNotifCount" hidden>0</span></button>
-    <button type="button" id="mobileProfileBtn" class="nav-login" data-click="openProfile"><span class="nav-login-ic" aria-hidden="true">&#9673;</span><span id="mobileProfileLabel" data-i18n="profileLabel">Profil</span></button>
-  </div>
-</nav>
+<nav class="mobile-nav" aria-label="Navigation mobile"><div class="mobile-nav-inner">
+<a href="#browse"><img class="market-icon" src="icons/market/home.svg" alt="" aria-hidden="true"><span data-en="Discover">Découvrir</span></a>
+<button type="button" data-click="scrollFavs"><img class="market-icon" src="icons/market/heart.svg" alt="" aria-hidden="true"><span data-i18n="favoris">Favoris</span></button>
+<button type="button" class="hot" data-click="openPostModal"><img class="market-icon" src="icons/market/plus.svg" alt="" aria-hidden="true"><span data-i18n="postShort">Publier</span></button>
+<button type="button" data-click="openMessages"><img class="market-icon" src="icons/market/mail.svg" alt="" aria-hidden="true"><span data-i18n="messages">Messages</span></button>
+<button type="button" id="mobileProfileBtn" class="nav-login" data-click="openProfile"><img class="market-icon" src="icons/market/user.svg" alt="" aria-hidden="true"><span id="mobileProfileLabel" data-i18n="profileLabel">Profil</span></button>
+</div></nav>
 
 <aside class="mobile-ad-slot mobile-sticky-ad" aria-label="Publicité mobile" data-admob-placement="sticky-bottom" data-admob-format="anchored-adaptive-banner">
   <div class="mobile-ad-inner">
@@ -2542,7 +2555,7 @@
           <section class="vehicle-fields" id="vehicleFields" aria-live="polite">
             <div>
               <h3 data-i18n="vehicleInfoTitle">Informations véhicule</h3>
-              <p data-i18n="vehicleInfoHelp">Ajoutez les détails essentiels: année, kilométrage, couleur, motorisation et transmission.</p>
+              <p data-i18n="vehicleInfoHelp">Ajoutez les détails du véhicule: année, motorisation et transmission.</p>
             </div>
             <div class="vehicle-grid">
               <div class="field">
@@ -2919,7 +2932,7 @@
               <ul><li data-en="Unlimited listings">Annonces illimitées</li><li data-en="Premium storefront">Vitrine premium</li><li data-en="20 automatic boosts per month">20 boosts automatiques par mois</li><li data-en="Advanced statistics">Statistiques avancées</li></ul><span class="pricing-cta" data-en="Choose Pro Unlimited">Choisir Pro Unlimited</span>
             </button>
           </div>
-          <p class="pricing-legal"><span data-en="Pro subscriptions are monthly and renew automatically until cancelled.">Les abonnements Pro sont mensuels et se renouvellent automatiquement jusqu'à résiliation.</span> <a href="terms.html" target="_self" data-en="Terms of Use (EULA)">Conditions d'utilisation (EULA)</a> · <a href="privacy.html" target="_self" data-en="Privacy Policy">Politique de confidentialité</a></p>
+          <p class="pricing-legal"><span data-en="Pro subscriptions are monthly and renew automatically until cancelled.">Les abonnements Pro sont mensuels et se renouvellent automatiquement jusqu'à résiliation.</span> <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" data-apple-only hidden target="_blank" rel="noopener" data-en="Terms of Use (EULA)">Conditions d'utilisation (EULA)</a> <a href="terms.html" target="_self" data-en="Terms of Service">Conditions du service</a> · <a href="privacy.html" target="_self" data-en="Privacy Policy">Politique de confidentialité</a></p>
           <div class="pricing-context"><strong data-en="One Pro system for every business">Un seul système Pro pour toutes les entreprises</strong><span data-en="Restaurant, clothing shop, garage, real estate agency, appliance store or phone seller: each one picks a plan by the number of listings and the visibility it wants.">Restaurant, boutique de vêtements, garage, agence immobilière, magasin d'électroménager ou vendeur de téléphones : chacun choisit son plan selon le nombre d'annonces et la visibilité recherchée.</span></div>
           <div class="pricing-extras">
             <section class="pricing-info-block"><h3 data-en="Compatible categories">Catégories compatibles</h3><p data-en="The same subscription works in every main category.">Le même abonnement fonctionne dans toutes les grandes catégories.</p><div class="pricing-list"><div><span data-en="Vehicles">Véhicules</span><b data-en="Cars, motorbikes, boats, parts">Autos, motos, bateaux, pièces</b></div><div><span data-en="Real estate">Immobilier</span><b data-en="Sales, land, rentals">Vente, terrain, location</b></div><div><span data-en="Marketplace">Marketplace</span><b data-en="Fashion, home, electronics">Mode, maison, électronique</b></div><div><span data-en="Jobs &amp; services">Emploi & services</span><b data-en="Job offers and services">Offres et prestations</b></div><div><span data-en="Business">Business</span><b data-en="Shops and equipment">Commerces et équipements</b></div></div></section>
@@ -3147,8 +3160,8 @@
     </div>
     <div class="foot-col">
       <b data-i18n="footerTrust">Confiance & sécurité</b>
-      <span data-i18n="frSide">Côté français</span>
-      <span data-i18n="nlSide">Côté Sint Maarten</span>
+       <span data-i18n="frSide">Côté français</span>
+       <span data-i18n="nlSide">Côté Sint Maarten</span>
       <span data-i18n="footerLang">Français et anglais</span>
       <a href="privacy.html" data-en="Privacy Policy">Politique de confidentialité</a>
       <a href="terms.html" data-en="Terms of Use">Conditions d'utilisation</a>
@@ -3160,21 +3173,22 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=36005dc915431e91" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=36005dc915431e91"></script>
-<script src="native-ios.js?v=36005dc915431e91"></script>
-<script src="captcha.js?v=36005dc915431e91"></script>
-<script src="supabase-api.js?v=36005dc915431e91"></script>
-<script src="img-utils.js?v=36005dc915431e91"></script>
-<script src="draft-store.js?v=36005dc915431e91"></script>
-<script src="push-config.js?v=36005dc915431e91"></script>
-<script src="push-notifications.js?v=36005dc915431e91"></script>
-<script src="consent.js?v=36005dc915431e91" defer></script>
-<script src="ads-config.js?v=36005dc915431e91"></script>
-<script src="admob-plugin.js?v=36005dc915431e91"></script>
-<script src="native-admob.js?v=36005dc915431e91"></script>
-<script src="ads.js?v=36005dc915431e91" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=f9cbdca8c5f13815" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=f9cbdca8c5f13815"></script>
+<script src="native-ios.js?v=f9cbdca8c5f13815"></script>
+<script src="captcha.js?v=f9cbdca8c5f13815"></script>
+<script src="supabase-api.js?v=f9cbdca8c5f13815"></script>
+<script src="img-utils.js?v=f9cbdca8c5f13815"></script>
+<script src="draft-store.js?v=f9cbdca8c5f13815"></script>
+<script src="push-config.js?v=f9cbdca8c5f13815"></script>
+<script src="push-notifications.js?v=f9cbdca8c5f13815"></script>
+<script src="consent.js?v=f9cbdca8c5f13815" defer></script>
+<script src="ads-config.js?v=f9cbdca8c5f13815"></script>
+<script src="admob-plugin.js?v=f9cbdca8c5f13815"></script>
+<script src="native-admob.js?v=f9cbdca8c5f13815"></script>
+<script src="ads.js?v=f9cbdca8c5f13815" defer></script>
 
-<script src="app-index.js?v=36005dc915431e91"></script>
+<script src="app-index.js?v=f9cbdca8c5f13815"></script>
+<script src="native-workflows.js?v=f9cbdca8c5f13815"></script>
 </body>
 </html>

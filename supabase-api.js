@@ -338,10 +338,10 @@
     // Renvoie { full:[urls], thumbs:[urls|""] } ; thumbs[i] === "" si cette
     // photo n'a pas de miniature (échec génération, ou appelant sans ImgUtils) —
     // mediaFor() retombe alors sur full[i].
-    uploadPhotos: async function (files, thumbFiles) {
+    uploadPhotos: async function (files, thumbFiles, expectedUserId) {
       if (!window.db || !files || !files.length) return { full: [], thumbs: [] };
       var user = await SB.currentUser();
-      if (!user) return { full: [], thumbs: [] };
+      if (!user || (expectedUserId && user.id !== expectedUserId)) return { full: [], thumbs: [] };
       var bucket = window.db.storage.from("listing-photos");
       var full = [];
       var thumbs = [];
@@ -412,10 +412,10 @@
     },
 
     // insère une annonce pour l'utilisateur connecté ; renvoie l'objet créé ou null
-    insertListing: async function (listingObj) {
+    insertListing: async function (listingObj, expectedUserId) {
       if (!window.db) return null;
       var user = await SB.currentUser();
-      if (!user) {
+      if (!user || (expectedUserId && user.id !== expectedUserId)) {
         console.warn("[SB] insertListing: pas connecté");
         return null;
       }
@@ -891,10 +891,10 @@
       return res.data || [];
     },
 
-    createReport: async function (listingId, reason, notes) {
+    createReport: async function (listingId, reason, notes, expectedUserId) {
       if (!window.db || !listingId) return null;
       var user = await SB.currentUser();
-      if (!user) return null;
+      if (!user || (expectedUserId && user.id !== expectedUserId)) return null;
       var res = await window.db
         .from("reports")
         .insert({
@@ -1179,7 +1179,7 @@
     sendMessage: async function (opts) {
       if (!window.db) return null;
       var user = await SB.currentUser();
-      if (!user || !opts || !opts.recipientId || !opts.body) return null;
+      if (!user || !opts || (opts.expectedUserId && opts.expectedUserId !== user.id) || !opts.recipientId || !opts.body) return null;
       var base = {
         listing_id: opts.listingId || null,
         sender_id: user.id,
@@ -1298,10 +1298,10 @@
 
     // the message policy (user-blocks.sql) is what stops messages; this
     // only records the block. true on success.
-    blockUser: async function (blockedId, name) {
+    blockUser: async function (blockedId, name, expectedUserId) {
       if (!window.db || !blockedId) return false;
       var user = await SB.currentUser();
-      if (!user) return false;
+      if (!user || (expectedUserId && user.id !== expectedUserId)) return false;
       var res = await window.db
         .from("user_blocks")
         .upsert(

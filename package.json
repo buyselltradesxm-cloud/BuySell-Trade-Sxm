@@ -12,6 +12,8 @@
   },
   "main": "index.js",
   "scripts": {
+    "test:native-workflows": "node scripts/native-workflows-check.js",
+    "test:native-workflows-browser": "node scripts/native-workflows-browser-check.js",
     "test:share": "node playwright-share-qa.js",
     "test:deep-link": "node playwright-deep-link-qa.js",
     "build:listing-pages": "node scripts/build-listing-pages.js",

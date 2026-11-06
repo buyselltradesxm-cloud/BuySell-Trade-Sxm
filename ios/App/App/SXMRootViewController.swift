@@ -3,18 +3,20 @@ import SwiftUI
 import UIKit
 
 /// The app's root screen: a native tab bar under either the native Browse
-/// screen (SXMBrowseView) or the marketplace web view, which owns posting,
-/// messages, alerts and the account. The tab bar mirrors the unread counts
+/// screen, native posting/messages, or the marketplace account/alerts web view.
+/// The tab bar mirrors the unread counts
 /// the page reports back (see native-ios.js).
 final class SXMRootViewController: UIViewController, UITabBarDelegate {
     enum Tab: String, CaseIterable {
-        case browse, post, messages, alerts, profile
+        case browse, saved, post, messages, profile, alerts
+        static var allCases: [Tab] { [.browse, .saved, .post, .messages, .profile] }
     }
 
     // TODO(human): the tabs, their order, labels and icons are a product
     // choice. Icons are SF Symbol names; ".fill" is used for the selected one.
     private static let labels: [Tab: (fr: String, en: String, symbol: String)] = [
-        .browse: ("Parcourir", "Browse", "house"),
+        .browse: ("Découvrir", "Discover", "house"),
+        .saved: ("Favoris", "Saved", "heart"),
         .post: ("Publier", "Post", "plus.circle"),
         .messages: ("Messages", "Messages", "envelope"),
         .alerts: ("Alertes", "Alerts", "bell"),
@@ -28,13 +30,18 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     let web = SXMBridgeViewController()
     private lazy var browseModel: SXMBrowseModel = {
         let model = SXMBrowseModel(french: french)
-        model.contact = { [weak self] listing in self?.showInWeb(listing: listing.id) }
+        model.contact = { [weak self] listing in self?.contactSeller(listing.id) }
+        model.post = { [weak self] in self?.open(.post) }
+        model.alerts = { [weak self] in self?.open(.alerts) }
         return model
     }()
     private lazy var browse = UIHostingController(rootView: SXMBrowseView(model: browseModel))
     private let tabBar = UITabBar()
     private let refresh = UIRefreshControl()
     private let feedback = UISelectionFeedbackGenerator()
+    private let workflowModel = SXMWorkflowModel()
+    private var workflow: UIHostingController<SXMWorkflowView>?
+    private var workflowTab: Tab?
     private var french = Locale.preferredLanguages.first?.hasPrefix("fr") ?? false
     /// Titles sent by the page. They replace the built-in ones, so wording can
     /// change on the site without shipping a new build.
@@ -42,6 +49,7 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     /// A tab chosen before the page could act on it (cold start from a home
     /// screen shortcut, or while a legal page was showing).
     private var pendingTab: Tab?
+    private var pendingContact: String?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -107,6 +115,7 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
 
     private func title(_ tab: Tab) -> String {
         let label = Self.labels[tab]
+        if tab == .browse || tab == .saved { return (french ? label?.fr : label?.en) ?? tab.rawValue }
         return pageTitles[tab] ?? (french ? label?.fr : label?.en) ?? tab.rawValue
     }
 
@@ -125,7 +134,8 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     }
 
     private func select(_ tab: Tab) {
-        tabBar.selectedItem = tabBar.items?.first { $0.tag == Tab.allCases.firstIndex(of: tab) }
+        let visible = tab == .alerts ? Tab.profile : tab
+        tabBar.selectedItem = tabBar.items?.first { $0.tag == Tab.allCases.firstIndex(of: visible) }
     }
 
     func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
@@ -138,9 +148,13 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     /// screen; from any other page (terms, privacy) the app goes home first
     /// and the page picks the tab up through `takePendingTab()`.
     func open(_ tab: Tab) {
+        if workflowModel.busy { select(workflowTab ?? .browse); return }
+        hideWorkflow()
+        pendingContact = nil
         select(tab)
         // For Browse the page still closes whatever it had open behind the native screen.
-        showNativeBrowse(tab == .browse)
+        if tab == .browse || tab == .saved { browseModel.showingSaved = tab == .saved }
+        showNativeBrowse(tab == .browse || tab == .saved)
         guard let webView = web.webView, let bridge = web.bridge else { return }
         let home = bridge.config.serverURL
         let current = webView.url
@@ -157,6 +171,49 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     private func showNativeBrowse(_ on: Bool) {
         browse.view.isHidden = !on
         setNeedsStatusBarAppearanceUpdate()
+    }
+
+    private func hideWorkflow() {
+        workflow?.willMove(toParent: nil)
+        workflow?.view.removeFromSuperview()
+        workflow?.removeFromParent()
+        workflow = nil
+        workflowTab = nil
+    }
+
+    func workflowIdentity(_ userId: String?) { workflowModel.invalidate(userId: userId) }
+
+    func showWorkflow(tab: String, listingId: String? = nil) {
+        guard !workflowModel.busy, let chosen = Tab(rawValue: tab), chosen == .post || chosen == .messages else { return }
+        hideWorkflow()
+        workflowModel.webView = web.webView
+        workflowModel.allowedOrigin = web.bridge?.config.serverURL
+        let screen = SXMWorkflowView(model: workflowModel, tab: tab, listingId: listingId,
+            close: { [weak self] in self?.open(.browse) }, profile: { [weak self] in self?.open(.profile) })
+        let controller = UIHostingController(rootView: screen)
+        workflow = controller; workflowTab = chosen
+        addChild(controller)
+        controller.view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(controller.view)
+        NSLayoutConstraint.activate([
+            controller.view.topAnchor.constraint(equalTo: view.topAnchor),
+            controller.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            controller.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            controller.view.bottomAnchor.constraint(equalTo: tabBar.topAnchor)
+        ])
+        controller.didMove(toParent: self)
+        showNativeBrowse(false)
+        select(chosen)
+    }
+
+    private func contactSeller(_ id: String) {
+        guard let bridge = web.bridge, let webView = web.webView else { return }
+        if webView.isLoading || webView.url?.host != bridge.config.serverURL.host || !Self.appPaths.contains(webView.url?.path ?? "-") {
+            pendingContact = id
+            return
+        }
+        let json = String(data: (try? JSONSerialization.data(withJSONObject: ["id": id])) ?? Data(), encoding: .utf8) ?? "{}"
+        bridge.triggerWindowJSEvent(eventName: "sxmContact", data: json)
     }
 
     /// "Contact the seller": the page shows the listing with its chat button.
@@ -181,13 +238,18 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
         return pendingTab?.rawValue
     }
 
+    func takePendingContact() -> String? {
+        defer { pendingContact = nil }
+        return pendingContact
+    }
+
     /// The page reports what it is showing, in which language, and its unread counts.
     func update(selected: String?, french: Bool?, badges: [String: Int], titles: [String: String], detail: Bool? = nil) {
         if let french = french, french != browseModel.french { browseModel.french = french }
         // `detail`: the page has a screen open outside the tabs (a listing from a shared
         // link or from "Contact the seller", pricing...). It shows over Browse until closed.
-        if let tab = selected.flatMap(Tab.init(rawValue:)), let detail = detail {
-            showNativeBrowse(tab == .browse && !detail)
+        if workflow == nil, let tab = selected.flatMap(Tab.init(rawValue:)), let detail = detail {
+            showNativeBrowse((tab == .browse || tab == .saved) && !detail)
         }
         var sent: [Tab: String] = [:]
         for (name, text) in titles where !text.isEmpty {

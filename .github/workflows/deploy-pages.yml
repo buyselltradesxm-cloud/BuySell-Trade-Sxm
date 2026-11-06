@@ -38,6 +38,8 @@ jobs:
           node --check app-index.js
           node --check app-marketplace.js
           node --check supabase-api.js
+          node --check native-workflows.js
+          node scripts/native-workflows-check.js
           node --check push-notifications.js
       - uses: actions/jekyll-build-pages@v1
         with:
@@ -48,6 +50,7 @@ jobs:
           test -f _site/app-index.js
           test -f _site/app-marketplace.js
           test -f _site/supabase-api.js
+          test -f _site/native-workflows.js
           test ! -e _site/scripts
           test ! -e _site/supabase
           test ! -e _site/APP_QA_STATUS.md

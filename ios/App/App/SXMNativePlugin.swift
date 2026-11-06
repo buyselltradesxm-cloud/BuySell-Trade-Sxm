@@ -10,7 +10,7 @@ final class SXMBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(SXMNativePlugin())
         // The site is shared with older builds and with browsers: tell it,
         // before its scripts run, what this build can do natively.
-        let info = "window.SXMNativeInfo={shell:4,tabs:true,appleSignIn:true,refresh:true,push:true,nativeBrowse:true};" +
+        let info = "window.SXMNativeInfo={shell:5,tabs:true,appleSignIn:true,refresh:true,push:true,nativeBrowse:true,nativeWorkflows:true};" +
             "document.documentElement&&document.documentElement.classList.add('sxm-native-tabs');"
         webView?.configuration.userContentController.addUserScript(
             WKUserScript(source: info, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -28,6 +28,8 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
         CAPPluginMethod(name: "appleSignIn", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "ready", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setTabs", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "openWorkflow", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "workflowIdentity", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "refreshDone", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "pushStatus", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "pushEnable", returnType: CAPPluginReturnPromise),
@@ -241,11 +243,30 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
 
     // MARK: - Tab bar and pull to refresh
 
+    @objc func openWorkflow(_ call: CAPPluginCall) {
+        guard let tab = call.getString("tab"), ["post", "messages"].contains(tab) else {
+            call.reject("Invalid workflow"); return
+        }
+        DispatchQueue.main.async { [weak self] in
+            guard let root = self?.root else { call.reject("App screen unavailable"); return }
+            root.showWorkflow(tab: tab, listingId: call.getString("listingId"))
+            call.resolve()
+        }
+    }
+
+    @objc func workflowIdentity(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [weak self] in
+            self?.root?.workflowIdentity(call.getString("userId"))
+            call.resolve()
+        }
+    }
+
     /// Called once by the page when it can react to tabs.
     @objc func ready(_ call: CAPPluginCall) {
         DispatchQueue.main.async { [weak self] in
             var result: [String: Any] = [:]
             if let tab = self?.root?.takePendingTab() { result["tab"] = tab }
+            if let id = self?.root?.takePendingContact() { result["listingId"] = id }
             call.resolve(result)
         }
     }

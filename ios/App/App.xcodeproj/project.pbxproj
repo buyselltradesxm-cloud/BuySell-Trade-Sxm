@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA0123456789012345678921 /* SXMWorkflows.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0123456789012345678922 /* SXMWorkflows.swift */; };
 		AA0123456789012345678901 /* SXMNativePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0123456789012345678902 /* SXMNativePlugin.swift */; };
 		AA0123456789012345678903 /* SXMRootViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0123456789012345678904 /* SXMRootViewController.swift */; };
 		AA0123456789012345678911 /* SXMBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0123456789012345678912 /* SXMBrowseView.swift */; };
@@ -22,6 +23,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AA0123456789012345678922 /* SXMWorkflows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SXMWorkflows.swift; sourceTree = "<group>"; };
 		AA0123456789012345678902 /* SXMNativePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SXMNativePlugin.swift; sourceTree = "<group>"; };
 		AA0123456789012345678904 /* SXMRootViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SXMRootViewController.swift; sourceTree = "<group>"; };
 		AA0123456789012345678912 /* SXMBrowseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SXMBrowseView.swift; sourceTree = "<group>"; };
@@ -75,6 +77,7 @@
 				AA0123456789012345678902 /* SXMNativePlugin.swift */,
 				AA0123456789012345678904 /* SXMRootViewController.swift */,
 				AA0123456789012345678912 /* SXMBrowseView.swift */,
+				AA0123456789012345678922 /* SXMWorkflows.swift */,
 				AA0123456789012345678905 /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -174,6 +177,7 @@
 				AA0123456789012345678901 /* SXMNativePlugin.swift in Sources */,
 				AA0123456789012345678903 /* SXMRootViewController.swift in Sources */,
 				AA0123456789012345678911 /* SXMBrowseView.swift in Sources */,
+				AA0123456789012345678921 /* SXMWorkflows.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -19,6 +19,7 @@ android {
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.korekdigitalmarketing.buyselltradesxm"
+        manifestPlaceholders = [appLabel: "Buy Sell Trade Sxm"]
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode ((System.getenv("ANDROID_VERSION_CODE") ?: "1").toInteger())
@@ -41,6 +42,13 @@ android {
         }
     }
     buildTypes {
+        debug {
+            // Install the preview next to the Play-distributed app. Debug
+            // signing cannot update an existing Play-signed installation.
+            applicationIdSuffix ".preview"
+            versionNameSuffix "-preview"
+            manifestPlaceholders = [appLabel: "Buy Sell Trade SXM Preview"]
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
