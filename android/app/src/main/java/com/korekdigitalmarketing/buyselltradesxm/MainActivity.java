@@ -31,9 +31,11 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SXMSharePlugin.class);
         registerPlugin(SXMLayoutPlugin.class);
         super.onCreate(savedInstanceState);
-        french = getResources().getConfiguration().getLocales().get(0).getLanguage().equals("fr");
+        french = getSharedPreferences("sxm.browse", 0).getBoolean("french",
+            getResources().getConfiguration().getLocales().get(0).getLanguage().equals("fr"));
         web = getBridge().getWebView();
         installShell();
+        syncWebLanguage(0);
     }
 
     public void reserveBanner(int height) {
@@ -70,7 +72,8 @@ public class MainActivity extends BridgeActivity {
         content = new FrameLayout(this);
         root.addView(content, new LinearLayout.LayoutParams(-1, 0, 1));
         content.addView(web, new FrameLayout.LayoutParams(-1, -1));
-        browse = new SXMBrowseScreen(this, this::openListing, () -> select("post"), () -> select("alerts"), french);
+        browse = new SXMBrowseScreen(this, this::openListing, () -> select("post"),
+            () -> select("alerts"), this::setLanguage, french);
         content.addView(browse, new FrameLayout.LayoutParams(-1, -1));
         bar = new LinearLayout(this);
         bar.setBackgroundColor(PAPER);
@@ -121,6 +124,29 @@ public class MainActivity extends BridgeActivity {
     private void syncWebBanner(boolean nativeBrowse) {
         if (web == null) return;
         web.evaluateJavascript("if(window.__BST_ADMOB_SET_BROWSE__)window.__BST_ADMOB_SET_BROWSE__(" + nativeBrowse + ")", null);
+    }
+
+    private void setLanguage(boolean useFrench) {
+        french = useFrench;
+        renderBar();
+        syncWebLanguage(0);
+    }
+
+    public void applyLanguageFromWeb(boolean useFrench) {
+        if (french == useFrench) return;
+        french = useFrench;
+        if (browse != null) browse.applyLanguage(useFrench);
+        renderBar();
+    }
+
+    private void syncWebLanguage(int attempt) {
+        if (web == null) return;
+        final String language = french ? "fr" : "en";
+        web.evaluateJavascript("(function(){if(typeof setLang==='function'){setLang('" +
+            language + "');return true}return false})()", result -> {
+            if ("false".equals(result) && attempt < 25)
+                web.postDelayed(() -> syncWebLanguage(attempt + 1), 400);
+        });
     }
 
     @Override public void onResume() {

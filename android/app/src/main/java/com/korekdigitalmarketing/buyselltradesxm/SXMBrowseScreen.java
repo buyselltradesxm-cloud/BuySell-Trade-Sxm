@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.HorizontalScrollView;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -55,14 +56,18 @@ final class SXMBrowseScreen extends ScrollView {
     private final List<JSONObject> savedRows = new ArrayList<>();
     private final Set<String> saved;
     private final Consumer<String> open;
+    private final Consumer<Boolean> languageChanged;
     private final Runnable post, alerts;
-    private final boolean french;
+    private boolean french;
     private final LinearLayout grid, filters;
     private final LinearLayout adContainer;
     private AdView inlineAd;
     private boolean adsAllowed;
     private long lastAdAttemptAt;
-    private final TextView heading, status;
+    private final TextView heading, status, header, tagline, locationSubtitle, cta;
+    private final TextView spotlightTitle, spotlightCaption, spotlightAction;
+    private final LinearLayout spotlight;
+    private final TextView frButton, enButton, refreshButton, bellButton;
     private final EditText search;
     private String category = "", side = "", area = "";
     private TextView locationPicker;
@@ -72,9 +77,11 @@ final class SXMBrowseScreen extends ScrollView {
     private int generation;
     private int visibleLimit = 40;
 
-    SXMBrowseScreen(Context context, Consumer<String> open, Runnable post, Runnable alerts, boolean french) {
+    SXMBrowseScreen(Context context, Consumer<String> open, Runnable post, Runnable alerts,
+                    Consumer<Boolean> languageChanged, boolean french) {
         super(context);
-        this.open = open; this.post = post; this.alerts = alerts; this.french = french;
+        this.open = open; this.post = post; this.alerts = alerts;
+        this.languageChanged = languageChanged; this.french = french;
         saved = new HashSet<>(context.getSharedPreferences("sxm.browse", 0).getStringSet("saved", new HashSet<>()));
         try {
             JSONArray stored = new JSONArray(context.getSharedPreferences("sxm.browse", 0).getString("savedRows", "[]"));
@@ -87,34 +94,49 @@ final class SXMBrowseScreen extends ScrollView {
         setFillViewport(true);
         LinearLayout page = new LinearLayout(context);
         page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(dp(18), dp(18), dp(18), dp(24));
+        page.setPadding(dp(16), dp(16), dp(16), dp(24));
         addView(page);
-        TextView header = label(french ? "Découvrez SXM" : "Discover SXM", 24, true);
-        page.addView(header);
-        LinearLayout actions = new LinearLayout(context);
-        actions.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        page.addView(actions, new LinearLayout.LayoutParams(-1, dp(42)));
-        TextView reload = label("↻", 28, true);
-        reload.setContentDescription(french ? "Actualiser les annonces" : "Refresh listings");
-        reload.setTextColor(SEA);
-        reload.setOnClickListener(v -> refresh());
-        actions.addView(reload, new LinearLayout.LayoutParams(dp(52), -1));
-        TextView bell = label("🔔", 22, true);
-        bell.setContentDescription(french ? "Notifications" : "Notifications");
-        bell.setGravity(Gravity.END); bell.setTextColor(SEA);
-        bell.setOnClickListener(v -> alerts.run());
-        actions.addView(bell, new LinearLayout.LayoutParams(dp(52), -1));
-        TextView location = label(french ? "Toute l’île  ·  Saint-Martin & Sint Maarten" :
-            "Whole island  ·  Saint-Martin & Sint Maarten", 13, false);
-        location.setTextColor(SEA); page.addView(location);
+        LinearLayout top = new LinearLayout(context);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        page.addView(top, new LinearLayout.LayoutParams(-1, dp(56)));
+        LinearLayout titleGroup = new LinearLayout(context);
+        titleGroup.setOrientation(LinearLayout.VERTICAL);
+        top.addView(titleGroup, new LinearLayout.LayoutParams(0, -2, 1));
+        TextView brand = label("BUY SELL TRADE · SXM", 10, true);
+        brand.setLetterSpacing(.12f); brand.setTextColor(SEA);
+        titleGroup.addView(brand);
+        header = label("", 27, true); titleGroup.addView(header);
+        LinearLayout language = new LinearLayout(context);
+        language.setGravity(Gravity.CENTER);
+        language.setPadding(dp(3), dp(3), dp(3), dp(3));
+        language.setBackground(shape(INK, 16));
+        top.addView(language, new LinearLayout.LayoutParams(dp(98), dp(44)));
+        frButton = languageOption("FR"); enButton = languageOption("EN");
+        language.addView(frButton, new LinearLayout.LayoutParams(0, -1, 1));
+        language.addView(enButton, new LinearLayout.LayoutParams(0, -1, 1));
+        frButton.setOnClickListener(v -> changeLanguage(true));
+        enButton.setOnClickListener(v -> changeLanguage(false));
+
+        LinearLayout intro = new LinearLayout(context);
+        intro.setGravity(Gravity.CENTER_VERTICAL);
+        page.addView(intro, new LinearLayout.LayoutParams(-1, dp(42)));
+        tagline = label("", 13, false); tagline.setTextColor(Color.rgb(89, 110, 111));
+        intro.addView(tagline, new LinearLayout.LayoutParams(0, -2, 1));
+        refreshButton = iconAction("↻", () -> refresh());
+        bellButton = iconAction("🔔", alerts);
+        intro.addView(refreshButton, new LinearLayout.LayoutParams(dp(42), dp(42)));
+        LinearLayout.LayoutParams bellParams = new LinearLayout.LayoutParams(dp(42), dp(42));
+        bellParams.leftMargin = dp(8); intro.addView(bellButton, bellParams);
         search = new EditText(context);
         search.setSingleLine(true);
         search.setTextSize(16);
         search.setHint(french ? "Que cherchez-vous ?" : "What are you looking for?");
-        search.setBackground(shape(Color.WHITE, 16));
-        search.setPadding(dp(14), 0, dp(14), 0);
-        LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(-1, dp(52));
-        searchParams.topMargin = dp(22); page.addView(search, searchParams);
+        search.setBackground(outlinedShape(Color.WHITE, 16, Color.rgb(218, 227, 225)));
+        search.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.ic_menu_search, 0, 0, 0);
+        search.setCompoundDrawablePadding(dp(10));
+        search.setPadding(dp(16), 0, dp(14), 0);
+        LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(-1, dp(48));
+        searchParams.topMargin = dp(3); page.addView(search, searchParams);
         search.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             public void onTextChanged(CharSequence s, int start, int before, int count) { render(); }
@@ -123,29 +145,52 @@ final class SXMBrowseScreen extends ScrollView {
         filters = new LinearLayout(context);
         filters.setOrientation(LinearLayout.VERTICAL);
         page.addView(filters);
-        addFilterRow(french ? new String[]{"Tout", "Véhicules", "Logements", "Électronique", "Plus"} :
-            new String[]{"All", "Cars", "Homes", "Electronics", "More"},
-            new String[]{"", "voit", "immo", "elec", "*"}, false);
-        locationPicker = button(french ? "Où chercher ? · Toute l'île" : "Where? · Whole island");
+        locationPicker = label("", 14, true);
+        locationPicker.setTextColor(SEA); locationPicker.setGravity(Gravity.CENTER_VERTICAL);
+        locationPicker.setPadding(dp(15), 0, dp(12), 0);
+        locationPicker.setBackground(outlinedShape(Color.rgb(228, 243, 243), 15, Color.rgb(192, 224, 224)));
         locationPicker.setOnClickListener(v -> showLocations());
-        filters.addView(locationPicker, new LinearLayout.LayoutParams(-1, dp(52)));
+        buildFilters();
+        spotlight = new LinearLayout(context);
+        spotlight.setGravity(Gravity.CENTER_VERTICAL);
+        spotlight.setPadding(dp(15), dp(10), dp(12), dp(10));
+        GradientDrawable glow = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[]{SEA, Color.rgb(20, 65, 78)});
+        glow.setCornerRadius(dp(17)); spotlight.setBackground(glow);
+        LinearLayout.LayoutParams spotlightParams = new LinearLayout.LayoutParams(-1, dp(64));
+        spotlightParams.topMargin = dp(10); page.addView(spotlight, spotlightParams);
+        LinearLayout spotlightCopy = new LinearLayout(context);
+        spotlightCopy.setOrientation(LinearLayout.VERTICAL);
+        spotlight.addView(spotlightCopy, new LinearLayout.LayoutParams(0, -2, 1));
+        spotlightTitle = label("", 16, true); spotlightTitle.setTextColor(Color.WHITE);
+        spotlightCopy.addView(spotlightTitle);
+        spotlightCaption = label("", 11, false);
+        spotlightCaption.setTextColor(Color.rgb(221, 244, 241));
+        spotlightCopy.addView(spotlightCaption);
+        spotlightAction = label("", 12, true);
+        spotlightAction.setTextColor(Color.WHITE); spotlightAction.setGravity(Gravity.CENTER);
+        spotlightAction.setBackground(shape(Color.rgb(231, 78, 56), 12));
+        spotlightAction.setOnClickListener(v -> post.run());
+        LinearLayout.LayoutParams spotlightActionParams = new LinearLayout.LayoutParams(dp(82), dp(40));
+        spotlightActionParams.leftMargin = dp(8); spotlight.addView(spotlightAction, spotlightActionParams);
         heading = label("", 25, true);
         LinearLayout.LayoutParams headingParams = new LinearLayout.LayoutParams(-1, -2);
-        headingParams.topMargin = dp(16); headingParams.bottomMargin = dp(14);
+        headingParams.topMargin = dp(15); headingParams.bottomMargin = dp(2);
         page.addView(heading, headingParams);
-        status = label("", 14, false); page.addView(status);
+        locationSubtitle = label("", 13, false);
+        locationSubtitle.setTextColor(Color.rgb(89, 110, 111));
+        page.addView(locationSubtitle);
+        status = label("", 13, false); page.addView(status);
         adContainer = new LinearLayout(context);
         adContainer.setOrientation(LinearLayout.VERTICAL);
         adContainer.setGravity(Gravity.CENTER_HORIZONTAL);
         adContainer.setVisibility(View.GONE);
-        LinearLayout.LayoutParams adParams = new LinearLayout.LayoutParams(-1, -2);
-        adParams.bottomMargin = dp(16);
-        page.addView(adContainer, adParams);
         grid = new LinearLayout(context); grid.setOrientation(LinearLayout.VERTICAL); page.addView(grid);
-        TextView cta = button(french ? "Vendre un objet  +  Ajouter vos photos" : "Sell something  +  Add your photos");
+        cta = button("");
         LinearLayout.LayoutParams ctaParams = new LinearLayout.LayoutParams(-1, dp(54));
         ctaParams.topMargin = dp(24); page.addView(cta, ctaParams);
         cta.setOnClickListener(v -> post.run());
+        updateLanguageText();
         try {
             JSONArray cached = new JSONArray(context.getSharedPreferences("sxm.browse", 0).getString("feed", "[]"));
             setRows(cached);
@@ -174,15 +219,67 @@ final class SXMBrowseScreen extends ScrollView {
 
     private void chooseLocation(String chosenSide, String chosenArea) {
         side = chosenSide; area = chosenArea; visibleLimit = 40;
+        updateLocationText();
+        render();
+    }
+
+    private void updateLocationText() {
         String label = side.isEmpty() ? (french ? "Toute l'île" : "Whole island") :
             side.equals("fr") ? (french ? "Côté français" : "French side") : (french ? "Côté hollandais" : "Dutch side");
-        locationPicker.setText((area.isEmpty() ? "" : area + " · ") + label + " ▾");
+        locationPicker.setText("⌖  " + (area.isEmpty() ? "" : area + " · ") + label + "  ▾");
+    }
+
+    private void changeLanguage(boolean useFrench) {
+        if (french == useFrench) return;
+        applyLanguage(useFrench);
+        languageChanged.accept(french);
+    }
+
+    void applyLanguage(boolean useFrench) {
+        if (french == useFrench) return;
+        french = useFrench;
+        getContext().getSharedPreferences("sxm.browse", 0).edit().putBoolean("french", french).apply();
+        status.setText("");
+        updateLanguageText();
+    }
+
+    private void updateLanguageText() {
+        header.setText(savedOnly ? (french ? "Favoris" : "Saved") :
+            (french ? "Découvrir" : "Discover"));
+        tagline.setText(french ? "Des trouvailles sur toute l'île" : "Good finds across the island");
+        search.setHint(french ? "Que cherchez-vous ?" : "What are you looking for?");
+        refreshButton.setContentDescription(french ? "Actualiser les annonces" : "Refresh listings");
+        bellButton.setContentDescription(french ? "Notifications" : "Notifications");
+        frButton.setBackground(shape(french ? SEA : Color.TRANSPARENT, 13));
+        enButton.setBackground(shape(french ? Color.TRANSPARENT : SEA, 13));
+        frButton.setContentDescription(french ? "Français sélectionné" : "Switch to French");
+        enButton.setContentDescription(french ? "Passer en anglais" : "English selected");
+        frButton.setSelected(french); enButton.setSelected(!french);
+        cta.setText(french ? "+  Publier une annonce" : "+  Post a listing");
+        spotlightTitle.setText(french ? "Deux côtés. Un marché." : "Two sides. One market.");
+        spotlightCaption.setText(french ? "Achetez et vendez sur toute l'île" : "Buy and sell across the island");
+        spotlightAction.setText(french ? "Publier ↗" : "Post ↗");
+        buildFilters();
+        updateLocationText();
         render();
     }
 
     private int dp(float n) { return (int) (n * getResources().getDisplayMetrics().density + .5f); }
     private GradientDrawable shape(int color, int radius) {
         GradientDrawable d = new GradientDrawable(); d.setColor(color); d.setCornerRadius(dp(radius)); return d;
+    }
+    private GradientDrawable outlinedShape(int color, int radius, int border) {
+        GradientDrawable d = shape(color, radius); d.setStroke(dp(1), border); return d;
+    }
+    private TextView languageOption(String text) {
+        TextView option = label(text, 13, true); option.setTextColor(Color.WHITE);
+        option.setGravity(Gravity.CENTER); option.setMinHeight(dp(38)); return option;
+    }
+    private TextView iconAction(String glyph, Runnable action) {
+        TextView button = label(glyph, 24, true);
+        button.setGravity(Gravity.CENTER); button.setTextColor(SEA);
+        button.setBackground(shape(Color.rgb(228, 243, 243), 14));
+        button.setOnClickListener(v -> action.run()); return button;
     }
     private TextView label(String text, int size, boolean bold) {
         TextView view = new TextView(getContext()); view.setText(text); view.setTextColor(INK); view.setTextSize(size);
@@ -193,23 +290,39 @@ final class SXMBrowseScreen extends ScrollView {
         TextView b = label(text, 14, true); b.setTextColor(Color.WHITE); b.setGravity(Gravity.CENTER);
         b.setBackground(shape(SEA, 15)); return b;
     }
-    private void addFilterRow(String[] names, String[] values, boolean forSide) {
+    private void buildFilters() {
+        filters.removeAllViews();
+        addFilterRow(french ? new String[]{"Tout", "Véhicules", "Immobilier", "Électronique", "Plus ▾"} :
+            new String[]{"All", "Vehicles", "Property", "Electronics", "More ▾"},
+            new String[]{"", "voit", "immo", "elec", "*"});
+        LinearLayout.LayoutParams pickerParams = new LinearLayout.LayoutParams(-1, dp(44));
+        pickerParams.topMargin = dp(8);
+        filters.addView(locationPicker, pickerParams);
+    }
+    private void addFilterRow(String[] names, String[] values) {
+        HorizontalScrollView horizontal = new HorizontalScrollView(getContext());
+        horizontal.setHorizontalScrollBarEnabled(false);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, dp(40));
+        params.topMargin = dp(8); filters.addView(horizontal, params);
         LinearLayout row = new LinearLayout(getContext());
         row.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, dp(43));
-        params.topMargin = dp(12); filters.addView(row, params);
+        horizontal.addView(row);
         for (int i = 0; i < names.length; i++) {
             final String value = values[i];
-            TextView chip = label(names[i], 11, false);
+            boolean active = !value.equals("*") && category.equals(value);
+            TextView chip = label(names[i], 13, active);
             chip.setGravity(Gravity.CENTER); chip.setSingleLine(true);
-            chip.setBackground(shape(Color.WHITE, 10));
-            LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(0, -1, 1);
-            cp.rightMargin = dp(4); row.addView(chip, cp);
+            chip.setTextColor(active ? Color.WHITE : INK);
+            chip.setPadding(dp(15), 0, dp(15), 0);
+            chip.setBackground(outlinedShape(active ? SEA : Color.WHITE, 13,
+                active ? SEA : Color.rgb(219, 229, 226)));
+            LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-2, -1);
+            cp.rightMargin = dp(8); row.addView(chip, cp);
             chip.setOnClickListener(v -> {
-                if (forSide) side = value;
-                else if (value.equals("*")) { showCategories(); return; }
-                else category = value;
+                if (value.equals("*")) { showCategories(); return; }
+                category = value;
                 visibleLimit = 40;
+                buildFilters();
                 render();
             });
         }
@@ -231,11 +344,13 @@ final class SXMBrowseScreen extends ScrollView {
         new android.app.AlertDialog.Builder(getContext())
             .setTitle(french ? "Catégorie" : "Category")
             .setItems(french ? fr : en, (dialog, which) -> {
-                category = ids[which]; visibleLimit = 40; render();
+                category = ids[which]; visibleLimit = 40; buildFilters(); render();
             }).show();
     }
     void showSaved(boolean value) {
         savedOnly = value; search.setText(""); render(); scrollTo(0, 0);
+        spotlight.setVisibility(savedOnly ? View.GONE : View.VISIBLE);
+        header.setText(savedOnly ? (french ? "Favoris" : "Saved") : (french ? "Découvrir" : "Discover"));
         if (adContainer != null) adContainer.setVisibility(!savedOnly && adsAllowed && inlineAd != null && inlineAd.getTag() == Boolean.TRUE ? View.VISIBLE : View.GONE);
         if (!savedOnly) loadInlineAd();
     }
@@ -327,8 +442,10 @@ final class SXMBrowseScreen extends ScrollView {
         if (grid == null) return;
         generation++;
         grid.removeAllViews();
-        heading.setText(savedOnly ? (french ? "Vos favoris." : "Your saved finds.") :
-            (french ? "De belles trouvailles. Tout près de vous." : "Good finds. Close by."));
+        heading.setText(savedOnly ? (french ? "Vos annonces enregistrées" : "Your saved listings") :
+            (french ? "Annonces récentes" : "Recent listings"));
+        locationSubtitle.setText(savedOnly ? (french ? "Les annonces que vous aimez" : "Listings you love") :
+            (french ? "Trouvez votre prochain coup de cœur" : "Find your next favorite thing"));
         List<JSONObject> shown = new ArrayList<>();
         String query = search.getText().toString().trim().toLowerCase(java.util.Locale.ROOT);
         for (JSONObject l : savedOnly ? savedRows : listings) {
@@ -342,23 +459,33 @@ final class SXMBrowseScreen extends ScrollView {
             shown.add(l);
         }
         if (shown.isEmpty()) {
-            grid.addView(label(french ? "Aucune annonce trouvée" : "No listings found", 17, false));
+            TextView empty = label(french ? "Aucune annonce ici pour le moment. Essayez un autre quartier ou une autre catégorie." :
+                "Nothing here yet. Try another area or category.", 15, false);
+            empty.setTextColor(Color.rgb(89, 110, 111));
+            empty.setPadding(dp(18), dp(22), dp(18), dp(22));
+            empty.setBackground(shape(Color.WHITE, 15));
+            grid.addView(empty);
             return;
         }
         int width = getResources().getDisplayMetrics().widthPixels;
         boolean twoColumns = width >= dp(300);
         for (int i = 0; i < Math.min(shown.size(), visibleLimit); i += twoColumns ? 2 : 1) {
             LinearLayout row = new LinearLayout(getContext());
-            LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2); rp.bottomMargin = dp(22);
+            LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2); rp.bottomMargin = dp(12);
             grid.addView(row, rp);
             for (int j = i; j < Math.min(shown.size(), Math.min(visibleLimit, i + (twoColumns ? 2 : 1))); j++) {
                 View card = card(shown.get(j), generation);
                 LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(0, -2, 1);
-                if (j > i) cp.leftMargin = dp(12); row.addView(card, cp);
+                if (j > i) cp.leftMargin = dp(10); row.addView(card, cp);
                 if (twoColumns && j == i && i + 1 >= Math.min(shown.size(), visibleLimit)) {
                     View spacer = new View(getContext());
-                    LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(0, 1, 1); sp.leftMargin = dp(12); row.addView(spacer, sp);
+                    LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(0, 1, 1); sp.leftMargin = dp(10); row.addView(spacer, sp);
                 }
+            }
+            if (i == 0) {
+                LinearLayout.LayoutParams adParams = new LinearLayout.LayoutParams(-1, -2);
+                adParams.bottomMargin = dp(12);
+                grid.addView(adContainer, adParams);
             }
         }
         if (shown.size() > visibleLimit) {
@@ -369,14 +496,15 @@ final class SXMBrowseScreen extends ScrollView {
     }
     private View card(JSONObject l, int currentGeneration) {
         LinearLayout box = new LinearLayout(getContext()); box.setOrientation(LinearLayout.VERTICAL);
-        box.setBackgroundColor(Color.TRANSPARENT); box.setPadding(0, 0, 0, dp(8));
+        box.setBackground(shape(Color.WHITE, 16)); box.setClipToOutline(true);
+        box.setElevation(dp(2)); box.setPadding(0, 0, 0, dp(11));
         String id = l.optString("id"); box.setOnClickListener(v -> showDetail(l));
         ImageView photo = new ImageView(getContext());
         photo.setScaleType(ImageView.ScaleType.CENTER_CROP);
         photo.setBackgroundColor(Color.rgb(233, 238, 233));
         android.widget.FrameLayout imageFrame = new android.widget.FrameLayout(getContext());
-        int imageHeight = Math.max(dp(130), (getResources().getDisplayMetrics().widthPixels - dp(48)) / 2);
-        imageFrame.setBackground(shape(Color.rgb(233, 238, 233), 14));
+        int imageHeight = Math.max(dp(130), (getResources().getDisplayMetrics().widthPixels - dp(42)) / 2);
+        imageFrame.setBackground(shape(Color.rgb(233, 238, 233), 16));
         imageFrame.setClipToOutline(true);
         imageFrame.addView(photo, new android.widget.FrameLayout.LayoutParams(-1, -1));
         box.addView(imageFrame, new LinearLayout.LayoutParams(-1, imageHeight));
@@ -394,12 +522,19 @@ final class SXMBrowseScreen extends ScrollView {
         android.widget.FrameLayout.LayoutParams hp = new android.widget.FrameLayout.LayoutParams(dp(44), dp(44), Gravity.TOP | Gravity.END);
         hp.setMargins(dp(6), dp(6), dp(6), dp(6));
         imageFrame.addView(heart, hp);
-        TextView title = label(l.optString("title"), 15, true); title.setMaxLines(2); title.setMinLines(2); title.setEllipsize(android.text.TextUtils.TruncateAt.END); title.setPadding(0, dp(8), 0, 0); box.addView(title);
-        TextView location = label(place(l), 12, false); location.setMaxLines(2); box.addView(location);
+        TextView title = label(l.optString("title"), 14, true);
+        title.setMaxLines(2); title.setMinLines(2);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        title.setPadding(dp(10), dp(10), dp(10), 0); box.addView(title);
         String priceText = price(l);
         if (!priceText.isEmpty()) {
-            TextView value = label(priceText, 17, true); value.setTextColor(SEA); box.addView(value);
+            TextView value = label(priceText, 17, true);
+            value.setTextColor(SEA); value.setPadding(dp(10), dp(5), dp(10), 0); box.addView(value);
         }
+        TextView location = label(place(l), 11, false);
+        location.setTextColor(Color.rgb(89, 110, 111));
+        location.setMaxLines(2); location.setPadding(dp(10), dp(6), dp(10), 0);
+        box.addView(location);
         return box;
     }
     private String place(JSONObject l) {

@@ -3238,6 +3238,10 @@ function setLang(lang){
   document.getElementById("curPrefix").textContent = t().priceIn(state.cur);
   render();
   persistState();
+  if(window.Capacitor?.getPlatform?.()==="android" && window.Capacitor.isPluginAvailable?.("SXMLayout")){
+    const layout = window.Capacitor.Plugins?.SXMLayout || window.Capacitor.registerPlugin("SXMLayout");
+    layout.nativeLanguageState({french:lang==="fr"}).catch(()=>{});
+  }
 }
 
 function openModal(id){
