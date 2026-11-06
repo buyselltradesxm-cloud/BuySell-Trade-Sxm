@@ -3,7 +3,7 @@ Set-StrictMode -Version Latest
 Set-Location -LiteralPath (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 
 $repo = 'buyselltradesxm-cloud/BuySell-Trade-Sxm'
-$branch = 'codex/android-native-preview-20261105'
+$branch = 'codex/android-inline-admob-20261106'
 function Check([string]$message) { if ($LASTEXITCODE -ne 0) { throw $message } }
 if ((git branch --show-current) -ne $branch) { throw "Switch to $branch before publishing." }
 gh auth status
