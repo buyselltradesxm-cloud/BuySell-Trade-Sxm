@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=26e01c30a06ee27a"></script>
-<script src="/telemetry.js?v=26e01c30a06ee27a"></script>
-<script src="/pwa.js?v=26e01c30a06ee27a" defer></script>
-<link href="/fonts/fonts.css?v=26e01c30a06ee27a" rel="stylesheet">
+<script src="/frame-guard.js?v=9da4bdd8f9ea9946"></script>
+<script src="/telemetry.js?v=9da4bdd8f9ea9946"></script>
+<script src="/pwa.js?v=9da4bdd8f9ea9946" defer></script>
+<link href="/fonts/fonts.css?v=9da4bdd8f9ea9946" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -1029,7 +1029,8 @@
   .bubble.me{align-self:flex-end;background:var(--sea);color:var(--white);}
   .bubble.me small{color:rgba(255,255,255,.78);}
   .chat-compose{border-top:2px solid var(--line);padding:10px;display:grid;grid-template-columns:1fr auto;gap:8px;background:var(--white);}
-  .chat-compose input{border:2px solid var(--line);border-radius:9px;padding:9px 10px;min-width:0;}
+  .chat-compose input,.chat-compose textarea{border:2px solid var(--line);border-radius:9px;padding:9px 10px;min-width:0;}
+  .chat-compose textarea{font-family:inherit;color:inherit;font-size:12px;line-height:1.3;resize:none;}
   .chat-compose button{border:2px solid var(--line);border-radius:9px;background:var(--sun);font-weight:800;padding:9px 12px;}
   .chat-compose button:hover{background:#e0a800;}
   .chat-limit-note{margin:0;padding:0 12px 10px;color:var(--mute);font-size:11px;font-style:italic;line-height:1.4;}
@@ -2218,7 +2219,7 @@
   }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
-<link rel="stylesheet" href="market-design.css?v=26e01c30a06ee27a">
+<link rel="stylesheet" href="market-design.css?v=9da4bdd8f9ea9946">
 </head>
 <body>
 
@@ -3173,22 +3174,22 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=26e01c30a06ee27a" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=26e01c30a06ee27a"></script>
-<script src="native-ios.js?v=26e01c30a06ee27a"></script>
-<script src="captcha.js?v=26e01c30a06ee27a"></script>
-<script src="supabase-api.js?v=26e01c30a06ee27a"></script>
-<script src="img-utils.js?v=26e01c30a06ee27a"></script>
-<script src="draft-store.js?v=26e01c30a06ee27a"></script>
-<script src="push-config.js?v=26e01c30a06ee27a"></script>
-<script src="push-notifications.js?v=26e01c30a06ee27a"></script>
-<script src="consent.js?v=26e01c30a06ee27a" defer></script>
-<script src="ads-config.js?v=26e01c30a06ee27a"></script>
-<script src="admob-plugin.js?v=26e01c30a06ee27a"></script>
-<script src="native-admob.js?v=26e01c30a06ee27a"></script>
-<script src="ads.js?v=26e01c30a06ee27a" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=9da4bdd8f9ea9946" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=9da4bdd8f9ea9946"></script>
+<script src="native-ios.js?v=9da4bdd8f9ea9946"></script>
+<script src="captcha.js?v=9da4bdd8f9ea9946"></script>
+<script src="supabase-api.js?v=9da4bdd8f9ea9946"></script>
+<script src="img-utils.js?v=9da4bdd8f9ea9946"></script>
+<script src="draft-store.js?v=9da4bdd8f9ea9946"></script>
+<script src="push-config.js?v=9da4bdd8f9ea9946"></script>
+<script src="push-notifications.js?v=9da4bdd8f9ea9946"></script>
+<script src="consent.js?v=9da4bdd8f9ea9946" defer></script>
+<script src="ads-config.js?v=9da4bdd8f9ea9946"></script>
+<script src="admob-plugin.js?v=9da4bdd8f9ea9946"></script>
+<script src="native-admob.js?v=9da4bdd8f9ea9946"></script>
+<script src="ads.js?v=9da4bdd8f9ea9946" defer></script>
 
-<script src="app-index.js?v=26e01c30a06ee27a"></script>
-<script src="native-workflows.js?v=26e01c30a06ee27a"></script>
+<script src="app-index.js?v=9da4bdd8f9ea9946"></script>
+<script src="native-workflows.js?v=9da4bdd8f9ea9946"></script>
 </body>
 </html>
