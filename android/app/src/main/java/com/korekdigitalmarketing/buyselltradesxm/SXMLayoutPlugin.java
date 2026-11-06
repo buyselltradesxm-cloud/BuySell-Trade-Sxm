@@ -25,4 +25,11 @@ public class SXMLayoutPlugin extends Plugin {
             call.resolve();
         });
     }
+    @PluginMethod public void nativeLanguageState(PluginCall call) {
+        boolean french = call.getBoolean("french", true);
+        getActivity().runOnUiThread(() -> {
+            ((MainActivity)getActivity()).applyLanguageFromWeb(french);
+            call.resolve();
+        });
+    }
 }
