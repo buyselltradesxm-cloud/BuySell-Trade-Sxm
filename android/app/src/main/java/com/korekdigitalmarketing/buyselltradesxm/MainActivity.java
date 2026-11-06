@@ -40,6 +40,14 @@ public class MainActivity extends BridgeActivity {
         if (content != null) content.setPadding(0, 0, 0, dp(height));
     }
 
+    public void setNativeAdsAllowed(boolean allowed) {
+        if (browse != null) browse.setAdsAllowed(allowed);
+    }
+
+    public boolean isNativeBrowseVisible() {
+        return browse != null && browse.getVisibility() == View.VISIBLE;
+    }
+
     private int dp(float value) { return (int) (value * getResources().getDisplayMetrics().density + .5f); }
 
     private void installShell() {
@@ -85,6 +93,7 @@ public class MainActivity extends BridgeActivity {
         selected = "browse";
         browse.setVisibility(View.GONE);
         renderBar();
+        syncWebBanner(false);
         web.loadUrl("https://buyselltradesxm.com/?listing=" + android.net.Uri.encode(id));
         web.postDelayed(this::hideWebNavigation, 900);
         web.postDelayed(this::hideWebNavigation, 2500);
@@ -95,6 +104,7 @@ public class MainActivity extends BridgeActivity {
         selected = tab;
         boolean nativeBrowse = tab.equals("browse") || tab.equals("saved");
         browse.setVisibility(nativeBrowse ? View.VISIBLE : View.GONE);
+        syncWebBanner(nativeBrowse);
         if (nativeBrowse) {
             browse.showSaved(tab.equals("saved"));
             web.evaluateJavascript("(function(){document.querySelectorAll('.modal.open').forEach(function(m){" +
@@ -106,6 +116,26 @@ public class MainActivity extends BridgeActivity {
         }
         renderBar();
         hideWebNavigation();
+    }
+
+    private void syncWebBanner(boolean nativeBrowse) {
+        if (web == null) return;
+        web.evaluateJavascript("if(window.__BST_ADMOB_SET_BROWSE__)window.__BST_ADMOB_SET_BROWSE__(" + nativeBrowse + ")", null);
+    }
+
+    @Override public void onResume() {
+        super.onResume();
+        if (browse != null) browse.resumeAd();
+    }
+
+    @Override public void onPause() {
+        if (browse != null) browse.pauseAd();
+        super.onPause();
+    }
+
+    @Override public void onDestroy() {
+        if (browse != null) browse.destroyAd();
+        super.onDestroy();
     }
 
     private void openWebAction(String tab, String action, int attempt) {

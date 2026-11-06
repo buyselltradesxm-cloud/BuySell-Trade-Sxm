@@ -59,7 +59,16 @@
     // GDPR: let users change or withdraw their ads consent later. The app's
     // "Cookie choices" link calls this instead of the web consent banner.
     window.__BST_ADMOB_PRIVACY__ = function () {
-      return AdMob.showPrivacyOptionsForm().catch(function () {});
+      bannerAllowed = false;
+      syncNativeAds();
+      syncBanner();
+      return AdMob.showPrivacyOptionsForm()
+        .then(function () { return AdMob.requestConsentInfo(); })
+        .then(function (info) {
+          bannerAllowed = !!(info && info.canRequestAds);
+          syncNativeAds();
+          syncBanner();
+        }).catch(function () {});
     };
 
     var CFG = (window.AdsConfig && window.AdsConfig.admob) || {};
@@ -76,16 +85,33 @@
     var bannerShown = false;
     var bannerHidden = false;
     var retryTimer;
+    var nativeBrowseVisible = platform === 'android';
+    var bannerHeight = 0;
     var layout = platform === 'android' && window.Capacitor.isPluginAvailable?.('SXMLayout')
       ? (window.Capacitor.Plugins?.SXMLayout || window.Capacitor.registerPlugin('SXMLayout')) : null;
+    if (layout) layout.getBrowseState().then(function (state) {
+      nativeBrowseVisible = !!state.visible;
+      syncBanner();
+    }).catch(function () {});
+    function syncNativeAds() {
+      if (layout) layout.nativeAdsState({allowed: bannerAllowed && !adFree()}).catch(function () {});
+    }
+    window.__BST_ADMOB_SET_BROWSE__ = function (visible) {
+      nativeBrowseVisible = !!visible;
+      if (layout) layout.bannerSize({height: nativeBrowseVisible ? 0 : bannerHeight}).catch(function () {});
+      syncBanner();
+    };
     AdMob.addListener('bannerAdSizeChanged', function (size) {
-      if (layout) layout.bannerSize({height:Math.ceil(Number(size.height) || 0)}).catch(function () {});
+      bannerHeight = Math.ceil(Number(size.height) || 0);
+      if (layout) layout.bannerSize({height:nativeBrowseVisible ? 0 : bannerHeight}).catch(function () {});
     });
     // showBanner resolves when the request starts, not when Google supplies an ad.
     // Listen for asynchronous failures too, otherwise a failed first request stays blank.
     AdMob.addListener('bannerAdFailedToLoad', function (error) {
       window.__BST_ADMOB_STATUS__ = { state: 'failed', code: error && error.code };
       bannerShown = false;
+      bannerHeight = 0;
+      if (layout) layout.bannerSize({height:0}).catch(function () {});
       clearTimeout(retryTimer);
       retryTimer = setTimeout(function () {
         AdMob.removeBanner().catch(function () {}).then(function () {
@@ -109,13 +135,13 @@
     // "bst:ad-free" whenever the signed-in account changes.
     function adFree() { return window.__BST_AD_FREE__ === true; }
     function syncBanner() {
-      if (bannerAllowed && !bannerRequested && !adFree()) { showBanner(); return; }
-      var hide = purchaseOpen() || adFree();
+      if (bannerAllowed && !bannerRequested && !adFree() && !nativeBrowseVisible) { showBanner(); return; }
+      var hide = purchaseOpen() || adFree() || !bannerAllowed || nativeBrowseVisible;
       if (!bannerShown || hide === bannerHidden) return;
       bannerHidden = hide;
       (hide ? AdMob.hideBanner() : AdMob.resumeBanner()).catch(function () {});
     }
-    window.addEventListener("bst:ad-free", syncBanner);
+    window.addEventListener("bst:ad-free", function () { syncNativeAds(); syncBanner(); });
     ready(function () {
       var purchaseWatch = new MutationObserver(syncBanner);
       PURCHASE_MODALS.forEach(function (id) {
@@ -132,11 +158,6 @@
         position: "BOTTOM_CENTER",
         margin: 64, // clears the mobile-nav tab bar; adjust after a real-device check
         isTesting: testing
-      }).then(function () {
-        // A purchase window may already be open, or the account may have
-        // turned Pro, by the time the banner arrives.
-        bannerShown = true;
-        syncBanner();
       }).catch(function () {
         // Usually "no fill" on a young app: try again instead of waiting
         // for an unrelated modal or account change to call syncBanner.
@@ -231,9 +252,10 @@
                   return AdMob.requestTrackingAuthorization().catch(function () {});
                 }
               })
-              .then(function () { bannerAllowed = true; syncBanner(); prepareInterstitial(); });
+              .then(function () { bannerAllowed = true; syncNativeAds(); syncBanner(); prepareInterstitial(); });
           }
           bannerAllowed = true;
+          syncNativeAds();
           syncBanner();
           prepareInterstitial();
         }

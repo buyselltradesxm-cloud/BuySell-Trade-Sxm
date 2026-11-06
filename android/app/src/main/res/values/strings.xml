@@ -8,4 +8,5 @@
     <!-- AdMob App ID for "Buy Sell Trade SXM (Android)" in the Korek Digital
          AdMob account (see ads-config.js → AdsConfig.admob for its ad unit). -->
     <string name="admob_app_id">ca-app-pub-7816106453580174~7194862604</string>
+    <string name="admob_browse_banner_id">ca-app-pub-7816106453580174/5881780931</string>
 </resources>
