@@ -3407,7 +3407,7 @@ function openListing(id, syncUrl = true){
             <p>${t().shareHelp}</p>
           </div>
           <div class="share-row">
-            <input id="shareUrl-${l.id}" value="${esc(shareUrl)}" readonly data-click="selectInputText" data-click-args='${dataArgs(["__EVENT__"])}' aria-label="${t().shareTitle}">
+            <input id="shareUrl-${l.id}" value="${esc(shareUrl)}" readonly inputmode="none" data-click="selectInputText" data-click-args='${dataArgs(["__EVENT__"])}' aria-label="${t().shareTitle}">
             <button type="button" class="secondary-btn" data-click="copyListingLink" data-click-args='${dataArgs([l.id, "__EVENT__"])}'>${t().copyLink}</button>
           </div>
         </div>
@@ -3448,7 +3448,16 @@ function toggleFavFromDetail(id){
   showToast(state.favs.has(key) ? t().savedToast : t().removedToast);
 }
 
+function androidShareBridge(){
+  const cap = window.Capacitor;
+  if (!cap || cap.getPlatform?.() !== 'android' || !cap.isPluginAvailable?.('SXMShare')) return null;
+  return cap.Plugins?.SXMShare || cap.registerPlugin?.('SXMShare');
+}
 async function copyText(text){
+  const native = androidShareBridge();
+  if(native && /^https:\/\/buyselltradesxm\.com\//.test(text)){
+    try{ await native.copy({url:text}); return true; }catch(_){}
+  }
   if(navigator.clipboard?.writeText && window.isSecureContext){
     try{
       await navigator.clipboard.writeText(text);
@@ -3458,6 +3467,7 @@ async function copyText(text){
   const helper = document.createElement("textarea");
   helper.value = text;
   helper.setAttribute("readonly", "");
+  helper.setAttribute("inputmode", "none");
   helper.style.position = "fixed";
   helper.style.left = "-9999px";
   document.body.appendChild(helper);
@@ -3476,7 +3486,6 @@ async function copyListingLink(id, e){
   if(e) e.stopPropagation();
   const input = document.getElementById(`shareUrl-${id}`);
   const url = input?.value || listingUrl(id);
-  if(input) input.select();
   const ok = await copyText(url);
   showToast(ok ? t().linkCopied : (state.lang==="fr" ? "Lien prêt à copier." : "Link ready to copy."));
 }
@@ -3486,6 +3495,11 @@ async function shareListing(id, e){
   const l = L.find(x=>idKey(x.id)===idKey(id));
   if(!l) return;
   const payload = listingSharePayload(l);
+  const native = androidShareBridge();
+  if(native){
+    try{ await native.share({url:payload.url}); return; }
+    catch(_){ showToast(state.lang==='fr' ? 'Partage indisponible. Réessayez.' : 'Sharing unavailable. Please retry.'); return; }
+  }
   if(navigator.share){
     try{
       await navigator.share(payload);
@@ -3494,8 +3508,8 @@ async function shareListing(id, e){
       if(err?.name === "AbortError") return;
     }
   }
-  await copyText(payload.url);
-  showToast(navigator.share ? t().shareFailed : t().linkCopied);
+  const copied = await copyText(payload.url);
+  showToast(copied ? t().linkCopied : (state.lang==='fr' ? 'Impossible de copier le lien. Réessayez.' : 'Could not copy link. Please retry.'));
 }
 
 let reportingListingId = null;

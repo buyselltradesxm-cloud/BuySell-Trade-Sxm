@@ -26,6 +26,7 @@
   if (!isNative()) return;
 
   window.__BST_NATIVE_ADS__ = true;
+  if (window.Capacitor.getPlatform() === 'android') document.documentElement.classList.add('sxm-android');
 
   function ready(fn) {
     if (document.readyState === "loading") {
@@ -74,6 +75,25 @@
     var bannerRequested = false;
     var bannerShown = false;
     var bannerHidden = false;
+    var retryTimer;
+    // showBanner resolves when the request starts, not when Google supplies an ad.
+    // Listen for asynchronous failures too, otherwise a failed first request stays blank.
+    AdMob.addListener('bannerAdFailedToLoad', function (error) {
+      window.__BST_ADMOB_STATUS__ = { state: 'failed', code: error && error.code };
+      bannerShown = false;
+      clearTimeout(retryTimer);
+      retryTimer = setTimeout(function () {
+        AdMob.removeBanner().catch(function () {}).then(function () {
+          bannerRequested = false;
+          syncBanner();
+        });
+      }, 60000);
+    });
+    AdMob.addListener('bannerAdLoaded', function () {
+      window.__BST_ADMOB_STATUS__ = { state: 'loaded' };
+      bannerShown = true;
+      syncBanner();
+    });
     function purchaseOpen() {
       return PURCHASE_MODALS.some(function (id) {
         var modal = document.getElementById(id);

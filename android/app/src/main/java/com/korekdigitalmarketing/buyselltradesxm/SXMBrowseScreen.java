@@ -52,7 +52,10 @@ final class SXMBrowseScreen extends ScrollView {
     private final LinearLayout grid, filters;
     private final TextView heading, status;
     private final EditText search;
-    private String category = "", side = "";
+    private String category = "", side = "", area = "";
+    private TextView locationPicker;
+    private static final String[] AREAS_FR = {"Marigot","Concordia","Agrément","Galisbay","Hameau du Pont","Saint-James","Bellevue","Sandy Ground","Baie Nettlé","Terres Basses","Grand Case","La Savane","Cul-de-Sac","Anse Marcel","Colombier","Rambaud","Saint-Louis","Friar's Bay","Quartier d'Orléans","Oyster Pond","Baie Orientale"};
+    private static final String[] AREAS_NL = {"Philipsburg","Simpson Bay","Cole Bay","Maho","Beacon Hill","Cupecoy","Mullet Bay","Lowlands","Pelican Key","Cay Bay","Cay Hill","Little Bay","Belair","Point Blanche","Guana Bay","Dawn Beach","Oyster Pond","Dutch Quarter","Middle Region","Madame Estate","Sucker Garden","Belvedere","Defiance","St. Peters","Saunders","South Reward","Ebenezer","Cul de Sac","St. John's Estate","Mary's Estate / Mary's Fancy","Sentry Hill","Pond Island","Indigo Bay","Orange Grove","Billy Folly","Point Pirouette"};
     private boolean savedOnly;
     private int generation;
     private int visibleLimit = 40;
@@ -111,9 +114,9 @@ final class SXMBrowseScreen extends ScrollView {
         addFilterRow(french ? new String[]{"Tout", "Véhicules", "Logements", "Électronique", "Plus"} :
             new String[]{"All", "Cars", "Homes", "Electronics", "More"},
             new String[]{"", "voit", "immo", "elec", "*"}, false);
-        addFilterRow(french ? new String[]{"Toute l’île", "Côté français", "Côté hollandais"} :
-            new String[]{"Whole island", "French side", "Dutch side"},
-            new String[]{"", "fr", "nl"}, true);
+        locationPicker = button(french ? "Où chercher ? · Toute l'île" : "Where? · Whole island");
+        locationPicker.setOnClickListener(v -> showLocations());
+        filters.addView(locationPicker, new LinearLayout.LayoutParams(-1, dp(52)));
         heading = label("", 25, true);
         LinearLayout.LayoutParams headingParams = new LinearLayout.LayoutParams(-1, -2);
         headingParams.topMargin = dp(16); headingParams.bottomMargin = dp(14);
@@ -130,6 +133,32 @@ final class SXMBrowseScreen extends ScrollView {
         } catch (Exception ignored) {}
         render();
         refresh();
+    }
+
+    private void showLocations() {
+        String[] choices = french ? new String[]{"Toute l'île", "Côté français", "Côté hollandais"} :
+            new String[]{"Whole island", "French side", "Dutch side"};
+        new android.app.AlertDialog.Builder(getContext())
+            .setTitle(french ? "Où chercher ?" : "Where to search?")
+            .setItems(choices, (dialog, which) -> {
+                if (which == 0) { chooseLocation("", ""); return; }
+                String chosenSide = which == 1 ? "fr" : "nl";
+                String[] districts = which == 1 ? AREAS_FR : AREAS_NL;
+                String[] items = new String[districts.length + 1];
+                items[0] = french ? "Tous les quartiers" : "All areas";
+                System.arraycopy(districts, 0, items, 1, districts.length);
+                new android.app.AlertDialog.Builder(getContext()).setTitle(choices[which])
+                    .setItems(items, (areaDialog, index) -> chooseLocation(chosenSide, index == 0 ? "" : districts[index - 1]))
+                    .setNegativeButton(french ? "Annuler" : "Cancel", null).show();
+            }).setNegativeButton(french ? "Annuler" : "Cancel", null).show();
+    }
+
+    private void chooseLocation(String chosenSide, String chosenArea) {
+        side = chosenSide; area = chosenArea; visibleLimit = 40;
+        String label = side.isEmpty() ? (french ? "Toute l'île" : "Whole island") :
+            side.equals("fr") ? (french ? "Côté français" : "French side") : (french ? "Côté hollandais" : "Dutch side");
+        locationPicker.setText((area.isEmpty() ? "" : area + " · ") + label + " ▾");
+        render();
     }
 
     private int dp(float n) { return (int) (n * getResources().getDisplayMetrics().density + .5f); }
@@ -235,6 +264,7 @@ final class SXMBrowseScreen extends ScrollView {
             if (savedOnly && !saved.contains(id)) continue;
             if (!category.isEmpty() && !category.equals(l.optString("category"))) continue;
             if (!side.isEmpty() && !side.equals(l.optString("side"))) continue;
+            if (!area.isEmpty() && !area.equalsIgnoreCase(l.optString("area"))) continue;
             if (!query.isEmpty() && !(l.optString("title") + " " + l.optString("description") + " " +
                 l.optString("area")).toLowerCase(java.util.Locale.ROOT).contains(query)) continue;
             shown.add(l);

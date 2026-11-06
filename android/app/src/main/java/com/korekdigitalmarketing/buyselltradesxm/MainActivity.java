@@ -18,7 +18,7 @@ public class MainActivity extends BridgeActivity {
     private static final int SEA = Color.rgb(11, 110, 127);
     private static final int INK = Color.rgb(19, 42, 46);
     private static final String[] TABS = {"browse", "saved", "post", "messages", "profile"};
-    private static final String[] ICONS = {"⌂", "♡", "+", "✉", "◯"};
+    private static final int[] ICONS = {R.drawable.tab_home, R.drawable.tab_saved, R.drawable.tab_post, R.drawable.tab_messages, R.drawable.tab_profile};
     private FrameLayout content;
     private LinearLayout bar;
     private SXMBrowseScreen browse;
@@ -28,6 +28,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override public void onCreate(Bundle savedInstanceState) {
         registerPlugin(PlayBillingPlugin.class);
+        registerPlugin(SXMSharePlugin.class);
         super.onCreate(savedInstanceState);
         french = getResources().getConfiguration().getLocales().get(0).getLanguage().equals("fr");
         web = getBridge().getWebView();
@@ -43,6 +44,15 @@ public class MainActivity extends BridgeActivity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(PAPER);
+        // Reserve both gesture/three-button navigation and the keyboard area.
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            androidx.core.graphics.Insets bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars() | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+            androidx.core.graphics.Insets ime = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime());
+            v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+            return insets;
+        });
+        androidx.core.view.WindowCompat.getInsetsController(getWindow(), root).setAppearanceLightStatusBars(true);
+        androidx.core.view.WindowCompat.getInsetsController(getWindow(), root).setAppearanceLightNavigationBars(true);
         parent.addView(root, new ViewGroup.LayoutParams(-1, -1));
         content = new FrameLayout(this);
         root.addView(content, new LinearLayout.LayoutParams(-1, 0, 1));
@@ -52,7 +62,8 @@ public class MainActivity extends BridgeActivity {
         bar = new LinearLayout(this);
         bar.setBackgroundColor(PAPER);
         bar.setElevation(dp(8));
-        root.addView(bar, new LinearLayout.LayoutParams(-1, dp(60)));
+        root.addView(bar, new LinearLayout.LayoutParams(-1, dp(64)));
+        androidx.core.view.ViewCompat.requestApplyInsets(root);
         select("browse");
         web.postDelayed(this::hideWebNavigation, 800);
     }
@@ -117,7 +128,16 @@ public class MainActivity extends BridgeActivity {
             final String tab = TABS[i];
             TextView item = new TextView(this);
             item.setGravity(Gravity.CENTER);
-            item.setText(ICONS[i] + "\n" + labels[i]);
+            item.setText(labels[i]);
+            android.graphics.drawable.Drawable icon = androidx.appcompat.content.res.AppCompatResources.getDrawable(this, ICONS[i]).mutate();
+            icon.setTint(selected.equals(tab) ? SEA : INK);
+            icon.setBounds(0, 0, dp(24), dp(24));
+            item.setCompoundDrawables(null, icon, null, null);
+            item.setCompoundDrawablePadding(dp(4));
+            item.setPadding(0, dp(8), 0, dp(6));
+            item.setTypeface(null, selected.equals(tab) ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+            item.setSelected(selected.equals(tab));
+            item.setBackgroundColor(selected.equals(tab) ? Color.rgb(225, 241, 241) : PAPER);
             item.setTextSize(12);
             item.setContentDescription(labels[i]);
             item.setTextColor(selected.equals(tab) ? SEA : INK);

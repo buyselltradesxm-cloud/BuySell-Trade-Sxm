@@ -8,9 +8,10 @@ body{background:var(--paper);color:var(--ink)}
 .search input[type=text],.search select{color:var(--ink)}
 .search input[type=text]::placeholder{color:var(--mute)}
 .search .go,.post,#profileBtn{background:var(--sea);color:#fff;box-shadow:none}
-.lang{border:1px solid var(--line);background:#fff;border-radius:14px}
-.lang button{color:var(--ink)}
-.lang button[aria-pressed=true]{background:var(--sea);color:#fff}
+.lang,.bar-actions .lang{border:1px solid #0B6E7F;background:#0B6E7F;border-radius:14px}
+.lang button{background:transparent;color:#fff}
+.lang button[aria-pressed=true]{background:#F2B705;color:#132A2E}
+.lang button:focus-visible{outline:2px solid #F2B705;outline-offset:-3px}
 .icon-btn{color:var(--ink);border-color:var(--line)}
 .cur-toggle button{color:var(--ink)}
 .cur-toggle button[aria-pressed=true]{background:var(--sea);color:#fff}
@@ -109,3 +110,24 @@ body{background:var(--paper);color:var(--ink)}
   .market-all-categories .catrail .cat:first-child{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){.card,.market-shortcuts button{transition:none}}
+
+/* Android WebView fallback and modal routes share the same readable navigation. */
+@media(max-width:700px){
+  html.sxm-android{color-scheme:light}
+  html.sxm-android .mobile-nav{background:#FBF7EF!important;color:#132A2E!important;opacity:1;z-index:1000;border-top:1px solid #CCD8D6}
+  html.sxm-android .mobile-nav button,html.sxm-android .mobile-nav a{color:#132A2E!important;opacity:1;font-weight:700}
+  html.sxm-android .mobile-nav svg{stroke:currentColor}
+}
+
+/* Compact island introduction: listings stay within easy reach on phones. */
+@media(max-width:700px){
+  .hero{display:block;position:relative;isolation:isolate;overflow:hidden;background:#103C46;padding:0;border:0}
+  .hero .hero-inner{display:block;min-height:0;padding:18px 20px;max-width:700px;margin:auto}
+  .hero .hero-inner::before{display:none}
+  .hero h1{font-size:22px;line-height:1.18;letter-spacing:-.03em;max-width:28ch;color:#fff;margin:0}
+  .hero p{font-size:12px;line-height:1.45;margin:8px 0 0;max-width:50ch;color:#E2F0F0}
+  .hero .hero-props{display:none}
+  .hero::after{content:"";position:absolute;inset:-5%;z-index:-1;background:linear-gradient(100deg,rgba(8,43,52,.97),rgba(8,43,52,.88)),url('/og-image.jpg') center/cover;opacity:1;transform:scale(1.02);animation:sxm-island-pan 4s ease-out both}
+}
+@keyframes sxm-island-pan{from{transform:scale(1.1) translateX(-1%)}to{transform:scale(1.02) translateX(0)}}
+@media(prefers-reduced-motion:reduce){.hero::after{animation:none}}
