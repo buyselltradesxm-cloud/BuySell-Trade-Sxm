@@ -33,6 +33,7 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
         model.contact = { [weak self] listing in self?.contactSeller(listing.id) }
         model.post = { [weak self] in self?.open(.post) }
         model.alerts = { [weak self] in self?.open(.alerts) }
+        model.languageChanged = { [weak self] useFrench in self?.setBrowseLanguage(useFrench) }
         return model
     }()
     private lazy var browse = UIHostingController(rootView: SXMBrowseView(model: browseModel))
@@ -171,6 +172,17 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     private func showNativeBrowse(_ on: Bool) {
         browse.view.isHidden = !on
         setNeedsStatusBarAppearanceUpdate()
+    }
+
+    func setNativeAdsAllowed(_ allowed: Bool) {
+        browseModel.adsAllowed = allowed
+    }
+
+    private func setBrowseLanguage(_ useFrench: Bool) {
+        french = useFrench
+        buildItems(selected: browseModel.showingSaved ? .saved : .browse)
+        let language = useFrench ? "fr" : "en"
+        web.webView?.evaluateJavaScript("if(typeof setLang==='function')setLang('\(language)')")
     }
 
     private func hideWorkflow() {

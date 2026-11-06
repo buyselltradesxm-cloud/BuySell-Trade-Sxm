@@ -106,15 +106,19 @@ final class SXMBrowseScreen extends ScrollView {
     private final LinearLayout grid, filters;
     private final LinearLayout adContainer;
     private AdView inlineAd;
+    private TextView adDisclosure;
+    private final Runnable adRetry = this::loadInlineAd;
     private boolean adsAllowed;
     private long lastAdAttemptAt;
     private final TextView heading, status, header, tagline, locationSubtitle, cta;
     private final TextView spotlightTitle, spotlightCaption, spotlightAction;
     private final LinearLayout spotlight;
-    private final TextView frButton, enButton, refreshButton, bellButton;
+    private final TextView frButton, enButton, refreshButton, bellButton, locationCaption;
     private final EditText search;
     private String category = "", side = "", area = "";
     private TextView locationPicker;
+    private LinearLayout locationCard;
+    private ImageView globe;
     private static final String[] AREAS_FR = {"Marigot","Concordia","Agrément","Galisbay","Hameau du Pont","Saint-James","Bellevue","Sandy Ground","Baie Nettlé","Terres Basses","Grand Case","La Savane","Cul-de-Sac","Anse Marcel","Colombier","Rambaud","Saint-Louis","Friar's Bay","Quartier d'Orléans","Oyster Pond","Baie Orientale"};
     private static final String[] AREAS_NL = {"Philipsburg","Simpson Bay","Cole Bay","Maho","Beacon Hill","Cupecoy","Mullet Bay","Lowlands","Pelican Key","Cay Bay","Cay Hill","Little Bay","Belair","Point Blanche","Guana Bay","Dawn Beach","Oyster Pond","Dutch Quarter","Middle Region","Madame Estate","Sucker Garden","Belvedere","Defiance","St. Peters","Saunders","South Reward","Ebenezer","Cul de Sac","St. John's Estate","Mary's Estate / Mary's Fancy","Sentry Hill","Pond Island","Indigo Bay","Orange Grove","Billy Folly","Point Pirouette"};
     private boolean savedOnly;
@@ -154,6 +158,15 @@ final class SXMBrowseScreen extends ScrollView {
         language.setGravity(Gravity.CENTER);
         language.setPadding(dp(3), dp(3), dp(3), dp(3));
         language.setBackground(shape(INK, 16));
+        globe = new ImageView(context);
+        globe.setImageResource(R.drawable.ic_globe);
+        globe.setColorFilter(SEA);
+        globe.setPadding(dp(7), dp(7), dp(7), dp(7));
+        globe.setBackground(shape(Color.rgb(228, 243, 243), 18));
+        globe.setContentDescription(french ? "Langue" : "Language");
+        LinearLayout.LayoutParams globeParams = new LinearLayout.LayoutParams(dp(36), dp(36));
+        globeParams.rightMargin = dp(7);
+        top.addView(globe, globeParams);
         top.addView(language, new LinearLayout.LayoutParams(dp(98), dp(44)));
         frButton = languageOption("FR"); enButton = languageOption("EN");
         language.addView(frButton, new LinearLayout.LayoutParams(0, -1, 1));
@@ -189,11 +202,30 @@ final class SXMBrowseScreen extends ScrollView {
         filters = new LinearLayout(context);
         filters.setOrientation(LinearLayout.VERTICAL);
         page.addView(filters);
-        locationPicker = label("", 14, true);
-        locationPicker.setTextColor(SEA); locationPicker.setGravity(Gravity.CENTER_VERTICAL);
-        locationPicker.setPadding(dp(15), 0, dp(12), 0);
-        locationPicker.setBackground(outlinedShape(Color.rgb(228, 243, 243), 15, Color.rgb(192, 224, 224)));
-        locationPicker.setOnClickListener(v -> showLocations());
+        locationCard = new LinearLayout(context);
+        locationCard.setGravity(Gravity.CENTER_VERTICAL);
+        locationCard.setPadding(dp(14), dp(9), dp(12), dp(9));
+        locationCard.setBackground(outlinedShape(Color.WHITE, 17, Color.rgb(192, 224, 224)));
+        LinearLayout locationCopy = new LinearLayout(context);
+        locationCopy.setOrientation(LinearLayout.VERTICAL);
+        locationCard.addView(locationCopy, new LinearLayout.LayoutParams(0, -2, 1));
+        locationPicker = label("", 16, true);
+        locationPicker.setTextColor(INK);
+        locationPicker.setSingleLine(true);
+        locationPicker.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        locationCopy.addView(locationPicker);
+        locationCaption = label("", 11, false);
+        locationCaption.setTextColor(Color.rgb(89, 110, 111));
+        locationCaption.setSingleLine(true);
+        locationCopy.addView(locationCaption);
+        TextView explore = label("➜", 20, true);
+        explore.setTextColor(Color.WHITE);
+        explore.setGravity(Gravity.CENTER);
+        explore.setBackground(shape(SEA, 17));
+        LinearLayout.LayoutParams exploreParams = new LinearLayout.LayoutParams(dp(34), dp(34));
+        exploreParams.leftMargin = dp(8);
+        locationCard.addView(explore, exploreParams);
+        locationCard.setOnClickListener(v -> showLocations());
         buildFilters();
         spotlight = new LinearLayout(context);
         spotlight.setGravity(Gravity.CENTER_VERTICAL);
@@ -228,6 +260,9 @@ final class SXMBrowseScreen extends ScrollView {
         adContainer = new LinearLayout(context);
         adContainer.setOrientation(LinearLayout.VERTICAL);
         adContainer.setGravity(Gravity.CENTER_HORIZONTAL);
+        adContainer.setPadding(0, dp(12), 0, dp(12));
+        adContainer.setBackground(outlinedShape(Color.rgb(244, 249, 247), 16,
+            Color.rgb(218, 230, 227)));
         adContainer.setVisibility(View.GONE);
         grid = new LinearLayout(context); grid.setOrientation(LinearLayout.VERTICAL); page.addView(grid);
         cta = button("");
@@ -270,7 +305,12 @@ final class SXMBrowseScreen extends ScrollView {
     private void updateLocationText() {
         String label = side.isEmpty() ? (french ? "Toute l'île" : "Whole island") :
             side.equals("fr") ? (french ? "Côté français" : "French side") : (french ? "Côté hollandais" : "Dutch side");
-        locationPicker.setText("⌖  " + (area.isEmpty() ? "" : area + " · ") + label + "  ▾");
+        locationPicker.setText("⌖  " + (area.isEmpty() ? "" : area + " · ") + label);
+        locationCaption.setText(area.isEmpty()
+            ? (side.isEmpty() ? (french ? "Les bonnes affaires des deux côtés" : "Great finds on both sides")
+                : (french ? "Explorez tous les quartiers" : "Explore every neighborhood"))
+            : (french ? "Découvrez les annonces du quartier" : "Discover listings in this area"));
+        locationCard.setContentDescription((french ? "Choisir une zone : " : "Choose an area: ") + locationPicker.getText());
     }
 
     private void changeLanguage(boolean useFrench) {
@@ -299,6 +339,8 @@ final class SXMBrowseScreen extends ScrollView {
         frButton.setContentDescription(french ? "Français sélectionné" : "Switch to French");
         enButton.setContentDescription(french ? "Passer en anglais" : "English selected");
         frButton.setSelected(french); enButton.setSelected(!french);
+        if (adDisclosure != null) adDisclosure.setText(french ? "PUBLICITÉ" : "ADVERTISEMENT");
+        globe.setContentDescription(french ? "Langue" : "Language");
         cta.setText(french ? "+  Publier une annonce" : "+  Post a listing");
         spotlightTitle.setText(french ? "Deux côtés. Un marché." : "Two sides. One market.");
         spotlightCaption.setText(french ? "Achetez et vendez sur toute l'île" : "Buy and sell across the island");
@@ -336,12 +378,12 @@ final class SXMBrowseScreen extends ScrollView {
     }
     private void buildFilters() {
         filters.removeAllViews();
-        addFilterRow(french ? new String[]{"Tout", "Véhicules", "Immobilier", "Électronique", "Plus ▾"} :
-            new String[]{"All", "Vehicles", "Property", "Electronics", "More ▾"},
+        addFilterRow(french ? new String[]{"Tout ▾", "Véhicules", "Immobilier", "Électronique", "Plus ▾"} :
+            new String[]{"All ▾", "Vehicles", "Property", "Electronics", "More ▾"},
             new String[]{"", "voit", "immo", "elec", "*"});
-        LinearLayout.LayoutParams pickerParams = new LinearLayout.LayoutParams(-1, dp(44));
+        LinearLayout.LayoutParams pickerParams = new LinearLayout.LayoutParams(-1, dp(62));
         pickerParams.topMargin = dp(8);
-        filters.addView(locationPicker, pickerParams);
+        filters.addView(locationCard, pickerParams);
     }
     private void addFilterRow(String[] names, String[] values) {
         HorizontalScrollView horizontal = new HorizontalScrollView(getContext());
@@ -363,7 +405,7 @@ final class SXMBrowseScreen extends ScrollView {
             LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-2, -1);
             cp.rightMargin = dp(8); row.addView(chip, cp);
             chip.setOnClickListener(v -> {
-                if (value.equals("*")) { showCategories(); return; }
+                if (value.isEmpty() || value.equals("*")) { showCategories(); return; }
                 category = value;
                 visibleLimit = 40;
                 buildFilters();
@@ -402,8 +444,9 @@ final class SXMBrowseScreen extends ScrollView {
     void setAdsAllowed(boolean allowed) {
         adsAllowed = allowed;
         if (!allowed) {
+            removeCallbacks(adRetry);
             adContainer.setVisibility(View.GONE);
-            if (inlineAd != null) { inlineAd.destroy(); inlineAd = null; adContainer.removeAllViews(); }
+            if (inlineAd != null) { inlineAd.destroy(); inlineAd = null; adContainer.removeAllViews(); adDisclosure = null; }
             lastAdAttemptAt = 0;
         } else loadInlineAd();
     }
@@ -434,19 +477,26 @@ final class SXMBrowseScreen extends ScrollView {
                     adContainer.removeAllViews();
                     view.destroy();
                     inlineAd = null;
+                    adDisclosure = null;
+                    removeCallbacks(adRetry);
+                    postDelayed(adRetry, 60000);
                 }
             }
         });
-        TextView disclosure = label(french ? "Publicité" : "Advertisement", 10, false);
-        disclosure.setTextColor(SEA);
-        adContainer.addView(disclosure);
+        adDisclosure = label(french ? "PUBLICITÉ" : "ADVERTISEMENT", 10, true);
+        adDisclosure.setTextColor(SEA);
+        adDisclosure.setLetterSpacing(.1f);
+        LinearLayout.LayoutParams disclosureParams = new LinearLayout.LayoutParams(-1, -2);
+        disclosureParams.leftMargin = dp(12);
+        disclosureParams.bottomMargin = dp(8);
+        adContainer.addView(adDisclosure, disclosureParams);
         adContainer.addView(view, new LinearLayout.LayoutParams(-1, -2));
         view.loadAd(new AdRequest.Builder().build());
     }
 
     void resumeAd() { if (inlineAd != null) inlineAd.resume(); }
     void pauseAd() { if (inlineAd != null) inlineAd.pause(); }
-    void destroyAd() { if (inlineAd != null) { inlineAd.destroy(); inlineAd = null; } io.shutdownNow(); }
+    void destroyAd() { removeCallbacks(adRetry); if (inlineAd != null) { inlineAd.destroy(); inlineAd = null; } io.shutdownNow(); }
     private void setRows(JSONArray rows) {
         listings.clear();
         for (int i = 0; i < rows.length(); i++) {
@@ -528,7 +578,8 @@ final class SXMBrowseScreen extends ScrollView {
             }
             if (i == 0) {
                 LinearLayout.LayoutParams adParams = new LinearLayout.LayoutParams(-1, -2);
-                adParams.bottomMargin = dp(12);
+                adParams.topMargin = dp(6);
+                adParams.bottomMargin = dp(18);
                 grid.addView(adContainer, adParams);
             }
         }

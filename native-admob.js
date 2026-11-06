@@ -85,16 +85,20 @@
     var bannerShown = false;
     var bannerHidden = false;
     var retryTimer;
-    var nativeBrowseVisible = platform === 'android';
+    var nativeBrowseVisible = platform === 'android' ||
+      (platform === 'ios' && !!window.SXMNativeInfo?.nativeBrowse);
     var bannerHeight = 0;
     var layout = platform === 'android' && window.Capacitor.isPluginAvailable?.('SXMLayout')
       ? (window.Capacitor.Plugins?.SXMLayout || window.Capacitor.registerPlugin('SXMLayout')) : null;
+    var iosShell = platform === 'ios' && window.SXMNativeInfo?.nativeBrowse
+      ? (window.Capacitor.Plugins?.SXMNative || window.Capacitor.registerPlugin('SXMNative')) : null;
     if (layout) layout.getBrowseState().then(function (state) {
       nativeBrowseVisible = !!state.visible;
       syncBanner();
     }).catch(function () {});
     function syncNativeAds() {
       if (layout) layout.nativeAdsState({allowed: bannerAllowed && !adFree()}).catch(function () {});
+      if (iosShell) iosShell.nativeAdsState({allowed: bannerAllowed && !adFree()}).catch(function () {});
     }
     window.__BST_ADMOB_SET_BROWSE__ = function (visible) {
       nativeBrowseVisible = !!visible;
