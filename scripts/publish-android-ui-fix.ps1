@@ -12,6 +12,7 @@ Check 'Asset verification failed.'
 node scripts/native-workflows-check.js
 Check 'Workflow verification failed.'
 $files = @(
+ "android/app/src/main/java/com/korekdigitalmarketing/buyselltradesxm/SXMLayoutPlugin.java",
  'android/app/src/main/AndroidManifest.xml',
  'android/app/src/main/java/com/korekdigitalmarketing/buyselltradesxm/MainActivity.java',
  'android/app/src/main/java/com/korekdigitalmarketing/buyselltradesxm/SXMBrowseScreen.java',
@@ -61,8 +62,8 @@ for ($attempt = 0; $attempt -lt 30; $attempt++) {
 if (!$runId) { throw 'Website deployment did not start. Check GitHub Actions.' }
 gh run watch $runId --repo $repo --exit-status
 Check 'Website deployment failed. Android production upload was not started.'
-gh workflow run mobile-android-cloud.yml --repo $repo --ref main -f track=production -f version_name=1.0.5
+gh workflow run mobile-android-cloud.yml --repo $repo --ref main -f track=production -f version_name=1.0.6
 Check 'Could not start Android production build.'
-Write-Host 'Website deployment succeeded. Android 1.0.5 production build requested.'
+Write-Host 'Website deployment succeeded. Android 1.0.6 production build requested.'
 Write-Host 'Check its Publish to Google Play step and Play Console review status before calling the app live.'
 Write-Host 'https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm/actions/workflows/mobile-android-cloud.yml'

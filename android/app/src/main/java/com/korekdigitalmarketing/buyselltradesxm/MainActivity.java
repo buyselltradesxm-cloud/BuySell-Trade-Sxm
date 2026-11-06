@@ -29,10 +29,15 @@ public class MainActivity extends BridgeActivity {
     @Override public void onCreate(Bundle savedInstanceState) {
         registerPlugin(PlayBillingPlugin.class);
         registerPlugin(SXMSharePlugin.class);
+        registerPlugin(SXMLayoutPlugin.class);
         super.onCreate(savedInstanceState);
         french = getResources().getConfiguration().getLocales().get(0).getLanguage().equals("fr");
         web = getBridge().getWebView();
         installShell();
+    }
+
+    public void reserveBanner(int height) {
+        if (content != null) content.setPadding(0, 0, 0, dp(height));
     }
 
     private int dp(float value) { return (int) (value * getResources().getDisplayMetrics().density + .5f); }

@@ -76,6 +76,11 @@
     var bannerShown = false;
     var bannerHidden = false;
     var retryTimer;
+    var layout = platform === 'android' && window.Capacitor.isPluginAvailable?.('SXMLayout')
+      ? (window.Capacitor.Plugins?.SXMLayout || window.Capacitor.registerPlugin('SXMLayout')) : null;
+    AdMob.addListener('bannerAdSizeChanged', function (size) {
+      if (layout) layout.bannerSize({height:Math.ceil(Number(size.height) || 0)}).catch(function () {});
+    });
     // showBanner resolves when the request starts, not when Google supplies an ad.
     // Listen for asynchronous failures too, otherwise a failed first request stays blank.
     AdMob.addListener('bannerAdFailedToLoad', function (error) {

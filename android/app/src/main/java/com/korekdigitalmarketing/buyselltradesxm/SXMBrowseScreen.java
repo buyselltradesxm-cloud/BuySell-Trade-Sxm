@@ -274,15 +274,19 @@ final class SXMBrowseScreen extends ScrollView {
             return;
         }
         int width = getResources().getDisplayMetrics().widthPixels;
-        boolean twoColumns = width >= dp(360);
+        boolean twoColumns = width >= dp(300);
         for (int i = 0; i < Math.min(shown.size(), visibleLimit); i += twoColumns ? 2 : 1) {
             LinearLayout row = new LinearLayout(getContext());
-            LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2); rp.bottomMargin = dp(14);
+            LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2); rp.bottomMargin = dp(22);
             grid.addView(row, rp);
             for (int j = i; j < Math.min(shown.size(), Math.min(visibleLimit, i + (twoColumns ? 2 : 1))); j++) {
                 View card = card(shown.get(j), generation);
                 LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(0, -2, 1);
                 if (j > i) cp.leftMargin = dp(12); row.addView(card, cp);
+                if (twoColumns && j == i && i + 1 >= Math.min(shown.size(), visibleLimit)) {
+                    View spacer = new View(getContext());
+                    LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(0, 1, 1); sp.leftMargin = dp(12); row.addView(spacer, sp);
+                }
             }
         }
         if (shown.size() > visibleLimit) {
@@ -293,24 +297,33 @@ final class SXMBrowseScreen extends ScrollView {
     }
     private View card(JSONObject l, int currentGeneration) {
         LinearLayout box = new LinearLayout(getContext()); box.setOrientation(LinearLayout.VERTICAL);
-        box.setBackground(shape(Color.WHITE, 14)); box.setPadding(dp(8), dp(8), dp(8), dp(12));
+        box.setBackgroundColor(Color.TRANSPARENT); box.setPadding(0, 0, 0, dp(8));
         String id = l.optString("id"); box.setOnClickListener(v -> showDetail(l));
         ImageView photo = new ImageView(getContext());
         photo.setScaleType(ImageView.ScaleType.CENTER_CROP);
         photo.setBackgroundColor(Color.rgb(233, 238, 233));
-        box.addView(photo, new LinearLayout.LayoutParams(-1, dp(155)));
+        android.widget.FrameLayout imageFrame = new android.widget.FrameLayout(getContext());
+        int imageHeight = Math.max(dp(130), (getResources().getDisplayMetrics().widthPixels - dp(48)) / 2);
+        imageFrame.setBackground(shape(Color.rgb(233, 238, 233), 14));
+        imageFrame.setClipToOutline(true);
+        imageFrame.addView(photo, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        box.addView(imageFrame, new LinearLayout.LayoutParams(-1, imageHeight));
         JSONArray pictures = l.optJSONArray("thumb_photos");
         if (pictures == null || pictures.length() == 0) pictures = l.optJSONArray("photos");
         String photoURL = pictures == null ? "" : pictures.optString(0);
         loadPhoto(photoURL, photo, currentGeneration);
-        TextView heart = label(saved.contains(id) ? "♥" : "♡", 24, true);
-        heart.setTextColor(SEA); heart.setGravity(Gravity.END);
-        heart.setContentDescription(saved.contains(id) ? (french ? "Retirer des favoris" : "Remove from saved") :
-            (french ? "Enregistrer" : "Save listing"));
+        android.widget.ImageButton heart = new android.widget.ImageButton(getContext());
+        heart.setImageResource(R.drawable.tab_saved);
+        heart.setColorFilter(saved.contains(id) ? Color.rgb(208, 70, 54) : INK);
+        heart.setBackground(shape(Color.WHITE, 24));
+        heart.setPadding(dp(10), dp(10), dp(10), dp(10));
+        heart.setContentDescription(saved.contains(id) ? (french ? "Retirer des favoris" : "Remove from saved") : (french ? "Enregistrer" : "Save listing"));
         heart.setOnClickListener(v -> toggleSaved(id));
-        box.addView(heart);
-        TextView title = label(l.optString("title"), 15, true); title.setMaxLines(2); box.addView(title);
-        TextView location = label(place(l), 12, false); location.setMaxLines(1); box.addView(location);
+        android.widget.FrameLayout.LayoutParams hp = new android.widget.FrameLayout.LayoutParams(dp(44), dp(44), Gravity.TOP | Gravity.END);
+        hp.setMargins(dp(6), dp(6), dp(6), dp(6));
+        imageFrame.addView(heart, hp);
+        TextView title = label(l.optString("title"), 15, true); title.setMaxLines(2); title.setMinLines(2); title.setEllipsize(android.text.TextUtils.TruncateAt.END); title.setPadding(0, dp(8), 0, 0); box.addView(title);
+        TextView location = label(place(l), 12, false); location.setMaxLines(2); box.addView(location);
         String priceText = price(l);
         if (!priceText.isEmpty()) {
             TextView value = label(priceText, 17, true); value.setTextColor(SEA); box.addView(value);
