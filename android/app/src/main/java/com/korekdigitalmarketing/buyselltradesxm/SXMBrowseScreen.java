@@ -1,6 +1,7 @@
 package com.korekdigitalmarketing.buyselltradesxm;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.Intent;
 import android.net.Uri;
 import android.graphics.Bitmap;
@@ -17,6 +18,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.ump.UserMessagingPlatform;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -50,6 +58,10 @@ final class SXMBrowseScreen extends ScrollView {
     private final Runnable post, alerts;
     private final boolean french;
     private final LinearLayout grid, filters;
+    private final LinearLayout adContainer;
+    private AdView inlineAd;
+    private boolean adsAllowed;
+    private long lastAdAttemptAt;
     private final TextView heading, status;
     private final EditText search;
     private String category = "", side = "", area = "";
@@ -122,6 +134,13 @@ final class SXMBrowseScreen extends ScrollView {
         headingParams.topMargin = dp(16); headingParams.bottomMargin = dp(14);
         page.addView(heading, headingParams);
         status = label("", 14, false); page.addView(status);
+        adContainer = new LinearLayout(context);
+        adContainer.setOrientation(LinearLayout.VERTICAL);
+        adContainer.setGravity(Gravity.CENTER_HORIZONTAL);
+        adContainer.setVisibility(View.GONE);
+        LinearLayout.LayoutParams adParams = new LinearLayout.LayoutParams(-1, -2);
+        adParams.bottomMargin = dp(16);
+        page.addView(adContainer, adParams);
         grid = new LinearLayout(context); grid.setOrientation(LinearLayout.VERTICAL); page.addView(grid);
         TextView cta = button(french ? "Vendre un objet  +  Ajouter vos photos" : "Sell something  +  Add your photos");
         LinearLayout.LayoutParams ctaParams = new LinearLayout.LayoutParams(-1, dp(54));
@@ -215,7 +234,60 @@ final class SXMBrowseScreen extends ScrollView {
                 category = ids[which]; visibleLimit = 40; render();
             }).show();
     }
-    void showSaved(boolean value) { savedOnly = value; search.setText(""); render(); scrollTo(0, 0); }
+    void showSaved(boolean value) {
+        savedOnly = value; search.setText(""); render(); scrollTo(0, 0);
+        if (adContainer != null) adContainer.setVisibility(!savedOnly && adsAllowed && inlineAd != null && inlineAd.getTag() == Boolean.TRUE ? View.VISIBLE : View.GONE);
+        if (!savedOnly) loadInlineAd();
+    }
+
+    void setAdsAllowed(boolean allowed) {
+        adsAllowed = allowed;
+        if (!allowed) {
+            adContainer.setVisibility(View.GONE);
+            if (inlineAd != null) { inlineAd.destroy(); inlineAd = null; adContainer.removeAllViews(); }
+            lastAdAttemptAt = 0;
+        } else loadInlineAd();
+    }
+
+    private void loadInlineAd() {
+        if (!adsAllowed || savedOnly || inlineAd != null ||
+            !UserMessagingPlatform.getConsentInformation(getContext()).canRequestAds() ||
+            (lastAdAttemptAt != 0 && android.os.SystemClock.elapsedRealtime() - lastAdAttemptAt < 60000)) return;
+        lastAdAttemptAt = android.os.SystemClock.elapsedRealtime();
+        boolean debug = (getContext().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        AdView view = new AdView(getContext());
+        inlineAd = view;
+        view.setAdUnitId(debug ? "ca-app-pub-3940256099942544/6300978111" :
+            getResources().getString(R.string.admob_browse_banner_id));
+        int width = Math.max(250, (int) ((getResources().getDisplayMetrics().widthPixels - dp(36)) /
+            getResources().getDisplayMetrics().density));
+        view.setAdSize(AdSize.getInlineAdaptiveBannerAdSize(width, 110));
+        view.setAdListener(new AdListener() {
+            @Override public void onAdLoaded() {
+                if (inlineAd == view) {
+                    view.setTag(Boolean.TRUE);
+                    adContainer.setVisibility(adsAllowed && !savedOnly ? View.VISIBLE : View.GONE);
+                }
+            }
+            @Override public void onAdFailedToLoad(LoadAdError error) {
+                if (inlineAd == view) {
+                    adContainer.setVisibility(View.GONE);
+                    adContainer.removeAllViews();
+                    view.destroy();
+                    inlineAd = null;
+                }
+            }
+        });
+        TextView disclosure = label(french ? "Publicité" : "Advertisement", 10, false);
+        disclosure.setTextColor(SEA);
+        adContainer.addView(disclosure);
+        adContainer.addView(view, new LinearLayout.LayoutParams(-1, -2));
+        view.loadAd(new AdRequest.Builder().build());
+    }
+
+    void resumeAd() { if (inlineAd != null) inlineAd.resume(); }
+    void pauseAd() { if (inlineAd != null) inlineAd.pause(); }
+    void destroyAd() { if (inlineAd != null) { inlineAd.destroy(); inlineAd = null; } io.shutdownNow(); }
     private void setRows(JSONArray rows) {
         listings.clear();
         for (int i = 0; i < rows.length(); i++) {
