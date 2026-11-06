@@ -37,15 +37,16 @@ if ($LASTEXITCODE -eq 1) {
 git push origin $branch
 Check 'Could not push corrections.'
 $headSha = git rev-parse HEAD
-$prs = @(gh pr list --repo $repo --head $branch --base main --state open --json number | ConvertFrom-Json)
+$prs = gh pr list --repo $repo --head $branch --base main --state open --json number | ConvertFrom-Json
 Check 'Could not inspect pull requests.'
-if ($prs.Count -eq 0) {
+if (!$prs) {
  gh pr create --repo $repo --base main --head $branch --title 'Fix Android navigation, sharing and marketplace layout' --body 'Improve tab contrast and system insets, add side and district filtering, use native listing sharing, compact the mobile hero, and retry failed AdMob banner requests. Android debug compilation and targeted sharing/browser checks passed. Physical-device ad delivery remains unverified.'
  Check 'Could not create pull request.'
- $prs = @(gh pr list --repo $repo --head $branch --base main --state open --json number | ConvertFrom-Json)
+ $prs = gh pr list --repo $repo --head $branch --base main --state open --json number | ConvertFrom-Json
  Check 'Could not find new pull request.'
 }
-$prNumber = $prs[0].number
+if (!$prs) { throw 'Pull request was not found after creation.' }
+$prNumber = @($prs)[0].number
 gh pr merge $prNumber --repo $repo --squash --match-head-commit $headSha
 Check 'Merge failed. Resolve the reported checks or conflicts before continuing.'
 $merged = gh pr view $prNumber --repo $repo --json state,mergeCommit | ConvertFrom-Json
@@ -54,9 +55,9 @@ if ($merged.state -ne 'MERGED') { throw 'Pull request is not merged yet.' }
 $mergeSha = $merged.mergeCommit.oid
 $runId = $null
 for ($attempt = 0; $attempt -lt 30; $attempt++) {
- $runs = @(gh run list --repo $repo --workflow deploy-pages.yml --commit $mergeSha --json databaseId --limit 1 | ConvertFrom-Json)
+ $runs = gh run list --repo $repo --workflow deploy-pages.yml --commit $mergeSha --json databaseId --limit 1 | ConvertFrom-Json
  Check 'Could not inspect website deployment.'
- if ($runs.Count -gt 0) { $runId = $runs[0].databaseId; break }
+ if ($runs) { $runId = @($runs)[0].databaseId; break }
  Start-Sleep -Seconds 10
 }
 if (!$runId) { throw 'Website deployment did not start. Check GitHub Actions.' }
