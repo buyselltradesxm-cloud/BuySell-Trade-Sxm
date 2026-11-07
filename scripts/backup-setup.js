@@ -43,7 +43,8 @@ const tmp = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "bst-backup-")), "ro
 fs.writeFileSync(tmp, sql, {mode: 0o600});
 try {
   console.log("1/2  Creating the read-only database account bst_backup...");
-  const out = execFileSync("supabase", ["db", "query", "--linked", "-f", tmp], {encoding: "utf8"});
+  // JSON on purpose: the CLI prints a table in a terminal and JSON only for AI agents.
+  const out = execFileSync("supabase", ["db", "query", "--linked", "--output-format", "json", "-f", tmp], {encoding: "utf8"});
   if(!/"read_only_access":\s*true/.test(out)) throw new Error("The database did not confirm the account:\n" + out);
 } finally {
   fs.rmSync(path.dirname(tmp), {recursive: true, force: true});
