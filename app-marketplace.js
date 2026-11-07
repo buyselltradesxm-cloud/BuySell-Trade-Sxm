@@ -2181,6 +2181,65 @@ function jsString(value){
   return JSON.stringify(String(value ?? "")).replace(/</g, "\\u003C");
 }
 
+// Outline icons for the listing detail actions (same shapes as the Android app).
+const DETAIL_ICONS = (()=>{
+  const svg = (d, extra = "")=>`<svg class="btn-icon${extra}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const heart = '<path d="M12 21 3 12C-2 5 7 1 12 7c5-6 14-2 9 5z"/>';
+  return {
+    share: svg('<path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 11v9h14v-9"/>'),
+    heart: svg(heart),
+    heartOn: svg(heart.replace("<path", '<path fill="currentColor"'), " is-on"),
+    pin: svg('<path d="M12 21.5S5 14.5 5 9.5a7 7 0 0 1 14 0c0 5-7 12-7 12z"/><circle cx="12" cy="9.5" r="2.5"/>')
+  };
+})();
+
+// Full-screen photo: tap the detail photo; arrows, swipe or keyboard change photo; tap, ✕ or Escape close.
+function openPhotoViewer(id){
+  const l = L.find(x=>idKey(x.id)===idKey(id));
+  const gallery = l ? listingGallery(l) : [];
+  if(!gallery.length) return;
+  const fr = state.lang === "fr";
+  const current = document.getElementById(`mainPhoto-${id}`)?.getAttribute("src");
+  let at = Math.max(0, gallery.findIndex(p=>p.img === current));
+  const box = document.createElement("div");
+  box.className = "photo-viewer";
+  box.setAttribute("role", "dialog");
+  box.setAttribute("aria-modal", "true");
+  box.setAttribute("aria-label", fr ? "Photo en grand" : "Full-screen photo");
+  box.innerHTML = `<img alt=""><span class="pv-count"></span>
+    <button type="button" class="pv-close" aria-label="${fr ? "Fermer" : "Close"}">✕</button>
+    ${gallery.length > 1 ? `<button type="button" class="pv-prev" aria-label="${fr ? "Photo précédente" : "Previous photo"}">‹</button>
+    <button type="button" class="pv-next" aria-label="${fr ? "Photo suivante" : "Next photo"}">›</button>` : ""}`;
+  const img = box.querySelector("img"), count = box.querySelector(".pv-count");
+  const show = ()=>{ img.src = gallery[at].img; img.alt = gallery[at].alt; count.textContent = gallery.length > 1 ? `${at + 1} / ${gallery.length}` : ""; };
+  const step = d=>{ at = (at + d + gallery.length) % gallery.length; show(); };
+  const close = ()=>{ box.remove(); document.removeEventListener("keydown", onKey, true); };
+  const onKey = e=>{
+    if(e.key === "Escape"){ e.stopPropagation(); e.preventDefault(); close(); }
+    else if(e.key === "ArrowLeft") step(-1);
+    else if(e.key === "ArrowRight") step(1);
+  };
+  let startX = null;
+  box.addEventListener("touchstart", e=>{ startX = e.touches[0].clientX; }, {passive:true});
+  box.addEventListener("touchend", e=>{
+    const dx = startX === null ? 0 : e.changedTouches[0].clientX - startX;
+    startX = null;
+    if(Math.abs(dx) > 50 && gallery.length > 1){ step(dx < 0 ? 1 : -1); box.dataset.swiped = "1"; }
+  });
+  box.addEventListener("click", e=>{
+    e.stopPropagation();
+    if(box.dataset.swiped){ delete box.dataset.swiped; return; }
+    const b = e.target.closest("button");
+    if(b?.classList.contains("pv-prev")) step(-1);
+    else if(b?.classList.contains("pv-next")) step(1);
+    else close();
+  });
+  document.addEventListener("keydown", onKey, true);
+  document.body.appendChild(box);
+  show();
+  box.querySelector(".pv-close").focus();
+}
+
 function setMainListingPhoto(id, src, alt, btn){
   const img = document.getElementById(`mainPhoto-${id}`);
   if(img){
@@ -3389,8 +3448,9 @@ function openListing(id, syncUrl = true){
         <div class="detail-actions">
           ${state.user || listingIsSold(l) ? "" : `<button type="button" class="primary-btn" data-click="requestListingLogin" data-click-args='${dataArgs([l.id])}'>${state.lang==="fr"?"Se connecter pour discuter":"Log in to chat"}</button>`}
           ${isOwnListing(l) && !listingIsSold(l) && !hasActiveProSubscription(state.user) ? `<button type="button" class="primary-btn" data-click="openBoostCheckout" data-click-args='${dataArgs([l.id, "__EVENT__"])}'>${t().boostCta}</button>` : ""}
-          <button type="button" class="primary-btn" data-click="shareListing" data-click-args='${dataArgs([l.id, "__EVENT__"])}'>${t().shareLabel}</button>
-          <button type="button" class="secondary-btn" data-click="toggleFavFromDetail" data-click-args='${dataArgs([l.id])}'>${state.favs.has(idKey(id))?t().savedLabel:t().saveLabel}</button>
+          <button type="button" class="primary-btn" data-click="shareListing" data-click-args='${dataArgs([l.id, "__EVENT__"])}'>${DETAIL_ICONS.share}${t().shareLabel}</button>
+          <button type="button" class="secondary-btn" data-click="toggleFavFromDetail" data-click-args='${dataArgs([l.id])}'>${state.favs.has(idKey(id))?DETAIL_ICONS.heartOn+t().savedLabel:DETAIL_ICONS.heart+t().saveLabel}</button>
+          ${l.area ? `<a class="secondary-btn map-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${l.area}, ${l.side === "nl" ? "Sint Maarten" : "Saint-Martin"}`)}" target="_blank" rel="noopener">${DETAIL_ICONS.pin}${state.lang==="fr"?"Voir le secteur sur la carte":"View area on map"}</a>` : ""}
           ${isOwnListing(l) ? "" : `<button type="button" class="secondary-btn report-btn" data-click="openReportModal" data-click-args='${dataArgs([l.id])}'>${t().reportLabel}</button>`}
         </div>
         <div class="share-box">
@@ -3414,7 +3474,7 @@ function openListing(id, syncUrl = true){
         <aside class="listing-detail-ad" aria-label="Publicité" data-ad-placement="listing-detail"></aside>
       </div>
       ${profile.photos ? `<div class="detail-media">
-        <div class="detail-photo"><img id="mainPhoto-${l.id}" src="${esc(media.img)}" alt="${esc(media.alt)}"></div>
+        <button type="button" class="detail-photo" data-click="openPhotoViewer" data-click-args='${dataArgs([l.id])}' aria-label="${state.lang==="fr"?"Voir la photo en grand":"View photo full screen"}"><img id="mainPhoto-${l.id}" src="${esc(media.img)}" alt="${esc(media.alt)}"></button>
         ${thumbs}
       </div>` : ""}
     </div>`;
