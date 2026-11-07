@@ -2951,6 +2951,45 @@ function scrollCats(dir){
   document.getElementById("catrail").scrollBy({left:dir * 360, behavior:"smooth"});
 }
 
+/* ---------------- PUSH NOTIFICATIONS (invitation after sign-in) ---------------- */
+// Nobody turned notifications on by themselves, so a small card asks once after sign-in,
+// then again at most every 5 days if the person chose "Plus tard". The tap on "Activer"
+// is the user gesture browsers need before asking for permission.
+const PUSH_INVITE_KEY = "bst-push-invite";
+let pushInviteTimer = null;
+function schedulePushInvite(delay = 4000, tries = 0){
+  clearTimeout(pushInviteTimer);
+  pushInviteTimer = setTimeout(()=>showPushInvite(tries), delay);
+}
+async function showPushInvite(tries){
+  if(!state.user || !(window.Push && Push.supported()) || document.getElementById("pushInvite")) return;
+  try { if(Date.now() - Number(localStorage.getItem(PUSH_INVITE_KEY) || 0) < 5 * 86400000) return; } catch(e){}
+  let status = "unsupported";
+  try { status = await Push.status(); } catch(e){}
+  if(status !== "default" && status !== "ready") return;
+  // Wait for open windows and the cookie banner, which would cover the card.
+  const consent = document.getElementById("bst-consent");
+  if(document.querySelector(".modal.open") || (consent && consent.offsetParent !== null)){
+    if(tries < 8) schedulePushInvite(15000, tries + 1);
+    return;
+  }
+  const fr = state.lang === "fr";
+  const card = document.createElement("div");
+  card.id = "pushInvite";
+  card.className = "push-invite";
+  card.setAttribute("role", "dialog");
+  card.setAttribute("aria-live", "polite");
+  card.innerHTML = `<div class="push-invite-icon" aria-hidden="true">🔔</div>
+    <div class="push-invite-copy"><b>${fr ? "Ne ratez aucun message" : "Never miss a message"}</b>
+    <span>${fr ? "Activez les notifications pour savoir quand un acheteur ou un vendeur vous écrit." : "Turn on notifications to know when a buyer or seller writes to you."}</span></div>
+    <div class="push-invite-actions"><button type="button" class="push-invite-later">${fr ? "Plus tard" : "Later"}</button>
+    <button type="button" class="push-invite-on">${fr ? "Activer" : "Turn on"}</button></div>`;
+  const close = ()=>{ try { localStorage.setItem(PUSH_INVITE_KEY, String(Date.now())); } catch(e){} card.remove(); };
+  card.querySelector(".push-invite-later").addEventListener("click", close);
+  card.querySelector(".push-invite-on").addEventListener("click", async ()=>{ close(); await toggleProfilePushNotifications(); });
+  document.body.appendChild(card);
+}
+
 /* ---------------- PUSH NOTIFICATIONS (profile shortcut) ---------------- */
 async function toggleProfilePushNotifications(btn){
   if(!(window.Push && Push.supported())){
@@ -5640,6 +5679,7 @@ async function applySupabaseUser(sbUser){
   await loadBlockedUsers();
   if(revision !== authProjectionRevision) return null;
   persistState();
+  schedulePushInvite();
   return state.user;
 }
 

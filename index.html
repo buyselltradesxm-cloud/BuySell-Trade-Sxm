@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=4254f3bce0be6542"></script>
-<script src="/telemetry.js?v=4254f3bce0be6542"></script>
-<script src="/pwa.js?v=4254f3bce0be6542" defer></script>
-<link href="/fonts/fonts.css?v=4254f3bce0be6542" rel="stylesheet">
+<script src="/frame-guard.js?v=f7cc8ae466be9688"></script>
+<script src="/telemetry.js?v=f7cc8ae466be9688"></script>
+<script src="/pwa.js?v=f7cc8ae466be9688" defer></script>
+<link href="/fonts/fonts.css?v=f7cc8ae466be9688" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -1239,6 +1239,17 @@
     background:var(--paper);padding:12px;gap:12px;
   }
   .vehicle-fields.show{display:grid;}
+  .push-invite{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:9000;max-width:520px;margin:0 auto;
+    display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:center;padding:14px;border-radius:18px;background:var(--white);
+    border:1px solid rgba(11,110,127,.25);box-shadow:0 14px 34px rgba(19,42,46,.22);animation:pushInviteIn .25s ease-out;}
+  .push-invite-icon{width:42px;height:42px;border-radius:12px;background:rgba(11,110,127,.1);display:grid;place-items:center;font-size:21px;}
+  .push-invite-copy b{display:block;font-size:15px;color:var(--ink);}
+  .push-invite-copy span{display:block;font-size:13px;line-height:1.4;color:var(--mute);margin-top:2px;}
+  .push-invite-actions{grid-column:1 / -1;display:flex;gap:8px;justify-content:flex-end;}
+  .push-invite-actions button{min-height:42px;padding:8px 16px;border-radius:999px;font-weight:800;border:1px solid var(--line);background:var(--white);color:var(--ink);}
+  .push-invite-actions .push-invite-on{background:var(--sea);border-color:var(--sea);color:#fff;}
+  @keyframes pushInviteIn{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+  @media (prefers-reduced-motion:reduce){.push-invite{animation:none}}
   .price-unit{font-size:.78em;font-weight:600;color:var(--mute);margin-left:3px;}
   .results-head{scroll-margin-top:12px;}
   .vehicle-fields h3{font-size:16px;font-family:'Space Grotesk',sans-serif;}
@@ -2266,8 +2277,8 @@
   }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
-<link rel="stylesheet" href="market-design.css?v=4254f3bce0be6542">
-<link rel="stylesheet" href="pro-studio.css?v=4254f3bce0be6542">
+<link rel="stylesheet" href="market-design.css?v=f7cc8ae466be9688">
+<link rel="stylesheet" href="pro-studio.css?v=f7cc8ae466be9688">
 </head>
 <body>
 
@@ -3236,23 +3247,23 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=4254f3bce0be6542" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=4254f3bce0be6542"></script>
-<script src="native-ios.js?v=4254f3bce0be6542"></script>
-<script src="captcha.js?v=4254f3bce0be6542"></script>
-<script src="supabase-api.js?v=4254f3bce0be6542"></script>
-<script src="img-utils.js?v=4254f3bce0be6542"></script>
-<script src="draft-store.js?v=4254f3bce0be6542"></script>
-<script src="push-config.js?v=4254f3bce0be6542"></script>
-<script src="push-notifications.js?v=4254f3bce0be6542"></script>
-<script src="consent.js?v=4254f3bce0be6542" defer></script>
-<script src="ads-config.js?v=4254f3bce0be6542"></script>
-<script src="admob-plugin.js?v=4254f3bce0be6542"></script>
-<script src="native-admob.js?v=4254f3bce0be6542"></script>
-<script src="ads.js?v=4254f3bce0be6542" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=f7cc8ae466be9688" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=f7cc8ae466be9688"></script>
+<script src="native-ios.js?v=f7cc8ae466be9688"></script>
+<script src="captcha.js?v=f7cc8ae466be9688"></script>
+<script src="supabase-api.js?v=f7cc8ae466be9688"></script>
+<script src="img-utils.js?v=f7cc8ae466be9688"></script>
+<script src="draft-store.js?v=f7cc8ae466be9688"></script>
+<script src="push-config.js?v=f7cc8ae466be9688"></script>
+<script src="push-notifications.js?v=f7cc8ae466be9688"></script>
+<script src="consent.js?v=f7cc8ae466be9688" defer></script>
+<script src="ads-config.js?v=f7cc8ae466be9688"></script>
+<script src="admob-plugin.js?v=f7cc8ae466be9688"></script>
+<script src="native-admob.js?v=f7cc8ae466be9688"></script>
+<script src="ads.js?v=f7cc8ae466be9688" defer></script>
 
-<script src="app-index.js?v=4254f3bce0be6542"></script>
-<script src="pro-studio.js?v=4254f3bce0be6542"></script>
-<script src="native-workflows.js?v=4254f3bce0be6542"></script>
+<script src="app-index.js?v=f7cc8ae466be9688"></script>
+<script src="pro-studio.js?v=f7cc8ae466be9688"></script>
+<script src="native-workflows.js?v=f7cc8ae466be9688"></script>
 </body>
 </html>
