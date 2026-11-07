@@ -39,3 +39,7 @@ scripts/artifacts/
 /codex-plugin-cc/
 /obsidian-skills/
 /security-audit-skill/
+
+# Local only, never published (the repository and the site are public)
+/.vscode/
+/google code/
