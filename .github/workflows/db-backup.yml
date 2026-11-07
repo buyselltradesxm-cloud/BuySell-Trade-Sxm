@@ -40,7 +40,8 @@ jobs:
           sparse-checkout: .github
           persist-credentials: false
 
-      - uses: supabase/setup-cli@v1
+      # Pinned to a commit: this job holds the database secret, so a moved tag must not run here.
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
         with:
           version: 2.116.0
 
