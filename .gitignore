@@ -29,3 +29,9 @@ play-store-assets/
 appstore-iap-review-screenshots/
 appstore-iap-review-screenshots.zip
 scripts/artifacts/
+
+# Tool clones and old release bundles kept out of the project (removed 2026-11-07)
+/ponytail/
+/strix/
+/graphify/
+/.release-artifacts/
