@@ -43,3 +43,7 @@ scripts/artifacts/
 # Local only, never published (the repository and the site are public)
 /.vscode/
 /google code/
+
+# Firebase: client config is written by CI from a secret; service account keys are secrets.
+android/app/google-services.json
+*firebase-adminsdk*.json

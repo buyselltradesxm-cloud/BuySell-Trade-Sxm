@@ -56,8 +56,27 @@ jobs:
       - name: Verify shared marketplace workflows
         run: npm run test:native-workflows
 
+      # Push notifications: the Firebase client config is kept out of git and
+      # written here from a repository secret. Without it the app still builds
+      # but cannot receive notifications.
+      - name: Add Firebase config (google-services.json)
+        env:
+          FIREBASE_GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$FIREBASE_GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "::warning::FIREBASE_GOOGLE_SERVICES_JSON_BASE64 is not set — this build cannot receive push notifications."
+            exit 0
+          fi
+          echo -n "$FIREBASE_GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
+          node scripts/check-google-services.js android/app/google-services.json "$APP_ID"
+
       - name: Sync Capacitor Android
         run: npx cap sync android
+
+      - name: Check the push plugin is in the Android build
+        run: |
+          grep -q "capacitor-push-notifications" android/app/capacitor.build.gradle android/capacitor.settings.gradle \
+            || { echo "::error::@capacitor/push-notifications was not synced into the Android project"; exit 1; }
 
       - name: Build installable Android preview
         working-directory: android
