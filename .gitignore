@@ -35,3 +35,7 @@ scripts/artifacts/
 /strix/
 /graphify/
 /.release-artifacts/
+/autoresearch/
+/codex-plugin-cc/
+/obsidian-skills/
+/security-audit-skill/
