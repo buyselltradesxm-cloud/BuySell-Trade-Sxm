@@ -1,7 +1,8 @@
 name: Database backup
 
 # Every night: a copy of the live database (roles, schema, data, including
-# accounts in auth.users), kept 30 days as a workflow artifact.
+# accounts in auth.users), kept 30 days as a workflow artifact. On Sundays the
+# copy also holds every photo (both Storage buckets) and is named db-photos-*.
 #
 # This repository is PUBLIC and anyone signed in to GitHub can download its
 # artifacts, so the copy is encrypted (AES-256-GCM) for the certificate
@@ -20,8 +21,14 @@ name: Database backup
 #     -c 'SET session_replication_role = replica' -f data.sql
 on:
   schedule:
-    - cron: "41 2 * * *"
+    - cron: "41 2 * * *"   # database, every night
+    - cron: "11 4 * * 0"   # database and photos, Sundays (photos weekly to keep Storage egress low)
   workflow_dispatch:
+    inputs:
+      photos:
+        description: Include the photos
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -82,12 +89,36 @@ jobs:
           done
           ls -l
 
+      - name: Download the photos
+        if: github.event.schedule == '11 4 * * 0' || inputs.photos
+        env:
+          BACKUP_DB_URL: ${{ secrets.BACKUP_DB_URL }}
+        run: |
+          set -euo pipefail
+          pw="${BACKUP_DB_URL#*://*:}"; echo "::add-mask::${pw%%@*}"
+          cd "$RUNNER_TEMP/dump"
+          # Both buckets are public: files come from their public links, no key needed.
+          /usr/lib/postgresql/17/bin/psql "$BACKUP_DB_URL" -Atc \
+            "select bucket_id || '/' || name from storage.objects where bucket_id in ('listing-photos', 'avatars') order by 1" > photos.txt
+          ok=0; failed=0; skipped=0
+          while IFS= read -r path; do
+            # Users choose their file names: never follow one that could leave the photos folder.
+            if [[ ! "$path" =~ ^[A-Za-z0-9._/-]+$ || "$path" =~ (^|/)\.\.(/|$) ]]; then skipped=$((skipped+1)); continue; fi
+            mkdir -p "photos/$(dirname "$path")"
+            if curl -fsS --retry 3 -o "photos/$path" "https://szhaxlmronirhnntlwyb.supabase.co/storage/v1/object/public/$path"; then
+              ok=$((ok+1)); else failed=$((failed+1)); fi
+          done < photos.txt
+          echo "photos: $ok saved, $failed failed, $skipped skipped, $(du -sh photos 2>/dev/null | cut -f1)"
+          if [ "$failed" -gt 0 ] || [ "$skipped" -gt 0 ]; then echo "::warning::$failed photo(s) failed, $skipped skipped (see photos.txt in the backup)"; fi
+          if [ "$ok" -eq 0 ] && [ -s photos.txt ]; then echo "::error::no photo could be downloaded"; exit 1; fi
+
       - name: Encrypt
         run: |
           set -euo pipefail
-          echo "BACKUP_FILE=db-$(date -u +%F).cms" >> "$GITHUB_ENV"
+          name="db-$(date -u +%F).cms"; [ -d "$RUNNER_TEMP/dump/photos" ] && name="db-photos-$(date -u +%F).cms"
+          echo "BACKUP_FILE=$name" >> "$GITHUB_ENV"
           tar -C "$RUNNER_TEMP/dump" -czf - . | openssl cms -encrypt -binary -aes-256-gcm -outform DER \
-            -out "$RUNNER_TEMP/db-$(date -u +%F).cms" .github/backup-public-cert.pem
+            -out "$RUNNER_TEMP/$name" .github/backup-public-cert.pem
           rm -rf "$RUNNER_TEMP/dump"
           ls -l "$RUNNER_TEMP"/*.cms
 
