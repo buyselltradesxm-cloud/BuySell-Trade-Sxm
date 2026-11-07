@@ -116,7 +116,7 @@ final class SXMBrowseScreen extends ScrollView {
     private final TextView frButton, enButton, refreshButton, bellButton, locationCaption;
     private final EditText search;
     private String category = "", side = "", area = "";
-    private TextView locationPicker;
+    private TextView locationPicker, locationEyebrow, locationAction;
     private LinearLayout locationCard;
     private ImageView globe;
     private static final String[] AREAS_FR = {"Marigot","Concordia","Agrément","Galisbay","Hameau du Pont","Saint-James","Bellevue","Sandy Ground","Baie Nettlé","Terres Basses","Grand Case","La Savane","Cul-de-Sac","Anse Marcel","Colombier","Rambaud","Saint-Louis","Friar's Bay","Quartier d'Orléans","Oyster Pond","Baie Orientale"};
@@ -204,27 +204,43 @@ final class SXMBrowseScreen extends ScrollView {
         page.addView(filters);
         locationCard = new LinearLayout(context);
         locationCard.setGravity(Gravity.CENTER_VERTICAL);
-        locationCard.setPadding(dp(14), dp(9), dp(12), dp(9));
-        locationCard.setBackground(outlinedShape(Color.WHITE, 17, Color.rgb(192, 224, 224)));
+        locationCard.setPadding(dp(12), dp(12), dp(12), dp(12));
+        locationCard.setBackground(outlinedShape(Color.WHITE, 20, Color.rgb(192, 224, 224)));
+        locationCard.setElevation(dp(3));
+        locationCard.setMinimumHeight(dp(78));
+        // Pin in a tinted tile, then eyebrow / area / caption, then a "Changer" pill.
+        ImageView pin = new ImageView(context);
+        pin.setImageResource(R.drawable.ic_location);
+        pin.setColorFilter(SEA);
+        pin.setPadding(dp(11), dp(11), dp(11), dp(11));
+        pin.setBackground(shape(Color.rgb(225, 241, 241), 14));
+        locationCard.addView(pin, new LinearLayout.LayoutParams(dp(48), dp(48)));
         LinearLayout locationCopy = new LinearLayout(context);
         locationCopy.setOrientation(LinearLayout.VERTICAL);
-        locationCard.addView(locationCopy, new LinearLayout.LayoutParams(0, -2, 1));
-        locationPicker = label("", 16, true);
+        LinearLayout.LayoutParams copyParams = new LinearLayout.LayoutParams(0, -2, 1);
+        copyParams.leftMargin = dp(12);
+        locationCard.addView(locationCopy, copyParams);
+        locationEyebrow = label("", 11, true);
+        locationEyebrow.setTextColor(SEA);
+        locationEyebrow.setLetterSpacing(0.08f);
+        locationCopy.addView(locationEyebrow);
+        locationPicker = label("", 18, true);
         locationPicker.setTextColor(INK);
         locationPicker.setSingleLine(true);
         locationPicker.setEllipsize(android.text.TextUtils.TruncateAt.END);
         locationCopy.addView(locationPicker);
-        locationCaption = label("", 11, false);
+        locationCaption = label("", 12, false);
         locationCaption.setTextColor(Color.rgb(89, 110, 111));
         locationCaption.setSingleLine(true);
         locationCopy.addView(locationCaption);
-        TextView explore = label("➜", 20, true);
-        explore.setTextColor(Color.WHITE);
-        explore.setGravity(Gravity.CENTER);
-        explore.setBackground(shape(SEA, 17));
-        LinearLayout.LayoutParams exploreParams = new LinearLayout.LayoutParams(dp(34), dp(34));
+        locationAction = label("", 13, true);
+        locationAction.setTextColor(Color.WHITE);
+        locationAction.setGravity(Gravity.CENTER);
+        locationAction.setPadding(dp(12), 0, dp(12), 0);
+        locationAction.setBackground(shape(SEA, 18));
+        LinearLayout.LayoutParams exploreParams = new LinearLayout.LayoutParams(-2, dp(36));
         exploreParams.leftMargin = dp(8);
-        locationCard.addView(explore, exploreParams);
+        locationCard.addView(locationAction, exploreParams);
         locationCard.setOnClickListener(v -> showLocations());
         buildFilters();
         spotlight = new LinearLayout(context);
@@ -305,7 +321,9 @@ final class SXMBrowseScreen extends ScrollView {
     private void updateLocationText() {
         String label = side.isEmpty() ? (french ? "Toute l'île" : "Whole island") :
             side.equals("fr") ? (french ? "Côté français" : "French side") : (french ? "Côté hollandais" : "Dutch side");
-        locationPicker.setText("⌖  " + (area.isEmpty() ? "" : area + " · ") + label);
+        locationEyebrow.setText(french ? "OÙ CHERCHER ?" : "WHERE TO SEARCH?");
+        locationAction.setText(french ? "Changer ▾" : "Change ▾");
+        locationPicker.setText((area.isEmpty() ? "" : area + " · ") + label);
         locationCaption.setText(area.isEmpty()
             ? (side.isEmpty() ? (french ? "Les bonnes affaires des deux côtés" : "Great finds on both sides")
                 : (french ? "Explorez tous les quartiers" : "Explore every neighborhood"))
@@ -381,8 +399,8 @@ final class SXMBrowseScreen extends ScrollView {
         addFilterRow(french ? new String[]{"Tout ▾", "Véhicules", "Immobilier", "Électronique", "Plus ▾"} :
             new String[]{"All ▾", "Vehicles", "Property", "Electronics", "More ▾"},
             new String[]{"", "voit", "immo", "elec", "*"});
-        LinearLayout.LayoutParams pickerParams = new LinearLayout.LayoutParams(-1, dp(62));
-        pickerParams.topMargin = dp(8);
+        LinearLayout.LayoutParams pickerParams = new LinearLayout.LayoutParams(-1, -2);
+        pickerParams.setMargins(dp(2), dp(10), dp(2), dp(4)); // room for the card shadow
         filters.addView(locationCard, pickerParams);
     }
     private void addFilterRow(String[] names, String[] values) {
