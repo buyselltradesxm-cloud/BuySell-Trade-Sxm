@@ -1,0 +1,95 @@
+name: Database backup
+
+# Every night: a copy of the live database (roles, schema, data, including
+# accounts in auth.users), kept 30 days as a workflow artifact.
+#
+# This repository is PUBLIC and anyone signed in to GitHub can download its
+# artifacts, so the copy is encrypted (AES-256-GCM) for the certificate
+# .github/backup-public-cert.pem. Only the matching private key opens it; it is
+# kept by the owner (C:\Users\PC\Documents\BuySellTradeSxm-backups). Never put
+# that key in this repository or in a GitHub secret.
+#
+# Setup: node scripts/backup-setup.js (read-only database account bst_backup
+# and the secret BACKUP_DB_URL). A failed run makes GitHub email the owner.
+#
+# Open a backup (Git Bash, in the folder holding the downloaded .cms file):
+#   openssl cms -decrypt -binary -inform DER -in db-YYYY-MM-DD.cms \
+#     -inkey ~/Documents/BuySellTradeSxm-backups/backup-private-key.pem | tar -xz
+# Restore into an empty project (Supabase guide "Backup and restore using the CLI"):
+#   psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -f roles.sql -f schema.sql \
+#     -c 'SET session_replication_role = replica' -f data.sql
+on:
+  schedule:
+    - cron: "41 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+          persist-credentials: false
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.116.0
+
+      - name: Install pg_dump 17 (same major version as the database)
+        run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y >/dev/null
+          sudo apt-get install -y -qq postgresql-client-17 >/dev/null
+          /usr/lib/postgresql/17/bin/pg_dump --version
+
+      - name: Dump the database
+        env:
+          BACKUP_DB_URL: ${{ secrets.BACKUP_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "$BACKUP_DB_URL" ]; then echo "::error::BACKUP_DB_URL is not set: run node scripts/backup-setup.js"; exit 1; fi
+          # Hide the password on its own too, in case a tool prints it outside the URL.
+          pw="${BACKUP_DB_URL#*://*:}"; echo "::add-mask::${pw%%@*}"
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          mkdir -p "$RUNNER_TEMP/dump" && cd "$RUNNER_TEMP/dump"
+          # The Supabase CLI's own dump scripts (its exclusions and clean-ups), minus
+          # 'SET ROLE postgres': bst_backup is read-only and must stay so.
+          dump() {
+            supabase db dump --dry-run --db-url "$BACKUP_DB_URL" "${@:2}" 2>/dev/null | sed '/--role "postgres"/d' > "$RUNNER_TEMP/$1.sh"
+            grep -q pg_dump "$RUNNER_TEMP/$1.sh" || { echo "::error::no dump script for $1"; exit 1; }
+            bash "$RUNNER_TEMP/$1.sh" > "$1.sql"
+            rm -f "$RUNNER_TEMP/$1.sh"
+          }
+          dump roles --role-only
+          dump schema
+          dump data --use-copy --data-only
+          # A dump that lost the main tables is a failure, not a backup.
+          for table in '"auth"."users"' '"public"."profiles"' '"public"."listings"' '"public"."messages"'; do
+            grep -q "^COPY $table " data.sql || { echo "::error::$table is missing from the data dump"; exit 1; }
+          done
+          ls -l
+
+      - name: Encrypt
+        run: |
+          set -euo pipefail
+          echo "BACKUP_FILE=db-$(date -u +%F).cms" >> "$GITHUB_ENV"
+          tar -C "$RUNNER_TEMP/dump" -czf - . | openssl cms -encrypt -binary -aes-256-gcm -outform DER \
+            -out "$RUNNER_TEMP/db-$(date -u +%F).cms" .github/backup-public-cert.pem
+          rm -rf "$RUNNER_TEMP/dump"
+          ls -l "$RUNNER_TEMP"/*.cms
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKUP_FILE }}
+          path: ${{ runner.temp }}/${{ env.BACKUP_FILE }}
+          retention-days: 30
+          if-no-files-found: error
+          compression-level: 0
