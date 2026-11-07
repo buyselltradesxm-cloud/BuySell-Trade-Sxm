@@ -15,6 +15,7 @@ struct SXMListing: Codable, Identifiable, Equatable {
     let title: String
     let description: String?
     let category: String?
+    let subcategory: String?
     let area: String?
     let side: String?
     let currency: String?
@@ -25,7 +26,7 @@ struct SXMListing: Codable, Identifiable, Equatable {
     let createdAt: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, title, description, category, area, side, currency, photos
+        case id, title, description, category, subcategory, area, side, currency, photos
         case priceEur = "price_eur", priceUsd = "price_usd", thumbPhotos = "thumb_photos", createdAt = "created_at"
     }
 
@@ -36,6 +37,7 @@ struct SXMListing: Codable, Identifiable, Equatable {
         title = (try? c.decode(String.self, forKey: .title)) ?? ""
         description = try? c.decode(String.self, forKey: .description)
         category = try? c.decode(String.self, forKey: .category)
+        subcategory = try? c.decode(String.self, forKey: .subcategory)
         area = try? c.decode(String.self, forKey: .area)
         side = try? c.decode(String.self, forKey: .side)
         currency = try? c.decode(String.self, forKey: .currency)
@@ -44,6 +46,46 @@ struct SXMListing: Codable, Identifiable, Equatable {
         photos = try? c.decode([String].self, forKey: .photos)
         thumbPhotos = try? c.decode([String].self, forKey: .thumbPhotos)
         createdAt = try? c.decode(String.self, forKey: .createdAt)
+    }
+
+    /// Same words as the website's searchAliases(), so "bike" finds a scooter filed under Vehicles.
+    static let searchWords: [String: String] = [
+        "voit": "vehicules vehicles vehicle car cars voiture voitures auto autos camion truck trucks",
+        "immo": "immobilier property real estate maison apartment appartement rent rental sale vendre louer",
+        "elec": "electronique electronics electronic phone phones laptop laptops ordinateur telephone",
+        "meub": "maison meubles home furniture sofa canape table chair chaise",
+        "mode": "mode fashion",
+        "job": "emploi jobs job work travail hiring cv resume",
+        "serv": "services service cleaning plumber plumbing mechanic construction beauty",
+        "pets": "animaux pets",
+        "bat": "bateaux boats boat bateau jet ski jetski nautique marine",
+        "gaming": "gaming",
+        "beauty": "beaute beauty",
+        "scoot": "motos scooters motorcycles scooter moto motorcycle bike bikes",
+        "locvoit": "locations de voitures car rentals cars voiture rental location louer",
+        "menag": "electromenager appliances appliance frigo refrigerator washer washing",
+        "dining": "restaurants bars sorties nightlife restaurant bar pub beach club cafe food truck sortie",
+        "tourism": "excursions activites tours activities tour excursion activite plongee snorkeling diving jet ski spa wellness",
+        "transport": "taxis transferts transfers taxi transfert airport aeroport chauffeur navette shuttle cruise croisiere",
+        "food": "alimentation boissons food drinks foods boisson meal repas",
+        "lois": "loisirs leisure",
+        "billet": "billetterie tickets",
+        "pro": "materiel pro business gear",
+        "bonplan": "bons plans deals",
+        "scooter-sale": "scooter scooters moto motos motorcycle motorcycles motorbike motorbikes bike bikes",
+        "motorbike-sale": "scooter scooters moto motos motorcycle motorcycles motorbike motorbikes bike bikes",
+        "motorbike-parts": "scooter scooters moto motos motorcycle motorcycles motorbike motorbikes bike bikes",
+        "scooter-mechanic": "scooter scooters moto motos motorcycle motorcycles motorbike motorbikes bike bikes",
+        "bike-equipment": "velo velos bicycle bicycles bike bikes"
+    ]
+    static func fold(_ text: String) -> String {
+        text.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil).lowercased()
+    }
+    /// Every search word must appear in the listing text or in its category words.
+    func matches(_ terms: [String]) -> Bool {
+        let text = SXMListing.fold([title, description ?? "", area ?? ""].joined(separator: " ")) + " " +
+            (SXMListing.searchWords[category ?? ""] ?? "") + " " + (SXMListing.searchWords[subcategory ?? ""] ?? "")
+        return terms.allSatisfy { text.contains($0) }
     }
 
     var photoURLs: [URL] { (photos ?? []).compactMap { $0.hasPrefix("https://") ? URL(string: $0) : nil } }
@@ -139,7 +181,7 @@ final class SXMBrowseModel: ObservableObject {
         defer { loading = false }
         var parts = URLComponents(string: "\(Self.supabaseURL)/rest/v1/listings")!
         parts.queryItems = [
-            URLQueryItem(name: "select", value: "id,title,description,category,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at"),
+            URLQueryItem(name: "select", value: "id,title,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at"),
             URLQueryItem(name: "seller_id", value: "not.is.null"),
             URLQueryItem(name: "or", value: "(status.is.null,status.in.(active,reserved))"),
             URLQueryItem(name: "order", value: "created_at.desc"),
@@ -219,13 +261,13 @@ struct SXMBrowseView: View {
     @State private var showFilters = false
     private var fr: Bool { model.french }
     private var shown: [SXMListing] {
-        let q = query.trimmingCharacters(in: .whitespaces).lowercased()
+        let terms = SXMListing.fold(query).split(whereSeparator: { $0.isWhitespace }).map(String.init)
         let source = model.showingSaved ? model.saved : model.listings
         return source.filter { l in
             (category == nil || l.category == category) &&
             (side == nil || l.side == side) &&
             (area.map { l.area?.localizedCaseInsensitiveCompare($0) == .orderedSame } ?? true) &&
-            (q.isEmpty || [l.title, l.description ?? "", l.area ?? ""].joined(separator: " ").lowercased().contains(q))
+            (terms.isEmpty || l.matches(terms))
         }
     }
     var body: some View {
