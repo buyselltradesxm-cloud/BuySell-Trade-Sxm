@@ -199,7 +199,7 @@
      Builds that have it announce themselves through window.SXMNativeInfo
      before any script runs; older builds and browsers never set it. */
   const shell = () => (isIOS() && window.SXMNativeInfo) || {};
-  const tabModals = { postModal: "post", messagesModal: "messages", profileModal: "profile" };
+  const tabModals = { postModal: "post", proStudioModal: "post", messagesModal: "messages", profileModal: "profile" };
   let wantedTab = "browse", sentTabs = "", workflowTab = null;
   function currentTab() {
     for (const modal of document.querySelectorAll(".modal.open")) if (tabModals[modal.id]) return tabModals[modal.id];

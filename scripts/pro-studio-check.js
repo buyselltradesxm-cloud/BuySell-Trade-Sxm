@@ -52,15 +52,23 @@ const user=(extra={})=>({id:'qa-biz',name:'Owner',businessName:'Island Pro',acco
   await page.locator('.ps-lines input').nth(0).fill('Aéroport → <b>Marigot</b>');
   await page.locator('.ps-lines input').nth(1).fill('30 $');
   await page.selectOption('#ps-s0-area','Philipsburg');
+  await page.locator('#proStudioBody textarea').first().fill('Chauffeur agréé');
   await page.locator('.ps-publish').click();
   await page.locator('#proStudioModal').waitFor({state:'hidden'});
   const taxi=await page.evaluate(()=>L.find(l=>l.cat==='transport'));
   assert.equal(taxi.sub,'airport-transfer');assert.equal(taxi.side,'nl');
   assert.deepEqual(taxi.details.f.routes,[['Aéroport → <b>Marigot</b>','30 $']]);
+  // The stored description carries the details as text for the apps' native screens.
+  assert.equal(taxi.details.own,'Chauffeur agréé');
+  assert.ok(taxi.desc.startsWith('Chauffeur agréé\n\n'),taxi.desc);
+  assert.ok(taxi.desc.includes('Aéroport → <b>Marigot</b> · 30 $'),taxi.desc);
   await page.evaluate(id=>openListing(id),taxi.id);
   const details=page.locator('#detailBody .pro-details');
   await details.waitFor({state:'attached'});
   assert.match(await details.textContent(),/Aéroport → <b>Marigot<\/b>/);
+  const pageText=await page.locator('#detailBody').textContent();
+  assert.equal(pageText.split('Aéroport →').length-1,1,'Listing page shows the routes once, not again in the description');
+  assert.ok(pageText.includes('Chauffeur agréé'));
   assert.equal(await page.locator('#detailBody .pro-details b b, #detailBody img[src="x"]').count(),0);
   assert.equal(await page.evaluate(()=>window.__xss),undefined);
 
@@ -68,6 +76,7 @@ const user=(extra={})=>({id:'qa-biz',name:'Owner',businessName:'Island Pro',acco
   await page.evaluate(id=>openEditListing(id),taxi.id);
   assert.equal(await page.locator('#proStudioModal').isVisible(),true);
   assert.equal(await page.inputValue('#ps-i0-title'),taxi.t);
+  assert.equal(await page.locator('#proStudioBody textarea').first().inputValue(),'Chauffeur agréé','Editing shows only the seller\'s own words');
   await page.fill('#ps-i0-title','Taxi Jean transferts');
   await page.locator('.ps-publish').click();
   await page.locator('#proStudioModal').waitFor({state:'hidden'});

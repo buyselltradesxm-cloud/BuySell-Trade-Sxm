@@ -38,6 +38,14 @@ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg
           assert.equal(await page.evaluate(()=>calls.filter(c=>c[0]==='workflow').pop()[1].tab),'post');
           assert.equal(await page.evaluate(()=>calls.filter(c=>c[0]==='tabs').pop()[1].selected),'post');
         }
+        // Subscribed businesses get the same Studio Pro as on the website, in the app too.
+        await page.evaluate(()=>{const e=new Event('sxmTab');e.tab='browse';window.dispatchEvent(e);calls.length=0;
+          state.user=normalizeUser({id:'22222222-2222-4222-8222-222222222222',provider:'supabase',accountType:'business',name:'Pro',
+            accountPlan:'pro-business',subscriptionStatus:'active',subscriptionCurrentPeriodEnd:'2099-01-01'});openPostModal();});
+        assert.equal(await page.locator('#proStudioModal.open').count(),1,'Pro account opens the Studio');
+        assert.equal(await page.evaluate(()=>calls.filter(c=>c[0]==='workflow').length),0,'Pro account skips the native form');
+        await page.waitForFunction(()=>calls.filter(c=>c[0]==='tabs').pop()?.[1].selected==='post',null,{timeout:3000}); // Studio keeps the Post tab lit
+        await page.evaluate(()=>{closeModal('proStudioModal');state.user=normalizeUser({id:'11111111-1111-4111-8111-111111111111',provider:'supabase',accountType:'personal',name:'QA'});});
         await page.evaluate(()=>{document.querySelectorAll('.modal.open').forEach(m=>closeModal(m.id));SB.fetchInbox=async()=>[];});
         await page.evaluate(()=>openMessages());
         assert.equal(await page.locator('#messagesModal.open').count(),native?0:1);

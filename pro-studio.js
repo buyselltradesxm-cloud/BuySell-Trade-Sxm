@@ -299,7 +299,8 @@ function openStudioEdit(listing){
   if(!tpl || !isOwnListing(listing) || !studioCanUse()) return false;
   const f = listing.details.f && typeof listing.details.f === "object" ? listing.details.f : {};
   const shared = {cur: listing.cur === "eur" ? "eur" : "usd", phone: listing.sellerPhone || "", area: listing.area || ""};
-  const v = {title: listing.t || "", desc: listing.details.autoDesc ? "" : (listing.desc || ""), area: listing.area || ""};
+  const own = listing.details.own;
+  const v = {title: listing.t || "", desc: typeof own === "string" ? own : listing.details.autoDesc ? "" : (listing.desc || ""), area: listing.area || ""};
   const price = Number(listing.cur === "eur" ? listing.eur : listing.usd) || 0;
   if(price) v.price = String(price);
   tpl.shared.forEach(fd=>{ if(!STUDIO_LISTING_KEYS.has(fd.k) && f[fd.k] !== undefined) shared[fd.k] = f[fd.k]; });
@@ -681,16 +682,6 @@ function studioValidate(tpl, it){
   if(url && !safeUrl(url)) missing.push(fr ? "lien valide (https://…)" : "valid link (https://…)");
   return missing.length ? `${fr ? "À compléter" : "Missing"} : ${missing.join(", ")}` : "";
 }
-function studioSummary(tpl, shared, v){
-  const parts = [];
-  tpl.item.forEach(f=>{
-    if(STUDIO_LISTING_KEYS.has(f.k) || !studioVisible(f, v, shared) || studioEmpty(v[f.k])) return;
-    if(f.t === "choice") parts.push(tr((studioOption(f, v[f.k]) || []).slice(1, 3)));
-    else if(f.t === "chips") parts.push(v[f.k].map(id=>tr((studioOption(f, id) || []).slice(1, 3))).filter(Boolean).join(", "));
-    else if(f.t === "num") parts.push(`${tr(f.l)} : ${v[f.k]}`);
-  });
-  return parts.filter(Boolean).join(" · ").slice(0, 1000);
-}
 function studioBuildListing(tpl, it, editing){
   const shared = studio.shared, v = it.v;
   const {cat, sub} = studioCatSub(tpl, shared, v);
@@ -712,7 +703,7 @@ function studioBuildListing(tpl, it, editing){
   const userDesc = String(v.desc || "").trim().slice(0, 2000);
   const vehicle = tpl.vehicle ? {year:String(v.year || ""), km:String(v.km || ""), color:String(v.color || ""),
     fuel:v.fuel || "", transmission:v.transmission || "", body:"", mechanical:"", docs:""} : (editing?.vehicle || null);
-  return {
+  const listing = {
     ...(editing || {}),
     id: editing ? editing.id : Date.now() + Math.floor(Math.random() * 1000),
     createdAt: editing?.createdAt || new Date().toISOString(),
@@ -729,11 +720,13 @@ function studioBuildListing(tpl, it, editing){
     delivery:null, meetup:null, negotiable:false, safeMeet:false,
     noPrice: !(price > 0),
     salary: cat === "job" && !(price > 0),
-    desc: userDesc || studioSummary(tpl, shared, v),
     vehicle,
-    details: {tpl: tpl.id, v: 1, autoDesc: !userDesc, f},
+    // own = the seller's words; desc below adds the details as text for the apps.
+    details: {tpl: tpl.id, v: 1, autoDesc: !userDesc, own: userDesc, f},
     pro: true, urgent:false, feat: editing?.feat ?? true
   };
+  listing.desc = [userDesc, proDetailsText(listing)].filter(Boolean).join("\n\n").slice(0, 10000);
+  return listing;
 }
 async function studioSaveOne(listing, photos, editing, userId){
   if(state.user?.provider !== "supabase"){
@@ -814,49 +807,70 @@ async function studioPublish(){
 }
 
 /* ---------------- public listing page ---------------- */
-// Extra details of a Studio listing, for the listing page. Everything comes
-// from the listing row (public data typed by the seller) and is escaped here.
-function proDetailsHTML(l){
+// Extra details of a Studio listing as plain values: {title, specs:[{label, value, href}],
+// tables:[{label, head, rows}]}. Everything comes from the listing row (public data
+// typed by the seller), so every caller must escape it. withVehicle keeps the vehicle
+// fields, which the listing page shows in its own vehicle block.
+function proDetailsParts(l, withVehicle){
   const d = l?.details;
   const tpl = d && typeof d === "object" ? studioTpl(d.tpl) : null;
   const f = tpl && d.f && typeof d.f === "object" && !Array.isArray(d.f) ? d.f : null;
-  if(!f) return "";
+  if(!f) return null;
   const cur = l.cur === "eur" ? "eur" : "usd";
-  const specs = [], blocks = [];
+  const specs = [], tables = [];
   const optLabels = (x, ids)=>(Array.isArray(ids) ? ids : [ids]).map(id=>studioOption(x, id)).filter(Boolean).map(o=>tr(o.slice(1, 3)));
   [...tpl.item, ...tpl.shared].forEach(x=>{
-    if(STUDIO_LISTING_KEYS.has(x.k) || (tpl.vehicle && STUDIO_VEHICLE_KEYS.has(x.k)) || !Object.prototype.hasOwnProperty.call(f, x.k)) return;
+    if(STUDIO_LISTING_KEYS.has(x.k) || (tpl.vehicle && !withVehicle && STUDIO_VEHICLE_KEYS.has(x.k)) || !Object.prototype.hasOwnProperty.call(f, x.k)) return;
     const val = f[x.k];
     const label = tr(x.l).replace(/ \((facultatif|optional)\)$/, "");
     if(x.t === "hours" && Array.isArray(val)){
       if(!val.some(h=>String(h || "").trim())) return;
-      blocks.push(`<div class="vehicle-section"><b>${esc(label)}</b><table class="pro-table"><tbody>${STUDIO_DAYS.map((day, i)=>
-        `<tr><th scope="row">${esc(tr(day.slice(1, 3)))}</th><td>${esc(String(val[i] || "").trim() || (state.lang === "fr" ? "Fermé" : "Closed"))}</td></tr>`).join("")}</tbody></table></div>`);
+      tables.push({label, rows: STUDIO_DAYS.map((day, i)=>[tr(day.slice(1, 3)), String(val[i] || "").trim() || (state.lang === "fr" ? "Fermé" : "Closed")])});
     } else if(x.t === "lines" && Array.isArray(val)){
-      const rows = val.filter(r=>Array.isArray(r) && r.some(c=>String(c || "").trim()));
-      if(!rows.length) return;
-      blocks.push(`<div class="vehicle-section"><b>${esc(label)}</b><table class="pro-table"><thead><tr>${x.cols.map(c=>`<th scope="col">${esc(tr(c))}</th>`).join("")}</tr></thead>
-        <tbody>${rows.map(r=>`<tr>${x.cols.map((_, ci)=>`<td>${esc(String(r[ci] || ""))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+      const rows = val.filter(r=>Array.isArray(r) && r.some(c=>String(c || "").trim())).map(r=>x.cols.map((_, ci)=>String(r[ci] || "")));
+      if(rows.length) tables.push({label, head: x.cols.map(c=>tr(c)), rows});
     } else if(["chips", "days", "choice"].includes(x.t)){
       const labels = optLabels(x, val);
-      if(labels.length) specs.push([label, labels.join(", ")]);
+      if(labels.length) specs.push({label, value: labels.join(", ")});
     } else if(x.t === "money"){
-      if(studioNum(val) > 0) specs.push([label, listingMoney(studioNum(val), cur)]);
+      if(studioNum(val) > 0) specs.push({label, value: listingMoney(studioNum(val), cur)});
     } else if(x.t === "url"){
       const href = safeUrl(String(val || ""));
-      if(href) specs.push([label, `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${state.lang === "fr" ? "Ouvrir" : "Open"}</a>`, true]);
+      if(href) specs.push({label, value: href, href});
     } else if(!studioEmpty(val) && typeof val !== "object"){
-      specs.push([label, String(val)]);
+      specs.push({label, value: String(val)});
     }
   });
-  if(!specs.length && !blocks.length) return "";
+  return specs.length || tables.length ? {title: tr(tpl.l), specs, tables} : null;
+}
+// The details on the listing page, escaped here.
+function proDetailsHTML(l){
+  const p = proDetailsParts(l);
+  if(!p) return "";
+  const open = state.lang === "fr" ? "Ouvrir" : "Open";
+  const cell = (c, i, t)=>!t.head && i === 0 ? `<th scope="row">${esc(c)}</th>` : `<td>${esc(c)}</td>`;
   return `<section class="vehicle-detail pro-details">
-    <h3>${esc(tr(tpl.l))}</h3>
-    ${specs.length ? `<div class="vehicle-spec-grid">${specs.map(([label, value, html])=>`<div class="vehicle-spec"><span>${esc(label)}</span><b>${html ? value : esc(value)}</b></div>`).join("")}</div>` : ""}
-    ${blocks.join("")}
+    <h3>${esc(p.title)}</h3>
+    ${p.specs.length ? `<div class="vehicle-spec-grid">${p.specs.map(s=>`<div class="vehicle-spec"><span>${esc(s.label)}</span><b>${s.href
+      ? `<a href="${esc(s.href)}" target="_blank" rel="noopener noreferrer">${open}</a>` : esc(s.value)}</b></div>`).join("")}</div>` : ""}
+    ${p.tables.map(t=>`<div class="vehicle-section"><b>${esc(t.label)}</b><table class="pro-table">${t.head
+      ? `<thead><tr>${t.head.map(c=>`<th scope="col">${esc(c)}</th>`).join("")}</tr></thead>` : ""}
+      <tbody>${t.rows.map(r=>`<tr>${r.map((c, i)=>cell(c, i, t)).join("")}</tr>`).join("")}</tbody></table></div>`).join("")}
   </section>`;
 }
-// The listing page hides the automatic summary when the structured details already say it.
+// The same details as text. It is stored in the description because the native
+// Browse screens of the iOS and Android apps show the description, not this page.
+function proDetailsText(l){
+  const p = proDetailsParts(l, true);
+  if(!p) return "";
+  const sep = state.lang === "fr" ? " : " : ": ";
+  return [p.specs.map(s=>s.label + sep + s.value).join("\n"),
+    ...p.tables.map(t=>[t.label, ...t.rows.map(r=>t.head ? r.filter(Boolean).join(" · ") : r.join(sep))].join("\n"))]
+    .filter(Boolean).join("\n\n");
+}
+// The listing page shows the details as a table, so above it only the seller's own words.
 function proDescriptionFor(l){
-  return l?.details?.autoDesc && proDetailsHTML(l) ? "" : descriptionFor(l);
+  const d = l?.details;
+  if(!proDetailsHTML(l)) return descriptionFor(l);
+  return typeof d.own === "string" ? d.own : d.autoDesc ? "" : descriptionFor(l);
 }

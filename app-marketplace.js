@@ -5274,9 +5274,9 @@ function openPostModal(){
     return;
   }
   editingListingId = null;
-  if(window.SXM?.openWorkflow?.("post")) return;
-  // Subscribed businesses post from the Studio Pro (pro-studio.js).
+  // Subscribed businesses post from the Studio Pro (pro-studio.js), on the site and in both apps.
   if(window.studioCanUse?.()){ openProStudio(); return; }
+  if(window.SXM?.openWorkflow?.("post")) return;
   buildPostForm();
   openModal("postModal");
   maybeOfferDraftRestore();
