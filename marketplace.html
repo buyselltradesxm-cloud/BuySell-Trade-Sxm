@@ -32,10 +32,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=a57445be7eb50ab1"></script>
-<script src="/telemetry.js?v=a57445be7eb50ab1"></script>
-<script src="/pwa.js?v=a57445be7eb50ab1" defer></script>
-<link href="/fonts/fonts.css?v=a57445be7eb50ab1" rel="stylesheet">
+<script src="/frame-guard.js?v=43b6595d6698c5b7"></script>
+<script src="/telemetry.js?v=43b6595d6698c5b7"></script>
+<script src="/pwa.js?v=43b6595d6698c5b7" defer></script>
+<link href="/fonts/fonts.css?v=43b6595d6698c5b7" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -1625,6 +1625,41 @@
   #profileBody .profile-section{border:1px solid var(--pf-rule);border-radius:14px;margin-top:16px;}
   #profileBody .mini-row{border:1px solid var(--pf-rule);border-radius:12px;}
   .pf-id .business-contact span,.pf-id .business-contact a{border:1px solid var(--pf-rule);border-radius:999px;background:var(--white);padding:4px 10px;font-size:12px;font-weight:600;}
+  /* Profile redesign 2026-11: brand header card, compact tiles and cards. */
+  #profileBody .pf-id{grid-template-columns:auto 1fr;gap:14px;align-items:center;padding:16px;border-radius:18px;
+    background:linear-gradient(135deg,var(--sea) 0%,#0a4c58 100%);color:#fff;box-shadow:0 10px 24px rgba(11,110,127,.22);}
+  #profileBody .pf-id .profile-avatar{width:58px;height:58px;border-radius:16px;box-shadow:0 0 0 3px rgba(255,255,255,.85);}
+  #profileBody .pf-id .avatar-edit-btn{transform:scale(.82);transform-origin:bottom right;}
+  #profileBody .pf-id h3{color:#fff;font-size:18px;margin:0 0 2px;}
+  #profileBody .pf-id p{color:rgba(255,255,255,.8);font-size:12.5px;line-height:1.4;}
+  #profileBody .pf-id .pf-link{margin-top:8px;padding:5px 12px;min-height:0;font-size:12.5px;border-radius:999px;
+    border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.14);color:#fff;}
+  #profileBody .pf-id .pf-chips{gap:5px;margin-top:8px;}
+  #profileBody .pf-id .pf-chips button,#profileBody .pf-id .business-contact span,#profileBody .pf-id .business-contact a{
+    border:0;background:rgba(255,255,255,.18);color:#fff;padding:3px 9px;font-size:11.5px;font-weight:700;}
+  #profileBody .pf-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 0;border:0;}
+  #profileBody .pf-stats button{padding:10px 4px;border:1px solid var(--pf-rule);border-radius:12px;background:var(--white);}
+  #profileBody .pf-stats button + button{border-left:1px solid var(--pf-rule);}
+  #profileBody .pf-stats b{font-size:18px;}
+  #profileBody .pf-stats span{font-size:11px;}
+  #profileBody .pro-workspace{margin:12px 0;padding:12px 14px;border-left-width:4px;border-radius:12px;
+    background:linear-gradient(90deg,rgba(11,110,127,.08),var(--white) 70%);}
+  #profileBody .pro-workspace h3{font-size:17px;margin:4px 0 2px;}
+  #profileBody .pro-workspace p{font-size:13px;line-height:1.45;}
+  #profileBody .pro-eyebrow{font-size:10.5px;color:var(--sea);}
+  #profileBody .pro-workspace .primary-btn{min-height:40px;padding:8px 14px;font-size:14px;}
+  #profileBody .pf-label{font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin:16px 4px 6px;}
+  #profileBody .pf-plan{padding:11px 14px;}
+  #profileBody .pf-plan b{font-size:15.5px;}
+  #profileBody .pf-plan b{white-space:nowrap;}
+  #profileBody .pf-plan small{display:block;margin:1px 0 0;white-space:nowrap;font-size:12px;}
+  #profileBody .pf-plan .pf-link{padding:5px 11px;font-size:12.5px;min-height:0;border-radius:999px;}
+  #profileBody .pf-plan .subscription-badges span{padding:2px 9px;font-size:11px;}
+  #profileBody .pf-note{padding:8px 14px;font-size:12.5px;}
+  #profileBody .pf-kv{padding:8px 14px;font-size:13px;}
+  #profileBody .pf-row{min-height:46px;}
+  #profileBody .pf-row b{font-size:14px;}
+  #profileBody .pf-group.pf-gap{margin-top:12px;}
   .drawer-list{display:flex;flex-direction:column;gap:10px;}
   .thread{
     border:2px solid var(--line);border-radius:12px;background:var(--white);
@@ -2183,8 +2218,8 @@
   }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
-<link rel="stylesheet" href="market-design.css?v=a57445be7eb50ab1">
-<link rel="stylesheet" href="pro-studio.css?v=a57445be7eb50ab1">
+<link rel="stylesheet" href="market-design.css?v=43b6595d6698c5b7">
+<link rel="stylesheet" href="pro-studio.css?v=43b6595d6698c5b7">
 </head>
 <body>
 
@@ -3149,23 +3184,23 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=a57445be7eb50ab1" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=a57445be7eb50ab1"></script>
-<script src="native-ios.js?v=a57445be7eb50ab1"></script>
-<script src="captcha.js?v=a57445be7eb50ab1"></script>
-<script src="supabase-api.js?v=a57445be7eb50ab1"></script>
-<script src="img-utils.js?v=a57445be7eb50ab1"></script>
-<script src="draft-store.js?v=a57445be7eb50ab1"></script>
-<script src="push-config.js?v=a57445be7eb50ab1"></script>
-<script src="push-notifications.js?v=a57445be7eb50ab1"></script>
-<script src="consent.js?v=a57445be7eb50ab1" defer></script>
-<script src="ads-config.js?v=a57445be7eb50ab1"></script>
-<script src="admob-plugin.js?v=a57445be7eb50ab1"></script>
-<script src="native-admob.js?v=a57445be7eb50ab1"></script>
-<script src="ads.js?v=a57445be7eb50ab1" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=43b6595d6698c5b7" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=43b6595d6698c5b7"></script>
+<script src="native-ios.js?v=43b6595d6698c5b7"></script>
+<script src="captcha.js?v=43b6595d6698c5b7"></script>
+<script src="supabase-api.js?v=43b6595d6698c5b7"></script>
+<script src="img-utils.js?v=43b6595d6698c5b7"></script>
+<script src="draft-store.js?v=43b6595d6698c5b7"></script>
+<script src="push-config.js?v=43b6595d6698c5b7"></script>
+<script src="push-notifications.js?v=43b6595d6698c5b7"></script>
+<script src="consent.js?v=43b6595d6698c5b7" defer></script>
+<script src="ads-config.js?v=43b6595d6698c5b7"></script>
+<script src="admob-plugin.js?v=43b6595d6698c5b7"></script>
+<script src="native-admob.js?v=43b6595d6698c5b7"></script>
+<script src="ads.js?v=43b6595d6698c5b7" defer></script>
 
-<script src="app-marketplace.js?v=a57445be7eb50ab1"></script>
-<script src="pro-studio.js?v=a57445be7eb50ab1"></script>
-<script src="native-workflows.js?v=a57445be7eb50ab1"></script>
+<script src="app-marketplace.js?v=43b6595d6698c5b7"></script>
+<script src="pro-studio.js?v=43b6595d6698c5b7"></script>
+<script src="native-workflows.js?v=43b6595d6698c5b7"></script>
 </body>
 </html>
