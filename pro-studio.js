@@ -87,7 +87,7 @@ const STUDIO_TEMPLATES = [
       if(v.deal === "seasonal") return ({villa:"short-term-villa", house:"short-term-house", studio:"short-term-studio", apartment:"short-term-apartment"})[p] || "vacation-rental";
       return (p === "apartment" || p === "studio") ? "rent-apartment" : (p === "house" || p === "villa") ? "rent-house" : "rent";
     },
-    shared:[SF.text("fees",["Frais d'agence","Agency fees"],{ph:["Ex. 1 mois de loyer","E.g. one month's rent"]}), SF.cur(), SF.phone()],
+    shared:[SF.cur(), SF.phone()],
     item:[SF.choice("deal",["Transaction","Transaction"],[["sale","Vente","Sale"],["rent","Location à l'année","Long-term rental"],["seasonal","Saisonnier","Vacation rental"]],{req:true}),
       SF.choice("ptype",["Type de bien","Property type"],[["apartment","Appartement","Apartment"],["villa","Villa","Villa"],["house","Maison","House"],["studio","Studio","Studio"],["land","Terrain","Land"],["commercial","Local commercial","Commercial"]]),
       SF.title(["Titre","Title"],["Ex. T2 vue mer à Simpson Bay","E.g. 1-bed sea-view flat in Simpson Bay"]),
