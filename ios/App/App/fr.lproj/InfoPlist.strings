@@ -1,0 +1,4 @@
+/* French texts for the iOS permission prompts (English ones live in Info.plist). */
+"NSCameraUsageDescription" = "Buy Sell Trade SXM utilise l’appareil photo pour que vous puissiez photographier les articles que vous publiez et choisir votre photo de profil.";
+"NSPhotoLibraryUsageDescription" = "Buy Sell Trade SXM accède à vos photos pour que vous puissiez en ajouter à vos annonces et choisir votre photo de profil.";
+"NSUserTrackingUsageDescription" = "Autorisez le suivi pour voir des publicités plus adaptées et mesurer leur efficacité. L’app fonctionne aussi si vous refusez.";
