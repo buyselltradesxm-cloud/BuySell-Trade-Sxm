@@ -12,6 +12,7 @@
   },
   "main": "index.js",
   "scripts": {
+    "test:pro-studio": "node scripts/pro-studio-check.js",
     "test:native-workflows": "node scripts/native-workflows-check.js",
     "test:native-workflows-browser": "node scripts/native-workflows-browser-check.js",
     "test:share": "node playwright-share-qa.js",

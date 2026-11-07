@@ -2054,29 +2054,11 @@ function proTrialOfferHTML(user){
 function businessWorkspaceHTML(){
   if(state.user?.accountType !== "business") return "";
   const fr = state.lang === "fr";
-  const choices = [
-    ["locvoit", "", fr ? "Voiture à louer" : "Car for rent"],
-    ["voit", "car-sale", fr ? "Véhicule à vendre" : "Vehicle for sale"],
-    ["dining", "restaurants", fr ? "Restaurant ou bar" : "Restaurant or bar"],
-    ["tourism", "guided-tours", fr ? "Excursion ou activité" : "Tour or activity"],
-    ["serv", "", fr ? "Service" : "Service"],
-    ["elec", "", fr ? "Produit" : "Product"]
-  ];
   return `<section class="pro-workspace"><span class="pro-eyebrow">${fr ? "MON ENTREPRISE SUR SXM" : "MY BUSINESS ON SXM"}</span>
     <h3>${fr ? "Présentez ce que vous proposez" : "Show what you offer"}</h3>
-    <p>${fr ? "Une offre, ses photos et ses informations. Les clients vous contactent directement." : "Your offer, photos and details. Customers contact you directly."}</p>
-    <div class="pro-choices">${choices.map(([cat,sub,label])=>`<button type="button" data-click="startBusinessOffer" data-click-args='${dataArgs([cat,sub])}'>+ ${esc(label)}</button>`).join("")}</div>
+    <p>${fr ? "Le Studio Pro a un formulaire pour chaque activité et publie plusieurs offres d'un coup. Les clients vous contactent directement." : "Studio Pro has a form for each activity and publishes several offers at once. Customers contact you directly."}</p>
+    <button type="button" class="primary-btn" data-click="openProStudio">${fr ? "Ouvrir le Studio Pro" : "Open Studio Pro"}</button>
     <button type="button" class="pf-link" data-click="openBusinessPage" data-click-args='${dataArgs([state.user.id])}'>${fr ? "Voir ma vitrine publique" : "View my public showcase"}</button></section>`;
-}
-function startBusinessOffer(cat, sub){
-  if(state.user?.accountType !== "business") return;
-  closeModal("profileModal");
-  openPostModal(); // Retains the existing subscription and publication-limit checks.
-  if(!document.getElementById("postModal").classList.contains("open")) return;
-  document.getElementById("newCat").value = cat;
-  buildPostSubcats();
-  if(sub) document.getElementById("newSubcat").value = sub;
-  applyPostFieldProfile();
 }
 function businessListings(sellerId){
   return L.filter(l=>idKey(l.sellerId || l.ownerId) === idKey(sellerId) &&
@@ -3376,6 +3358,9 @@ function openListing(id, syncUrl = true){
   const listingTitle = titleFor(l);
   const side = l.side === "fr" ? t().frSide : t().nlSide;
   const shareUrl = shareUrlFor(l);
+  // Studio Pro listings (pro-studio.js) add their activity details.
+  const detailDesc = window.proDescriptionFor ? proDescriptionFor(l) : descriptionFor(l);
+  const detailExtra = vehicleDetailsHTML(l) + (window.proDetailsHTML ? proDetailsHTML(l) : "");
   const detail = document.getElementById("detailBody");
   const thumbs = gallery.length > 1 ? `
     <div class="photo-preview" style="margin-top:10px">
@@ -3418,12 +3403,12 @@ function openListing(id, syncUrl = true){
             <button type="button" class="secondary-btn" data-click="copyListingLink" data-click-args='${dataArgs([l.id, "__EVENT__"])}'>${t().copyLink}</button>
           </div>
         </div>
-        ${(descriptionFor(l) || vehicleDetailsHTML(l)) ? `
+        ${(detailDesc || detailExtra) ? `
           <details class="listing-extra">
             <summary>${state.lang==="fr" ? "Description et détails" : "Description and details"}</summary>
             <div class="listing-extra-body">
-              ${descriptionFor(l) ? `<p class="detail-description">${esc(descriptionFor(l))}</p>` : ""}
-              ${vehicleDetailsHTML(l)}
+              ${detailDesc ? `<p class="detail-description">${esc(detailDesc)}</p>` : ""}
+              ${detailExtra}
             </div>
           </details>` : ""}
         <aside class="listing-detail-ad" aria-label="Publicité" data-ad-placement="listing-detail"></aside>
@@ -5290,6 +5275,8 @@ function openPostModal(){
   }
   editingListingId = null;
   if(window.SXM?.openWorkflow?.("post")) return;
+  // Subscribed businesses post from the Studio Pro (pro-studio.js).
+  if(window.studioCanUse?.()){ openProStudio(); return; }
   buildPostForm();
   openModal("postModal");
   maybeOfferDraftRestore();
@@ -5317,6 +5304,7 @@ function openEditListing(id, e){
     showToast(state.lang==="fr" ? "Vous ne pouvez modifier que vos propres annonces." : "You can only edit your own listings.");
     return;
   }
+  if(window.openStudioEdit?.(listing)) return;
   editingListingId = listing.id;
   closeModal("detailModal");
   buildPostForm(listing);

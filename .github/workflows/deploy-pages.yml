@@ -37,6 +37,7 @@ jobs:
           node scripts/version-assets.js --check
           node --check app-index.js
           node --check app-marketplace.js
+          node --check pro-studio.js
           node --check supabase-api.js
           node --check native-workflows.js
           node scripts/native-workflows-check.js
@@ -49,6 +50,8 @@ jobs:
         run: |
           test -f _site/app-index.js
           test -f _site/app-marketplace.js
+          test -f _site/pro-studio.js
+          test -f _site/pro-studio.css
           test -f _site/supabase-api.js
           test -f _site/native-workflows.js
           test ! -e _site/scripts

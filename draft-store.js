@@ -60,26 +60,27 @@
     });
   }
 
-  function save(obj) {
+  // `key` is optional: the Studio Pro keeps its own draft beside "postDraft".
+  function save(obj, key) {
     if (!obj) return Promise.resolve(false);
     var record = Object.assign({ savedAt: Date.now() }, obj);
-    return tx('readwrite', function (s) { return s.put(record, KEY); })
+    return tx('readwrite', function (s) { return s.put(record, key || KEY); })
       .then(function () { return true; })
       .catch(function (e) { console.warn('[drafts] save failed:', e); return false; });
   }
 
-  function load() {
-    return tx('readonly', function (s) { return s.get(KEY); })
+  function load(key) {
+    return tx('readonly', function (s) { return s.get(key || KEY); })
       .then(function (v) { return v || null; })
       .catch(function (e) { console.warn('[drafts] load failed:', e); return null; });
   }
 
-  function peek() {
-    return load().then(function (d) { return d ? { savedAt: d.savedAt || 0 } : null; });
+  function peek(key) {
+    return load(key).then(function (d) { return d ? { savedAt: d.savedAt || 0 } : null; });
   }
 
-  function clear() {
-    return tx('readwrite', function (s) { return s.delete(KEY); })
+  function clear(key) {
+    return tx('readwrite', function (s) { return s.delete(key || KEY); })
       .then(function () {})
       .catch(function (e) { console.warn('[drafts] clear failed:', e); });
   }
