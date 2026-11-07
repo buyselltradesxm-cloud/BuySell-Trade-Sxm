@@ -6,6 +6,9 @@
 # Neither file is printed. Delete the adminsdk key file from Downloads afterwards.
 param([string]$GoogleServices = "", [string]$KeyFile = "")
 $ErrorActionPreference = "Stop"
+# Run from the repository root that holds this script, wherever PowerShell was opened.
+Set-Location (Split-Path -Parent $PSScriptRoot)
+$ref = "szhaxlmronirhnntlwyb"   # live Supabase project
 $downloads = Join-Path $env:USERPROFILE "Downloads"
 $repo = "buyselltradesxm-cloud/BuySell-Trade-Sxm"
 $package = "com.korekdigitalmarketing.buyselltradesxm"
@@ -36,12 +39,12 @@ $envFile = Join-Path $env:TEMP ("fcm-" + [guid]::NewGuid().ToString("N") + ".env
 try {
   # Single quotes in the env file keep the JSON literal; the file is deleted right after.
   Set-Content -Path $envFile -Value ("FCM_SERVICE_ACCOUNT_JSON='" + $compact + "'") -NoNewline -Encoding utf8
-  npx -y supabase secrets set --env-file $envFile
+  npx -y supabase secrets set --env-file $envFile --project-ref $ref
   if ($LASTEXITCODE -ne 0) { throw "supabase secrets set failed" }
 } finally {
   Remove-Item -Force -ErrorAction SilentlyContinue $envFile
 }
-npx -y supabase functions deploy send-push --no-verify-jwt
+npx -y supabase functions deploy send-push --no-verify-jwt --project-ref $ref
 if ($LASTEXITCODE -ne 0) { throw "send-push deploy failed" }
 Write-Host "2/2 Supabase secret FCM_SERVICE_ACCOUNT_JSON set and send-push redeployed."
 Write-Host "Done. You can now delete this key file from Downloads: $KeyFile"
