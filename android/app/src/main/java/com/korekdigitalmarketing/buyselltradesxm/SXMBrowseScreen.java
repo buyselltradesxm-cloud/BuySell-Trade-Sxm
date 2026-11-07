@@ -655,6 +655,10 @@ final class SXMBrowseScreen extends ScrollView {
         render();
     }
     private void loadPhoto(String photoURL, ImageView photo, int currentGeneration) {
+        loadPhoto(photoURL, photo, currentGeneration, 4);
+    }
+    /** sampleSize 4 for grid cards, 2 for the detail sheet, 1 for the full-screen viewer. */
+    private void loadPhoto(String photoURL, ImageView photo, int currentGeneration, int sampleSize) {
         photo.setTag(photoURL);
         if (photoURL.startsWith("https://")) io.execute(() -> {
             try {
@@ -662,13 +666,13 @@ final class SXMBrowseScreen extends ScrollView {
                 conn.setConnectTimeout(6000); conn.setReadTimeout(6000);
                 try {
                     BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inSampleSize = 4;
+                    options.inSampleSize = sampleSize;
                     Bitmap bitmap = BitmapFactory.decodeStream(conn.getInputStream(), null, options);
                     if (bitmap != null) post(() -> {
                         if (generation == currentGeneration && photoURL.equals(photo.getTag())) photo.setImageBitmap(bitmap);
                     });
                 } finally { conn.disconnect(); }
-            } catch (Exception ignored) {}
+            } catch (Exception | OutOfMemoryError ignored) {} // a huge full-size photo must not crash the app
         });
     }
     private void showDetail(JSONObject l) {
@@ -681,7 +685,11 @@ final class SXMBrowseScreen extends ScrollView {
         if (photos == null || photos.length() == 0) photos = l.optJSONArray("thumb_photos");
         final JSONArray gallery = photos;
         final int[] page = {0};
-        if (gallery != null && gallery.length() > 0) loadPhoto(gallery.optString(0), photo, generation);
+        if (gallery != null && gallery.length() > 0) {
+            loadPhoto(gallery.optString(0), photo, generation, 2);
+            photo.setContentDescription(french ? "Voir la photo en grand" : "View photo full screen");
+            photo.setOnClickListener(v -> showPhotoViewer(gallery, page[0]));
+        }
         if (gallery != null && gallery.length() > 1) {
             LinearLayout controls = new LinearLayout(getContext());
             TextView prev = label("◀", 22, true), next = label("▶", 22, true);
@@ -692,11 +700,11 @@ final class SXMBrowseScreen extends ScrollView {
             content.addView(controls);
             prev.setOnClickListener(v -> {
                 page[0] = (page[0] + gallery.length() - 1) % gallery.length();
-                loadPhoto(gallery.optString(page[0]), photo, generation);
+                loadPhoto(gallery.optString(page[0]), photo, generation, 2);
             });
             next.setOnClickListener(v -> {
                 page[0] = (page[0] + 1) % gallery.length();
-                loadPhoto(gallery.optString(page[0]), photo, generation);
+                loadPhoto(gallery.optString(page[0]), photo, generation, 2);
             });
         }
         TextView title = label(l.optString("title"), 22, true); content.addView(title);
@@ -748,6 +756,46 @@ final class SXMBrowseScreen extends ScrollView {
             .setNegativeButton(french ? "Fermer" : "Close", (d, which) -> {}).create();
         contact.setOnClickListener(v -> { dialog.dismiss(); open.accept(id); });
         dialog.show();
+    }
+    /** Full-screen black viewer: full-quality photo, ◀ ▶ between photos, tap the photo or ✕ to close. */
+    private void showPhotoViewer(JSONArray gallery, int start) {
+        android.app.Dialog viewer = new android.app.Dialog(getContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        android.widget.FrameLayout frame = new android.widget.FrameLayout(getContext());
+        frame.setBackgroundColor(Color.BLACK);
+        ImageView big = new ImageView(getContext());
+        big.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        frame.addView(big, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        TextView counter = new TextView(getContext());
+        counter.setTextColor(Color.WHITE); counter.setTextSize(15);
+        android.widget.FrameLayout.LayoutParams top = new android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        top.topMargin = dp(22); frame.addView(counter, top);
+        TextView close = viewerButton("✕", french ? "Fermer" : "Close");
+        frame.addView(close, new android.widget.FrameLayout.LayoutParams(dp(56), dp(56), Gravity.TOP | Gravity.END));
+        final int[] at = {start};
+        Runnable show = () -> {
+            counter.setText((at[0] + 1) + " / " + gallery.length());
+            loadPhoto(gallery.optString(at[0]), big, generation, 1);
+        };
+        if (gallery.length() > 1) {
+            TextView prev = viewerButton("◀", french ? "Photo précédente" : "Previous photo");
+            TextView next = viewerButton("▶", french ? "Photo suivante" : "Next photo");
+            frame.addView(prev, new android.widget.FrameLayout.LayoutParams(dp(56), dp(72), Gravity.START | Gravity.CENTER_VERTICAL));
+            frame.addView(next, new android.widget.FrameLayout.LayoutParams(dp(56), dp(72), Gravity.END | Gravity.CENTER_VERTICAL));
+            prev.setOnClickListener(v -> { at[0] = (at[0] + gallery.length() - 1) % gallery.length(); show.run(); });
+            next.setOnClickListener(v -> { at[0] = (at[0] + 1) % gallery.length(); show.run(); });
+        } else counter.setVisibility(View.GONE);
+        close.setOnClickListener(v -> viewer.dismiss());
+        big.setOnClickListener(v -> viewer.dismiss());
+        show.run();
+        viewer.setContentView(frame);
+        viewer.show();
+    }
+    private TextView viewerButton(String symbol, String description) {
+        TextView b = new TextView(getContext());
+        b.setText(symbol); b.setTextColor(Color.WHITE); b.setTextSize(24);
+        b.setGravity(Gravity.CENTER); b.setContentDescription(description);
+        b.setBackgroundColor(Color.argb(90, 0, 0, 0));
+        return b;
     }
     /** Puts a 24dp icon before a detail action and gives the row a 48dp tap height. */
     private void actionIcon(TextView row, int icon, int color) {
