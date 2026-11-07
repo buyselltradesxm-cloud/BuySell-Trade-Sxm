@@ -97,8 +97,8 @@
       syncBanner();
     }).catch(function () {});
     function syncNativeAds() {
-      if (layout) layout.nativeAdsState({allowed: bannerAllowed && !adFree()}).catch(function () {});
-      if (iosShell) iosShell.nativeAdsState({allowed: bannerAllowed && !adFree()}).catch(function () {});
+      if (layout) layout.nativeAdsState({allowed: bannerAllowed}).catch(function () {});
+      if (iosShell) iosShell.nativeAdsState({allowed: bannerAllowed}).catch(function () {});
     }
     window.__BST_ADMOB_SET_BROWSE__ = function (visible) {
       nativeBrowseVisible = !!visible;
@@ -135,17 +135,17 @@
         return !!(modal && modal.classList.contains("open"));
       });
     }
-    // Paying Pro members see no ads. The page sets the flag and fires
-    // "bst:ad-free" whenever the signed-in account changes.
-    function adFree() { return window.__BST_AD_FREE__ === true; }
+    // Pro members (paid or on the free trial) keep the small banners but never get
+    // full-screen ads. The page sets the flag and fires "bst:ad-free" on account changes.
+    function proMember() { return window.__BST_AD_FREE__ === true; }
     function syncBanner() {
-      if (bannerAllowed && !bannerRequested && !adFree() && !nativeBrowseVisible) { showBanner(); return; }
-      var hide = purchaseOpen() || adFree() || !bannerAllowed || nativeBrowseVisible;
+      if (bannerAllowed && !bannerRequested && !nativeBrowseVisible) { showBanner(); return; }
+      var hide = purchaseOpen() || !bannerAllowed || nativeBrowseVisible;
       if (!bannerShown || hide === bannerHidden) return;
       bannerHidden = hide;
       (hide ? AdMob.hideBanner() : AdMob.resumeBanner()).catch(function () {});
     }
-    window.addEventListener("bst:ad-free", function () { syncNativeAds(); syncBanner(); });
+    window.addEventListener("bst:ad-free", function () { if (bannerAllowed) prepareInterstitial(); });
     ready(function () {
       var purchaseWatch = new MutationObserver(syncBanner);
       PURCHASE_MODALS.forEach(function (id) {
@@ -197,7 +197,7 @@
     var isPreparing = false;
 
     function prepareInterstitial() {
-      if (!interstitialAdId || isPrepared || isPreparing) return;
+      if (!interstitialAdId || isPrepared || isPreparing || proMember()) return;
       isPreparing = true;
       AdMob.prepareInterstitial({
         adId: interstitialAdId,
@@ -216,7 +216,7 @@
     // Expose a single call that the web UI can fire at any transition
     // point. Returns true if the ad was shown, false if throttled.
     window.__BST_ADMOB_INTERSTITIAL__ = function () {
-      if (!interstitialAdId || !isPrepared || adFree()) return false;
+      if (!interstitialAdId || !isPrepared || proMember()) return false;
       accrueActiveTime();
       if (activeMs < FIRST_DELAY_MS) return false;
       if (activeMs - lastShownActiveMs < COOLDOWN_MS) return false;

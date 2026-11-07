@@ -1383,8 +1383,8 @@ function loadLocalState(){
   }catch(e){}
 }
 
-// Paying Pro members get the store apps without ads: native-admob.js reads
-// this flag and listens for the event whenever the signed-in account changes.
+// Pro members (paid or free trial) get no full-screen ads in the store apps, only
+// the small banners: native-admob.js reads this flag and listens for the event.
 function syncAdFree(){
   const adFree = hasActiveProSubscription();
   if(window.__BST_AD_FREE__ === adFree) return;
