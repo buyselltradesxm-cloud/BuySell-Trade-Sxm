@@ -47,10 +47,54 @@ final class SXMBrowseScreen extends ScrollView {
     private static final int SEA = Color.rgb(11, 110, 127), INK = Color.rgb(19, 42, 46);
     private static final int PAPER = Color.rgb(251, 247, 239);
     private static final String ENDPOINT = "https://szhaxlmronirhnntlwyb.supabase.co/rest/v1/listings" +
-        "?select=id,title,description,category,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at" +
+        "?select=id,title,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at" +
         "&seller_id=not.is.null&or=(status.is.null,status.in.(active,reserved))&order=created_at.desc&limit=300";
     // Public publishable key; protected writes continue through the signed-in WebView.
     private static final String PUBLIC_KEY = "sb_publishable_2EgfSBNrfE-5rIC2qS__tg_dCoEFyac";
+    // Same words as the website's searchAliases(), so "bike" finds a scooter filed under Vehicles.
+    private static final java.util.Map<String, String> SEARCH_WORDS = new java.util.HashMap<>();
+    static {
+        String[][] rows = {
+            {"voit", "vehicules vehicles vehicle car cars voiture voitures auto autos camion truck trucks"},
+            {"immo", "immobilier property real estate maison apartment appartement rent rental sale vendre louer"},
+            {"elec", "electronique electronics electronic phone phones laptop laptops ordinateur telephone"},
+            {"meub", "maison meubles home furniture sofa canape table chair chaise"},
+            {"mode", "mode fashion"},
+            {"job", "emploi jobs job work travail hiring cv resume"},
+            {"serv", "services service cleaning plumber plumbing mechanic construction beauty"},
+            {"pets", "animaux pets"},
+            {"bat", "bateaux boats boat bateau jet ski jetski nautique marine"},
+            {"gaming", "gaming"},
+            {"beauty", "beaute beauty"},
+            {"scoot", "motos scooters motorcycles scooter moto motorcycle bike bikes"},
+            {"locvoit", "locations de voitures car rentals cars voiture rental location louer"},
+            {"menag", "electromenager appliances appliance frigo refrigerator washer washing"},
+            {"dining", "restaurants bars sorties nightlife restaurant bar pub beach club cafe food truck sortie"},
+            {"tourism", "excursions activites tours activities tour excursion activite plongee snorkeling diving jet ski spa wellness"},
+            {"transport", "taxis transferts transfers taxi transfert airport aeroport chauffeur navette shuttle cruise croisiere"},
+            {"food", "alimentation boissons food drinks foods boisson meal repas"},
+            {"lois", "loisirs leisure"},
+            {"billet", "billetterie tickets"},
+            {"pro", "materiel pro business gear"},
+            {"bonplan", "bons plans deals"},
+            {"scooter-sale", "scooter scooters moto motos motorcycle motorcycles motorbike motorbikes bike bikes"},
+            {"motorbike-sale", "scooter scooters moto motos motorcycle motorcycles motorbike motorbikes bike bikes"},
+            {"motorbike-parts", "scooter scooters moto motos motorcycle motorcycles motorbike motorbikes bike bikes"},
+            {"scooter-mechanic", "scooter scooters moto motos motorcycle motorcycles motorbike motorbikes bike bikes"},
+            {"bike-equipment", "velo velos bicycle bicycles bike bikes"}
+        };
+        for (String[] row : rows) SEARCH_WORDS.put(row[0], row[1]);
+    }
+    static String fold(String text) {
+        return java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD)
+            .replaceAll("\\p{M}+", "").toLowerCase(java.util.Locale.ROOT);
+    }
+    static boolean matchesSearch(JSONObject l, String[] terms) {
+        String text = fold(l.optString("title") + " " + l.optString("description") + " " + l.optString("area")) + " " +
+            SEARCH_WORDS.getOrDefault(l.optString("category"), "") + " " + SEARCH_WORDS.getOrDefault(l.optString("subcategory"), "");
+        for (String term : terms) if (!text.contains(term)) return false;
+        return true;
+    }
     private final ExecutorService io = Executors.newFixedThreadPool(3);
     private final List<JSONObject> listings = new ArrayList<>();
     private final List<JSONObject> savedRows = new ArrayList<>();
@@ -447,15 +491,15 @@ final class SXMBrowseScreen extends ScrollView {
         locationSubtitle.setText(savedOnly ? (french ? "Les annonces que vous aimez" : "Listings you love") :
             (french ? "Trouvez votre prochain coup de cœur" : "Find your next favorite thing"));
         List<JSONObject> shown = new ArrayList<>();
-        String query = search.getText().toString().trim().toLowerCase(java.util.Locale.ROOT);
+        String query = fold(search.getText().toString()).trim();
+        String[] terms = query.split("\\s+");
         for (JSONObject l : savedOnly ? savedRows : listings) {
             String id = l.optString("id");
             if (savedOnly && !saved.contains(id)) continue;
             if (!category.isEmpty() && !category.equals(l.optString("category"))) continue;
             if (!side.isEmpty() && !side.equals(l.optString("side"))) continue;
             if (!area.isEmpty() && !area.equalsIgnoreCase(l.optString("area"))) continue;
-            if (!query.isEmpty() && !(l.optString("title") + " " + l.optString("description") + " " +
-                l.optString("area")).toLowerCase(java.util.Locale.ROOT).contains(query)) continue;
+            if (!query.isEmpty() && !matchesSearch(l, terms)) continue;
             shown.add(l);
         }
         if (shown.isEmpty()) {

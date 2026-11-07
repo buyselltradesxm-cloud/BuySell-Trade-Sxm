@@ -2498,7 +2498,10 @@ function searchAliases(l){
     transport:"taxi taxis transfert transferts airport aeroport chauffeur navette shuttle cruise croisiere",
     food:"food foods drinks alimentation boisson meal repas"
   };
-  return aliases[l.cat] || "";
+  const twoWheels = "scooter scooters moto motos motorcycle motorcycles motorbike motorbikes bike bikes";
+  const subAliases = {"scooter-sale":twoWheels, "motorbike-sale":twoWheels, "motorbike-parts":twoWheels,
+    "scooter-mechanic":twoWheels, "bike-equipment":"velo velos bicycle bicycles bike bikes"};
+  return `${aliases[l.cat] || ""} ${subAliases[l.sub] || ""}`;
 }
 
 function subcatText(l){
