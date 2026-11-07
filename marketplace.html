@@ -32,10 +32,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=43b6595d6698c5b7"></script>
-<script src="/telemetry.js?v=43b6595d6698c5b7"></script>
-<script src="/pwa.js?v=43b6595d6698c5b7" defer></script>
-<link href="/fonts/fonts.css?v=43b6595d6698c5b7" rel="stylesheet">
+<script src="/frame-guard.js?v=a271d2e0f255e51e"></script>
+<script src="/telemetry.js?v=a271d2e0f255e51e"></script>
+<script src="/pwa.js?v=a271d2e0f255e51e" defer></script>
+<link href="/fonts/fonts.css?v=a271d2e0f255e51e" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -1212,6 +1212,8 @@
     background:var(--paper);padding:12px;gap:12px;
   }
   .vehicle-fields.show{display:grid;}
+  .price-unit{font-size:.78em;font-weight:600;color:var(--mute);margin-left:3px;}
+  .results-head{scroll-margin-top:12px;}
   .vehicle-fields h3{font-size:16px;font-family:'Space Grotesk',sans-serif;}
   .vehicle-fields p{font-size:12.5px;color:var(--mute);font-weight:700;line-height:1.4;}
   .vehicle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
@@ -2218,8 +2220,8 @@
   }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
-<link rel="stylesheet" href="market-design.css?v=43b6595d6698c5b7">
-<link rel="stylesheet" href="pro-studio.css?v=43b6595d6698c5b7">
+<link rel="stylesheet" href="market-design.css?v=a271d2e0f255e51e">
+<link rel="stylesheet" href="pro-studio.css?v=a271d2e0f255e51e">
 </head>
 <body>
 
@@ -2590,6 +2592,10 @@
                 <select id="newVehicleTransmission"></select>
               </div>
             </div>
+          </section>
+          <section class="vehicle-fields" id="postExtraFields" hidden aria-live="polite">
+            <div><h3>Détails</h3></div>
+            <div class="vehicle-grid"></div>
           </section>
           <div class="field full" id="postSellerPhoneField">
             <label for="newSellerPhone"><span data-i18n="sellerPhoneLabel">Téléphone du vendeur (facultatif)</span></label>
@@ -3184,23 +3190,23 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=43b6595d6698c5b7" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=43b6595d6698c5b7"></script>
-<script src="native-ios.js?v=43b6595d6698c5b7"></script>
-<script src="captcha.js?v=43b6595d6698c5b7"></script>
-<script src="supabase-api.js?v=43b6595d6698c5b7"></script>
-<script src="img-utils.js?v=43b6595d6698c5b7"></script>
-<script src="draft-store.js?v=43b6595d6698c5b7"></script>
-<script src="push-config.js?v=43b6595d6698c5b7"></script>
-<script src="push-notifications.js?v=43b6595d6698c5b7"></script>
-<script src="consent.js?v=43b6595d6698c5b7" defer></script>
-<script src="ads-config.js?v=43b6595d6698c5b7"></script>
-<script src="admob-plugin.js?v=43b6595d6698c5b7"></script>
-<script src="native-admob.js?v=43b6595d6698c5b7"></script>
-<script src="ads.js?v=43b6595d6698c5b7" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=a271d2e0f255e51e" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=a271d2e0f255e51e"></script>
+<script src="native-ios.js?v=a271d2e0f255e51e"></script>
+<script src="captcha.js?v=a271d2e0f255e51e"></script>
+<script src="supabase-api.js?v=a271d2e0f255e51e"></script>
+<script src="img-utils.js?v=a271d2e0f255e51e"></script>
+<script src="draft-store.js?v=a271d2e0f255e51e"></script>
+<script src="push-config.js?v=a271d2e0f255e51e"></script>
+<script src="push-notifications.js?v=a271d2e0f255e51e"></script>
+<script src="consent.js?v=a271d2e0f255e51e" defer></script>
+<script src="ads-config.js?v=a271d2e0f255e51e"></script>
+<script src="admob-plugin.js?v=a271d2e0f255e51e"></script>
+<script src="native-admob.js?v=a271d2e0f255e51e"></script>
+<script src="ads.js?v=a271d2e0f255e51e" defer></script>
 
-<script src="app-marketplace.js?v=43b6595d6698c5b7"></script>
-<script src="pro-studio.js?v=43b6595d6698c5b7"></script>
-<script src="native-workflows.js?v=43b6595d6698c5b7"></script>
+<script src="app-marketplace.js?v=a271d2e0f255e51e"></script>
+<script src="pro-studio.js?v=a271d2e0f255e51e"></script>
+<script src="native-workflows.js?v=a271d2e0f255e51e"></script>
 </body>
 </html>

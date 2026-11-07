@@ -2278,7 +2278,10 @@ function hasNoStatedPrice(l){
   return postFieldProfile(l.cat, l.sub || "").priceRequired === false && !Number(l.eur) && !Number(l.usd);
 }
 function listingPriceHTML(l){
-  if(!hasNoStatedPrice(l)) return priceHTML(l);
+  if(!hasNoStatedPrice(l)){
+    const unit = priceUnitFor(l.cat, l.sub, l.details?.f?.period);
+    return priceHTML(l) + (unit ? `<small class="price-unit">/ ${state.lang === "fr" ? unit[0] : unit[1]}</small>` : "");
+  }
   const label = l.cat === "job"
     ? (state.lang==="fr" ? "Salaire à convenir" : "Pay negotiable")
     : (state.lang==="fr" ? "Prix sur demande" : "Price on request");
@@ -2825,6 +2828,11 @@ function applySearch(e){
     restoreListingsIfNeeded();
     render();
   }
+  // On a phone the results sit below the banner and categories: show them.
+  if(state.q) requestAnimationFrame(()=>{
+    document.getElementById("q")?.blur();
+    document.querySelector(".results-head")?.scrollIntoView({behavior:"smooth", block:"start"});
+  });
   return false;
 }
 function applyFilterSearch(){
@@ -6302,7 +6310,8 @@ function fillPostForm(l){
   document.getElementById("newNegotiable").checked = !!l.negotiable;
   document.getElementById("newUrgent").checked = !!l.urgent;
   document.getElementById("newSafeMeet").checked = l.safeMeet !== false;
-  document.getElementById("newDesc").value = l.desc || "";
+  document.getElementById("newDesc").value = typeof l.details?.own === "string" ? l.details.own : (l.desc || "");
+  fillPostExtraFields(l);
   if(l.vehicle){
     document.getElementById("newVehicleYear").value = l.vehicle.year || "";
     document.getElementById("newVehicleKm").value = l.vehicle.km || "";
@@ -6462,16 +6471,114 @@ function clearPostDraft(){
   if(window.Drafts) Drafts.clear();
 }
 
+// Subcategories that are site services or paid options, not something a user posts.
+const NOT_POSTABLE_SUBCATS = new Set(["loan","news","all-immo","dealer-account","verified-pro","top-service","paid-job-post"]);
+const IMMO_NIGHTLY_SUBCATS = new Set(["vacation-rental","short-term-studio","short-term-apartment","short-term-villa","short-term-house","short-term-room","hotel-guesthouse"]);
+const IMMO_MONTHLY_SUBCATS = new Set(["rent","rent-apartment","rent-house","rent-parking","roommates","commercial","offices"]);
+const IMMO_NO_ROOMS = new Set(["sale-land","rent-parking","commercial","offices"]);
+
+// What the price means, shared by the post form label and the price shown on listings.
+function priceUnitFor(cat, sub, period){
+  if(cat === "locvoit") return ["jour","day"];
+  if(cat === "immo" && IMMO_NIGHTLY_SUBCATS.has(sub)) return ["nuit","night"];
+  if(cat === "immo" && IMMO_MONTHLY_SUBCATS.has(sub)) return ["mois","month"];
+  if(cat === "job") return ({hour:["heure","hour"], month:["mois","month"], year:["an","year"]})[period] || null;
+  if(cat === "tourism") return ["pers.","person"];
+  return null;
+}
+function postPriceLabel(cat, sub){
+  const pick = (fr, en)=>state.lang === "fr" ? fr : en;
+  if(cat === "locvoit") return pick("Tarif par jour", "Daily rate");
+  if(cat === "immo" && IMMO_NIGHTLY_SUBCATS.has(sub)) return pick("Prix par nuit", "Price per night");
+  if(cat === "immo" && IMMO_MONTHLY_SUBCATS.has(sub)) return pick("Loyer par mois", "Monthly rent");
+  if(cat === "job") return pick("Salaire", "Pay");
+  if(cat === "tourism") return pick("Prix par personne", "Price per person");
+  if(cat === "transport") return pick("Tarif par trajet", "Price per ride");
+  if(cat === "billet") return pick("Prix du billet", "Ticket price");
+  if(cat === "serv" || SERVICE_SUBCATS.has(sub) || (cat === "beauty" && sub !== "beauty-products")) return pick("Tarif (à partir de)", "Rate (from)");
+  return t().price;
+}
+
+// Category details of the classic form. They use the Studio Pro templates and its details
+// JSON ({tpl, v, own, f}), so the listing page shows them through proDetailsHTML().
+function postExtraFieldSpec(cat, sub){
+  if(typeof studioTpl !== "function" || SERVICE_SUBCATS.has(sub) || NOT_POSTABLE_SUBCATS.has(sub)) return null;
+  const pick = (tplId, keys)=>{
+    const tpl = studioTpl(tplId);
+    return tpl ? {tpl:tplId, fields:keys.map(k=>tpl.item.find(f=>f.k === k)).filter(Boolean)} : null;
+  };
+  if(cat === "immo"){
+    const spec = pick("immo", IMMO_NO_ROOMS.has(sub) ? ["surface"] : ["bedrooms","bathrooms","surface"]);
+    if(spec) spec.furnished = !IMMO_NO_ROOMS.has(sub) && (IMMO_MONTHLY_SUBCATS.has(sub) || IMMO_NIGHTLY_SUBCATS.has(sub));
+    return spec;
+  }
+  if(cat === "job") return pick("emploi", ["contract","period"]);
+  if(cat === "billet"){
+    const spec = pick("events", ["date","time"]);
+    if(spec) spec.required = ["date"];
+    return spec;
+  }
+  return null;
+}
+function renderPostExtraFields(cat, sub){
+  const section = document.getElementById("postExtraFields");
+  if(!section) return;
+  const spec = postExtraFieldSpec(cat, sub);
+  const key = spec ? [state.lang, spec.tpl, spec.fields.map(f=>f.k).join(","), spec.furnished ? "furnished" : ""].join("|") : "";
+  section.hidden = !spec;
+  section.classList.toggle("show", !!spec);
+  if(section.dataset.key === key) return; // same fields: keep what the seller typed
+  section.dataset.key = key;
+  const grid = section.querySelector(".vehicle-grid");
+  if(!spec){ grid.innerHTML = ""; return; }
+  section.querySelector("h3").textContent = tr(studioTpl(spec.tpl).l);
+  grid.innerHTML = spec.fields.map(f=>{
+    const id = "newExtra-" + f.k;
+    const label = f.k === "period" ? (state.lang === "fr" ? "Salaire par" : "Pay per") : tr(f.l);
+    const req = spec.required?.includes(f.k) ? " required" : "";
+    const control = f.t === "choice"
+      ? `<select id="${id}" data-extra="${f.k}"${req}><option value="">—</option>${f.o.map(o=>`<option value="${esc(o[0])}">${esc(tr(o.slice(1, 3)))}</option>`).join("")}</select>`
+      : `<input id="${id}" data-extra="${f.k}" type="${f.t === "num" ? "number" : f.t === "date" ? "date" : "text"}"${f.t === "num" ? ' min="0" inputmode="numeric"' : ""}${f.ph ? ` placeholder="${esc(tr(f.ph))}"` : ""}${req}>`;
+    return `<div class="field"><label for="${id}">${esc(label)}</label>${control}</div>`;
+  }).join("") + (spec.furnished ? `<label class="post-option"><input type="checkbox" id="newExtra-furnished"> ${state.lang === "fr" ? "Meublé" : "Furnished"}</label>` : "");
+}
+function fillPostExtraFields(l){
+  const f = l?.details && typeof l.details.f === "object" && l.details.f ? l.details.f : {};
+  document.querySelectorAll("#postExtraFields [data-extra]").forEach(el=>{ el.value = f[el.dataset.extra] ?? ""; });
+  const furnished = document.getElementById("newExtra-furnished");
+  if(furnished) furnished.checked = Array.isArray(f.features) && f.features.includes("furnished");
+}
+// previous = the listing's details before this edit: Studio Pro keys the form does not show are kept.
+function collectPostExtraDetails(cat, sub, desc, previous){
+  const spec = postExtraFieldSpec(cat, sub);
+  const prev = previous && typeof previous === "object" && typeof studioTpl === "function" ? previous : null;
+  if(!spec) return prev && studioTpl(prev.tpl)?.cat === cat ? {...prev, own:desc} : null;
+  const f = prev?.tpl === spec.tpl && prev.f && typeof prev.f === "object" ? {...prev.f} : {};
+  spec.fields.forEach(x=>{
+    const v = (document.getElementById("newExtra-" + x.k)?.value || "").trim();
+    if(!v) delete f[x.k];
+    else f[x.k] = x.t === "num" ? Math.max(0, Number(v) || 0) : v;
+  });
+  if(spec.furnished){
+    const features = (Array.isArray(f.features) ? f.features : []).filter(x=>x !== "furnished");
+    if(document.getElementById("newExtra-furnished")?.checked) features.push("furnished");
+    if(features.length) f.features = features; else delete f.features;
+  }
+  if(cat === "immo") f.deal = IMMO_NIGHTLY_SUBCATS.has(sub) ? "seasonal" : IMMO_MONTHLY_SUBCATS.has(sub) ? "rent" : "sale";
+  return Object.keys(f).length ? {...(prev?.tpl === spec.tpl ? prev : {}), tpl:spec.tpl, v:1, autoDesc:false, own:desc, f} : null;
+}
+
 function buildPostSubcats(){
   const cat = document.getElementById("newCat").value;
   const field = document.getElementById("newSubcatField");
   const select = document.getElementById("newSubcat");
   const data = SUBCATS[cat];
+  const keepSub = editingListingId != null ? L.find(x=>idKey(x.id) === idKey(editingListingId))?.sub || "" : "";
   field.hidden = !data;
   select.required = !!data;
   select.innerHTML = data ? data.groups.map(group=>`<optgroup label="${group[state.lang]}">
-    ${group.items.map(item=>`<option value="${item.id}">${item[state.lang]}</option>`).join("")}
-  </optgroup>`).join("") : "";
+    ${group.items.filter(item=>!NOT_POSTABLE_SUBCATS.has(item.id) || item.id === keepSub).map(item=>`<option value="${item.id}">${item[state.lang]}</option>`).join("")}
+  </optgroup>`).join("").replace(/<optgroup label="[^"]*">\s*<\/optgroup>/g, "") : "";
   buildPostAreas();
   applyPostFieldProfile();
 }
@@ -6509,7 +6616,7 @@ function applyPostFieldProfile(){
   const photosLabel = document.querySelector("#postPhotosField > label");
   if(photosLabel) photosLabel.textContent = t().photosLabel + (profile.photosRequired ? "" : optional);
   const priceLabel = document.querySelector('label[for="newPrice"]');
-  if(priceLabel) priceLabel.textContent = (cat === "locvoit" ? (state.lang === "fr" ? "Tarif par jour" : "Daily rate") : t().price) + (profile.priceRequired === false ? optional : "");
+  if(priceLabel) priceLabel.textContent = postPriceLabel(cat, sub) + (profile.priceRequired === false ? optional : "");
   setPostFieldVisibility("postCurrencyField", profile.price);
   setPostFieldVisibility("postConditionField", profile.condition, "newCond");
   setPostOptionVisibility("postNegotiableOption", "newNegotiable", profile.negotiable);
@@ -6517,6 +6624,7 @@ function applyPostFieldProfile(){
   setPostOptionVisibility("postSafeMeetOption", "newSafeMeet", profile.safeMeet);
   document.getElementById("postOptionsField").hidden = !(profile.negotiable || profile.urgent || profile.safeMeet);
   toggleVehicleFields(cat, sub);
+  renderPostExtraFields(cat, sub);
 
   const service = cat === "serv" || cat === "job" || SERVICE_SUBCATS.has(sub);
   document.getElementById("newTitle").placeholder = service
@@ -6781,6 +6889,13 @@ async function createListing(e){
     urgent:profile.urgent && document.getElementById("newUrgent").checked,
     feat:editing?.feat ?? true
   };
+  listing.details = collectPostExtraDetails(cat, sub, listing.desc, editing?.details);
+  if(!listing.details) delete listing.details;
+  else if(window.proDetailsText){
+    // The native Browse screens show the description, not the details table.
+    const extra = proDetailsText(listing);
+    if(extra) listing.desc = [listing.details.own, extra].filter(Boolean).join("\n\n");
+  }
 
   // A real account must receive a confirmed backend write. On failure,
   // preserve the form and draft rather than pretending a local copy is live.
