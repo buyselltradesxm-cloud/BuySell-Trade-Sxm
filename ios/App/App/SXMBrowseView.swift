@@ -1,6 +1,5 @@
 import MapKit
 import GoogleMobileAds
-import GoogleUserMessagingPlatform
 import SwiftUI
 import UIKit
 
@@ -555,7 +554,9 @@ private struct SXMInlineAdBanner: UIViewRepresentable {
         banner.rootViewController = UIApplication.shared.connectedScenes
             .compactMap { ($0 as? UIWindowScene)?.keyWindow?.rootViewController }.first
         banner.delegate = context.coordinator
-        if ConsentInformation.shared.canRequestAds { banner.load(Request()) }
+        // Only built when model.adsAllowed, which native-admob.js sets from UMP canRequestAds and Pro status;
+        // the App target cannot import GoogleUserMessagingPlatform itself (it comes in through the AdMob plugin only).
+        banner.load(Request())
         return banner
     }
 
