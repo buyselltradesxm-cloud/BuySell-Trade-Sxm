@@ -35,6 +35,18 @@ const APNS_HOST = Deno.env.get("APNS_HOST") || "https://api.push.apple.com";
 const APNS_PREFIX = "apns:";
 const APNS_READY = !!(APNS_KEY_ID && APNS_TEAM_ID && APNS_PRIVATE_KEY);
 
+// Android app: a subscription whose endpoint is "fcm:<registration token>" is sent
+// through Firebase Cloud Messaging (HTTP v1). Optional; without it those are skipped:
+//   FCM_SERVICE_ACCOUNT_JSON  service account key (JSON) of the Firebase project
+const FCM_PREFIX = "fcm:";
+type FcmAccount = { client_email: string; private_key: string; project_id: string };
+let FCM_ACCOUNT: FcmAccount | null = null;
+try {
+  const raw = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") || "";
+  const parsed = raw ? JSON.parse(raw) : null;
+  if (parsed?.client_email && parsed?.private_key && parsed?.project_id) FCM_ACCOUNT = parsed;
+} catch { FCM_ACCOUNT = null; }
+
 function serviceKey(): string {
   const direct = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
   if (direct) return direct;
@@ -212,6 +224,52 @@ async function sendApns(deviceToken: string, message: ApnsMessage): Promise<"sen
   return "failed";
 }
 
+// OAuth access token for FCM from the service account (JWT bearer grant), cached ~1 h.
+let fcmAccess: { token: string; exp: number } | null = null;
+async function fcmAccessToken(account: FcmAccount): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  if (fcmAccess && fcmAccess.exp - 120 > now) return fcmAccess.token;
+  const pem = account.private_key.replace(/\n/g, "\n").replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey("pkcs8", der, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  const head = bytesToB64url(enc.encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
+  const claims = bytesToB64url(enc.encode(JSON.stringify({
+    iss: account.client_email, scope: "https://www.googleapis.com/auth/firebase.messaging",
+    aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600,
+  })));
+  const sig = new Uint8Array(await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, enc.encode(head + "." + claims)));
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: `${head}.${claims}.${bytesToB64url(sig)}` }),
+  });
+  if (!res.ok) throw new Error("fcm oauth " + res.status);
+  const body = await res.json();
+  fcmAccess = { token: String(body.access_token), exp: now + Number(body.expires_in || 3600) };
+  return fcmAccess.token;
+}
+
+async function sendFcm(account: FcmAccount, token: string, message: ApnsMessage): Promise<"sent" | "gone" | "failed"> {
+  const res = await fetch(`https://fcm.googleapis.com/v1/projects/${encodeURIComponent(account.project_id)}/messages:send`, {
+    method: "POST",
+    headers: { authorization: "Bearer " + await fcmAccessToken(account), "content-type": "application/json" },
+    body: JSON.stringify({
+      message: {
+        token,
+        notification: { title: message.title, body: message.body },
+        data: { url: message.url },
+        android: { priority: "HIGH", ttl: "86400s", notification: { tag: message.tag, sound: "default" } },
+      },
+    }),
+  });
+  if (res.ok) return "sent";
+  const reason = await res.text().catch(() => "");
+  // The app was uninstalled or the token was replaced.
+  if (res.status === 404 || /UNREGISTERED|registration-token-not-registered/.test(reason)) return "gone";
+  console.warn("[send-push] fcm", res.status, reason.slice(0, 300));
+  return "failed";
+}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 }
@@ -273,6 +331,14 @@ Deno.serve(async (req) => {
       if (s.endpoint.startsWith(APNS_PREFIX)) {
         if (!APNS_READY) { skipped++; return; }
         const outcome = await sendApns(s.endpoint.slice(APNS_PREFIX.length), content);
+        if (outcome === "sent") sent++;
+        else if (outcome === "gone") { await deleteSubscription(s.endpoint); pruned++; }
+        else failed++;
+        return;
+      }
+      if (s.endpoint.startsWith(FCM_PREFIX)) {
+        if (!FCM_ACCOUNT) { skipped++; return; }
+        const outcome = await sendFcm(FCM_ACCOUNT, s.endpoint.slice(FCM_PREFIX.length), content);
         if (outcome === "sent") sent++;
         else if (outcome === "gone") { await deleteSubscription(s.endpoint); pruned++; }
         else failed++;

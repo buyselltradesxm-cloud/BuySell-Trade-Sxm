@@ -332,7 +332,73 @@
       syncEndpoint: () => state().then(r => r.on ? plugin().pushEnable().then(x => x.token && window.SB && SB.savePushSubscription ? save(x.token) : null) : null).catch(() => {})
     };
   }
-  function startPush() { if (shell().push) window.Push = nativePush(); }
+  /* ---- Push notifications in Android builds with Firebase (@capacitor/push-notifications) ----
+     Same window.Push contract. The FCM token is stored as "fcm:<token>" and send-push
+     delivers it through Firebase. Builds without the plugin keep window.Push unsupported. */
+  function androidPush() {
+    const P = window.Capacitor.Plugins.PushNotifications;
+    const KEY = "sxm.push.android";
+    const endpoint = token => "fcm:" + token;
+    const save = token => SB.savePushSubscription({ endpoint: endpoint(token), p256dh: "-", auth: "-", user_agent: "android-app" });
+    const isOn = () => { try { return localStorage.getItem(KEY) === "on"; } catch (_) { return false; } };
+    const setOn = on => { try { on ? localStorage.setItem(KEY, "on") : localStorage.removeItem(KEY); } catch (_) {} };
+    let lastToken = null;
+    // register() answers through the "registration" event; wait for it (or fail after 15 s).
+    const register = () => new Promise((resolve, reject) => {
+      let done = false;
+      const handles = [];
+      const finish = (fn, value) => {
+        if (done) return;
+        done = true;
+        handles.forEach(h => Promise.resolve(h).then(x => x && x.remove()).catch(() => {}));
+        fn(value);
+      };
+      handles.push(P.addListener("registration", t => finish(resolve, t.value)));
+      handles.push(P.addListener("registrationError", e => finish(reject, new Error((e && e.error) || "registration failed"))));
+      P.register().catch(e => finish(reject, e));
+      setTimeout(() => finish(reject, new Error("registration timeout")), 15000);
+    });
+    const permission = () => P.checkPermissions().then(r => r.receive);
+    // Tapping a notification opens the page it points to (a conversation or listing).
+    P.addListener("pushNotificationActionPerformed", action => {
+      const url = action && action.notification && action.notification.data && action.notification.data.url;
+      if (typeof url === "string" && url.startsWith("/")) location.href = url;
+    });
+    return {
+      supported: () => true,
+      status: () => permission().then(p => p === "denied" ? "denied" : p !== "granted" ? "default" : isOn() ? "on" : "ready").catch(() => "default"),
+      enable: async () => {
+        try {
+          let p = await permission();
+          if (p !== "granted") p = (await P.requestPermissions()).receive;
+          if (p !== "granted") return { ok: false, status: p === "denied" ? "denied" : "default" };
+          lastToken = await register();
+          if (!(window.SB && SB.savePushSubscription)) return { ok: false, status: "ready", reason: "no-backend" };
+          if (await save(lastToken)) { setOn(true); return { ok: true, status: "on" }; }
+          return { ok: false, status: "ready", reason: "save-failed" };
+        } catch (error) {
+          return { ok: false, status: "error", reason: String(error && error.message || error) };
+        }
+      },
+      disable: async () => {
+        setOn(false);
+        try {
+          const token = lastToken || await register();
+          if (window.SB && SB.deletePushSubscription) await SB.deletePushSubscription(endpoint(token));
+          await P.unregister().catch(() => {});
+          return { ok: true };
+        } catch (_) { return { ok: false }; }
+      },
+      // Firebase can rotate the token: store the current one again while notifications are on.
+      syncEndpoint: () => isOn()
+        ? register().then(token => { lastToken = token; return window.SB && SB.savePushSubscription ? save(token) : null; }).catch(() => {})
+        : Promise.resolve()
+    };
+  }
+  function startPush() {
+    if (shell().push) window.Push = nativePush();
+    else if (isAndroid() && window.Capacitor.isPluginAvailable && Capacitor.isPluginAvailable("PushNotifications")) window.Push = androidPush();
+  }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { startShell(); startPush(); });
   else { startShell(); startPush(); }
