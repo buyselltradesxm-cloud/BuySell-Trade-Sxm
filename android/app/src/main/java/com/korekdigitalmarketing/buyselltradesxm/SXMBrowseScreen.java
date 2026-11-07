@@ -708,15 +708,17 @@ final class SXMBrowseScreen extends ScrollView {
         TextView description = label(l.optString("description"), 15, false);
         LinearLayout.LayoutParams desc = new LinearLayout.LayoutParams(-1, -2);
         desc.topMargin = dp(12); content.addView(description, desc);
-        TextView save = label(saved.contains(id) ? "♥  " + (french ? "Enregistré" : "Saved") :
-            "♡  " + (french ? "Enregistrer" : "Save"), 16, true);
-        save.setOnClickListener(v -> {
-            toggleSaved(id);
-            save.setText(saved.contains(id) ? "♥  " + (french ? "Enregistré" : "Saved") :
-                "♡  " + (french ? "Enregistrer" : "Save"));
-        });
+        TextView save = label("", 16, true);
+        Runnable paintSave = () -> {
+            boolean on = saved.contains(id);
+            save.setText(on ? (french ? "Enregistré" : "Saved") : (french ? "Enregistrer" : "Save"));
+            actionIcon(save, on ? R.drawable.ic_heart_filled : R.drawable.tab_saved, on ? Color.rgb(208, 70, 54) : INK);
+        };
+        paintSave.run();
+        save.setOnClickListener(v -> { toggleSaved(id); paintSave.run(); });
         content.addView(save);
         TextView share = label(french ? "Partager l’annonce" : "Share listing", 16, true);
+        actionIcon(share, R.drawable.ic_share, INK);
         share.setOnClickListener(v -> {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
@@ -727,6 +729,7 @@ final class SXMBrowseScreen extends ScrollView {
         String area = l.optString("area");
         if (!area.isEmpty()) {
             TextView map = label(french ? "Voir le secteur sur la carte" : "View area on map", 16, true);
+            actionIcon(map, R.drawable.ic_location, INK);
             map.setOnClickListener(v -> {
                 Uri uri = Uri.parse("geo:0,0?q=" + Uri.encode(area +
                     (l.optString("side").equals("nl") ? ", Sint Maarten" : ", Saint-Martin")));
@@ -745,6 +748,16 @@ final class SXMBrowseScreen extends ScrollView {
             .setNegativeButton(french ? "Fermer" : "Close", (d, which) -> {}).create();
         contact.setOnClickListener(v -> { dialog.dismiss(); open.accept(id); });
         dialog.show();
+    }
+    /** Puts a 24dp icon before a detail action and gives the row a 48dp tap height. */
+    private void actionIcon(TextView row, int icon, int color) {
+        android.graphics.drawable.Drawable d = androidx.appcompat.content.res.AppCompatResources.getDrawable(getContext(), icon).mutate();
+        d.setTint(color);
+        d.setBounds(0, 0, dp(24), dp(24));
+        row.setCompoundDrawablesRelative(d, null, null, null);
+        row.setCompoundDrawablePadding(dp(12));
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinHeight(dp(48));
     }
     @Override protected void onDetachedFromWindow() { super.onDetachedFromWindow(); io.shutdownNow(); }
 }
