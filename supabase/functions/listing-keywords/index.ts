@@ -38,7 +38,7 @@ Return the words a buyer could type to find this item, in BOTH French and Englis
 - the correct spelling of any misspelled word in the listing (the misspelled "caouche" gives couch, canape);
 - the brand, model, colour, material, size or kind when the listing states them, in both languages when the words differ.
 
-Only describe what the listing states. No sentences, prices, phone numbers, links or the seller's name. At most 40 keywords.`;
+Only describe what the listing states. No sentences, prices, phone numbers, links or the seller's name. At most 30 keywords.`;
 
 const SCHEMA = {
   type: "object",
@@ -55,9 +55,9 @@ export function foldKeywords(words: unknown): string {
     if (typeof w !== "string") continue;
     const n = w.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
     if (n && n.length <= 40) seen.add(n);
-    if (seen.size >= 60) break;
+    if (seen.size >= 30) break;
   }
-  return [...seen].join(" ").slice(0, 1500);
+  return [...seen].join(" ").slice(0, 600);
 }
 
 function sameSecret(a: string, b: string): boolean {
@@ -121,6 +121,12 @@ Deno.serve(async (req) => {
   let keywords = "";
   try { keywords = foldKeywords(JSON.parse(text && text.type === "text" ? text.text : "{}").keywords); } catch (_e) { /* empty */ }
   if (!keywords) return json(200, { skipped: "no keywords" });
+
+  // The seller may have edited the listing while Claude was answering: then a newer call is on its
+  // way and these keywords describe old text, so do not save them.
+  const again = await rest(`listings?id=eq.${id}&select=title,description`);
+  const now = again.ok ? (await again.json())?.[0] : null;
+  if (!now || now.title !== listing.title || now.description !== listing.description) return json(200, { skipped: "listing changed" });
 
   const saved = await rest(`listings?id=eq.${id}`, {
     method: "PATCH",

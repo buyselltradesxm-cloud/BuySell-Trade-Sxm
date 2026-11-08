@@ -20,6 +20,9 @@
 create extension if not exists pg_net with schema extensions;
 
 alter table public.listings add column if not exists search_keywords text;
+-- Paid AI calls per listing per day (a seller editing in a loop must not run up the bill).
+alter table public.listings add column if not exists keyword_requests_day date;
+alter table public.listings add column if not exists keyword_requests int not null default 0;
 alter table public.listings drop constraint if exists listings_search_keywords_size;
 alter table public.listings add constraint listings_search_keywords_size
   check (search_keywords is null or char_length(search_keywords) <= 1500);
@@ -36,10 +39,22 @@ begin
   end if;
   if tg_op = 'INSERT' then
     new.search_keywords := null;
-  elsif new.title is distinct from old.title or new.description is distinct from old.description then
-    new.search_keywords := null;
+    new.keyword_requests_day := current_date;
+    new.keyword_requests := 1;
   else
-    new.search_keywords := old.search_keywords;
+    new.keyword_requests_day := old.keyword_requests_day;
+    new.keyword_requests := old.keyword_requests;
+    if new.title is distinct from old.title or new.description is distinct from old.description then
+      new.search_keywords := null;
+      if old.keyword_requests_day is distinct from current_date then
+        new.keyword_requests_day := current_date;
+        new.keyword_requests := 1;
+      else
+        new.keyword_requests := old.keyword_requests + 1;
+      end if;
+    else
+      new.search_keywords := old.search_keywords;
+    end if;
   end if;
   return new;
 end;
@@ -74,7 +89,8 @@ $$;
 create or replace function public.request_listing_keywords()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if new.seller_id is not null and (tg_op = 'INSERT'
+  -- At most 10 AI calls per listing per day; beyond that the listing keeps searching without keywords.
+  if new.seller_id is not null and coalesce(new.keyword_requests, 0) <= 10 and (tg_op = 'INSERT'
       or new.title is distinct from old.title or new.description is distinct from old.description) then
     perform public.queue_listing_keywords(new.id);
   end if;
