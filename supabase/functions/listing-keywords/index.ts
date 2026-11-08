@@ -38,14 +38,9 @@ Return the words a buyer could type to find this item, in BOTH French and Englis
 - the correct spelling of any misspelled word in the listing (the misspelled "caouche" gives couch, canape);
 - the brand, model, colour, material, size or kind when the listing states them, in both languages when the words differ.
 
-Only describe what the listing states. No sentences, prices, phone numbers, links or the seller's name. At most 30 keywords.`;
+Only describe what the listing states. No sentences, prices, phone numbers, links or the seller's name. At most 30 keywords.
 
-const SCHEMA = {
-  type: "object",
-  properties: { keywords: { type: "array", items: { type: "string" } } },
-  required: ["keywords"],
-  additionalProperties: false,
-};
+Reply with ONLY a JSON object of this exact shape: {"keywords": ["word1", "word2"]}. No other text, no markdown fences.`;
 
 // Same folding as the website search (normalizeQuery): lowercase, no accents, letters and digits only.
 export function foldKeywords(words: unknown): string {
@@ -97,10 +92,9 @@ Deno.serve(async (req) => {
   const client = new Anthropic({ apiKey });
   let response;
   try {
-    response = await client.beta.messages.create({
+    response = await client.messages.create({
       model: "claude-haiku-5-5", // cheapest model; good enough for keyword extraction
-      max_tokens: 4000,
-      output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
+      max_tokens: 2000,
       system: SYSTEM,
       messages: [{
         role: "user",
@@ -110,14 +104,18 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     if (error instanceof Anthropic.RateLimitError) return json(429, { error: "rate limited, retry later" });
-    if (error instanceof Anthropic.APIError) return json(502, { error: `Claude API ${error.status}` });
+    if (error instanceof Anthropic.APIError) return json(502, { error: `Claude API ${error.status}: ${String((error as { message?: unknown }).message ?? "").slice(0, 200)}` });
     throw error;
   }
   if (response.stop_reason === "refusal") return json(200, { skipped: "declined" });
 
   const text = response.content.find((b) => b.type === "text");
+  let raw = text && text.type === "text" ? text.text : "";
+  raw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+  const open = raw.indexOf("{"), close = raw.lastIndexOf("}");
+  if (open >= 0 && close > open) raw = raw.slice(open, close + 1);
   let keywords = "";
-  try { keywords = foldKeywords(JSON.parse(text && text.type === "text" ? text.text : "{}").keywords); } catch (_e) { /* empty */ }
+  try { keywords = foldKeywords(JSON.parse(raw || "{}").keywords); } catch (_e) { /* empty */ }
   if (!keywords) return json(200, { skipped: "no keywords" });
 
   // The seller may have edited the listing while Claude was answering: then a newer call is on its
