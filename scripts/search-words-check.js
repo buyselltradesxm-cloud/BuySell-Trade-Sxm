@@ -35,11 +35,16 @@ const cases = [
   ['room', {t:'Appartement 2 chambres', cat:'immo'}, true],
   ['bureau', {t:'Ground Floor Office/ Retail Space', cat:'immo'}, true],
   ['hoodie', {t:'Sweat à capuche Jack & Jones', cat:'mode'}, true],
+  // Hidden keywords from the listing-keywords function (misspelled "Caouche" = couch)
+  ['canapé', {t:'Caouche grise', cat:'autres'}, false],
+  ['canapé', {t:'Caouche grise', kw:'couch canape sofa gris grey', cat:'autres'}, true],
+  ['sofa grey', {t:'Caouche grise', kw:'couch canape sofa gris grey', cat:'autres'}, true],
   ['Réfrigérateur', {t:'fridge LG', cat:'autres'}, true],
 ];
 
 (async()=>{
   const browser = await chromium.launch();
+  try {
   for(const page of ['/', '/marketplace.html']){
     const p = await browser.newPage({serviceWorkers:'block'});
     await p.goto(base + page + '?local=1', {waitUntil:'domcontentloaded'});
@@ -49,5 +54,5 @@ const cases = [
     await p.close();
     console.log(`${page}: ${cases.length} French/English search cases passed`);
   }
-  await browser.close();
+  } finally { await browser.close(); }
 })().catch(e=>{ console.error(e.message || e); process.exitCode = 1; });

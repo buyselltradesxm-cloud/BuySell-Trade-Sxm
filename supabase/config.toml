@@ -72,3 +72,7 @@ verify_jwt = false
 # Called by Google's AdMob servers; trusts only Google's ECDSA signature.
 [functions.admob-reward]
 verify_jwt = false
+
+# Called only by the database (pg_net); authenticates with the shared x-push-secret header.
+[functions.listing-keywords]
+verify_jwt = false

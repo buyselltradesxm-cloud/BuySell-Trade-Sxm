@@ -145,6 +145,8 @@
       photos: photos,
       thumbPhotos: thumbPhotos,
       desc: r.description || "",
+      // Hidden French + English search words written by the listing-keywords function (never shown).
+      kw: r.search_keywords || "",
       expiresAt: r.expires_at || null,
       renewalRequestedAt: r.renewal_requested_at || null,
       renewalResponseAt: r.renewal_response_at || null,

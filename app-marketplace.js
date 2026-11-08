@@ -2560,7 +2560,7 @@ function listingSearchText(l){
   const cat = CATS.find(c=>c.id===l.cat);
   const vehicle = l.vehicle || {};
   return normalizeQuery([
-    l.t,l.te,l.desc,l.desce,l.area,l.side,
+    l.t,l.te,l.desc,l.desce,l.kw,l.area,l.side,
     cat?.fr,cat?.en,l.cat,subcatText(l),searchAliases(l),
     vehicle.year,vehicle.color,vehicle.fuel,vehicle.transmission
   ].filter(Boolean).join(" "));
@@ -2600,7 +2600,7 @@ function listingMatchesQuery(l, query){
   const hay = listingSearchText(l);
   // Translations only look at the seller's own words, not category names ("house" must not find
   // every "Maison & meubles" listing through "maison").
-  const padded = ` ${normalizeQuery([l.t, l.te, l.desc, l.desce].filter(Boolean).join(" "))} `;
+  const padded = ` ${normalizeQuery([l.t, l.te, l.desc, l.desce, l.kw].filter(Boolean).join(" "))} `;
   const tokens = new Set(hay.split(" ").filter(Boolean));
   const exactCategoryWords = new Set([
     "car","cars","auto","autos","voiture","voitures","vehicle","vehicles",

@@ -23,10 +23,13 @@ struct SXMListing: Codable, Identifiable, Equatable {
     let photos: [String]?
     let thumbPhotos: [String]?
     let createdAt: String?
+    /// Hidden French + English search words from the listing-keywords function (never shown).
+    let searchKeywords: String?
 
     enum CodingKeys: String, CodingKey {
         case id, title, description, category, subcategory, area, side, currency, photos
         case priceEur = "price_eur", priceUsd = "price_usd", thumbPhotos = "thumb_photos", createdAt = "created_at"
+        case searchKeywords = "search_keywords"
     }
 
     init(from decoder: Decoder) throws {
@@ -45,6 +48,7 @@ struct SXMListing: Codable, Identifiable, Equatable {
         photos = try? c.decode([String].self, forKey: .photos)
         thumbPhotos = try? c.decode([String].self, forKey: .thumbPhotos)
         createdAt = try? c.decode(String.self, forKey: .createdAt)
+        searchKeywords = try? c.decode(String.self, forKey: .searchKeywords)
     }
 
     /// Same words as the website's searchAliases(), so "bike" finds a scooter filed under Vehicles.
@@ -82,8 +86,8 @@ struct SXMListing: Codable, Identifiable, Equatable {
     }
     /// Every search word must appear in the listing text or in its category words, as typed or translated.
     func matches(_ terms: [String], _ words: SXMSearchWords) -> Bool {
-        let own = SXMListing.fold([title, description ?? ""].joined(separator: " "))
-        let text = SXMListing.fold([title, description ?? "", area ?? ""].joined(separator: " ")) + " " +
+        let own = SXMListing.fold([title, description ?? "", searchKeywords ?? ""].joined(separator: " "))
+        let text = SXMListing.fold([title, description ?? "", area ?? "", searchKeywords ?? ""].joined(separator: " ")) + " " +
             (SXMListing.searchWords[category ?? ""] ?? "") + " " + (SXMListing.searchWords[subcategory ?? ""] ?? "")
         return words.matches(text: text, own: own, terms: terms)
     }
@@ -253,7 +257,7 @@ final class SXMBrowseModel: ObservableObject {
         defer { loading = false }
         var parts = URLComponents(string: "\(Self.supabaseURL)/rest/v1/listings")!
         parts.queryItems = [
-            URLQueryItem(name: "select", value: "id,title,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at"),
+            URLQueryItem(name: "select", value: "id,title,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords"),
             URLQueryItem(name: "seller_id", value: "not.is.null"),
             URLQueryItem(name: "or", value: "(status.is.null,status.in.(active,reserved))"),
             URLQueryItem(name: "order", value: "created_at.desc"),
@@ -312,6 +316,8 @@ extension SXMListing {
         try c.encodeIfPresent(photos, forKey: .photos)
         try c.encodeIfPresent(thumbPhotos, forKey: .thumbPhotos)
         try c.encodeIfPresent(createdAt, forKey: .createdAt)
+        try c.encodeIfPresent(subcategory, forKey: .subcategory)
+        try c.encodeIfPresent(searchKeywords, forKey: .searchKeywords)
     }
 }
 
