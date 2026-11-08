@@ -80,7 +80,13 @@ jobs:
 
       - name: Build installable Android preview
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        # The Firebase config only lists the Play package, not the preview's ".preview" one, and the
+        # google-services plugin fails on a package it does not know: build the preview without Firebase
+        # (no push in the preview APK), then put the config back for the Play bundle.
+        run: |
+          if [ -f app/google-services.json ]; then mv app/google-services.json "$RUNNER_TEMP/google-services.json"; fi
+          ./gradlew assembleDebug --no-daemon
+          if [ -f "$RUNNER_TEMP/google-services.json" ]; then mv "$RUNNER_TEMP/google-services.json" app/google-services.json; fi
 
       - name: Upload Android preview APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
