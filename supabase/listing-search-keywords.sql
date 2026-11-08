@@ -81,7 +81,8 @@ begin
   perform net.http_post(
     url := fn_url || '/functions/v1/listing-keywords',
     headers := jsonb_build_object('content-type', 'application/json', 'x-push-secret', fn_secret),
-    body := jsonb_build_object('listing_id', p_listing_id)
+    body := jsonb_build_object('listing_id', p_listing_id),
+    timeout_milliseconds := 20000  -- Claude takes a few seconds; the default 5s would cut it off
   );
 end;
 $$;
@@ -104,6 +105,24 @@ drop trigger if exists request_listing_keywords_trigger on public.listings;
 create trigger request_listing_keywords_trigger
   after insert or update of title, description on public.listings
   for each row execute function public.request_listing_keywords();
+
+-- Save keywords past RLS. On this project the Edge Function only has the new sb_secret key, which
+-- the API maps to anon: it can read public listings but cannot UPDATE them. This SECURITY DEFINER
+-- function does the write as its owner (bypassing RLS), but only when the caller passes the shared
+-- PUSH_FUNCTION_SECRET, so a public caller cannot set keywords (no keyword stuffing).
+create or replace function public.save_listing_keywords(p_id bigint, p_kw text, p_secret text)
+returns boolean language plpgsql security definer set search_path = public, extensions as $$
+declare expected text;
+begin
+  select decrypted_secret into expected from vault.decrypted_secrets where name = 'PUSH_FUNCTION_SECRET' limit 1;
+  if expected is null or p_secret is null or p_secret <> expected then
+    return false;
+  end if;
+  update public.listings set search_keywords = p_kw where id = p_id;
+  return true;
+end;
+$$;
+grant execute on function public.save_listing_keywords(bigint, text, text) to anon, authenticated, service_role;
 
 revoke execute on function public.queue_listing_keywords(bigint) from public, anon, authenticated;
 revoke execute on function public.request_listing_keywords() from public, anon, authenticated;
