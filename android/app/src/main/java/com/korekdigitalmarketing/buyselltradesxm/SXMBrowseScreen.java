@@ -134,9 +134,12 @@ final class SXMBrowseScreen extends ScrollView {
     static boolean matchesSearch(JSONObject l, String[] terms) {
         String text = fold(l.optString("title") + " " + l.optString("description") + " " + l.optString("area")) + " " +
             SEARCH_WORDS.getOrDefault(l.optString("category"), "") + " " + SEARCH_WORDS.getOrDefault(l.optString("subcategory"), "");
-        String padded = " " + searchText(text) + " ";
+        String all = " " + searchText(text) + " ";
+        // Translations only look at the seller's own words, so "house" does not find every
+        // "Maison & meubles" listing through "maison".
+        String padded = " " + searchText(l.optString("title") + " " + l.optString("description")) + " ";
         for (String term : terms) {
-            if (text.contains(term) || padded.contains(term)) continue;
+            if (text.contains(term) || all.contains(term)) continue;
             boolean translated = false;
             // A translation must be a whole word (plural allowed), so "ac" never matches "achat".
             for (String alt : translations(term))

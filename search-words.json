@@ -1,6 +1,6 @@
 {
   "about": "French/English search translations, read by the website and the iOS and Android apps. Each group lists words that mean the same thing; a search for one also finds the others. Lowercase, no accents, letters/digits/spaces only. 'notAsTranslation' words are never searched as a translation (they are also common words in the other language, e.g. French 'car' = because, English 'work' in 'works great').",
-  "notAsTranslation": ["car", "work", "short", "book", "flat"],
+  "notAsTranslation": ["car", "work", "short", "book", "flat", "home"],
   "groups": [
     ["car", "voiture", "auto", "automobile"],
     ["truck", "camion"],
@@ -14,7 +14,7 @@
     ["rim", "rims", "jante", "jantes"],
     ["engine", "motor", "moteur"],
     ["battery", "batterie"],
-    ["spare parts", "parts", "pieces detachees", "pieces"],
+    ["spare parts", "parts", "pieces detachees"],
     ["helmet", "casque moto"],
     ["mileage", "kilometrage"],
     ["gearbox", "transmission", "boite de vitesses"],
@@ -40,8 +40,7 @@
     ["surfboard", "planche de surf"],
     ["house", "home", "maison"],
     ["apartment", "flat", "appartement", "appart"],
-    ["room", "piece"],
-    ["bedroom", "chambre"],
+    ["bedroom", "room", "chambre"],
     ["bathroom", "salle de bain", "salle de bains"],
     ["kitchen", "cuisine"],
     ["living room", "salon", "sejour"],
@@ -54,7 +53,7 @@
     ["furnished", "meuble", "meublee"],
     ["unfurnished", "non meuble"],
     ["roommate", "flatmate", "colocation", "coloc", "colocataire"],
-    ["shop", "store", "boutique", "magasin"],
+    ["shop", "store", "retail", "boutique", "magasin", "commerce"],
     ["office", "bureau"],
     ["warehouse", "storage", "entrepot", "stockage"],
     ["parking", "parking space", "place de parking"],
@@ -136,7 +135,7 @@
     ["cap", "casquette"],
     ["perfume", "parfum"],
     ["makeup", "make up", "maquillage"],
-    ["hair", "cheveux"],
+    ["hair", "cheveux", "capillaire", "capillaires"],
     ["wig", "perruque"],
     ["hairdresser", "barber", "coiffeur", "coiffeuse", "barbier"],
     ["nails", "manicure", "ongles", "manucure"],
@@ -239,6 +238,15 @@
     ["red", "rouge"],
     ["blue", "bleu", "bleue"],
     ["green", "vert", "verte"],
-    ["grey", "gray", "gris", "grise"]
+    ["grey", "gray", "gris", "grise"],
+    ["office space", "commercial space", "local commercial", "bureaux"],
+    ["men", "man", "mens", "homme", "hommes"],
+    ["women", "woman", "womens", "femme", "femmes"],
+    ["hoodie", "sweat a capuche"],
+    ["sweatshirt", "sweat"],
+    ["refurbished", "reconditionne", "reconditionnee"],
+    ["bed base", "box spring", "sommier"],
+    ["hair products", "produits capillaires"],
+    ["compactor", "compacteur"]
   ]
 }

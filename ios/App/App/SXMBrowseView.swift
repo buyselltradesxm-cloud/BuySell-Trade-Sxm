@@ -82,9 +82,10 @@ struct SXMListing: Codable, Identifiable, Equatable {
     }
     /// Every search word must appear in the listing text or in its category words, as typed or translated.
     func matches(_ terms: [String], _ words: SXMSearchWords) -> Bool {
+        let own = SXMListing.fold([title, description ?? ""].joined(separator: " "))
         let text = SXMListing.fold([title, description ?? "", area ?? ""].joined(separator: " ")) + " " +
             (SXMListing.searchWords[category ?? ""] ?? "") + " " + (SXMListing.searchWords[subcategory ?? ""] ?? "")
-        return words.matches(text: text, terms: terms)
+        return words.matches(text: text, own: own, terms: terms)
     }
 
     var photoURLs: [URL] { (photos ?? []).compactMap { $0.hasPrefix("https://") ? URL(string: $0) : nil } }
@@ -186,11 +187,14 @@ struct SXMSearchWords {
         return []
     }
 
-    /// `text` is already folded; a translation must be a whole word (plural allowed), so "ac" never matches "achat".
-    func matches(text: String, terms: [String]) -> Bool {
-        let padded = " " + Self.normalize(text) + " "
+    /// `text` (listing + category words) and `own` (the seller's title and description) are already folded.
+    /// Translations only look at `own`, so "house" does not find every "Maison & meubles" listing, and must
+    /// be a whole word (plural allowed), so "ac" never matches "achat".
+    func matches(text: String, own: String, terms: [String]) -> Bool {
+        let all = " " + Self.normalize(text) + " "
+        let padded = " " + Self.normalize(own) + " "
         return terms.allSatisfy { term in
-            text.contains(term) || padded.contains(term) || alternatives(term).contains { alt in
+            text.contains(term) || all.contains(term) || alternatives(term).contains { alt in
                 padded.contains(" \(alt) ") || padded.contains(" \(alt)s ") || padded.contains(" \(alt)x ")
             }
         }

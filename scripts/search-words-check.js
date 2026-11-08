@@ -30,6 +30,11 @@ const cases = [
   ['chien', {t:'Puppy and dog toys', cat:'pets'}, true],
   ['stroller', {t:'Poussette Chicco', cat:'autres'}, true],
   ['lave linge', {t:'Lave-linge Whirlpool', cat:'menag'}, true],
+  ['house', {t:'Matelas 140x190 et sommier', cat:'meub'}, false],    // not through the category name "Maison & meubles"
+  ['room', {t:'Sweat homme, pièce unique', cat:'mode'}, false],
+  ['room', {t:'Appartement 2 chambres', cat:'immo'}, true],
+  ['bureau', {t:'Ground Floor Office/ Retail Space', cat:'immo'}, true],
+  ['hoodie', {t:'Sweat à capuche Jack & Jones', cat:'mode'}, true],
   ['Réfrigérateur', {t:'fridge LG', cat:'autres'}, true],
 ];
 

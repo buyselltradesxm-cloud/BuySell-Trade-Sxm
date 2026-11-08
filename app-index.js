@@ -2598,7 +2598,9 @@ function listingMatchesQuery(l, query){
   const words = searchTerms(query);
   if(!words.length) return true;
   const hay = listingSearchText(l);
-  const padded = ` ${hay} `;
+  // Translations only look at the seller's own words, not category names ("house" must not find
+  // every "Maison & meubles" listing through "maison").
+  const padded = ` ${normalizeQuery([l.t, l.te, l.desc, l.desce].filter(Boolean).join(" "))} `;
   const tokens = new Set(hay.split(" ").filter(Boolean));
   const exactCategoryWords = new Set([
     "car","cars","auto","autos","voiture","voitures","vehicle","vehicles",
