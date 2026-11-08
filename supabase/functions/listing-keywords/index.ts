@@ -98,10 +98,8 @@ Deno.serve(async (req) => {
   let response;
   try {
     response = await client.beta.messages.create({
-      model: "claude-opus-5-5",
+      model: "claude-haiku-5-5", // cheapest model; good enough for keyword extraction
       max_tokens: 4000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default", // if the model declines, the API retries on its own fallback model
       output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
       system: SYSTEM,
       messages: [{
