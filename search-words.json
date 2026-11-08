@@ -53,7 +53,7 @@
     ["furnished", "meuble", "meublee"],
     ["unfurnished", "non meuble"],
     ["roommate", "flatmate", "colocation", "coloc", "colocataire"],
-    ["shop", "store", "retail", "boutique", "magasin", "commerce"],
+    ["shop", "store", "retail", "boutique", "magasin"],
     ["office", "bureau"],
     ["warehouse", "storage", "entrepot", "stockage"],
     ["parking", "parking space", "place de parking"],
