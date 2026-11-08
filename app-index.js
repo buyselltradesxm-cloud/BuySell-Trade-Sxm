@@ -1087,6 +1087,7 @@ async function refreshPushControl(){
     : status === "unsupported" ? t().pushUnsupported
     : t().pushReady;
   btn.disabled = status === "denied" || status === "unsupported";
+  refreshPushCard();
 }
 
 async function togglePushNotifications(e){
@@ -1232,7 +1233,7 @@ document.addEventListener("click", (e)=>{
 });
 document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeNotifPanel(); });
 
-Object.assign(window, { toggleNotifPanel, clearNotifications, openNotification, refreshPushControl, togglePushNotifications });
+Object.assign(window, { toggleNotifPanel, clearNotifications, openNotification, refreshPushControl, refreshPushCard, togglePushNotifications });
 
 function setUnreadMessageCount(count){
   unreadMessageCount = Math.max(0, Number(count) || 0);
@@ -3012,6 +3013,39 @@ async function toggleProfilePushNotifications(btn){
   }
   refreshPushToolLabel(btn || document.getElementById("pushTool"));
 }
+// A bell card with an on/off switch, used in the profile. Same action as the bell panel.
+function pushCardHTML(){
+  if(!(window.PUSH_ENABLED && window.Push && Push.supported && Push.supported())) return "";
+  const fr = state.lang === "fr";
+  return `<section class="push-card" id="pushCard">
+    <div class="push-card-icon" aria-hidden="true">🔔</div>
+    <div class="push-card-copy"><b>${fr ? "Notifications" : "Notifications"}</b>
+      <span id="pushCardStatus">${fr ? "Soyez prévenu des nouveaux messages, même l'app fermée." : "Get told about new messages, even when the app is closed."}</span></div>
+    <button type="button" class="push-switch" id="pushCardToggle" role="switch" aria-checked="false"
+      data-click="togglePushNotifications" data-click-args='["__EVENT__"]'
+      aria-label="${fr ? "Activer ou désactiver les notifications" : "Turn notifications on or off"}"><span class="push-switch-dot"></span></button>
+  </section>`;
+}
+// Keeps every notification control (bell panel + profile card) showing the same state.
+async function refreshPushCard(){
+  const card = document.getElementById("pushCard");
+  if(!card) return;
+  const sw = card.querySelector("#pushCardToggle");
+  const status = card.querySelector("#pushCardStatus");
+  const fr = state.lang === "fr";
+  let state_ = "default";
+  try { state_ = await Push.status(); } catch(e){}
+  const on = state_ === "on";
+  const blocked = state_ === "denied" || state_ === "unsupported";
+  sw.classList.toggle("is-on", on);
+  sw.setAttribute("aria-checked", on ? "true" : "false");
+  sw.disabled = blocked;
+  status.textContent = on
+    ? (fr ? "Activées. Vous recevez les alertes de messages." : "On. You get message alerts.")
+    : state_ === "denied" ? (fr ? "Bloquées dans les réglages du téléphone." : "Blocked in the phone settings.")
+    : state_ === "unsupported" ? (fr ? "Non disponibles sur cet appareil." : "Not available on this device.")
+    : (fr ? "Désactivées. Activez-les pour ne rien manquer." : "Off. Turn them on so you don't miss anything.");
+}
 function refreshPushToolLabel(btn){
   if(!btn || !(window.Push && Push.status)) return;
   Push.status().then(s=>{
@@ -4408,6 +4442,7 @@ function renderProfile(){
       <button type="button" data-click="openProfileStat" data-click-args='${dataArgs(['saved'])}'><b>${state.favs.size}</b><span>${t().savedItems}</span></button>
       <button type="button" data-click="openProfileStat" data-click-args='${dataArgs(['messages'])}'><b>${Object.keys(chatThreads).length}</b><span>${t().conversations}</span></button>
     </div>
+    ${pushCardHTML()}
     ${proTrialOfferHTML(user)}
     ${subscriptionDashboardHTML(user, own)}
     ${businessWorkspaceHTML()}
@@ -4416,7 +4451,6 @@ function renderProfile(){
       ${row(fr ? "Répondre aux acheteurs" : "Reply to buyers", 'data-click="closeProfileModalThenMessages"')}
       ${row(t().boostCta, 'data-click="closeProfileModalThenBoostInfo"')}
       ${row(fr ? "Suivre mes favoris" : "Watch saved items", 'data-click="scrollFavsThenCloseProfileModal"')}
-      ${(window.PUSH_ENABLED && window.Push && Push.supported()) ? row(fr ? "Activer les notifications" : "Turn on notifications", `id="pushTool" data-click="toggleProfilePushNotifications" data-click-args='${dataArgs(["__THIS__"])}'`) : ""}
       ${canInstall ? row(fr ? "Installer l'application" : "Install the app", 'data-click="handleInstallAppClick"') : ""}
       ${isAdminUser(user) ? row("Admin", 'data-click="closeProfileModalThenAdmin"') : ""}
     </div>
@@ -4429,7 +4463,7 @@ function renderProfile(){
       ${row(t().logoutLabel, 'data-click="logoutUser"', "plain")}
     </div>
     <button type="button" class="pf-delete-account" data-click="deleteMyAccountConfirmed">${t().deleteAccountLabel}</button>`;
-  refreshPushToolLabel(document.getElementById("pushTool"));
+  refreshPushCard();
   persistState();
 }
 
