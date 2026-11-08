@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=0d882bdbcb86fe43"></script>
-<script src="/telemetry.js?v=0d882bdbcb86fe43"></script>
-<script src="/pwa.js?v=0d882bdbcb86fe43" defer></script>
-<link href="/fonts/fonts.css?v=0d882bdbcb86fe43" rel="stylesheet">
+<script src="/frame-guard.js?v=ebace8b00a44e6fa"></script>
+<script src="/telemetry.js?v=ebace8b00a44e6fa"></script>
+<script src="/pwa.js?v=ebace8b00a44e6fa" defer></script>
+<link href="/fonts/fonts.css?v=ebace8b00a44e6fa" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -129,7 +129,8 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
   }
   .logo .mark b{color:var(--sea);}
-  .logo .sub{font-size:10.5px;color:var(--mute);font-weight:500;margin-top:3px;letter-spacing:0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .logo .mark{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sub{font-size:10.5px;color:var(--mute);font-weight:500;margin-top:3px;letter-spacing:0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
   .search{
     display:flex;align-items:stretch;
@@ -1800,7 +1801,7 @@
   @media (max-width:900px){
     .bar-inner{padding:10px 14px;gap:10px;}
     .logo-img{width:42px;height:42px;}
-    .logo .mark{font-size:18px;max-width:170px;}
+    .logo .mark{font-size:14.5px;max-width:none;}
     .logo .sub{font-size:10px;max-width:170px;}
     .bar-actions{gap:4px;}
     .bar-actions .icon-btn{padding:7px 8px;}
@@ -1863,7 +1864,7 @@
   }
   @media (max-width:620px){
     .bar-inner{padding:10px 14px;gap:10px;}
-    .logo .mark{font-size:18px;}
+    .logo .mark{font-size:14.5px;}
     .logo .sub{font-size:10px;max-width:116px;}
     .bar-actions{gap:2px;}
     .bar-actions .lang{display:none;}
@@ -1915,7 +1916,7 @@
       gap:12px;
     }
     .logo-img{width:48px;height:48px;}
-    .logo .mark{font-size:22px;line-height:1;}
+    .logo .mark{font-size:16.5px;line-height:1.1;}
     .logo .sub{font-size:12px;max-width:none;}
     .bar-actions{
       grid-area:actions;
@@ -2255,7 +2256,7 @@
   h1,h2,h3,.grotesk{font-family:'Space Grotesk','Instrument Sans',sans-serif;letter-spacing:-.045em;}
   .topbar{background:rgba(16,27,33,.96);border-bottom:1px solid rgba(255,255,255,.16);backdrop-filter:blur(16px);}
   .bar-inner{max-width:1440px;padding-top:14px;padding-bottom:14px;}
-  .logo{color:#fffdf9}.logo .mark{font-size:22px}.logo .mark b{color:var(--coral)}.logo .sub{color:rgba(255,255,255,.62)}
+  .logo{color:#fffdf9}.logo .mark{font-size:16.5px}.logo .mark b{color:var(--coral)}.logo .sub{color:rgba(255,255,255,.62)}
   .search{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;box-shadow:none;}
   .search input[type=text],.search select{color:#fffdf9}.search input[type=text]::placeholder{color:rgba(255,255,255,.58)}
   .search .divide{background:rgba(255,255,255,.16)}.search .go{background:var(--coral);border-left:0;border-radius:999px;margin:4px;padding:0 18px;font-weight:800}@media (hover:hover){.search .go:hover{background:#ff806b}}
@@ -2271,7 +2272,7 @@
   .layout{max-width:1440px;padding-top:28px}.filters{border:1px solid var(--line);border-radius:18px;background:#fffdf9;box-shadow:0 12px 28px rgba(16,27,33,.05)}.filter-apply{background:var(--coral);border-color:var(--coral);border-radius:999px}@media (hover:hover){.filter-apply:hover{background:#ff806b}}.save-search{border:1px dashed rgba(16,27,33,.25);border-radius:999px}.save-search.saved{background:var(--sea);border-color:var(--sea)}
   .board-head{border-bottom:1px solid var(--line);padding-bottom:16px}.board-btn{border:1px solid var(--line)}.grid{gap:18px}.card{border:1px solid var(--line);border-radius:18px;background:#fffdf9;box-shadow:0 10px 26px rgba(16,27,33,.06);overflow:hidden;transition:transform .2s ease,box-shadow .2s ease}.card:hover{transform:translateY(-5px);box-shadow:0 18px 38px rgba(16,27,33,.14)}.card .stripe{height:4px}.fav,.share-card{border:1px solid rgba(16,27,33,.18);border-radius:999px}.fav[aria-pressed=true]{color:var(--coral)}.boost-card-action{background:var(--coral);border:0;border-radius:999px}.badge{border-radius:999px}.badge.urgent{background:var(--sun);border:0}.badge.boosted{background:var(--sea);border:0}
   .mobile-nav{background:rgba(16,27,33,.98);border-top:1px solid rgba(255,255,255,.15)}.mobile-nav button{color:rgba(255,255,255,.7)}.mobile-nav button.active{color:#fff}.mobile-nav .nav-login:not(.is-auth){background:var(--coral);border-radius:999px}
-  @media (max-width:700px){.bar-inner{padding-left:14px;padding-right:14px;gap:8px}.logo-img{width:34px;height:34px}.logo .mark{font-size:17px}.logo .sub{display:none}.search{grid-column:1/-1;grid-row:2;margin-top:4px}.desktop-leaderboard-ad{padding:12px 14px 0}.hero{display:block}.hero-inner{min-height:430px;padding:52px 22px 50px}.hero h1{font-size:clamp(38px,12vw,58px)}.hero p{font-size:14px}.layout{padding-top:16px}.card:hover{transform:none}.sponsored-strip{padding:12px 14px}.sponsored-card{padding:16px}.sponsored-card h2{font-size:24px}}
+  @media (max-width:700px){.bar-inner{padding-left:14px;padding-right:14px;gap:8px}.logo-img{width:34px;height:34px}.logo .mark{font-size:13.5px}.logo .sub{display:none}.search{grid-column:1/-1;grid-row:2;margin-top:4px}.desktop-leaderboard-ad{padding:12px 14px 0}.hero{display:block}.hero-inner{min-height:430px;padding:52px 22px 50px}.hero h1{font-size:clamp(38px,12vw,58px)}.hero p{font-size:14px}.layout{padding-top:16px}.card:hover{transform:none}.sponsored-strip{padding:12px 14px}.sponsored-card{padding:16px}.sponsored-card h2{font-size:24px}}
   /* Phone category panel: the dark desktop rail above paints the names white,
      which vanished on the light phone panel. Dark labels, larger photos, and
      each category in its own soft tile. */
@@ -2289,8 +2290,8 @@
   }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
-<link rel="stylesheet" href="market-design.css?v=0d882bdbcb86fe43">
-<link rel="stylesheet" href="pro-studio.css?v=0d882bdbcb86fe43">
+<link rel="stylesheet" href="market-design.css?v=ebace8b00a44e6fa">
+<link rel="stylesheet" href="pro-studio.css?v=ebace8b00a44e6fa">
 </head>
 <body>
 
@@ -2299,8 +2300,8 @@
     <a href="#browse" class="logo" aria-label="Buy Sell Trade Sint Maarten, accueil">
       <img class="logo-img" src="logo-192.webp" alt="" aria-hidden="true">
       <span class="logo-text">
-        <span class="mark" data-en="Discover SXM">Découvrez SXM</span>
-        <span class="sub">Buy Sell Trade SXM</span>
+        <span class="mark">Buy Sell Trade SXM</span>
+        <span class="sub" data-en="The local marketplace">La place de marché locale</span>
       </span>
     </a>
 
@@ -3259,23 +3260,23 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=0d882bdbcb86fe43" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=0d882bdbcb86fe43"></script>
-<script src="native-ios.js?v=0d882bdbcb86fe43"></script>
-<script src="captcha.js?v=0d882bdbcb86fe43"></script>
-<script src="supabase-api.js?v=0d882bdbcb86fe43"></script>
-<script src="img-utils.js?v=0d882bdbcb86fe43"></script>
-<script src="draft-store.js?v=0d882bdbcb86fe43"></script>
-<script src="push-config.js?v=0d882bdbcb86fe43"></script>
-<script src="push-notifications.js?v=0d882bdbcb86fe43"></script>
-<script src="consent.js?v=0d882bdbcb86fe43" defer></script>
-<script src="ads-config.js?v=0d882bdbcb86fe43"></script>
-<script src="admob-plugin.js?v=0d882bdbcb86fe43"></script>
-<script src="native-admob.js?v=0d882bdbcb86fe43"></script>
-<script src="ads.js?v=0d882bdbcb86fe43" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=ebace8b00a44e6fa" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=ebace8b00a44e6fa"></script>
+<script src="native-ios.js?v=ebace8b00a44e6fa"></script>
+<script src="captcha.js?v=ebace8b00a44e6fa"></script>
+<script src="supabase-api.js?v=ebace8b00a44e6fa"></script>
+<script src="img-utils.js?v=ebace8b00a44e6fa"></script>
+<script src="draft-store.js?v=ebace8b00a44e6fa"></script>
+<script src="push-config.js?v=ebace8b00a44e6fa"></script>
+<script src="push-notifications.js?v=ebace8b00a44e6fa"></script>
+<script src="consent.js?v=ebace8b00a44e6fa" defer></script>
+<script src="ads-config.js?v=ebace8b00a44e6fa"></script>
+<script src="admob-plugin.js?v=ebace8b00a44e6fa"></script>
+<script src="native-admob.js?v=ebace8b00a44e6fa"></script>
+<script src="ads.js?v=ebace8b00a44e6fa" defer></script>
 
-<script src="app-index.js?v=0d882bdbcb86fe43"></script>
-<script src="pro-studio.js?v=0d882bdbcb86fe43"></script>
-<script src="native-workflows.js?v=0d882bdbcb86fe43"></script>
+<script src="app-index.js?v=ebace8b00a44e6fa"></script>
+<script src="pro-studio.js?v=ebace8b00a44e6fa"></script>
+<script src="native-workflows.js?v=ebace8b00a44e6fa"></script>
 </body>
 </html>

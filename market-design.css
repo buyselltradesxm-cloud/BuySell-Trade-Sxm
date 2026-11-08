@@ -65,7 +65,7 @@ body{background:var(--paper);color:var(--ink)}
   .topbar{position:static}
   .bar-inner{padding:18px 18px 12px;gap:16px 8px}
   .logo-img{width:44px;height:44px}
-  .logo .mark{font-size:22px;letter-spacing:-.04em;line-height:1.15}
+  .logo .mark{font-size:15px;letter-spacing:-.02em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .logo .sub{display:block;font-size:12px;line-height:1.4}
   .bar-actions{gap:4px}
   .lang button{min-width:34px;min-height:44px;padding:6px;font-size:12px}
