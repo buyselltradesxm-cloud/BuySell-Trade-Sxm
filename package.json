@@ -72,7 +72,8 @@
     "test:listing-editor-races": "node scripts/listing-editor-race-check.js",
     "test:listing-action-races": "node scripts/listing-action-race-check.js",
     "test:account-exit-races": "node scripts/account-exit-race-check.js",
-    "test:browse-controls": "node scripts/browse-controls-check.js"
+    "test:browse-controls": "node scripts/browse-controls-check.js",
+    "test:search-words": "node scripts/search-words-check.js"
   },
   "keywords": [],
   "author": "",

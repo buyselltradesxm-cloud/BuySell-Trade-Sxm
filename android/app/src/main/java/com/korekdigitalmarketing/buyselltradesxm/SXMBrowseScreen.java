@@ -89,10 +89,60 @@ final class SXMBrowseScreen extends ScrollView {
         return java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD)
             .replaceAll("\\p{M}+", "").toLowerCase(java.util.Locale.ROOT);
     }
+    // French <-> English search words from the website's search-words.json (same list as the site and iOS):
+    // "fridge" also finds "frigo". Empty until loaded (or offline); search then works untranslated.
+    static volatile java.util.Map<String, List<String>> TRANSLATIONS = new java.util.HashMap<>();
+    static volatile List<String> PHRASES = new ArrayList<>();
+    static void loadSearchWords(String json) throws org.json.JSONException {
+        JSONObject file = new JSONObject(json);
+        Set<String> skip = new HashSet<>();
+        JSONArray no = file.optJSONArray("notAsTranslation");
+        for (int i = 0; no != null && i < no.length(); i++) skip.add(no.getString(i));
+        java.util.Map<String, List<String>> map = new java.util.HashMap<>();
+        JSONArray groups = file.getJSONArray("groups");
+        for (int g = 0; g < groups.length(); g++) {
+            JSONArray group = groups.getJSONArray(g);
+            for (int i = 0; i < group.length(); i++) {
+                List<String> alts = map.computeIfAbsent(group.getString(i), k -> new ArrayList<>());
+                for (int j = 0; j < group.length(); j++) {
+                    String other = group.getString(j);
+                    if (j != i && !skip.contains(other) && !alts.contains(other)) alts.add(other);
+                }
+            }
+        }
+        List<String> phrases = new ArrayList<>();
+        for (String k : map.keySet()) if (k.contains(" ")) phrases.add(k);
+        phrases.sort((a, b) -> b.length() - a.length());
+        TRANSLATIONS = map;
+        PHRASES = phrases;
+    }
+    static String searchText(String text) { return fold(text).replaceAll("[^a-z0-9]+", " ").trim(); }
+    /** Query words, keeping known phrases ("washing machine") together so they translate as one. */
+    static String[] searchTerms(String query) {
+        String q = " " + searchText(query) + " ";
+        List<String> terms = new ArrayList<>();
+        for (String p : PHRASES) if (q.contains(" " + p + " ")) { terms.add(p); q = q.replace(" " + p + " ", " "); }
+        for (String w : q.trim().split(" ")) if (!w.isEmpty()) terms.add(w);
+        return terms.toArray(new String[0]);
+    }
+    static List<String> translations(String word) {
+        List<String> alts = TRANSLATIONS.get(word);
+        if (alts == null && word.length() > 3 && (word.endsWith("s") || word.endsWith("x")))
+            alts = TRANSLATIONS.get(word.substring(0, word.length() - 1));
+        return alts == null ? new ArrayList<>() : alts;
+    }
     static boolean matchesSearch(JSONObject l, String[] terms) {
         String text = fold(l.optString("title") + " " + l.optString("description") + " " + l.optString("area")) + " " +
             SEARCH_WORDS.getOrDefault(l.optString("category"), "") + " " + SEARCH_WORDS.getOrDefault(l.optString("subcategory"), "");
-        for (String term : terms) if (!text.contains(term)) return false;
+        String padded = " " + searchText(text) + " ";
+        for (String term : terms) {
+            if (text.contains(term) || padded.contains(term)) continue;
+            boolean translated = false;
+            // A translation must be a whole word (plural allowed), so "ac" never matches "achat".
+            for (String alt : translations(term))
+                if (padded.contains(" " + alt + " ") || padded.contains(" " + alt + "s ") || padded.contains(" " + alt + "x ")) { translated = true; break; }
+            if (!translated) return false;
+        }
         return true;
     }
     private final ExecutorService io = Executors.newFixedThreadPool(3);
@@ -524,6 +574,23 @@ final class SXMBrowseScreen extends ScrollView {
     }
     private void refresh() {
         status.setText(french ? "Chargement des annonces…" : "Loading listings…");
+        // shortcut: the word list is not kept offline, so offline search is untranslated; cache it like the feed if that matters.
+        if (TRANSLATIONS.isEmpty()) io.execute(() -> {
+            try {
+                HttpURLConnection connection = (HttpURLConnection) new URL("https://buyselltradesxm.com/search-words.json").openConnection();
+                connection.setConnectTimeout(12000); connection.setReadTimeout(12000);
+                try {
+                    if (connection.getResponseCode() != 200) return;
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(
+                        connection.getInputStream(), java.nio.charset.StandardCharsets.UTF_8));
+                    StringBuilder body = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) body.append(line);
+                    loadSearchWords(body.toString());
+                    post(() -> { if (search.getText().length() > 0) render(); });
+                } finally { connection.disconnect(); }
+            } catch (Exception ignored) { /* search keeps working, untranslated */ }
+        });
         io.execute(() -> {
             try {
                 HttpURLConnection connection = (HttpURLConnection) new URL(ENDPOINT).openConnection();
@@ -559,15 +626,14 @@ final class SXMBrowseScreen extends ScrollView {
         locationSubtitle.setText(savedOnly ? (french ? "Les annonces que vous aimez" : "Listings you love") :
             (french ? "Trouvez votre prochain coup de cœur" : "Find your next favorite thing"));
         List<JSONObject> shown = new ArrayList<>();
-        String query = fold(search.getText().toString()).trim();
-        String[] terms = query.split("\\s+");
+        String[] terms = searchTerms(search.getText().toString());
         for (JSONObject l : savedOnly ? savedRows : listings) {
             String id = l.optString("id");
             if (savedOnly && !saved.contains(id)) continue;
             if (!category.isEmpty() && !category.equals(l.optString("category"))) continue;
             if (!side.isEmpty() && !side.equals(l.optString("side"))) continue;
             if (!area.isEmpty() && !area.equalsIgnoreCase(l.optString("area"))) continue;
-            if (!query.isEmpty() && !matchesSearch(l, terms)) continue;
+            if (terms.length > 0 && !matchesSearch(l, terms)) continue;
             shown.add(l);
         }
         if (shown.isEmpty()) {

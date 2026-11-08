@@ -2566,17 +2566,49 @@ function listingSearchText(l){
   ].filter(Boolean).join(" "));
 }
 
+// French <-> English search words from search-words.json, the same file the iOS and Android apps read:
+// "fridge" also finds "frigo". Until it loads (or if it fails) search works as before, untranslated.
+let searchWordMap = null, searchPhrases = [];
+function loadSearchWords(data){
+  const skip = new Set(data.notAsTranslation || []), map = new Map();
+  (data.groups || []).forEach(group=>group.forEach(word=>{
+    const alts = map.get(word) || new Set();
+    group.forEach(other=>{ if(other !== word && !skip.has(other)) alts.add(other); });
+    map.set(word, alts);
+  }));
+  searchWordMap = map;
+  searchPhrases = [...map.keys()].filter(k=>k.includes(" ")).sort((a, b)=>b.length - a.length);
+}
+fetch("search-words.json").then(r=>r.ok ? r.json() : null)
+  .then(data=>{ if(data){ loadSearchWords(data); if(state.q) render(); } }).catch(()=>{});
+
+// Query words, keeping known phrases ("washing machine") together so they translate as one.
+function searchTerms(query){
+  let q = ` ${normalizeQuery(query)} `;
+  const terms = [];
+  searchPhrases.forEach(phrase=>{ if(q.includes(` ${phrase} `)){ terms.push(phrase); q = q.split(` ${phrase} `).join(" "); } });
+  return terms.concat(q.split(" ").filter(Boolean));
+}
+function searchTranslations(word){
+  const alts = searchWordMap?.get(word) || (word.length > 3 && /[sx]$/.test(word) && searchWordMap?.get(word.slice(0, -1)));
+  return alts ? [...alts] : [];
+}
+
 function listingMatchesQuery(l, query){
-  const words = normalizeQuery(query).split(" ").filter(Boolean);
+  const words = searchTerms(query);
   if(!words.length) return true;
   const hay = listingSearchText(l);
+  const padded = ` ${hay} `;
   const tokens = new Set(hay.split(" ").filter(Boolean));
   const exactCategoryWords = new Set([
     "car","cars","auto","autos","voiture","voitures","vehicle","vehicles",
     "moto","motos","motorcycle","motorcycles","scooter","scooters",
     "boat","boats","bateau","bateaux","jetski","nautique"
   ]);
-  return words.every(word=>exactCategoryWords.has(word) ? tokens.has(word) : hay.includes(word));
+  // A translation must be a whole word (plural allowed), so "ac" never matches "achat".
+  const hasWord = w=>padded.includes(` ${w} `) || padded.includes(` ${w}s `) || padded.includes(` ${w}x `);
+  return words.every(word=>(exactCategoryWords.has(word) ? tokens.has(word) : hay.includes(word)) ||
+    searchTranslations(word).some(hasWord));
 }
 
 function sortList(arr){

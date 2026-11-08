@@ -80,11 +80,11 @@ struct SXMListing: Codable, Identifiable, Equatable {
     static func fold(_ text: String) -> String {
         text.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil).lowercased()
     }
-    /// Every search word must appear in the listing text or in its category words.
-    func matches(_ terms: [String]) -> Bool {
+    /// Every search word must appear in the listing text or in its category words, as typed or translated.
+    func matches(_ terms: [String], _ words: SXMSearchWords) -> Bool {
         let text = SXMListing.fold([title, description ?? "", area ?? ""].joined(separator: " ")) + " " +
             (SXMListing.searchWords[category ?? ""] ?? "") + " " + (SXMListing.searchWords[subcategory ?? ""] ?? "")
-        return terms.allSatisfy { text.contains($0) }
+        return words.matches(text: text, terms: terms)
     }
 
     var photoURLs: [URL] { (photos ?? []).compactMap { $0.hasPrefix("https://") ? URL(string: $0) : nil } }
@@ -139,6 +139,64 @@ enum SXMCategories {
     }
 }
 
+/// French <-> English search words from the website's search-words.json (same list as the site and Android):
+/// "fridge" also finds "frigo". Empty until loaded (or offline); search then works untranslated.
+struct SXMSearchWords {
+    private(set) var translations: [String: [String]] = [:]
+    private(set) var phrases: [String] = []
+
+    init() {}
+    init(json: Data) throws {
+        struct File: Decodable { let groups: [[String]]; let notAsTranslation: [String]? }
+        let file = try JSONDecoder().decode(File.self, from: json)
+        let skip = Set(file.notAsTranslation ?? [])
+        var map: [String: [String]] = [:]
+        for group in file.groups {
+            for word in group {
+                for other in group where other != word && !skip.contains(other) && !(map[word] ?? []).contains(other) {
+                    map[word, default: []].append(other)
+                }
+            }
+        }
+        translations = map
+        phrases = map.keys.filter { $0.contains(" ") }.sorted { $0.count > $1.count }
+    }
+
+    /// Lowercase, no accents, only letters and digits: the same text the website searches.
+    static func normalize(_ text: String) -> String {
+        let folded = text.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil).lowercased()
+        let kept = folded.unicodeScalars.map { $0.isASCII && CharacterSet.alphanumerics.contains($0) ? Character($0) : " " }
+        return String(kept).split(separator: " ").joined(separator: " ")
+    }
+
+    /// Query words, keeping known phrases ("washing machine") together so they translate as one.
+    func terms(_ query: String) -> [String] {
+        var q = " " + Self.normalize(query) + " "
+        var out: [String] = []
+        for p in phrases where q.contains(" \(p) ") {
+            out.append(p)
+            q = q.replacingOccurrences(of: " \(p) ", with: " ")
+        }
+        return out + q.split(separator: " ").map(String.init)
+    }
+
+    func alternatives(_ word: String) -> [String] {
+        if let alts = translations[word] { return alts }
+        if word.count > 3, word.hasSuffix("s") || word.hasSuffix("x") { return translations[String(word.dropLast())] ?? [] }
+        return []
+    }
+
+    /// `text` is already folded; a translation must be a whole word (plural allowed), so "ac" never matches "achat".
+    func matches(text: String, terms: [String]) -> Bool {
+        let padded = " " + Self.normalize(text) + " "
+        return terms.allSatisfy { term in
+            text.contains(term) || padded.contains(term) || alternatives(term).contains { alt in
+                padded.contains(" \(alt) ") || padded.contains(" \(alt)s ") || padded.contains(" \(alt)x ")
+            }
+        }
+    }
+}
+
 @MainActor
 final class SXMBrowseModel: ObservableObject {
     static let supabaseURL = "https://szhaxlmronirhnntlwyb.supabase.co"
@@ -154,6 +212,7 @@ final class SXMBrowseModel: ObservableObject {
     @Published var french: Bool
     @Published var showingSaved = false
     @Published var adsAllowed = false
+    @Published var searchWords = SXMSearchWords()
     private var loadedOnce = false
 
     /// Opens the authenticated native conversation with this listing's seller.
@@ -173,6 +232,16 @@ final class SXMBrowseModel: ObservableObject {
         guard !loadedOnce else { return }
         loadedOnce = true
         await refresh()
+        await loadSearchWords()
+    }
+
+    // shortcut: the word list is not kept offline, so offline search is untranslated; cache it like the feed if that matters.
+    private func loadSearchWords() async {
+        guard let url = URL(string: "https://buyselltradesxm.com/search-words.json"),
+              let result = try? await URLSession.shared.data(from: url),
+              (result.1 as? HTTPURLResponse)?.statusCode == 200,
+              let words = try? SXMSearchWords(json: result.0) else { return }
+        searchWords = words
     }
 
     func refresh() async {
@@ -260,13 +329,13 @@ struct SXMBrowseView: View {
     @State private var showFilters = false
     private var fr: Bool { model.french }
     private var shown: [SXMListing] {
-        let terms = SXMListing.fold(query).split(whereSeparator: { $0.isWhitespace }).map(String.init)
+        let terms = model.searchWords.terms(query)
         let source = model.showingSaved ? model.saved : model.listings
         return source.filter { l in
             (category == nil || l.category == category) &&
             (side == nil || l.side == side) &&
             (area.map { l.area?.localizedCaseInsensitiveCompare($0) == .orderedSame } ?? true) &&
-            (terms.isEmpty || l.matches(terms))
+            (terms.isEmpty || l.matches(terms, model.searchWords))
         }
     }
     var body: some View {
