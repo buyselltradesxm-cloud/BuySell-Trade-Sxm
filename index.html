@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=ebace8b00a44e6fa"></script>
-<script src="/telemetry.js?v=ebace8b00a44e6fa"></script>
-<script src="/pwa.js?v=ebace8b00a44e6fa" defer></script>
-<link href="/fonts/fonts.css?v=ebace8b00a44e6fa" rel="stylesheet">
+<script src="/frame-guard.js?v=7e4156ed1e7bb046"></script>
+<script src="/telemetry.js?v=7e4156ed1e7bb046"></script>
+<script src="/pwa.js?v=7e4156ed1e7bb046" defer></script>
+<link href="/fonts/fonts.css?v=7e4156ed1e7bb046" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -130,6 +130,23 @@
   }
   .logo .mark b{color:var(--sea);}
   .logo .mark{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* Brand header 2026-11: three colours + rotating tagline. */
+  .brand-mark span{display:inline-block;animation:brandPop 6s ease-in-out infinite;}
+  .brand-mark span:nth-child(1){color:var(--sea);}
+  .brand-mark span:nth-child(2){color:var(--sun);animation-delay:.12s;}
+  /* literal coral: market-design.css remaps --coral to the sea blue site-wide */
+  .brand-mark span:nth-child(3){color:#E4572E;animation-delay:.24s;}
+  .brand-mark span:nth-child(4){color:var(--ink);animation-delay:.36s;}
+  @keyframes brandPop{0%,88%,100%{transform:none}92%{transform:translateY(-2px) scale(1.04)}}
+  .brand-sub{position:relative;display:block;height:1.35em;overflow:hidden;}
+  .brand-sub i{position:absolute;left:0;top:0;font-style:normal;white-space:nowrap;opacity:0;animation:brandCycle 9s linear infinite;}
+  .brand-sub i:nth-child(2){animation-delay:3s;}
+  .brand-sub i:nth-child(3){animation-delay:6s;}
+  @keyframes brandCycle{0%{opacity:0;transform:translateY(7px)}4%,30%{opacity:1;transform:none}34%,100%{opacity:0;transform:translateY(-7px)}}
+  @media (prefers-reduced-motion:reduce){
+    .brand-mark span,.brand-sub i{animation:none;}
+    .brand-sub i{opacity:0;} .brand-sub i:first-child{opacity:1;}
+  }
 .sub{font-size:10.5px;color:var(--mute);font-weight:500;margin-top:3px;letter-spacing:0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
   .search{
@@ -2290,8 +2307,8 @@
   }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
-<link rel="stylesheet" href="market-design.css?v=ebace8b00a44e6fa">
-<link rel="stylesheet" href="pro-studio.css?v=ebace8b00a44e6fa">
+<link rel="stylesheet" href="market-design.css?v=7e4156ed1e7bb046">
+<link rel="stylesheet" href="pro-studio.css?v=7e4156ed1e7bb046">
 </head>
 <body>
 
@@ -2300,8 +2317,8 @@
     <a href="#browse" class="logo" aria-label="Buy Sell Trade Sint Maarten, accueil">
       <img class="logo-img" src="logo-192.webp" alt="" aria-hidden="true">
       <span class="logo-text">
-        <span class="mark">Buy Sell Trade SXM</span>
-        <span class="sub" data-en="The local marketplace">La place de marché locale</span>
+        <span class="mark brand-mark"><span>Buy</span> <span>Sell</span> <span>Trade</span> <span>SXM</span></span>
+        <span class="sub brand-sub" aria-label="La place de marché locale de Saint-Martin"><i data-en="The local marketplace">La place de marché locale</i><i data-en="Buy close to home">Achetez près de chez vous</i><i data-en="Sell in 2 minutes">Vendez en 2 minutes</i></span>
       </span>
     </a>
 
@@ -3260,23 +3277,23 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=ebace8b00a44e6fa" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=ebace8b00a44e6fa"></script>
-<script src="native-ios.js?v=ebace8b00a44e6fa"></script>
-<script src="captcha.js?v=ebace8b00a44e6fa"></script>
-<script src="supabase-api.js?v=ebace8b00a44e6fa"></script>
-<script src="img-utils.js?v=ebace8b00a44e6fa"></script>
-<script src="draft-store.js?v=ebace8b00a44e6fa"></script>
-<script src="push-config.js?v=ebace8b00a44e6fa"></script>
-<script src="push-notifications.js?v=ebace8b00a44e6fa"></script>
-<script src="consent.js?v=ebace8b00a44e6fa" defer></script>
-<script src="ads-config.js?v=ebace8b00a44e6fa"></script>
-<script src="admob-plugin.js?v=ebace8b00a44e6fa"></script>
-<script src="native-admob.js?v=ebace8b00a44e6fa"></script>
-<script src="ads.js?v=ebace8b00a44e6fa" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=7e4156ed1e7bb046" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=7e4156ed1e7bb046"></script>
+<script src="native-ios.js?v=7e4156ed1e7bb046"></script>
+<script src="captcha.js?v=7e4156ed1e7bb046"></script>
+<script src="supabase-api.js?v=7e4156ed1e7bb046"></script>
+<script src="img-utils.js?v=7e4156ed1e7bb046"></script>
+<script src="draft-store.js?v=7e4156ed1e7bb046"></script>
+<script src="push-config.js?v=7e4156ed1e7bb046"></script>
+<script src="push-notifications.js?v=7e4156ed1e7bb046"></script>
+<script src="consent.js?v=7e4156ed1e7bb046" defer></script>
+<script src="ads-config.js?v=7e4156ed1e7bb046"></script>
+<script src="admob-plugin.js?v=7e4156ed1e7bb046"></script>
+<script src="native-admob.js?v=7e4156ed1e7bb046"></script>
+<script src="ads.js?v=7e4156ed1e7bb046" defer></script>
 
-<script src="app-index.js?v=ebace8b00a44e6fa"></script>
-<script src="pro-studio.js?v=ebace8b00a44e6fa"></script>
-<script src="native-workflows.js?v=ebace8b00a44e6fa"></script>
+<script src="app-index.js?v=7e4156ed1e7bb046"></script>
+<script src="pro-studio.js?v=7e4156ed1e7bb046"></script>
+<script src="native-workflows.js?v=7e4156ed1e7bb046"></script>
 </body>
 </html>
