@@ -145,7 +145,11 @@
       bannerHidden = hide;
       (hide ? AdMob.hideBanner() : AdMob.resumeBanner()).catch(function () {});
     }
-    window.addEventListener("bst:ad-free", function () { if (bannerAllowed) prepareInterstitial(); });
+    window.addEventListener("bst:ad-free", function () {
+      if (!bannerAllowed) return;
+      prepareInterstitial();
+      loadAppOpen();
+    });
     ready(function () {
       var purchaseWatch = new MutationObserver(syncBanner);
       PURCHASE_MODALS.forEach(function (id) {
@@ -193,6 +197,51 @@
     setInterval(accrueActiveTime, 1000);
     var lastShownActiveMs = -COOLDOWN_MS;
     var shownThisSession = 0;
+    /* ---- App open ad: launch and resume ----------------------------------
+       Google's dedicated format for this moment. It is requested as soon as
+       consent allows, shown once the app has had minLoadMs to paint, then on
+       resume after a real absence. Pro members never see it. */
+    var appOpenAdId = (CFG.appOpen && CFG.appOpen[platform]) || "";
+    var openOpts = CFG.appOpenOptions || {};
+    var OPEN_MIN_LOAD_MS = openOpts.minLoadMs == null ? 5000 : openOpts.minLoadMs;
+    var OPEN_RESUME_AFTER_MS = openOpts.resumeAfterMs == null ? 30000 : openOpts.resumeAfterMs;
+    var OPEN_COOLDOWN_MS = openOpts.cooldownMs == null ? 120000 : openOpts.cooldownMs;
+    var OPEN_MAX_PER_SESSION = openOpts.maxPerSession == null ? 3 : openOpts.maxPerSession;
+    var openReady = false, openLoading = false, openShowing = false;
+    var openShownCount = 0, openLastShownAt = 0;
+    // Counted from when the page started loading, so the user always gets the
+    // full delay with the app in front of them, however fast consent resolves.
+    var startedAt = (window.performance && performance.timeOrigin) || Date.now();
+    var hiddenAt = 0;
+
+    function loadAppOpen() {
+      if (!appOpenAdId || openReady || openLoading || proMember() || !AdMob.loadAppOpen) return;
+      openLoading = true;
+      AdMob.loadAppOpen({ adId: appOpenAdId, isTesting: testing })
+        .then(function () { openReady = true; openLoading = false; })
+        .catch(function () { openLoading = false; setTimeout(loadAppOpen, 30000); });
+    }
+    function showAppOpen() {
+      if (!openReady || openShowing || proMember()) return;
+      if (openShownCount >= OPEN_MAX_PER_SESSION) return;
+      if (Date.now() - openLastShownAt < OPEN_COOLDOWN_MS) return;
+      // Never cover a form, a conversation or a purchase sheet the user opened.
+      if (document.querySelector(".modal.open") || purchaseOpen()) return;
+      openShowing = true;
+      openReady = false;
+      openShownCount += 1;
+      openLastShownAt = Date.now();
+      AdMob.showAppOpen()
+        .catch(function () {})
+        .then(function () { openShowing = false; setTimeout(loadAppOpen, 1000); });
+    }
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") { hiddenAt = Date.now(); return; }
+      // Back from a real absence: the open ad is allowed again.
+      if (hiddenAt && Date.now() - hiddenAt >= OPEN_RESUME_AFTER_MS) showAppOpen();
+      hiddenAt = 0;
+    });
+
     var isPrepared = false;
     var isPreparing = false;
 
@@ -256,12 +305,19 @@
                   return AdMob.requestTrackingAuthorization().catch(function () {});
                 }
               })
-              .then(function () { bannerAllowed = true; syncNativeAds(); syncBanner(); prepareInterstitial(); });
+              .then(function () {
+                bannerAllowed = true; syncNativeAds(); syncBanner(); prepareInterstitial();
+                loadAppOpen();
+                setTimeout(showAppOpen, Math.max(0, OPEN_MIN_LOAD_MS - (Date.now() - startedAt)));
+              });
           }
           bannerAllowed = true;
           syncNativeAds();
           syncBanner();
           prepareInterstitial();
+          loadAppOpen();
+          // Cold start: let the feed paint first, then show it if it is ready.
+          setTimeout(showAppOpen, Math.max(0, OPEN_MIN_LOAD_MS - (Date.now() - startedAt)));
         }
       })
       .catch(function () {});

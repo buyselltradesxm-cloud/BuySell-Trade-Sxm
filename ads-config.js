@@ -94,6 +94,22 @@ window.AdsConfig = {
       ios: "ca-app-pub-7816106453580174/9429125770" // SXM iOS Interstitial
     },
 
+    /* App open ad: Google's own format for the launch / resume moment, the only
+     * one allowed to cover the app at that point (an interstitial there breaks
+     * AdMob policy). Shown on a cold start after appOpenMinLoadMs, and when the
+     * app comes back to the foreground after appOpenResumeAfterMs in background.
+     * Never for Pro members. */
+    appOpen: {
+      android: "ca-app-pub-7816106453580174/8292769938", // SXM Android App Open
+      ios: "ca-app-pub-7816106453580174/6796030440"      // SXM iOS App Open
+    },
+    appOpenOptions: {
+      minLoadMs: 5000,        // let the feed paint before the ad covers it
+      resumeAfterMs: 30000,   // only after a real absence, not a quick switch
+      cooldownMs: 120000,     // never two open ads back to back
+      maxPerSession: 3
+    },
+
     /* Interstitial eligibility is checked only at natural transitions
      * (closing a listing, finishing a post), never by a background timer.
      * Foreground time must reach firstSessionDelayMs before the first ad
