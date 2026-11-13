@@ -23,6 +23,7 @@ const server = http.createServer((req, res) => {
       const errors = [];
       page.on("pageerror", error => errors.push(error.message));
       await page.addInitScript(() => {
+        window.CapacitorCustomPlatform = { name: "ios" }; // the bundled Capacitor recomputes the platform; it sees no native bridge here
         window.calls = []; window.purchaseResult = { cancelled: true };
         window.Capacitor = { getPlatform: () => "ios", isNativePlatform: () => true, Plugins: { SXMNative: {
           products: async () => ({ products: ["starter", "business", "premium", "elite", "unlimited"].map(tier => ({ id: "com.korekdigitalmarketing.buyselltradesxm.pro_" + tier + "_monthly", price: "€12.34" })).concat([3, 7, 14].map(days => ({ id: "com.korekdigitalmarketing.buyselltradesxm.boost_" + days + "_days", price: "€4.56" }))) }),
@@ -118,6 +119,7 @@ const server = http.createServer((req, res) => {
       const shellErrors = [];
       shellPage.on("pageerror", error => shellErrors.push(error.message));
       await shellPage.addInitScript(() => {
+        window.CapacitorCustomPlatform = { name: "ios" };
         window.calls = []; window.appleFails = false;
         window.SXMNativeInfo = { shell: 3, tabs: true, appleSignIn: true, refresh: true, push: true };
         window.pushState = { status: "prompt", on: false };
@@ -128,6 +130,7 @@ const server = http.createServer((req, res) => {
           pushDisable: async () => { pushState = { status: "granted", on: false }; return { token: "abc123" }; },
           ready: async () => ({ tab: "messages" }),
           setTabs: async tabs => { calls.push(["tabs", tabs]); },
+          openWorkflow: async args => { calls.push(["openWorkflow", args]); },
           refreshDone: async () => { calls.push(["refreshDone"]); },
           appleSignIn: async () => { if (appleFails) throw Object.assign(new Error("Unable to complete sign-in"), { code: "AUTH_FAILED" }); return { identityToken: "apple-token", nonce: "raw-nonce", name: "Ada Reviewer" }; },
           authenticate: async args => { calls.push(["authenticate", args]); return { url: "buyselltradesxm://auth/callback?code=pkce-test" }; }
@@ -176,6 +179,19 @@ const server = http.createServer((req, res) => {
       assert.equal((await lastTabs()).selected, "profile");
       await shellPage.evaluate(() => closeModal("profileModal"));
       await shellPage.waitForFunction(() => (calls.filter(x => x[0] === "tabs").pop() || [])[1].selected === "browse");
+      // 4.2: when the build has native Post/Messages screens, tapping those tabs
+      // must open the NATIVE workflow, not the web modal. (Apple rejected build 3
+      // because only Browse was native and these tabs fell through to web pages.)
+      // The reviewer-visible invariant: the web post/messages modals never open,
+      // and the native openWorkflow plugin method is called for each.
+      await shellPage.evaluate(() => { window.SXMNativeInfo.nativeWorkflows = true; window.calls = []; });
+      await tap("post");
+      await tap("messages");
+      const workflowTaps = (await shellPage.evaluate(() => window.calls)).filter(x => x[0] === "openWorkflow").map(x => x[1].tab);
+      assert.deepEqual(workflowTaps, ["post", "messages"], "Post and Messages must call the native workflow");
+      assert.equal(await isOpen("postModal"), false, "Native Post tab must not open the web post modal");
+      assert.equal(await isOpen("messagesModal"), false, "Native Messages tab must not open the web messages modal");
+      await shellPage.evaluate(() => { window.SXMNativeInfo.nativeWorkflows = false; });
       await shellPage.evaluate(() => { setUnreadMessageCount(3); setLang("en"); });
       await shellPage.waitForFunction(() => { const tabs = (calls.filter(x => x[0] === "tabs").pop() || [])[1]; return tabs.badges.messages === 3 && tabs.lang === "en"; });
       await shellPage.evaluate(() => { SB.hydrate = async () => true; window.dispatchEvent(new Event("sxmRefresh")); });
@@ -202,7 +218,7 @@ const server = http.createServer((req, res) => {
       // in Safari on the same iPhone it still appears.
       for (const inApp of [true, false]) {
         const hintPage = await browser.newPage({ serviceWorkers: "block", userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148" });
-        if (inApp) await hintPage.addInitScript(() => { window.Capacitor = { getPlatform: () => "ios", isNativePlatform: () => true, Plugins: {} }; });
+        if (inApp) await hintPage.addInitScript(() => { window.CapacitorCustomPlatform = { name: "ios" }; window.Capacitor = { getPlatform: () => "ios", isNativePlatform: () => true, Plugins: {} }; });
         await hintPage.goto(`http://127.0.0.1:${server.address().port}/${filename}?local=1`);
         await hintPage.waitForTimeout(5500);
         assert.equal(await hintPage.locator("#bst-pwa-banner").count(), inApp ? 0 : 1, inApp ? "No install hint inside the app" : "Install hint still shown in Safari");

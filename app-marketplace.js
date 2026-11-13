@@ -6187,7 +6187,11 @@ async function confirmSignupCode(){
       return;
     }
     const { email, password } = pendingSignupOtp;
-    if(confirmButton) confirmButton.textContent = state.lang === "fr" ? "Connexion en cours…" : "Signing in…";
+    // Only promise "Signing in…" when we actually have the password to do it.
+    // After a reload the pending state is restored without the password
+    // (savePendingSignup never persists it), so we skip the doomed attempt and
+    // send the user straight to the password form below.
+    if(password && confirmButton) confirmButton.textContent = state.lang === "fr" ? "Connexion en cours…" : "Signing in…";
     let signInResult;
     try { signInResult = password ? await SB.signIn(email, password) : {error:{code:"password_required"}}; }
     catch(e){ signInResult = {error:e}; }

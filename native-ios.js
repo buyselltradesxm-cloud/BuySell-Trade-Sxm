@@ -242,6 +242,8 @@
     if (panel && !panel.hidden) toggleNotifPanel();
     toggleFilters(false);
     wantedTab = tab;
+    // Post and Messages delegate to the native SwiftUI workflow themselves
+    // (openPostModal/openMessages call SXM.openWorkflow before any web modal).
     if (tab === "post") openPostModal();
     else if (tab === "messages") openMessages();
     else if (tab === "alerts") toggleNotifPanel();
