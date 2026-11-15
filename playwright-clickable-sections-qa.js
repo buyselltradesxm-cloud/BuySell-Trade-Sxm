@@ -82,8 +82,11 @@ const base = process.env.APP_QA_BASE_URL || "http://localhost:5173";
 
     await page.evaluate(() => { closeModal("detailModal"); openBoostInfo(); });
     await page.getByRole("button", { name:/Publier gratuitement|Post free|Annonce gratuite|Free listing/i }).first().click();
-    const postOpen = await page.locator("#postModal.open").count();
-    if(!postOpen) errors.push(`${path}: free pricing card did not open post modal`);
+    // Personal accounts open the standard composer. An active business plan
+    // correctly opens Studio Pro, which is its own composer rather than a
+    // failed click.
+    const composerOpen = await page.locator("#postModal.open, #proStudioModal.open").count();
+    if(!composerOpen) errors.push(`${path}: free pricing card did not open a listing composer`);
 
     await page.close();
   }

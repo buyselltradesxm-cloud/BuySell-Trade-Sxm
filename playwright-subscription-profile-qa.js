@@ -23,7 +23,9 @@ const { chromium } = require("playwright");
     });
 
     const personalText = await page.locator("#profileModal.open").innerText();
-    if (!/Mon abonnement|My subscription/.test(personalText)) errors.push(`${path}: missing subscription section for personal account`);
+    // The profile heading is visually uppercased by CSS, so browser innerText can
+    // return uppercase even though the accessible source label is sentence case.
+    if (!/Mon abonnement|My subscription/i.test(personalText)) errors.push(`${path}: missing subscription section for personal account`);
     if (!/5/.test(personalText)) errors.push(`${path}: missing personal monthly limit`);
     if (!/Le 1er du mois|1st of the month/.test(personalText)) errors.push(`${path}: missing personal renewal reset text`);
 

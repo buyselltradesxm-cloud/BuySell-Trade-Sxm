@@ -17,6 +17,19 @@ function json(body: unknown, status: number, h: Record<string,string>) { return 
 async function digest(value: string) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)); return Array.from(new Uint8Array(b), x => x.toString(16).padStart(2,"0")).join(""); }
 function code() { const a = new Uint32Array(1); crypto.getRandomValues(a); return String(a[0] % 1000000).padStart(6,"0"); }
 async function auth(path: string, init: RequestInit = {}) { return fetch(`${SUPABASE_URL}/auth/v1${path}`, { ...init, headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type":"application/json", ...(init.headers || {}) } }); }
+async function findUserByEmail(email: string) {
+  // Supabase's create-user endpoint returns 422 for an existing address. An
+  // interrupted signup leaves that address unconfirmed, so retrieve the
+  // pending account and issue a fresh code instead of trapping the customer
+  // on the create-account screen.
+  // The Admin API supports an email substring filter, avoiding a scan of the
+  // entire user population as the marketplace grows.
+  const listed = await auth(`/admin/users?page=1&per_page=100&filter=${encodeURIComponent(email)}`);
+  if (!listed.ok) return null;
+  const payload = await listed.json().catch(() => ({}));
+  const users = Array.isArray(payload) ? payload : Array.isArray(payload.users) ? payload.users : [];
+  return users.find((user: any) => String(user?.email || "").toLowerCase() === email) || null;
+}
 async function sendEmail(email: string, value: string) { if (!RESEND_KEY) return false; const response = await fetch("https://api.resend.com/emails", { method:"POST", headers:{ Authorization:`Bearer ${RESEND_KEY}`, "Content-Type":"application/json", "Idempotency-Key":`signup_code_${await digest(email + value)}` }, body: JSON.stringify({ from:"Buy Sell Trade SXM <noreply@buyselltradesxm.com>", to:[email], subject:"Your Buy Sell Trade SXM verification code", text:`Your verification code is ${value}. It expires in 15 minutes. If you did not create this account, ignore this email.`, html:`<div style="font-family:Arial,sans-serif;max-width:520px"><h2>Confirm your email address</h2><p>Enter this code in Buy Sell Trade SXM:</p><p style="font-size:32px;font-weight:700;letter-spacing:8px">${value}</p><p>This code expires in 15 minutes. If you did not create this account, ignore this email.</p><p><a href="${SITE_URL}">${SITE_URL}</a></p></div>` }) }); return response.ok; }
 function validEmail(email: string) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254; }
 async function consume(bucket: string, max_attempts: number, window_seconds: number) { const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_security_rate_limit`, { method:"POST", headers:{ apikey:SERVICE_KEY, Authorization:`Bearer ${SERVICE_KEY}`, "Content-Type":"application/json" }, body:JSON.stringify({ bucket_key:bucket, max_attempts, window_seconds }) }); return response.ok && (await response.json()) === true; }
@@ -38,7 +51,21 @@ Deno.serve(async (req) => {
     const password = String(body.password || ""); if (password.length < 8 || password.length > 256) return json({ error:"invalid signup", code:"password_rejected" }, 400, h);
     const value = code(); const userMetadata = { name:String(body.name || "").slice(0,120), account_type:String(body.account_type || "personal").slice(0,20), account_plan:"personal-free", business_name:String(body.business_name || "").slice(0,160), phone:String(body.phone || "").slice(0,40), signup_code_hash:await digest(email + ":" + value), signup_code_expires_at:new Date(Date.now() + CODE_TTL_SECONDS * 1000).toISOString(), signup_code_attempts:0 };
     let created: Response; try { created = await auth("/admin/users", { method:"POST", body:JSON.stringify({ email, password, email_confirm:false, user_metadata:userMetadata }) }); } catch (_) { return json({ error:"signup unavailable", code:"service_unavailable" }, 503, h); }
-    if (!created.ok) { let reason = ""; try { const detail = await created.json(); reason = String(detail.code || detail.error_code || "").toLowerCase(); } catch (_) {} return json({ error:"signup could not be completed", code:reason.includes("password") ? "password_rejected" : "signup_failed" }, 400, h); }
+    if (!created.ok) {
+      let reason = ""; try { const detail = await created.json(); reason = String(detail.code || detail.error_code || "").toLowerCase(); } catch (_) {}
+      if (reason.includes("email")) {
+        const existing = await findUserByEmail(email);
+        if (existing && !existing.email_confirmed_at && !existing.confirmed_at) {
+          const retryValue = code();
+          const retryMeta = { ...(existing.user_metadata || {}), signup_code_hash:await digest(email + ":" + retryValue), signup_code_expires_at:new Date(Date.now() + CODE_TTL_SECONDS * 1000).toISOString(), signup_code_attempts:0 };
+          let refreshed: Response;
+          try { refreshed = await auth(`/admin/users/${encodeURIComponent(existing.id)}`, { method:"PUT", body:JSON.stringify({ user_metadata:retryMeta, email_confirm:false }) }); } catch (_) { return json({ error:"signup unavailable", code:"service_unavailable" }, 503, h); }
+          if (!refreshed.ok || !(await sendEmail(email, retryValue))) return json({ error:"signup unavailable", code:"email_delivery_failed" }, 503, h);
+          return json({ accepted:true, user_id:existing.id, resent:true }, 200, h);
+        }
+      }
+      return json({ error:"signup could not be completed", code:reason.includes("password") ? "password_rejected" : "signup_failed" }, 400, h);
+    }
     const user = await created.json(); if (!user?.id) return json({ error:"signup unavailable", code:"service_unavailable" }, 503, h);
     let emailSent = false; try { emailSent = await sendEmail(email, value); } catch (_) {}
     if (!emailSent) { try { await auth(`/admin/users/${encodeURIComponent(user.id)}`, { method:"DELETE" }); } catch (_) {} return json({ error:"signup unavailable", code:"email_delivery_failed" }, 503, h); }
