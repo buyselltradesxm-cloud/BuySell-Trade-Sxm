@@ -31,8 +31,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SXMSharePlugin.class);
         registerPlugin(SXMLayoutPlugin.class);
         super.onCreate(savedInstanceState);
-        french = getSharedPreferences("sxm.browse", 0).getBoolean("french",
-            getResources().getConfiguration().getLocales().get(0).getLanguage().equals("fr"));
+        french = getSharedPreferences("sxm.browse", 0).getBoolean("french", false);
         web = getBridge().getWebView();
         installShell();
         syncWebLanguage(0);

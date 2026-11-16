@@ -12,6 +12,8 @@ const { chromium } = require("playwright");
   await page.goto("http://localhost:5173/?local=1", { waitUntil: "domcontentloaded" });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: "domcontentloaded" });
+  // This fixture checks French localized prices; first visits default to English.
+  await page.evaluate(() => setLang("fr"));
 
   const headerLogin = page.locator("#profileBtn");
   const headerPricing = page.locator(".bar-actions").getByRole("button", { name: /^(Pricing|Tarifs)$/i });
@@ -56,7 +58,7 @@ const { chromium } = require("playwright");
   for (const expected of ["Particulier", "Pro Starter", "Pro Business", "Premium", "Elite", "Unlimited"]) {
     if (!pricingText.includes(expected)) errors.push(`Pricing modal is missing ${expected}.`);
   }
-  // The page opens in French: prices read "24.99 $ / mois" (English: "$24.99 / month").
+  // In French, prices read "24.99 $ / mois" (English: "$24.99 / month").
   for (const price of ["24.99 $ / mois", "59.00 $ / mois", "99.00 $ / mois", "149.00 $ / mois", "199.00 $ / mois"]) {
     if (!pricingText.includes(price)) errors.push(`Pricing modal is missing ${price}.`);
   }

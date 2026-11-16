@@ -43,7 +43,7 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     private let workflowModel = SXMWorkflowModel()
     private var workflow: UIHostingController<SXMWorkflowView>?
     private var workflowTab: Tab?
-    private var french = Locale.preferredLanguages.first?.hasPrefix("fr") ?? false
+    private var french = UserDefaults.standard.bool(forKey: "sxm.language.french")
     /// Titles sent by the page. They replace the built-in ones, so wording can
     /// change on the site without shipping a new build.
     private var pageTitles: [Tab: String] = [:]
@@ -180,6 +180,7 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
 
     private func setBrowseLanguage(_ useFrench: Bool) {
         french = useFrench
+        UserDefaults.standard.set(useFrench, forKey: "sxm.language.french")
         buildItems(selected: browseModel.showingSaved ? .saved : .browse)
         let language = useFrench ? "fr" : "en"
         web.webView?.evaluateJavaScript("if(typeof setLang==='function')setLang('\(language)')")
@@ -270,7 +271,10 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
         let retitled = !sent.isEmpty && sent != pageTitles
         if retitled { pageTitles = sent }
         let languageChanged = french != nil && french != self.french
-        if let french = french { self.french = french }
+        if let french = french {
+            self.french = french
+            UserDefaults.standard.set(french, forKey: "sxm.language.french")
+        }
         let chosen = selected.flatMap(Tab.init(rawValue:))
         if retitled || languageChanged {
             let current = tabBar.selectedItem.flatMap { Tab.allCases.indices.contains($0.tag) ? Tab.allCases[$0.tag] : nil }

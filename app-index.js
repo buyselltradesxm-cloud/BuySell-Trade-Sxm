@@ -956,7 +956,7 @@ const BASE_LISTINGS = L.map(item=>({...item}));
 
 /* ---------------- STATE ---------------- */
 const state = {
-  lang:"fr", cur:"eur", cat:"all",
+  lang:"en", cur:"eur", cat:"all",
   q:"", area:"",
   subcat:"",
   sides:new Set(), conds:new Set(),
@@ -3373,7 +3373,7 @@ function updateTermsConsentLabel(el){
 
 /* ---------------- I18N SWAP ---------------- */
 function setLang(lang){
-  if(!I18N[lang]) lang = "fr";
+  if(!I18N[lang]) lang = "en";
   state.lang = lang;
   document.documentElement.lang = lang;
   document.querySelectorAll(".lang button").forEach(b=>

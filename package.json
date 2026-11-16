@@ -54,6 +54,7 @@
     "test:push": "node scripts/push-crypto-check.js",
     "test:push-client": "node scripts/push-client-check.js",
     "test:translations": "node scripts/translation-check.js",
+    "test:default-language": "node scripts/default-language-check.js",
     "test:draft": "node scripts/draft-check.js",
     "test:pwa": "node scripts/pwa-check.js",
     "supabase:enable-google-auth": "node scripts/enable-google-auth.js",

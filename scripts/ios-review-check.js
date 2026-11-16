@@ -197,7 +197,7 @@ const server = http.createServer((req, res) => {
       // A tab chosen before the page was ready (home screen shortcut): signed out, it asks to sign in.
       await shellPage.waitForFunction(() => document.querySelector("#accountModal.open"), null, { timeout: 5000 });
       assert.equal((await lastTabs()).selected, "messages");
-      assert.equal((await lastTabs()).titles.post, "Publier", "The native bar takes its words from the page");
+      assert.equal((await lastTabs()).titles.post, "Post", "The native bar defaults to English with the page");
       await tap("browse");
       assert.equal(await isOpen("accountModal"), false);
       assert.equal((await lastTabs()).selected, "browse");

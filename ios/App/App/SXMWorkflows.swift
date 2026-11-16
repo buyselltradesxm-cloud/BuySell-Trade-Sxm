@@ -65,7 +65,7 @@ final class SXMWorkflowModel: ObservableObject {
     @Published var threads: [SXMThread] = []
     @Published var messageDrafts: [String: String] = [:]
     private var generation = UUID()
-    var french: Bool { session?.french ?? (Locale.preferredLanguages.first?.hasPrefix("fr") ?? false) }
+    var french: Bool { session?.french ?? false }
     func text(_ fr: String, _ en: String) -> String { french ? fr : en }
 
     func invalidate(userId: String?) {
@@ -207,6 +207,7 @@ struct SXMPostView: View {
     let profile: () -> Void
     @State private var draft = SXMPostDraft()
     @State private var restored = false
+    @State private var draftLoadFailed = false
     @State private var saved = false
     @State private var published = false
     @State private var addingPhotos = false
@@ -297,6 +298,11 @@ struct SXMPostView: View {
                     if !notice.isEmpty { Text(notice).foregroundColor(.primary).accessibilityAddTraits(.updatesFrequently) }
                     if !storageError.isEmpty { Text(storageError).foregroundColor(.red) }
                     if saved { Label(model.text("Brouillon enregistré sur cet appareil", "Draft saved on this device"), systemImage: "checkmark") }
+                    if draftLoadFailed {
+                        Button(model.text("Réessayer de charger le brouillon", "Retry loading draft")) { restoreDraft() }
+                    } else if !storageError.isEmpty {
+                        Button(model.text("Réessayer d'enregistrer le brouillon", "Retry saving draft")) { persist() }
+                    }
                     if draft.uncertain {
                         Text(model.text("Vérifiez vos annonces avant de recommencer pour éviter un doublon.", "Check your listings before starting again to avoid a duplicate."))
                         Button(model.text("Vérifier mon profil", "Check my profile"), action: profile)
@@ -305,16 +311,12 @@ struct SXMPostView: View {
                             if model.busy { ProgressView() } else { Text(model.text("Publier l'annonce", "Publish listing")).fontWeight(.semibold) }
                         }.disabled(model.busy || addingPhotos || !restored || !storageError.isEmpty)
                     }
-                    Button(model.text("Effacer le brouillon", "Discard draft"), role: .destructive) { confirmDiscard = true }.disabled(model.busy || !restored)
+                    Button(model.text("Effacer le brouillon", "Discard draft"), role: .destructive) { confirmDiscard = true }.disabled(model.busy || (!restored && !draftLoadFailed))
                 }
             }
         }
         .disabled(model.busy || model.session?.userId != owner)
-        .onAppear {
-            guard !restored else { return }
-            do { draft = try model.restore(owner: owner); restored = true }
-            catch { storageError = model.text("Impossible de charger le brouillon. Fermez puis réessayez.", "Could not load your draft. Close and try again.") }
-        }
+        .onAppear { restoreDraft() }
         .onChange(of: draft) { _ in persist() }
         .sheet(item: $picker) { source in
             SXMPhotoPicker(source: source, limit: 8 - draft.photos.count, processing: { addingPhotos = $0; model.busy = $0 }) { data in
@@ -325,10 +327,24 @@ struct SXMPostView: View {
         }
         .confirmationDialog(model.text("Effacer le brouillon et ses photos ?", "Discard this draft and its photos?"), isPresented: $confirmDiscard, titleVisibility: .visible) {
             Button(model.text("Effacer le brouillon", "Discard draft"), role: .destructive) {
-                do { try model.discard(owner: owner); draft = SXMPostDraft(); notice = "" }
+                do {
+                    try model.discard(owner: owner)
+                    restored = true; draftLoadFailed = false; saved = false; storageError = ""
+                    draft = SXMPostDraft(); notice = ""
+                }
                 catch { storageError = error.localizedDescription }
             }
             Button(model.text("Annuler", "Cancel"), role: .cancel) {}
+        }
+    }
+    private func restoreDraft() {
+        guard !restored else { return }
+        do {
+            draft = try model.restore(owner: owner)
+            restored = true; draftLoadFailed = false; storageError = ""
+        } catch {
+            draftLoadFailed = true
+            storageError = model.text("Impossible de charger le brouillon. Réessayez ou effacez-le pour recommencer.", "Could not load your draft. Retry or discard it to start again.")
         }
     }
     private func persist() {
