@@ -1,6 +1,6 @@
 # TestFlight acceptance and feedback record
 
-Candidate: 1.0.3 (3). Website asset release: record the live version from the final release check. Testing date, device, iOS version and tester alias must accompany each result. All rows below are **PENDING**; automated fixtures are separate evidence.
+Candidate: **1.0.4 (1)**, uploaded November 16 in run 43857510505. Website asset release: `a32d4bc2d2eb558f`. This supersedes the previous 1.0.3 (3) candidate; old build results do not establish acceptance of this one. Testing date, device, iOS version and tester alias must accompany each result. All rows below are **PENDING**; automated fixtures are separate evidence. See `testflight-candidate-2026-11-16.md` for build and verification details.
 
 Use tester aliases in this repository. Keep credentials, messages, private photos, purchase receipts and personal contact details outside the repository. Use sandbox purchases only.
 

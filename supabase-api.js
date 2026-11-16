@@ -132,6 +132,8 @@
     return {
       id: r.id,
       t: r.title,
+      tf: r.title_fr || "",
+      te: r.title_en || "",
       cat: r.category,
       sub: r.subcategory || undefined,
       side: r.side,

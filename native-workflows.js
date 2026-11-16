@@ -3,6 +3,7 @@
 (function () {
   "use strict";
   const text = (fr, en) => state.lang === "fr" ? fr : en;
+  const listingTitle = l => l ? (text(l.tf || l.title_fr, l.te || l.title_en) || l.t || l.title || "") : "";
   const fail = (fr, en, code = "REQUEST_FAILED") => { const e = new Error(text(fr, en)); e.code = code; throw e; };
   const validID = value => /^(?:[0-9]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.test(String(value || ""));
   const validUser = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
@@ -37,7 +38,7 @@
   }
   async function listing(id) {
     if(!validID(id)) fail("Annonce invalide.", "Invalid listing.");
-    const r = await db.from("listings").select("id,seller_id,title,seller_name,status").eq("id",id).maybeSingle();
+    const r = await db.from("listings").select("id,seller_id,title,title_fr,title_en,seller_name,status").eq("id",id).maybeSingle();
     if(r.error || !r.data?.seller_id) fail("Cette annonce n’est plus accessible.", "This listing is no longer accessible.");
     return r.data;
   }
@@ -115,13 +116,13 @@
         if(typeof refreshMessageBadge === "function") await refreshMessageBadge(threads);
         check();
         data = threads.map(t=>({key:t.key,listingId:t.listingId == null ? null : String(t.listingId),otherId:t.otherId,
-          otherName:t.otherName || text("Membre SXM","SXM member"),title:L.find(l=>String(l.id)===String(t.listingId))?.t || text("Conversation","Conversation"),
+          otherName:t.otherName || text("Membre SXM","SXM member"),title:listingTitle(L.find(l=>String(l.id)===String(t.listingId))) || text("Conversation","Conversation"),
           lastBody:t.lastBody || "",lastAt:t.lastAt,unread:t.unread}));
       } else if(action === "contact") {
         const l = await listing(payload.listingId); check();
         if(l.seller_id === user.id) fail("C’est votre annonce.","This is your listing.");
         data = {key:String(l.id)+":"+l.seller_id,listingId:String(l.id),otherId:l.seller_id,
-          otherName:l.seller_name || text("Vendeur","Seller"),title:l.title,lastBody:"",lastAt:null,unread:0};
+          otherName:l.seller_name || text("Vendeur","Seller"),title:listingTitle(l),lastBody:"",lastAt:null,unread:0};
       } else if(action === "thread") {
         if(!validUser(payload.otherId) || payload.otherId === user.id || (payload.listingId != null && !validID(payload.listingId))) fail("Conversation invalide.","Invalid conversation.");
         const blocks = await SB.fetchBlocks(); check();

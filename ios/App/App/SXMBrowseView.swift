@@ -12,6 +12,13 @@ import UIKit
 struct SXMListing: Codable, Identifiable, Equatable {
     let id: String
     let title: String
+    let titleFr: String?
+    let titleEn: String?
+
+    func displayTitle(french: Bool) -> String {
+        let translated = (french ? titleFr : titleEn)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return translated?.isEmpty == false ? translated! : title
+    }
     let description: String?
     let category: String?
     let subcategory: String?
@@ -28,6 +35,7 @@ struct SXMListing: Codable, Identifiable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case id, title, description, category, subcategory, area, side, currency, photos
+        case titleFr = "title_fr", titleEn = "title_en"
         case priceEur = "price_eur", priceUsd = "price_usd", thumbPhotos = "thumb_photos", createdAt = "created_at"
         case searchKeywords = "search_keywords"
     }
@@ -37,6 +45,8 @@ struct SXMListing: Codable, Identifiable, Equatable {
         // Ids are numbers on older rows and uuids on newer ones.
         if let number = try? c.decode(Int.self, forKey: .id) { id = String(number) } else { id = try c.decode(String.self, forKey: .id) }
         title = (try? c.decode(String.self, forKey: .title)) ?? ""
+        titleFr = try? c.decode(String.self, forKey: .titleFr)
+        titleEn = try? c.decode(String.self, forKey: .titleEn)
         description = try? c.decode(String.self, forKey: .description)
         category = try? c.decode(String.self, forKey: .category)
         subcategory = try? c.decode(String.self, forKey: .subcategory)
@@ -86,8 +96,8 @@ struct SXMListing: Codable, Identifiable, Equatable {
     }
     /// Every search word must appear in the listing text or in its category words, as typed or translated.
     func matches(_ terms: [String], _ words: SXMSearchWords) -> Bool {
-        let own = SXMListing.fold([title, description ?? "", searchKeywords ?? ""].joined(separator: " "))
-        let text = SXMListing.fold([title, description ?? "", area ?? "", searchKeywords ?? ""].joined(separator: " ")) + " " +
+        let own = SXMListing.fold([title, titleFr ?? "", titleEn ?? "", description ?? "", searchKeywords ?? ""].joined(separator: " "))
+        let text = SXMListing.fold([title, titleFr ?? "", titleEn ?? "", description ?? "", area ?? "", searchKeywords ?? ""].joined(separator: " ")) + " " +
             (SXMListing.searchWords[category ?? ""] ?? "") + " " + (SXMListing.searchWords[subcategory ?? ""] ?? "")
         return words.matches(text: text, own: own, terms: terms)
     }
@@ -257,7 +267,7 @@ final class SXMBrowseModel: ObservableObject {
         defer { loading = false }
         var parts = URLComponents(string: "\(Self.supabaseURL)/rest/v1/listings")!
         parts.queryItems = [
-            URLQueryItem(name: "select", value: "id,title,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords"),
+            URLQueryItem(name: "select", value: "id,title,title_fr,title_en,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords"),
             URLQueryItem(name: "seller_id", value: "not.is.null"),
             URLQueryItem(name: "or", value: "(status.is.null,status.in.(active,reserved))"),
             URLQueryItem(name: "order", value: "created_at.desc"),
@@ -271,6 +281,9 @@ final class SXMBrowseModel: ObservableObject {
             guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.badServerResponse) }
             let rows = try JSONDecoder().decode([SXMListing].self, from: data).filter { !$0.title.isEmpty }
             listings = rows
+            let current = Dictionary(uniqueKeysWithValues: rows.map { ($0.id, $0) })
+            saved = saved.map { current[$0.id] ?? $0 }
+            Self.store(saved, Self.savedKey)
             offline = false
             Self.store(rows, Self.cacheKey)
         } catch {
@@ -306,6 +319,8 @@ extension SXMListing {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(id, forKey: .id)
         try c.encode(title, forKey: .title)
+        try c.encodeIfPresent(titleFr, forKey: .titleFr)
+        try c.encodeIfPresent(titleEn, forKey: .titleEn)
         try c.encodeIfPresent(description, forKey: .description)
         try c.encodeIfPresent(category, forKey: .category)
         try c.encodeIfPresent(area, forKey: .area)
@@ -665,7 +680,7 @@ struct SXMListingCard: View {
             Color.clear.aspectRatio(1, contentMode: .fit)
                 .overlay(SXMRemoteImage(url: listing.thumbURL, fill: true))
                 .clipShape(RoundedRectangle(cornerRadius: 18))
-            Text(listing.title).font(.subheadline.weight(.semibold)).foregroundColor(ink).lineLimit(2)
+            Text(listing.displayTitle(french: french)).font(.subheadline.weight(.semibold)).foregroundColor(ink).lineLimit(2)
             if let price = listing.priceLabel {
                 Text(price + (listing.category == "locvoit" ? (french ? " / jour" : " / day") : ""))
                     .font(.title3.weight(.bold)).foregroundColor(sea)
@@ -717,7 +732,7 @@ struct SXMListingDetail: View {
             VStack(alignment: .leading, spacing: 14) {
                 gallery
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(listing.title).font(.title2.weight(.bold)).foregroundColor(ink)
+                    Text(listing.displayTitle(french: fr)).font(.title2.weight(.bold)).foregroundColor(ink)
                     if let price = listing.priceLabel { Text(price).font(.title3.weight(.heavy)).foregroundColor(sea) }
                     HStack(spacing: 6) {
                         Image(systemName: "mappin.and.ellipse")
@@ -774,7 +789,7 @@ struct SXMListingDetail: View {
             }
         }
         .sheet(isPresented: $sharing) {
-            SXMShareSheet(items: [listing.title, model.shareURL(listing)])
+            SXMShareSheet(items: [listing.displayTitle(french: fr), model.shareURL(listing)])
         }
         .fullScreenCover(item: $zoomed) { url in SXMZoomView(url: url) }
         .task { await locate() }

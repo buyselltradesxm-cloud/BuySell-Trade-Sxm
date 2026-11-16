@@ -45,7 +45,14 @@ Return the words a buyer could type to find this item, in BOTH French and Englis
 
 Only describe what the listing states. No sentences, prices, phone numbers, links or the seller's name. At most 30 keywords.
 
-Reply with ONLY a JSON object of this exact shape: {"keywords": ["word1", "word2"]}. No other text, no markdown fences.`;
+Also return the listing TITLE in natural French and English as title_fr and title_en.
+Translate the title only, without adding claims from the description. Preserve brands, models,
+proper names, numbers, prices and units. Correct obvious spelling mistakes without changing meaning.
+Keep a title already written in the requested language in that language. Each title: 1 to 300 characters.
+
+Reply with ONLY a JSON object of this exact shape:
+{"keywords": ["word1", "word2"], "title_fr": "Titre en français", "title_en": "English title"}.
+No other text, no markdown fences.`;
 
 // Same folding as the website search (normalizeQuery): lowercase, no accents, letters and digits only.
 export function foldKeywords(words: unknown): string {
@@ -94,7 +101,7 @@ Deno.serve(async (req) => {
 
   // The tags only frame the data; a seller cannot close them early.
   const clean = (s: unknown, max: number) => String(s || "").replace(/<\/?listing>/gi, " ").slice(0, max);
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, timeout: 15000, maxRetries: 0 });
   let response;
   try {
     response = await client.messages.create({
@@ -104,7 +111,7 @@ Deno.serve(async (req) => {
       messages: [{
         role: "user",
         content: `<listing>\nCategory: ${clean(listing.category, 40)} ${clean(listing.subcategory, 60)}\n` +
-          `Title: ${clean(listing.title, 200)}\nDescription: ${clean(listing.description, 4000)}\n</listing>`,
+          `Title: ${clean(listing.title, 300)}\nDescription: ${clean(listing.description, 4000)}\n</listing>`,
       }],
     });
   } catch (error) {
@@ -119,9 +126,16 @@ Deno.serve(async (req) => {
   raw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
   const open = raw.indexOf("{"), close = raw.lastIndexOf("}");
   if (open >= 0 && close > open) raw = raw.slice(open, close + 1);
-  let keywords = "";
-  try { keywords = foldKeywords(JSON.parse(raw || "{}").keywords); } catch (_e) { /* empty */ }
-  if (!keywords) return json(200, { skipped: "no keywords" });
+  let keywords = "", titleFr = "", titleEn = "";
+  try {
+    const result = JSON.parse(raw || "{}");
+    keywords = foldKeywords(result.keywords);
+    const title = (value: unknown) => typeof value === "string" ? value.trim() : "";
+    titleFr = title(result.title_fr);
+    titleEn = title(result.title_en);
+  } catch (_e) { /* invalid response is not persisted */ }
+  if (!keywords || !titleFr || !titleEn || titleFr.length > 300 || titleEn.length > 300)
+    return json(502, { error: "invalid localization response" });
 
   // The seller may have edited the listing while Claude was answering: then a newer call is on its
   // way and these keywords describe old text, so do not save them.
@@ -132,9 +146,10 @@ Deno.serve(async (req) => {
   // UPDATE listings through a SECURITY DEFINER RPC: this project only hands the function the
   // anon-mapped sb_secret key, which cannot write. The RPC checks PUSH_FUNCTION_SECRET, so only
   // this function (which holds the secret) can set keywords.
-  const saved = await rest(`rpc/save_listing_keywords`, {
+  const saved = await rest(`rpc/save_listing_localization`, {
     method: "POST",
-    body: JSON.stringify({ p_id: id, p_kw: keywords, p_secret: SECRET }),
+    body: JSON.stringify({ p_id: id, p_title: listing.title, p_description: listing.description,
+      p_kw: keywords, p_title_fr: titleFr, p_title_en: titleEn, p_secret: SECRET }),
   });
   const body = saved.ok ? (await saved.text()).trim() : "";
   if (!saved.ok || body !== "true") return json(502, { error: `save failed (${saved.status})`, body: body.slice(0, 60) });
