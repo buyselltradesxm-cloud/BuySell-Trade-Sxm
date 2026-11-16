@@ -33,6 +33,7 @@ Business catalogue uses two photo-led columns on desktop and one below 620px. Ex
 
 ## Components
 Pro workspace contains activity-specific shortcuts into the existing listing form. Public showcase uses public listing data only. Existing profile, modal, event delegation, toast and listing contact flows remain canonical.
+Studio Pro places a teal-accented all-category callout and primary posting action above the activity shortcuts. Explain that the shortcuts are optional and the simple form includes every marketplace category, in both English and French.
 
 ## Do's and Don'ts
 Use semantic buttons, visible focus and escaped user content. Do not fetch private profile fields for storefronts. Keep existing subscription gates. Restaurant profiles hide prices; food products retain prices. Rental vehicle prices are daily rates.

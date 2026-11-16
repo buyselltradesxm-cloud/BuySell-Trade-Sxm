@@ -349,11 +349,16 @@ function studioHomeHTML(){
     </header>
     ${studioHasDraft ? `<div class="ps-card ps-draft"><div><strong>${fr ? "Brouillon en cours" : "Draft in progress"}</strong><span>${fr ? "Reprenez là où vous étiez." : "Pick up where you left off."}</span></div>
       <button type="button" class="ps-btn2" data-click="studioRestoreDraft">${fr ? "Reprendre" : "Resume"}</button></div>` : ""}
-    <div><h3 class="ps-h">${fr ? "Que voulez-vous publier ?" : "What would you like to publish?"}</h3>
-      <p class="ps-muted">${fr ? "Chaque activité a son formulaire." : "Each activity has its own form."}${main ? (fr ? " Votre activité principale est en premier." : " Your main activity comes first.") : ""}</p></div>
+    <section class="ps-any-category" aria-labelledby="psAnyCategoryTitle">
+      <div class="ps-any-heading"><span class="ps-ico" aria-hidden="true">${studioIcon("plus")}</span>
+        <h3 class="ps-h" id="psAnyCategoryTitle">${fr ? "Toutes les catégories, à votre disposition" : "Every category is open to you"}</h3></div>
+      <p class="ps-muted">${fr ? "Vos annonces ne se limitent pas aux activités ci-dessous. Utilisez le formulaire simple pour choisir parmi toutes les catégories du marketplace." : "You can post more than the activities below. Use the simple form to choose from all marketplace categories."}</p>
+      <button type="button" class="primary-btn ps-any-action" data-click="studioClassicForm">${fr ? "Publier dans n’importe quelle catégorie" : "Post in any category"}<span aria-hidden="true">→</span></button>
+    </section>
+    <div><h3 class="ps-h">${fr ? "Raccourcis par activité" : "Activity shortcuts"}</h3>
+      <p class="ps-muted">${fr ? "Gagnez du temps avec un formulaire adapté à votre activité." : "Save time with a form tailored to your activity."}${main ? (fr ? " Votre activité principale est en premier." : " Your main activity comes first.") : ""}</p></div>
     <div class="ps-tiles">${tpls.map(t=>`<button type="button" class="ps-tile${t.id === main ? " main" : ""}" data-click="studioPickTemplate" data-click-args='${dataArgs([t.id])}'>
       <span class="ps-ico">${studioIcon(t.icon)}</span><span class="ps-tn">${esc(tr(t.l))}</span><span class="ps-ts">${esc(tr(t.s))}</span></button>`).join("")}</div>
-    <button type="button" class="ps-link" data-click="studioClassicForm">${fr ? "Utiliser le formulaire simple" : "Use the simple form"}</button>
   </div>`;
 }
 
