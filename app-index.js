@@ -719,6 +719,7 @@ Object.assign(I18N.fr, {
   authFreeTitle:"Choisissez votre compte", authFreeText:"Un compte particulier reste gratuit. Un compte Pro ajoute des outils business avec un abonnement.", authBadge:"Inscription sécurisée",
   createKicker:"Compte particulier", newAccountTitle:"Créer un compte gratuit", newAccountHelp:"Pour vendre vos propres objets, publier gratuitement et discuter avec les acheteurs.", loginKicker:"Connexion", freeGoogle:"Créer gratuitement avec Google", freeApple:"Créer gratuitement avec Apple", createWithEmail:"ou créez votre compte avec email",
   proKicker:"Pour les entreprises", proAccountTitle:"Créer un compte Pro", proAccountHelp:"Pour les commerces et vendeurs réguliers qui veulent plus d'annonces, de visibilité et d'outils.",
+  accountFreeNav:"Compte gratuit", accountProNav:"Compte Pro", accountPasswordHint:"8 caractères minimum",
   proBenefit1:"Page business et badge Pro", proBenefit2:"Plus d'annonces et de visibilité", proBenefit3:"45 jours gratuits, sans carte bancaire",
   proGoogle:"Continuer Pro avec Google", proApple:"Continuer Pro avec Apple", proPlansHint:"Comparez le nombre d'annonces, les boosts et la visibilité avant de choisir.", viewProPlans:"Découvrir tous les comptes Pro"
 });
@@ -726,6 +727,7 @@ Object.assign(I18N.en, {
   authFreeTitle:"Choose your account", authFreeText:"A personal account stays free. A Pro account adds business tools with a subscription.", authBadge:"Secure sign-up",
   createKicker:"Personal account", newAccountTitle:"Create a free account", newAccountHelp:"Sell your own items, post for free, and chat with buyers.", loginKicker:"Log in", freeGoogle:"Create free with Google", freeApple:"Create free with Apple", createWithEmail:"or create your account with email",
   proKicker:"For businesses", proAccountTitle:"Create a Pro account", proAccountHelp:"For businesses and regular sellers who need more listings, visibility, and tools.",
+  accountFreeNav:"Free account", accountProNav:"Pro account", accountPasswordHint:"At least 8 characters",
   proBenefit1:"Business page and Pro badge", proBenefit2:"More listings and visibility", proBenefit3:"45 days free, no card required",
   proGoogle:"Continue Pro with Google", proApple:"Continue Pro with Apple", proPlansHint:"Compare listing limits, boosts, and visibility before choosing.", viewProPlans:"Explore all Pro accounts"
 });
@@ -1578,6 +1580,11 @@ for(const id of ["accountTermsConsent", "proTermsConsent"]){
  * as tiny, readable, individually-named functions rather than teaching
  * the generic dispatcher above a multi-call or expression syntax. */
 function closeAccountModalThenPricing(){ closeModal("accountModal"); openPricingInfo(); }
+function scrollAccountSection(id){
+  const section = document.getElementById(id);
+  section.scrollIntoView({block:"start"});
+  section.focus({preventScroll:true});
+}
 function closeBoostModalThenPostModal(){ closeModal("boostModal"); openPostModal(); }
 function closeProfileModalThenAdmin(){ closeModal("profileModal"); openAdmin(); }
 function closeProfileModalThenBoostInfo(){ closeModal("profileModal"); openBoostInfo(); }

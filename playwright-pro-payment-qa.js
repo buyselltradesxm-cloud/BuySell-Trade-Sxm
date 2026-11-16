@@ -41,7 +41,8 @@ const { chromium } = require("playwright");
   if (/Pro Starter|Pro Plus|Pro Premium|Dealer Pro/.test(loginText)) {
     errors.push("Pricing plans are still shown inside the login modal.");
   }
-  if (!/Créer un compte est gratuit|Creating an account is free/.test(loginText)) {
+  const freeAccountHeading = page.locator('#freeAccount [data-i18n="newAccountTitle"]');
+  if (!await freeAccountHeading.isVisible() || !/Créer un compte gratuit|Create a free account/.test(await freeAccountHeading.innerText())) {
     errors.push("Free account message is missing from the login modal.");
   }
   if (await page.locator("#accountModal .auth-intro").getByRole("button", { name: /^(Pricing|Tarifs)$/i }).count()) {

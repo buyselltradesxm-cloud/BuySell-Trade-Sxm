@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo \"ANDROID: $\\(gh run view 42592801262 --json conclusion --jq .conclusion\\)\")",
+      "Bash(echo \"IOS: $\\(gh run view 42592824174 --json conclusion --jq .conclusion\\)\")"
+    ]
+  }
+}

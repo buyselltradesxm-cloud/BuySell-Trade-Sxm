@@ -1,5 +1,47 @@
 # App Store correction handoff — 5 November 2026
 
+## November 16 follow-up
+
+The rejected submission still targets **1.0.2 (3)**. The signed archive from
+[GitHub run 43430787599](https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm/actions/runs/43430787599)
+identifies the replacement candidate as **1.0.3 (3)** for iPhone and iPad.
+Its executable contains the native Browse, Post and Messages views.
+[TestFlight build 1.0.3 (3)](https://appstoreconnect.apple.com/teams/d813053b-d1e0-409c-8b4a-607fd670049e/apps/6809964445/testflight/ios/3ed6ee0f-6475-449d-8b4a-44f469323339)
+is assigned to **SXM Internal Testing**. App Review still shows the November 16
+developer reply with no newer Apple message.
+
+### Draft follow-up for App Review
+
+Thank you for reviewing Buy Sell Trade SXM. We would like to demonstrate the
+native marketplace workflows in version 1.0.3, build 3. The app serves buyers
+and sellers on both sides of Saint-Martin/Sint Maarten. Browse supports local
+area filters, listing photos and saved listings. Post uses a native form with
+the iOS camera and photo picker and saves drafts on the device. Messages
+provides a native inbox and conversation screens.
+
+To try these flows, sign in with the demo account in App Review Information.
+In Browse, choose an area, open a listing and save it. In Post, enter a title
+and select a photo, then leave and return to the tab to see the draft. To try
+messaging, open another seller's listing and contact the seller or open an
+existing conversation from Messages.
+
+### Evidence to attach before sending
+
+- Install **1.0.3 (3)** from TestFlight. Confirm the demo account can sign in.
+  Record Browse, Post and Messages on that build, with credentials and personal
+  messages outside the recording.
+- On the same build, complete a sandbox Pro purchase and restore. Confirm the
+  plan shows as active in Profile after each step.
+- Add actual external tester feedback with the build number, reported issue,
+  resulting change and retest outcome. The owner's signup retest is internal
+  evidence. The external TestFlight group was assigned to 1.0.3 (1) at the last
+  check.
+- Add the verified evidence to the existing
+  [App Review thread](https://appstoreconnect.apple.com/apps/6809964445/distribution/reviewsubmissions/details/4eff6f75-7c79-472d-ab49-4a688b5379a3)
+  and follow Apple's direction on attaching the newer build.
+
+## Original November 5 handoff
+
 Status: implemented locally, NOT submitted, NOT deployed. Native compilation and
 device acceptance remain unverified. No approval outcome is guaranteed.
 
