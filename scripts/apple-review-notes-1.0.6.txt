@@ -1,0 +1,14 @@
+Review candidate: version 1.0.6, build 1. Please review this candidate in place of the previously rejected 1.0.2 (3).
+
+Buy Sell Trade SXM is a local marketplace for buyers and independent sellers across Saint-Martin and Sint Maarten. The native SwiftUI Browse and Saved screens provide listing discovery, island-side/area filtering, photos and saved listings. Native Post provides camera/photo selection and on-device drafts. Native Messages provides the inbox and seller conversations. Account and subscription screens use the existing web bridge.
+
+Testing and feedback: on November 16 the owner reported successful testing of the current TestFlight app and no remaining issues. Earlier owner-led TestFlight feedback identified that seller-written titles did not follow FR/EN; French and English display titles were added while preserving the seller original for editing. Feedback also requested Vans, Auto body repair, rental vehicle types and seven-day rental rates; these were implemented in 1.0.6. The shared posting, editing, draft, native routing and bilingual title fixtures passed, including 274 category/form combinations. This is owner-led internal testing; external-beta feedback for this candidate has not yet been recorded.
+
+Review steps:
+1. Browse without signing in. Filter Saint-Martin/Sint Maarten or an area, open a listing, view photos and change FR/EN to see localized titles.
+2. Sign in using the demo account supplied in App Review Information. Test Post with a photo and title; leave and return to confirm the draft.
+3. Under Vehicles select Vans, or under Services select Auto body repair. Under Car Rentals choose a vehicle type and enter a daily rate and optional weekly rate for seven days.
+4. Open a seller listing and contact the seller; use Messages to view/send a conversation. Free accounts have five messages per listing; Pro accounts have higher access.
+5. Open Pricing to test the monthly Pro subscription and Restore Purchases using Apple sandbox. The purchase screen includes price, monthly duration, renewal terms, Apple Standard EULA and privacy links.
+
+Our November 16 response in the review thread addresses the nine questions under guidelines 4.3 and 4.2.6. A follow-up identifies the current candidate and the actual feedback applied. The app is configured for automatic release after approval.

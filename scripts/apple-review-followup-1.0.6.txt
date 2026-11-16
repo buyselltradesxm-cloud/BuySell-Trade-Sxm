@@ -1,0 +1,18 @@
+Hello App Review team,
+
+Following our November 16 response to your nine questions, we are requesting reevaluation of the revised Buy Sell Trade SXM candidate, version 1.0.6, build 1, in place of 1.0.2 (3). The App Store version, selected build and reviewer instructions have been updated.
+
+We have now completed owner-led TestFlight validation. On November 16, the owner reported that the current TestFlight app tested successfully with no remaining issues. Actual feedback applied during this validation included:
+
+• Seller-written titles stayed in their original language when the user changed FR/EN. We added separate French and English display titles, preserving the seller original for editing, across native browsing/detail, saved listings and the website.
+• Vehicle and rental categories were too limited. We added Vans, Auto body repair and eight rental vehicle types, with a daily rate and optional seller-entered weekly rate covering seven days. These are included in 1.0.6.
+
+Automated posting/editing, draft, native workflow, responsive-layout and bilingual-title checks also passed, including 274 category/form combinations. The above TestFlight feedback is owner-led internal feedback; external-beta feedback for this exact candidate has not yet been recorded.
+
+The app addresses local buyer/seller discovery across Saint-Martin and Sint Maarten: island-side and local-area filters, bilingual listing discovery, seller-created inventory, direct conversations and listing safety controls. The current native SwiftUI Browse/Saved, Post and Messages screens are available in this candidate. Native Post supports camera/photo selection and on-device drafts.
+
+To review: browse public listings without signing in, filter by island side or area, open photos and switch FR/EN. Use the supplied demo login in App Review Information to post, save a draft, contact a seller and open Messages. Under Car Rentals, select a vehicle type and check daily/seven-day rates. Pricing provides the monthly subscription purchase and Restore Purchases controls, with EULA and privacy links.
+
+Our earlier nine-question response describes the audience, development, related-app scope and ownership. Please assess the revised candidate with these concrete changes and testing results, and let us know if further information is needed.
+
+Thank you.

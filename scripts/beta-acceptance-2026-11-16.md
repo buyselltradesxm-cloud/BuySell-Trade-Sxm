@@ -1,6 +1,8 @@
 # TestFlight acceptance and feedback record
 
-Candidate: **1.0.4 (1)**, uploaded November 16 in run 43857510505. Website asset release: `a32d4bc2d2eb558f`. This supersedes the previous 1.0.3 (3) candidate; old build results do not establish acceptance of this one. Testing date, device, iOS version and tester alias must accompany each result. All rows below are **PENDING**; automated fixtures are separate evidence. See `testflight-candidate-2026-11-16.md` for build and verification details.
+November 16 owner acceptance: the user reported that the current TestFlight app tested successfully and requested App Store release. Version 1.0.6 (1) has now been submitted and App Store Connect shows **Waiting for Review**, with automatic release after approval. This is an overall owner-reported pass; the detailed rows below remain pending where no individual device/test evidence was supplied. See `appstore-submission-1.0.6-2026-11-16.md`.
+
+Candidate: **1.0.6 (1)**, uploaded November 16 in run 43872414515, processed and assigned to SXM Internal Testing. Website asset release: `615eda0a1c785c75`. This supersedes 1.0.4/1.0.5; old build results do not establish acceptance of this one. Testing date, device, iOS version and tester alias must accompany each result. All rows below are **PENDING**; automated fixtures are separate evidence. See `category-rental-release-2026-11-16.md` for the current category/rate changes and build status.
 
 Use tester aliases in this repository. Keep credentials, messages, private photos, purchase receipts and personal contact details outside the repository. Use sandbox purchases only.
 
