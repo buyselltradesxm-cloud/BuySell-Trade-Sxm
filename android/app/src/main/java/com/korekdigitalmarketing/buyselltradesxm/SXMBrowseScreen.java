@@ -47,7 +47,7 @@ final class SXMBrowseScreen extends ScrollView {
     private static final int SEA = Color.rgb(11, 110, 127), INK = Color.rgb(19, 42, 46);
     private static final int PAPER = Color.rgb(251, 247, 239);
     private static final String ENDPOINT = "https://szhaxlmronirhnntlwyb.supabase.co/rest/v1/listings" +
-        "?select=id,title,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords" +
+        "?select=id,title,title_fr,title_en,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords" +
         "&seller_id=not.is.null&or=(status.is.null,status.in.(active,reserved))&order=created_at.desc&limit=300";
     // Public publishable key; protected writes continue through the signed-in WebView.
     private static final String PUBLIC_KEY = "sb_publishable_2EgfSBNrfE-5rIC2qS__tg_dCoEFyac";
@@ -133,14 +133,19 @@ final class SXMBrowseScreen extends ScrollView {
     }
     /** Empty until the listing-keywords function has run; optString would turn a JSON null into "null". */
     static String keywords(JSONObject l) { return l.isNull("search_keywords") ? "" : l.optString("search_keywords"); }
+    static String displayTitle(JSONObject l, boolean french) {
+        String key = french ? "title_fr" : "title_en";
+        String translated = l.isNull(key) ? "" : l.optString(key, "").trim();
+        return translated.isEmpty() ? l.optString("title", "") : translated;
+    }
     static boolean matchesSearch(JSONObject l, String[] terms) {
         // search_keywords: hidden French + English words from the listing-keywords function (never shown).
-        String text = fold(l.optString("title") + " " + l.optString("description") + " " + l.optString("area") + " " + keywords(l)) + " " +
+        String text = fold(displayTitle(l, true) + " " + displayTitle(l, false) + " " + l.optString("title") + " " + l.optString("description") + " " + l.optString("area") + " " + keywords(l)) + " " +
             SEARCH_WORDS.getOrDefault(l.optString("category"), "") + " " + SEARCH_WORDS.getOrDefault(l.optString("subcategory"), "");
         String all = " " + searchText(text) + " ";
         // Translations only look at the seller's own words, so "house" does not find every
         // "Maison & meubles" listing through "maison".
-        String padded = " " + searchText(l.optString("title") + " " + l.optString("description") + " " + keywords(l)) + " ";
+        String padded = " " + searchText(displayTitle(l, true) + " " + displayTitle(l, false) + " " + l.optString("title") + " " + l.optString("description") + " " + keywords(l)) + " ";
         for (String term : terms) {
             if (text.contains(term) || all.contains(term)) continue;
             boolean translated = false;
@@ -614,6 +619,14 @@ final class SXMBrowseScreen extends ScrollView {
                     JSONArray rows = new JSONArray(json);
                     post(() -> {
                         setRows(rows);
+                        for (int i = 0; i < savedRows.size(); i++) {
+                            String id = savedRows.get(i).optString("id");
+                            for (JSONObject current : listings) {
+                                if (id.equals(current.optString("id"))) { savedRows.set(i, current); break; }
+                            }
+                        }
+                        getContext().getSharedPreferences("sxm.browse", 0).edit()
+                            .putString("savedRows", new JSONArray(savedRows).toString()).apply();
                         getContext().getSharedPreferences("sxm.browse", 0).edit().putString("feed", json).apply();
                         status.setText(""); render();
                     });
@@ -707,7 +720,7 @@ final class SXMBrowseScreen extends ScrollView {
         android.widget.FrameLayout.LayoutParams hp = new android.widget.FrameLayout.LayoutParams(dp(44), dp(44), Gravity.TOP | Gravity.END);
         hp.setMargins(dp(6), dp(6), dp(6), dp(6));
         imageFrame.addView(heart, hp);
-        TextView title = label(l.optString("title"), 14, true);
+        TextView title = label(displayTitle(l, french), 14, true);
         title.setMaxLines(2); title.setMinLines(2);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
         title.setPadding(dp(10), dp(10), dp(10), 0); box.addView(title);
@@ -797,7 +810,7 @@ final class SXMBrowseScreen extends ScrollView {
                 loadPhoto(gallery.optString(page[0]), photo, generation, 2);
             });
         }
-        TextView title = label(l.optString("title"), 22, true); content.addView(title);
+        TextView title = label(displayTitle(l, french), 22, true); content.addView(title);
         content.addView(label(place(l), 14, false));
         String amount = price(l);
         if (!amount.isEmpty()) {
