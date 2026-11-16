@@ -2500,9 +2500,9 @@ function cardKey(e, id){
   }
 }
 
-function mobileAdHTML(slot){
+function mobileAdHTML(slot, large = false){
   return `
-    <aside class="feed-ad" aria-label="${state.lang==="fr" ? "Publicité" : "Sponsored"}" data-ad-placement="feed" data-ad-feed-slot="${slot}"></aside>`;
+    <aside class="feed-ad${large ? " feed-ad-large" : ""}" aria-label="${state.lang==="fr" ? "Publicité" : "Sponsored"}" data-ad-placement="feed" data-ad-feed-slot="${slot}"></aside>`;
 }
 
 /* ---------------- RENDER: FILTER + LOGIC ---------------- */
@@ -2678,10 +2678,13 @@ function gridCardsHTML(from, to){
   // suspended for pages that read as mostly ads), but tight enough to
   // maximize impressions within that limit.
   const FEED_AD_INTERVAL = 3;
+  const largeAdAfter = gridList.length <= 4 ? 2 : gridList.length <= 12 ? 4 : 8;
   let html = "";
   for(let idx = from; idx < to; idx++){
     html += cardHTML(gridList[idx], false);
-    if((idx + 1) % FEED_AD_INTERVAL === 0 && idx + 1 < gridList.length){
+    if(idx + 1 === largeAdAfter && idx + 1 < gridList.length){
+      html += mobileAdHTML("feed-middle", true);
+    } else if(idx + 1 > largeAdAfter && (idx + 1) % FEED_AD_INTERVAL === 0 && idx + 1 < gridList.length){
       html += mobileAdHTML("feed-after-" + (idx + 1));
     }
   }
