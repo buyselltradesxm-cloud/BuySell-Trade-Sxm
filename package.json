@@ -22,6 +22,7 @@
     "build:release-assets": "npm run build:admob-plugin && node scripts/version-assets.js",
     "build:assets": "node scripts/version-assets.js",
     "test:assets": "node scripts/version-assets.js --check",
+    "test:store-recovery": "node scripts/store-catalog-check.js && node scripts/store-failure-recovery-check.js",
     "test:release": "node scripts/release-check.js",
     "test:site-secrets": "node scripts/check-site-secrets.js",
     "test:gallery-search": "node playwright-gallery-search-qa.js",

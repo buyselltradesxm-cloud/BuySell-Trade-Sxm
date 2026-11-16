@@ -1,5 +1,15 @@
 # App Store correction handoff — 5 November 2026
 
+## November 16 verified status — supersedes older rejection notes
+
+App Store Connect was inspected directly after the pre-build review. The latest Apple message, dated November 13 at 20:51 in the UI, concerns **4.3 Spam and 4.2.6 App Generation Services**. It asks for nine detailed answers about product purpose, audience, differentiation, beta feedback, related apps, shared code and ownership. The developer's November 16 reply already answers these questions and commits to further external beta testing before resubmission. No new message or submission was sent in this session.
+
+Both French and English descriptions already include Apple's standard EULA, marketplace Terms and Privacy Policy links. The French Privacy Policy field is populated with `https://buyselltradesxm.com/privacy.html`. Do not continue treating the old missing-EULA finding as unresolved without new contrary evidence.
+
+The rejected version is still 1.0.2 (3). TestFlight 1.0.3 (3) is assigned to SXM Internal Testing, with one invitation and no installation/session/feedback counts displayed. External group `test externe bst` is still associated with 1.0.3 (1), which shows two installations and 30 sessions but no feedback count. Those sessions do not establish acceptance of build 3.
+
+See `scripts/release-remediation-2026-11-16.md` for purchase fixes and `scripts/beta-acceptance-2026-11-16.md` for the device and feedback evidence still needed. Do not attach a different build or resubmit solely because automated tests pass.
+
 ## November 16 follow-up
 
 The rejected submission still targets **1.0.2 (3)**. The signed archive from
@@ -75,7 +85,7 @@ Conditions d'utilisation (EULA) : https://www.apple.com/legal/internet-services/
 Politique de confidentialité : https://buyselltradesxm.com/privacy.html
 Conditions du service : https://buyselltradesxm.com/terms.html
 
-These additions have NOT been entered into App Store Connect. Keep the localized
+These additions were verified in both App Store Connect descriptions on November 16. Keep the localized
 subscription title, one-month duration, StoreKit price, automatic-renewal disclosure,
 restore and manage-subscriptions controls visible in the purchase journey.
 

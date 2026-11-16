@@ -1,5 +1,7 @@
 # Apple rejection follow-up — 13 November 2026
 
+Historical snapshot: the November 16 verified status in `scripts/appstore-review-2026-11-05.md` supersedes the rejection, deployment and metadata assumptions below. Apple's latest message concerns 4.3 / 4.2.6; both localized descriptions now have the legal links.
+
 Changes are local, not deployed or submitted.
 
 ## Findings

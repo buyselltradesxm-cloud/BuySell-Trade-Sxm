@@ -44,28 +44,32 @@
     const value = error?.message || (fr() ? "Service indisponible. Réessayez." : "Service unavailable. Please try again.");
     if (typeof showToast === "function") showToast(value);
   }
-  async function api(body) {
+  async function storeApi(endpoint, body, fallback) {
     const session = await window.db?.auth.getSession();
     const token = session?.data?.session?.access_token;
     if (!token) throw new Error(fr() ? "Connectez-vous avant de continuer." : "Please sign in first.");
-    const response = await fetch(window.SUPABASE_URL + "/functions/v1/apple-purchases", {
-      method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY, Authorization: "Bearer " + token },
-      body: JSON.stringify(body)
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "Purchase verification is temporarily unavailable. Use Restore Purchases to retry.");
-    return result;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const response = await fetch(window.SUPABASE_URL + "/functions/v1/" + endpoint, {
+        method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY, Authorization: "Bearer " + token },
+        body: JSON.stringify(body), signal: controller.signal
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || fallback);
+      return result;
+    } catch (error) {
+      if (controller.signal.aborted) throw new Error(fr()
+        ? "La vérification des achats a expiré. Utilisez Restaurer les achats pour réessayer."
+        : "Purchase verification timed out. Use Restore Purchases to retry.");
+      throw error;
+    } finally { clearTimeout(timeout); }
   }
-  async function playApi(body) {
-    const session = await window.db?.auth.getSession();
-    const token = session?.data?.session?.access_token;
-    if (!token) throw new Error(fr() ? "Connectez-vous avant de continuer." : "Please sign in first.");
-    const response = await fetch(window.SUPABASE_URL + "/functions/v1/google-play-purchases", {
-      method: "POST", headers: { "Content-Type": "application/json", apikey: window.SUPABASE_ANON_KEY, Authorization: "Bearer " + token }, body: JSON.stringify(body)
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "Google Play purchase verification is temporarily unavailable.");
-    return result;
+  function api(body) {
+    return storeApi("apple-purchases", body, "Purchase verification is temporarily unavailable. Use Restore Purchases to retry.");
+  }
+  function playApi(body) {
+    return storeApi("google-play-purchases", body, "Google Play purchase verification is temporarily unavailable.");
   }
   async function products() {
     if (catalog && Object.keys(catalog).length > 0) return catalog;
@@ -190,10 +194,10 @@
         return;
       }
       if (!listening) {
-        listening = true;
         await plugin().addListener("transaction", async result => {
           try { await deliver(result.signedTransaction); await refreshAccount(); } catch (error) { message(error); }
         });
+        listening = true;
       }
       const result = await (restore ? plugin().restore() : plugin().pending());
       let failed = false;

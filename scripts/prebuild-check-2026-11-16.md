@@ -1,5 +1,7 @@
 # Pre-build check — 16 November 2026
 
+Subsequent update: commit `3738d23` was pushed and deployed successfully in [run 43848540620](https://github.com/buyselltradesxm-cloud/BuySell-Trade-Sxm/actions/runs/43848540620); the live release check then passed. The deployment mismatch below is historical. Later purchase-recovery fixes and the verified 4.3 / 4.2.6 rejection are tracked in `scripts/release-remediation-2026-11-16.md`.
+
 Decision: local regression checks pass. Align the intended source and live website before treating a new build as release-ready. No build, deployment, commit, or store submission was triggered during this check.
 
 ## Release alignment

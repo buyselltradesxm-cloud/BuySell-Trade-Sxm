@@ -41,6 +41,7 @@ jobs:
           node --check supabase-api.js
           node --check native-workflows.js
           node scripts/native-workflows-check.js
+          npm run test:store-recovery
           node --check push-notifications.js
       - uses: actions/jekyll-build-pages@v1
         with:
