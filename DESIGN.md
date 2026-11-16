@@ -47,6 +47,14 @@ Keep authentic listing photos and live prices; the concept's example inventory i
 Use existing bundled Instrument Sans / Space Grotesk on web, system fonts and SF Symbols on iOS.
 Keep the featured carousel's left/right buttons and its reduced-motion behavior.
 The native photo gallery also has labelled 44-point previous/next controls.
+The main feed has one full-width advertising break after up to eight listings
+(between rows in shorter feeds). Web house/campaign fills use the shared ad
+manager with a 300px minimum creative area, existing type and teal/ivory tokens.
+Native inline AdMob supports creatives up to 300 points/dp high, uses the loaded
+creative's actual height, and collapses on no fill. Preserve the existing consent
+and Pro gates; saved native listings do not show advertising.
+The large in-app placement is AdMob-only. The web manager hides its matching
+WebView slot so no house promo, direct campaign or AdSense substitutes for AdMob.
 Native navigation is Discover, Saved, Post, Messages, Profile; alerts remain available via the home bell.
 Builds advertising `nativeWorkflows` use SXMWorkflows.swift for posting and messages.
 Native Forms, Pickers, Lists and navigation retain the established system-font/teal treatment.

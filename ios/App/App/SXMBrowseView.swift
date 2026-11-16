@@ -587,13 +587,14 @@ struct SXMListingGrid: View {
     let listings: [SXMListing]
     @ObservedObject var model: SXMBrowseModel
     @Environment(\.sizeCategory) private var sizeCategory
+    private var adAfter: Int { listings.count <= 4 ? 2 : listings.count <= 12 ? 4 : 8 }
     var body: some View {
         VStack(spacing: 20) {
-            listingRows(Array(listings.prefix(2)))
-            if !model.showingSaved && model.adsAllowed {
+            listingRows(Array(listings.prefix(adAfter)))
+            if listings.count > adAfter && !model.showingSaved && model.adsAllowed {
                 SXMInlineAdSection(french: model.french)
             }
-            if listings.count > 2 { listingRows(Array(listings.dropFirst(2))) }
+            if listings.count > adAfter { listingRows(Array(listings.dropFirst(adAfter))) }
         }.padding(.horizontal, 20)
     }
 
@@ -659,7 +660,7 @@ private struct SXMInlineAdBanner: UIViewRepresentable {
     let onFailure: () -> Void
 
     func makeUIView(context: Context) -> BannerView {
-        let banner = BannerView(adSize: inlineAdaptiveBanner(width: width, maxHeight: 110))
+        let banner = BannerView(adSize: inlineAdaptiveBanner(width: width, maxHeight: 300))
         #if DEBUG
         banner.adUnitID = "ca-app-pub-3940256099942544/2435281174"
         #else

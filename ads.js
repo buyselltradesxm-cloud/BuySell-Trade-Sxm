@@ -217,7 +217,9 @@
     if (!promo) { collapse(container); return; }
     var b = el("button", "ad-unit ad-house");
     b.type = "button";
-    b.appendChild(flag(L(CFG.houseLabel) || "Buy Sell Trade Sxm", "ad-flag-house"));
+    var houseLabel = L(CFG.houseLabel) || "Buy Sell Trade Sxm";
+    if (container.classList.contains("feed-ad-large")) houseLabel = (L(CFG.label) || "Sponsored") + " · " + houseLabel;
+    b.appendChild(flag(houseLabel, "ad-flag-house"));
     var body = el("span", "ad-body");
     body.appendChild(el("strong", "ad-head", L(promo.headline)));
     body.appendChild(el("span", "ad-text", L(promo.text)));
@@ -309,6 +311,12 @@
     if (container.getAttribute("data-ad-state") === "filled") return;
     var key = normKey(container);
     if (!key) { collapse(container); return; }
+    // The large in-app placement belongs to the native AdMob feed view.
+    // Never replace it with a house promotion, campaign, or AdSense in WKWebView/WebView.
+    if (NATIVE_ADS && container.classList.contains("feed-ad-large")) {
+      collapse(container);
+      return;
+    }
     if (key === "sticky-bottom") {
       if (stickyDismissed()) { collapse(container); return; }
       // don't stack the sticky banner under the consent notice; give the
@@ -537,6 +545,18 @@
       ".ad-network .adsbygoogle{min-height:90px;}",
       /* in-grid card: span the full row of the results grid */
       ".feed-ad{grid-column:1/-1;}",
+      /* Large mid-feed placement; retain the shared campaign/network/fallback renderers. */
+      ".feed-ad-large{scroll-margin-block:120px;}",
+      ".feed-ad-large .ad-unit{min-height:300px;padding:24px;justify-content:center;gap:16px;}",
+      ".feed-ad-large .ad-unit:focus-visible{outline:3px solid var(--sea,#0B6E7F);outline-offset:4px;}",
+      ".feed-ad-large .ad-house{background:var(--paper,#FBF7EF);border:2px solid var(--sea,#0B6E7F);box-shadow:none;}",
+      ".feed-ad-large .ad-head{font-size:clamp(24px,4vw,36px);max-width:24ch;line-height:1.15;}",
+      ".feed-ad-large .ad-text{font-size:15px;line-height:1.5;max-width:55ch;}",
+      ".feed-ad-large .ad-body{gap:12px;}",
+      ".feed-ad-large .ad-cta{font-size:15px;color:var(--sea-deep,#075663);text-decoration:underline;text-underline-offset:4px;}",
+      ".feed-ad-large .ad-media{max-height:300px;object-fit:contain;}",
+      ".feed-ad-large .ad-network{cursor:default;justify-content:flex-start;}",
+      ".feed-ad-large .adsbygoogle{min-height:250px;}",
       /* dismissible sticky bottom banner */
       ".ad-x{position:absolute;top:-9px;right:-9px;width:22px;height:22px;border-radius:50%;",
       "  background:#132a2e;color:#fff;border:2px solid #fff;font-size:13px;line-height:1;",
