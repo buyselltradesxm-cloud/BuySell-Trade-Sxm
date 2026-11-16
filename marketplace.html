@@ -32,10 +32,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=249275f416d7c777"></script>
-<script src="/telemetry.js?v=249275f416d7c777"></script>
-<script src="/pwa.js?v=249275f416d7c777" defer></script>
-<link href="/fonts/fonts.css?v=249275f416d7c777" rel="stylesheet">
+<script src="/frame-guard.js?v=bd4a857d90539bea"></script>
+<script src="/telemetry.js?v=bd4a857d90539bea"></script>
+<script src="/pwa.js?v=bd4a857d90539bea" defer></script>
+<link href="/fonts/fonts.css?v=bd4a857d90539bea" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -2254,8 +2254,8 @@
   }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
-<link rel="stylesheet" href="market-design.css?v=249275f416d7c777">
-<link rel="stylesheet" href="pro-studio.css?v=249275f416d7c777">
+<link rel="stylesheet" href="market-design.css?v=bd4a857d90539bea">
+<link rel="stylesheet" href="pro-studio.css?v=bd4a857d90539bea">
 </head>
 <body>
 
@@ -2270,7 +2270,7 @@
     </a>
 
     <form class="search" role="search" data-submit="applySearch" data-submit-args='["__EVENT__"]'>
-      <input type="text" id="q" data-i18n-ph="searchPh" placeholder="Que cherchez-vous&nbsp;?" aria-label="Mot-clé" data-keydown="onSearchKeydown" data-keydown-args='["__EVENT__"]'>
+      <input type="text" id="q" data-i18n-ph="searchPh" placeholder="What are you looking for?" aria-label="Mot-clé" data-keydown="onSearchKeydown" data-keydown-args='["__EVENT__"]'>
       <div class="divide"></div>
       <select id="area" aria-label="Zone">
         <option value="" data-i18n="allIsland">Whole island</option>
@@ -2326,7 +2326,7 @@
         <span aria-hidden="true">$</span>
         <span class="label" data-i18n="pricingLabel">Pricing</span>
       </button>
-      <button type="button" class="post" data-click="openPostModal" data-i18n="postAd" data-mobile-label="Publier">Post an ad</button>
+      <button type="button" class="post" data-click="openPostModal" data-i18n="postAd" data-mobile-label="Post">Post an ad</button>
     </div>
   </div>
 </header>
@@ -2570,7 +2570,7 @@
           </div>
           <div class="field full">
             <label for="newTitle" data-i18n="titleLabel">Title</label>
-            <input id="newTitle" required minlength="4" data-i18n-ph="titlePh" placeholder="Ex: Scooter 125 en bon état">
+            <input id="newTitle" required minlength="4" data-i18n-ph="titlePh" placeholder="Ex: 125cc scooter in good condition">
           </div>
           <div class="field">
             <label for="newCat" data-i18n="categoryLabel">Category</label>
@@ -2615,7 +2615,7 @@
               </div>
               <div class="field">
                 <label for="newVehicleColor" data-i18n="vehicleColorLabel">Color</label>
-                <input id="newVehicleColor" data-i18n-ph="vehicleColorPh" placeholder="Blanc">
+                <input id="newVehicleColor" data-i18n-ph="vehicleColorPh" placeholder="White">
               </div>
               <div class="field">
                 <label for="newVehicleFuel" data-i18n="vehicleFuelLabel">Engine</label>
@@ -2633,7 +2633,7 @@
           </section>
           <div class="field full" id="postSellerPhoneField">
             <label for="newSellerPhone"><span data-i18n="sellerPhoneLabel">Seller phone number (optional)</span></label>
-            <input id="newSellerPhone" type="tel" maxlength="32" autocomplete="tel" data-i18n-ph="sellerPhonePh" placeholder="Ex. +590 690 12 34 56">
+            <input id="newSellerPhone" type="tel" maxlength="32" autocomplete="tel" data-i18n-ph="sellerPhonePh" placeholder="Ex. +1 721 555 1234">
             <small data-i18n="sellerPhoneHelp">This number will be visible to buyers on this listing.</small>
           </div>
           <input id="newSide" type="hidden" value="fr">
@@ -2646,7 +2646,7 @@
           </div>
           <div class="field full" id="postDescField">
             <label for="newDesc" data-i18n="descLabel">Description</label>
-            <textarea id="newDesc" data-i18n-ph="descPh" placeholder="Ajoutez les détails utiles: état, livraison, point de rendez-vous"></textarea>
+            <textarea id="newDesc" data-i18n-ph="descPh" placeholder="Add useful details: condition, quantity, delivery, and meeting point"></textarea>
           </div>
         </div>
         <div class="detail-actions">
@@ -2704,7 +2704,7 @@
             </div>
             <div class="field">
               <label for="accountPassword" data-i18n="passwordLabel">Password</label>
-              <input id="accountPassword" type="password" required minlength="8" autocomplete="new-password" data-i18n-ph="accountPasswordHint" placeholder="8 caractères minimum">
+              <input id="accountPassword" type="password" required minlength="8" autocomplete="new-password" data-i18n-ph="accountPasswordHint" placeholder="At least 8 characters">
             </div>
             <div class="field">
               <label for="accountPasswordConfirm" data-i18n="confirmPasswordLabel">Confirm password</label>
@@ -2885,7 +2885,7 @@
           </div>
           <div class="msgr-log" id="msgrLog"></div>
           <form class="msgr-compose" id="msgrCompose" data-submit="sendInboxMessage" data-submit-args='["__EVENT__"]'>
-            <input id="msgrInput" autocomplete="off" data-i18n-ph="inboxWrite" placeholder="Écrivez votre réponse…">
+            <input id="msgrInput" autocomplete="off" data-i18n-ph="inboxWrite" placeholder="Write your replyâ€¦">
             <button type="submit" data-i18n="inboxSend">Send</button>
           </form>
         </div>
@@ -3213,23 +3213,23 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=249275f416d7c777" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=249275f416d7c777"></script>
-<script src="native-ios.js?v=249275f416d7c777"></script>
-<script src="captcha.js?v=249275f416d7c777"></script>
-<script src="supabase-api.js?v=249275f416d7c777"></script>
-<script src="img-utils.js?v=249275f416d7c777"></script>
-<script src="draft-store.js?v=249275f416d7c777"></script>
-<script src="push-config.js?v=249275f416d7c777"></script>
-<script src="push-notifications.js?v=249275f416d7c777"></script>
-<script src="consent.js?v=249275f416d7c777" defer></script>
-<script src="ads-config.js?v=249275f416d7c777"></script>
-<script src="admob-plugin.js?v=249275f416d7c777"></script>
-<script src="native-admob.js?v=249275f416d7c777"></script>
-<script src="ads.js?v=249275f416d7c777" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=bd4a857d90539bea" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=bd4a857d90539bea"></script>
+<script src="native-ios.js?v=bd4a857d90539bea"></script>
+<script src="captcha.js?v=bd4a857d90539bea"></script>
+<script src="supabase-api.js?v=bd4a857d90539bea"></script>
+<script src="img-utils.js?v=bd4a857d90539bea"></script>
+<script src="draft-store.js?v=bd4a857d90539bea"></script>
+<script src="push-config.js?v=bd4a857d90539bea"></script>
+<script src="push-notifications.js?v=bd4a857d90539bea"></script>
+<script src="consent.js?v=bd4a857d90539bea" defer></script>
+<script src="ads-config.js?v=bd4a857d90539bea"></script>
+<script src="admob-plugin.js?v=bd4a857d90539bea"></script>
+<script src="native-admob.js?v=bd4a857d90539bea"></script>
+<script src="ads.js?v=bd4a857d90539bea" defer></script>
 
-<script src="app-marketplace.js?v=249275f416d7c777"></script>
-<script src="pro-studio.js?v=249275f416d7c777"></script>
-<script src="native-workflows.js?v=249275f416d7c777"></script>
+<script src="app-marketplace.js?v=bd4a857d90539bea"></script>
+<script src="pro-studio.js?v=bd4a857d90539bea"></script>
+<script src="native-workflows.js?v=bd4a857d90539bea"></script>
 </body>
 </html>

@@ -4,6 +4,16 @@ const {chromium} = require('playwright');
 (async () => {
   const browser = await chromium.launch();
   try {
+    const initial = await browser.newContext({javaScriptEnabled: false, locale: 'fr-FR'});
+    const initialPage = await initial.newPage();
+    for (const route of ['/', '/marketplace.html']) {
+      await initialPage.goto('http://127.0.0.1:5173' + route);
+      assert.equal(await initialPage.locator('html').getAttribute('lang'), 'en');
+      assert.equal(await initialPage.locator('#profileBtnLabel').innerText(), 'Profile');
+      assert.ok((await initialPage.locator('#q').getAttribute('placeholder')).includes('looking'));
+      console.log('PASS initial English HTML before JavaScript: ' + route);
+    }
+    await initial.close();
     for (const platform of ['web', 'ios', 'android']) {
       for (const locale of ['en-US', 'fr-FR']) {
         for (const route of ['/', '/marketplace.html']) {
