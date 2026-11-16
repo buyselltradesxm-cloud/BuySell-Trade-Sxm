@@ -161,11 +161,22 @@
     finally { buying = false; }
   }
   async function sync(restore = false) {
-    if (!isStore() || syncing) return;
+    if (!isStore()) return;
+    if (syncing) {
+      if (restore) message({ message: fr()
+        ? "Une vérification des achats est en cours. Réessayez dans un instant."
+        : "A purchase check is in progress. Try again in a moment." });
+      return;
+    }
     syncing = true;
     try {
       const session = await window.db?.auth.getSession();
-      if (!session?.data?.session) return;
+      if (!session?.data?.session) {
+        if (restore) message({ message: fr()
+          ? "Connectez-vous pour restaurer vos achats."
+          : "Sign in to restore your purchases." });
+        return;
+      }
       if (isAndroid()) {
         await playApi({ action: "sync" });
         const result = await playPlugin().ownedPurchases();

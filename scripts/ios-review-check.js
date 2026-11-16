@@ -129,7 +129,40 @@ const server = http.createServer((req, res) => {
       const localizedPrice = (await page.locator('#paymentPlanPrice').innerText()).replace(/\s*\/\s*month$/, '');
       assert.ok(renewalText.includes(localizedPrice), `Renewal disclosure must match the Apple localized price: ${renewalText}`);
       assert.ok(!renewalText.includes('$24.99'), "Apple renewal disclosure must not quote the web Stripe price");
-      assert.equal(await page.locator("[data-apple-restore]").first().isVisible(), true);
+      const restore = page.locator("[data-apple-restore]:visible").first();
+      assert.equal(await restore.isVisible(), true);
+      await page.evaluate(() => {
+        window.calls = []; window.toasts = [];
+        window.signedInSession = db.auth.getSession;
+        db.auth.getSession = async () => ({ data: { session: null } });
+        SXM.plugin().restore = async () => {
+          calls.push(["restore"]);
+          return { transactions: ["signed-restore"] };
+        };
+      });
+      await restore.click();
+      await page.waitForFunction(() => toasts.some(text => /sign in.*restore/i.test(text)), null, { timeout: 3000 });
+      assert.deepEqual(await page.evaluate(() => calls), []);
+      await page.evaluate(() => {
+        db.auth.getSession = signedInSession;
+        SXM.plugin().pending = () => new Promise(resolve => {
+          window.finishBackgroundCheck = () => resolve({ transactions: [] });
+        });
+        window.backgroundCheck = SXM.sync();
+      });
+      await page.waitForFunction(() => !!window.finishBackgroundCheck);
+      await restore.click();
+      await page.waitForFunction(() => toasts.some(text => /purchase check.*progress/i.test(text)), null, { timeout: 3000 });
+      assert.deepEqual(await page.evaluate(() => calls), []);
+      await page.evaluate(() => { finishBackgroundCheck(); return backgroundCheck; });
+      await page.evaluate(() => { window.verifyFails = true; });
+      await restore.click();
+      await page.waitForFunction(() => toasts.includes("Verification unavailable"));
+      assert.ok(!(await page.evaluate(() => calls)).some(call => call[0] === "finish"));
+      await page.evaluate(() => { window.verifyFails = false; window.calls = []; });
+      await restore.click();
+      await page.waitForFunction(() => toasts.includes("Purchases restored."));
+      assert.deepEqual(await page.evaluate(() => calls.map(call => call[1] === "verify" ? "verify" : call[0])), ["restore", "verify", "finish"]);
       assert.deepEqual(errors, []);
       await page.close();
       // Builds with the native tab bar announce it through SXMNativeInfo: the
