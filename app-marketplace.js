@@ -1565,6 +1565,10 @@ function _dispatchDelegated(evtName, event){
   document.addEventListener(evtName, function(event){ _dispatchDelegated(evtName, event); });
 });
 document.addEventListener("submit", function(event){ _dispatchDelegated("submit", event); });
+document.getElementById("accountTermsConsent")?.addEventListener("change", () => {
+  const error = document.getElementById("socialSignupError");
+  if(error){ error.textContent = ""; error.hidden = true; }
+});
 
 /* Small named wrappers for the onclick= patterns that chained multiple
  * calls or held real logic, instead of a single function call -- kept
@@ -6108,12 +6112,15 @@ async function socialAuth(provider, mode){
   // signing in with Google/Apple from the same modal are not blocked.
   const consent = document.getElementById("accountTermsConsent");
   if(mode === "signup" && consent && !consent.checked){
-    const err = document.getElementById("createAccountError");
-    if(err) err.textContent = state.lang==="fr"
-      ? "Cochez d'abord la case confirmant que vous avez 18 ans ou plus et acceptez les Conditions."
-      : "First tick the box confirming you are 18 or older and agree to the Terms.";
-    consent.scrollIntoView({block:"center", behavior:"smooth"});
-    consent.focus();
+    const err = document.getElementById("socialSignupError");
+    if(err){
+      err.textContent = state.lang==="fr"
+        ? "Cochez d'abord la case confirmant que vous avez 18 ans ou plus et acceptez les Conditions."
+        : "First tick the box confirming you are 18 or older and agree to the Terms.";
+      err.hidden = false;
+    }
+    consent.scrollIntoView({block:"nearest"});
+    consent.focus({preventScroll:true});
     return;
   }
   const { data, error } = await SB.signInWithOAuth(provider);

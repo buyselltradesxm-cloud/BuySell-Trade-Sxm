@@ -14,8 +14,17 @@ const { chromium } = require("playwright");
 
   const results = [];
 
-  // The first Google button creates an account, which requires the 18+ / Terms box.
-  await page.locator("#accountTermsConsent").check();
+  const consent = page.locator("#accountTermsConsent");
+  const consentError = page.locator("#socialSignupError");
+  const googleSignup = page.locator('.social-btn.google[data-click-args*="signup"]');
+  if (!await googleSignup.evaluate(button => Boolean(document.querySelector("#accountTermsConsent").compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING))) {
+    errors.push("The age and Terms checkbox should appear before social signup.");
+  }
+  await googleSignup.click();
+  await consentError.waitFor({ state: "visible" });
+  if (!await consent.evaluate(input => document.activeElement === input)) errors.push("Missing consent should focus the checkbox.");
+  await consent.check();
+  await consentError.waitFor({ state: "hidden" });
   const googleBeforeUrl = page.url();
   await page.getByRole("button", { name: /Google/i }).first().click();
   await page.waitForTimeout(1500);
@@ -30,7 +39,8 @@ const { chromium } = require("playwright");
   await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /login|se connecter/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
-  // The first Apple button creates an account, which requires the 18+ / Terms box.
+  await page.locator('.social-btn.apple[data-click-args*="signup"]').click();
+  await consentError.waitFor({ state: "visible" });
   await page.locator("#accountTermsConsent").check();
   const appleBeforeUrl = page.url();
   await page.getByRole("button", { name: /Apple/i }).first().click();
