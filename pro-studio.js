@@ -46,19 +46,21 @@ const STUDIO_AC = ["ac","Climatisation","Air conditioning"];
 const STUDIO_TEMPLATES = [
   {id:"location", icon:"car", cat:"locvoit", multi:true, vehicle:true,
     l:["Location de voitures","Car rentals"], s:["Votre flotte, prix par jour","Your fleet, daily rates"],
+    sub:(v)=>v.rentalType || "",
     one:["voiture","car"], many:["voitures","cars"], add:["Ajouter une voiture","Add a car"], unit:["/ jour","/ day"],
     shared:[SF.area(["Agence / point de retrait","Office / pick-up point"]),
       SF.chips("handover",["Remise du véhicule","Vehicle hand-over"],[["airport-sxm","Aéroport Juliana","Juliana Airport"],["airport-gce","Aéroport Grand Case","Grand Case Airport"],["port","Port","Port"],["hotel","À l'hôtel","At your hotel"]]),
       SF.text("deposit",["Caution","Deposit"],{half:true, ph:["Ex. 500 $","E.g. $500"]}),
       SF.text("minAge",["Âge minimum","Minimum age"],{half:true, ph:["Ex. 21 ans","E.g. 21"]}),
       SF.cur(), SF.phone(["WhatsApp de réservation","Booking WhatsApp"])],
-    item:[SF.title(["Marque et modèle","Make and model"],["Ex. Toyota Yaris","E.g. Toyota Yaris"]),
+    item:[SF.choice("rentalType",["Type de véhicule","Vehicle type"],SUBCATS.locvoit.groups[0].items.map(s=>[s.id,s.fr,s.en])),
+      SF.title(["Marque et modèle","Make and model"],["Ex. Toyota Yaris","E.g. Toyota Yaris"]),
       SF.num("year",["Année","Year"],{half:true}), SF.num("seats",["Places","Seats"],{half:true}),
       SF.choice("transmission",["Boîte de vitesses","Transmission"],STUDIO_TRANS),
       SF.choice("fuel",["Carburant","Fuel"],STUDIO_FUEL),
       SF.chips("equipment",["Équipements","Equipment"],[STUDIO_AC,["4x4","4x4","4x4"],["convertible","Cabriolet","Convertible"],["child-seat","Siège enfant","Child seat"],["carplay","CarPlay / Android Auto","CarPlay / Android Auto"]]),
       SF.money("price",["Prix / jour","Price / day"],{half:true, req:true}),
-      SF.money("week",["Prix / semaine","Price / week"],{half:true}),
+      SF.money("week",["Tarif par semaine (7 jours)","Weekly rate (7 days)"],{half:true}),
       SF.text("km",["Kilométrage inclus","Included mileage"],{ph:["Ex. Illimité","E.g. Unlimited"]}), SF.desc()]},
 
   {id:"vehicles", icon:"tag", cat:"voit", multi:true, vehicle:true,
@@ -68,7 +70,7 @@ const STUDIO_TEMPLATES = [
       SF.text("warranty",["Garantie","Warranty"],{ph:["Ex. 6 mois","E.g. 6 months"]}),
       SF.chips("perks",["Services du garage","Dealer services"],[["inspection","Contrôle technique OK","Inspection passed"],["financing","Financement possible","Financing available"],["trade-in","Reprise possible","Trade-in accepted"],["delivery","Livraison possible","Delivery available"]]),
       SF.cur(), SF.phone()],
-    item:[SF.choice("kind",["Type","Type"],[["car","Voiture","Car",{cat:"voit",sub:"car-sale"}],["truck","Utilitaire","Van / truck",{cat:"voit",sub:"truck-sale"}],["moto","Moto","Motorbike",{cat:"scoot",sub:"motorbike-sale"}],["scooter","Scooter","Scooter",{cat:"scoot",sub:"scooter-sale"}],["boat","Bateau","Boat",{cat:"bat",sub:"boat-sale"}],["jetski","Jet-ski","Jet ski",{cat:"bat",sub:"jet-ski-sale"}]],{req:true}),
+    item:[SF.choice("kind",["Type","Type"],[["car","Voiture","Car",{cat:"voit",sub:"car-sale"}],["van","Fourgon / fourgonnette","Van",{cat:"voit",sub:"van-sale"}],["truck","Camion","Truck",{cat:"voit",sub:"truck-sale"}],["moto","Moto","Motorbike",{cat:"scoot",sub:"motorbike-sale"}],["scooter","Scooter","Scooter",{cat:"scoot",sub:"scooter-sale"}],["boat","Bateau","Boat",{cat:"bat",sub:"boat-sale"}],["jetski","Jet-ski","Jet ski",{cat:"bat",sub:"jet-ski-sale"}]],{req:true}),
       SF.title(["Marque et modèle","Make and model"],["Ex. Kia Picanto","E.g. Kia Picanto"]),
       SF.num("year",["Année","Year"],{half:true}), SF.num("km",["Kilométrage (km)","Mileage (km)"],{half:true}),
       SF.choice("transmission",["Boîte de vitesses","Transmission"],STUDIO_TRANS),
@@ -148,7 +150,7 @@ const STUDIO_TEMPLATES = [
     one:["fiche","page"], many:["fiches","pages"],
     shared:[SF.area(), SF.phone()],
     item:[SF.title(["Nom de votre activité","Business name"]),
-      SF.choice("activity",["Activité","Activity"],[["hairdresser","Coiffure","Hairdresser",{cat:"beauty",sub:"hairdresser"}],["barber","Barbier","Barber",{cat:"beauty",sub:"barber"}],["nails","Ongles","Nails",{cat:"beauty",sub:"nails"}],["makeup","Maquillage & soins","Make-up & skincare",{cat:"beauty",sub:"makeup"}],["cleaning","Ménage","Cleaning",{cat:"serv",sub:"cleaning"}],["plumber","Plomberie","Plumbing",{cat:"serv",sub:"plumber"}],["electrician","Électricité","Electrical",{cat:"serv",sub:"electrician"}],["gardening","Jardinage","Gardening",{cat:"serv",sub:"gardening"}],["construction-service","Travaux","Building work",{cat:"serv",sub:"construction-service"}],["mechanic-service","Mécanique","Mechanic",{cat:"serv",sub:"mechanic-service"}],["moving-service","Déménagement","Moving",{cat:"serv",sub:"moving-service"}],["photographer","Photographe","Photographer",{cat:"serv",sub:"photographer"}],["web-it","Informatique & web","IT & web",{cat:"serv",sub:"web-it"}]],{req:true}),
+      SF.choice("activity",["Activité","Activity"],[["hairdresser","Coiffure","Hairdresser",{cat:"beauty",sub:"hairdresser"}],["barber","Barbier","Barber",{cat:"beauty",sub:"barber"}],["nails","Ongles","Nails",{cat:"beauty",sub:"nails"}],["makeup","Maquillage & soins","Make-up & skincare",{cat:"beauty",sub:"makeup"}],["cleaning","Ménage","Cleaning",{cat:"serv",sub:"cleaning"}],["plumber","Plomberie","Plumbing",{cat:"serv",sub:"plumber"}],["electrician","Électricité","Electrical",{cat:"serv",sub:"electrician"}],["gardening","Jardinage","Gardening",{cat:"serv",sub:"gardening"}],["construction-service","Travaux","Building work",{cat:"serv",sub:"construction-service"}],["mechanic-service","Mécanique","Mechanic",{cat:"serv",sub:"mechanic-service"}],["auto-body-repair","Carrosserie automobile","Auto body repair",{cat:"serv",sub:"auto-body-repair"}],["moving-service","Déménagement","Moving",{cat:"serv",sub:"moving-service"}],["photographer","Photographe","Photographer",{cat:"serv",sub:"photographer"}],["web-it","Informatique & web","IT & web",{cat:"serv",sub:"web-it"}]],{req:true}),
       SF.choice("where",["Où","Where"],[["salon","En salon / atelier","At the salon / shop"],["home","À domicile","At the client's home"],["both","Les deux","Both"]]),
       SF.text("zone",["Zone d'intervention","Service area"],{ph:["Ex. Toute l'île","E.g. Whole island"]}),
       SF.hours("hours",["Horaires","Opening hours"]),
@@ -301,6 +303,7 @@ function openStudioEdit(listing){
   const shared = {cur: listing.cur === "eur" ? "eur" : "usd", phone: listing.sellerPhone || "", area: listing.area || ""};
   const own = listing.details.own;
   const v = {title: listing.t || "", desc: typeof own === "string" ? own : listing.details.autoDesc ? "" : (listing.desc || ""), area: listing.area || ""};
+  if(tpl.id === "location") v.rentalType = listing.sub || f.rentalType || "";
   const price = Number(listing.cur === "eur" ? listing.eur : listing.usd) || 0;
   if(price) v.price = String(price);
   tpl.shared.forEach(fd=>{ if(!STUDIO_LISTING_KEYS.has(fd.k) && f[fd.k] !== undefined) shared[fd.k] = f[fd.k]; });

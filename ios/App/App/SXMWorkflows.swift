@@ -43,12 +43,13 @@ struct SXMDraftPhoto: Codable, Identifiable, Equatable {
 struct SXMPostDraft: Codable, Equatable {
     var title = "", description = "", category = "", subcategory = "", area = ""
     var amount = "", currency = "usd", condition = "", phone = ""
+    var weeklyRate: String?
     var year = "", km = "", color = "", fuel = "gas", transmission = "automatic"
     var urgent = false, uncertain = false
     var photos: [SXMDraftPhoto] = []
     var payload: [String: Any] {
         ["title": title, "description": description, "category": category, "subcategory": subcategory,
-         "area": area, "amount": amount, "currency": currency, "condition": condition, "phone": phone,
+         "area": area, "amount": amount, "weeklyRate": weeklyRate ?? "", "currency": currency, "condition": condition, "phone": phone,
          "year": year, "km": km, "color": color, "fuel": fuel, "transmission": transmission,
          "urgent": urgent, "photos": photos.map { ["data": $0.data.base64EncodedString()] }]
     }
@@ -267,7 +268,10 @@ struct SXMPostView: View {
                 if let fields = fields {
                     Section(header: Text(model.text("Détails", "Details"))) {
                         if fields.price {
-                            TextField(fields.priceRequired ? model.text("Prix", "Price") : model.text("Prix (facultatif)", "Price (optional)"), text: $draft.amount).keyboardType(.decimalPad)
+                            TextField(draft.category == "locvoit" ? model.text("Tarif par jour", "Daily rate") : fields.priceRequired ? model.text("Prix", "Price") : model.text("Prix (facultatif)", "Price (optional)"), text: $draft.amount).keyboardType(.decimalPad)
+                            if draft.category == "locvoit" {
+                                TextField(model.text("Tarif par semaine (7 jours, facultatif)", "Weekly rate (7 days, optional)"), text: Binding(get: { draft.weeklyRate ?? "" }, set: { draft.weeklyRate = $0 })).keyboardType(.decimalPad)
+                            }
                             Picker(model.text("Devise", "Currency"), selection: $draft.currency) { Text("USD ($)").tag("usd"); Text("EUR (€)").tag("eur") }
                         }
                         if fields.condition {

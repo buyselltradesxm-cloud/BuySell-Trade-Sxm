@@ -1,6 +1,7 @@
 # Marketplace interaction ownership
 
 The authoritative product scope is advertising and connecting customers to sellers. No transaction or booking confirmation is introduced.
+Vehicle types are subcategories; rental prices are fields. Car rentals use a daily headline rate with an optional seller-entered weekly rate covering seven days in the same currency. Never infer a weekly discount by multiplying the daily rate. Preserve the original category IDs and stored weekly rates during edits.
 
 | Capability | Canonical owner | Variant |
 |---|---|---|

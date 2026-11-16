@@ -45,6 +45,13 @@ const draft=()=>({title:'Good phone',description:'A real phone',category:'elec',
   f=fixture();f.c.SB.insertListing=async()=>null;assert.equal((await f.request('publish',{draft:draft()})).code,'UNCERTAIN_WRITE');assert.equal(f.c.L.length,0);
   f=fixture();f.c.SB.insertListing=async()=>{throw new Error('Connection lost');};assert.equal((await f.request('publish',{draft:draft()})).code,'UNCERTAIN_WRITE');
   f=fixture();r=await f.request('publish',{draft:draft()});assert.equal(r.ok,true);assert.equal(f.calls.find(c=>c[0]==='upload')[2],owner);assert.equal(f.calls.find(c=>c[0]==='insert')[2],owner);assert.equal(f.c.L.length,1);
+  for(const weekly of ['280.50','-2','NaN','0']) {
+    f=fixture();f.c.CATS.push({id:'locvoit',en:'Car rentals'});
+    r=await f.request('publish',{draft:{...draft(),category:'locvoit',subcategory:'',weeklyRate:weekly}});
+    assert.equal(r.ok,weekly==='280.50');
+    if(r.ok) assert.equal(f.calls.find(c=>c[0]==='insert')[1].details.f.week,280.50);
+    else assert.equal(f.calls.length,0,'Invalid weekly rates must fail before uploads');
+  }
   f=fixture();const d={...draft(),category:'serv',subcategory:'',photos:[],amount:''};assert.equal((await f.request('publish',{draft:d})).ok,true);
   f=fixture();let release;f.c.SB.uploadPhotos=()=>new Promise(resolve=>{release=resolve;});
   const pending=f.request('publish',{draft:draft()});await new Promise(resolve=>setImmediate(resolve));

@@ -14,6 +14,16 @@ struct SXMListing: Codable, Identifiable, Equatable {
     let title: String
     let titleFr: String?
     let titleEn: String?
+    let weeklyRate: Double?
+    enum RentalKeys: String, CodingKey { case f, week }
+    func weeklyRateLabel(french: Bool) -> String? {
+        guard category == "locvoit", let rate = weeklyRate, rate > 0 else { return nil }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = currency == "eur" ? "EUR" : "USD"
+        formatter.locale = Locale(identifier: french ? "fr_FR" : "en_US")
+        return (formatter.string(from: NSNumber(value: rate)) ?? String(rate)) + (french ? " / semaine (7 jours)" : " / week (7 days)")
+    }
 
     func displayTitle(french: Bool) -> String {
         let translated = (french ? titleFr : titleEn)?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -36,6 +46,7 @@ struct SXMListing: Codable, Identifiable, Equatable {
     enum CodingKeys: String, CodingKey {
         case id, title, description, category, subcategory, area, side, currency, photos
         case titleFr = "title_fr", titleEn = "title_en"
+        case details
         case priceEur = "price_eur", priceUsd = "price_usd", thumbPhotos = "thumb_photos", createdAt = "created_at"
         case searchKeywords = "search_keywords"
     }
@@ -47,6 +58,10 @@ struct SXMListing: Codable, Identifiable, Equatable {
         title = (try? c.decode(String.self, forKey: .title)) ?? ""
         titleFr = try? c.decode(String.self, forKey: .titleFr)
         titleEn = try? c.decode(String.self, forKey: .titleEn)
+        if let details = try? c.nestedContainer(keyedBy: RentalKeys.self, forKey: .details),
+           let rates = try? details.nestedContainer(keyedBy: RentalKeys.self, forKey: .f) {
+            weeklyRate = (try? rates.decode(Double.self, forKey: .week)) ?? (try? rates.decode(String.self, forKey: .week)).flatMap(Double.init)
+        } else { weeklyRate = nil }
         description = try? c.decode(String.self, forKey: .description)
         category = try? c.decode(String.self, forKey: .category)
         subcategory = try? c.decode(String.self, forKey: .subcategory)
@@ -267,7 +282,7 @@ final class SXMBrowseModel: ObservableObject {
         defer { loading = false }
         var parts = URLComponents(string: "\(Self.supabaseURL)/rest/v1/listings")!
         parts.queryItems = [
-            URLQueryItem(name: "select", value: "id,title,title_fr,title_en,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords"),
+            URLQueryItem(name: "select", value: "id,title,title_fr,title_en,details,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords"),
             URLQueryItem(name: "seller_id", value: "not.is.null"),
             URLQueryItem(name: "or", value: "(status.is.null,status.in.(active,reserved))"),
             URLQueryItem(name: "order", value: "created_at.desc"),
@@ -321,6 +336,11 @@ extension SXMListing {
         try c.encode(title, forKey: .title)
         try c.encodeIfPresent(titleFr, forKey: .titleFr)
         try c.encodeIfPresent(titleEn, forKey: .titleEn)
+        if let rate = weeklyRate {
+            var details = c.nestedContainer(keyedBy: RentalKeys.self, forKey: .details)
+            var rates = details.nestedContainer(keyedBy: RentalKeys.self, forKey: .f)
+            try rates.encode(rate, forKey: .week)
+        }
         try c.encodeIfPresent(description, forKey: .description)
         try c.encodeIfPresent(category, forKey: .category)
         try c.encodeIfPresent(area, forKey: .area)
@@ -687,6 +707,7 @@ struct SXMListingCard: View {
             }
             Label(listing.area ?? listing.place, systemImage: "mappin.circle")
                 .font(.caption).foregroundColor(ink.opacity(0.7)).lineLimit(1)
+            if let weekly = listing.weeklyRateLabel(french: french) { Text(weekly).font(.caption).foregroundColor(sea) }
         }.accessibilityElement(children: .combine)
     }
 }
@@ -733,7 +754,8 @@ struct SXMListingDetail: View {
                 gallery
                 VStack(alignment: .leading, spacing: 8) {
                     Text(listing.displayTitle(french: fr)).font(.title2.weight(.bold)).foregroundColor(ink)
-                    if let price = listing.priceLabel { Text(price).font(.title3.weight(.heavy)).foregroundColor(sea) }
+                    if let price = listing.priceLabel { Text(price + (listing.category == "locvoit" ? (fr ? " / jour" : " / day") : "")).font(.title3.weight(.heavy)).foregroundColor(sea) }
+                    if let weekly = listing.weeklyRateLabel(french: fr) { Text(weekly).font(.subheadline).foregroundColor(sea) }
                     HStack(spacing: 6) {
                         Image(systemName: "mappin.and.ellipse")
                         Text(listing.place)

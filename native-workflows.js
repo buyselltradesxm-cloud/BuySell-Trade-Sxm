@@ -70,6 +70,10 @@
         if(![...AREAS.fr,...AREAS.nl].includes(d.area)) fail("Choisissez votre secteur.", "Choose your area.");
         const rawAmount = String(d.amount ?? "").trim().replace(",",".");
         const amount = Number(rawAmount);
+        const rawWeek = d.category === "locvoit" ? String(d.weeklyRate ?? "").trim().replace(",", ".") : "";
+        const weeklyRate = Number(rawWeek);
+        if(rawWeek && (!/^\d+(?:\.\d{1,2})?$/.test(rawWeek) || !Number.isFinite(weeklyRate) || weeklyRate <= 0))
+          fail("Saisissez un tarif hebdomadaire valide.", "Enter a valid weekly rate.");
         if(fields.price && (!Number.isFinite(amount) || amount < 0 || (rawAmount && !/^\d+(?:\.\d{1,2})?$/.test(rawAmount)) || (fields.priceRequired && !rawAmount)))
           fail("Saisissez un prix valide.", "Enter a valid price.");
         if(!["eur","usd"].includes(d.currency)) fail("Devise invalide.", "Invalid currency.");
@@ -101,6 +105,7 @@
           urgent:fields.urgent && !!d.urgent,feat:true,negotiable:false,
           vehicle:fields.vehicle?{year:d.year || "",km:fields.mileage?d.km:"",color:fields.mileage?d.color:"",fuel:d.fuel || "gas",transmission:d.transmission || "automatic"}:null};
         writeStarted = true;
+        if(d.category === "locvoit" && rawWeek) value.details = {tpl:"location",v:1,own:description,autoDesc:false,f:{week:weeklyRate,rentalType:d.subcategory || ""}};
         const saved = await SB.insertListing(value, user.id);
         check();
         if(!saved) fail("Publication non confirmée. Vérifiez vos annonces dans Profil avant de réessayer. Le brouillon est conservé.", "Publication not confirmed. Check your listings in Profile before retrying. Your draft is kept.","UNCERTAIN_WRITE");

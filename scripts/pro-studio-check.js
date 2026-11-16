@@ -23,6 +23,7 @@ const user=(extra={})=>({id:'qa-biz',name:'Owner',businessName:'Island Pro',acco
   // Car rental: one car with a photo, duplicated, published as two listings.
   await page.getByRole('button',{name:/Location de voitures/}).click();
   await page.selectOption('#ps-s0-area','Marigot');
+  await page.getByRole('button',{name:'SUV et 4×4',exact:true}).click();
   await page.fill('#ps-i0-title','Toyota Yaris 2021');
   await page.getByRole('button',{name:'Automatique',exact:true}).click();
   await page.fill('#ps-i0-price','45');
@@ -34,10 +35,10 @@ const user=(extra={})=>({id:'qa-biz',name:'Owner',businessName:'Island Pro',acco
   await page.fill('#ps-i1-title','Toyota Yaris 2021 rouge');
   await page.locator('.ps-publish').click();
   await page.locator('#proStudioModal').waitFor({state:'hidden'});
-  const cars=await page.evaluate(()=>L.filter(l=>l.cat==='locvoit').map(l=>({t:l.t,amount:l[l.cur],tpl:l.details?.tpl,week:l.details?.f?.week,trans:l.vehicle?.transmission,photos:l.photos.length,area:l.area})));
+  const cars=await page.evaluate(()=>L.filter(l=>l.cat==='locvoit').map(l=>({t:l.t,sub:l.sub,amount:l[l.cur],tpl:l.details?.tpl,week:l.details?.f?.week,trans:l.vehicle?.transmission,photos:l.photos.length,area:l.area})));
   assert.equal(cars.length,2);
   assert.deepEqual(cars.map(c=>c.t).sort(),['Toyota Yaris 2021','Toyota Yaris 2021 rouge']);
-  cars.forEach(c=>{assert.equal(c.tpl,'location');assert.equal(c.week,280);assert.equal(c.trans,'automatic');assert.equal(c.photos,1);assert.equal(c.amount,45);assert.equal(c.area,'Marigot');});
+  cars.forEach(c=>{assert.equal(c.sub,'rental-suv');assert.equal(c.tpl,'location');assert.equal(c.week,280);assert.equal(c.trans,'automatic');assert.equal(c.photos,1);assert.equal(c.amount,45);assert.equal(c.area,'Marigot');});
 
   // Missing required fields block publishing and say what is missing.
   await page.evaluate(()=>openProStudio());

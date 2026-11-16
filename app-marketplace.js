@@ -107,12 +107,26 @@ const SUBCATS = {
       ]}
     ]
   },
+  locvoit:{
+    fr:"Location de voitures", en:"Car rentals",
+    groups:[{fr:"Type de véhicule", en:"Vehicle type", items:[
+      {id:"rental-economy", fr:"Voitures économiques", en:"Economy cars"},
+      {id:"rental-compact", fr:"Voitures compactes", en:"Compact cars"},
+      {id:"rental-sedan", fr:"Berlines", en:"Sedans"},
+      {id:"rental-suv", fr:"SUV et 4×4", en:"SUVs & 4×4s"},
+      {id:"rental-convertible", fr:"Cabriolets", en:"Convertibles"},
+      {id:"rental-minivan", fr:"Monospaces (7 places et plus)", en:"Minivans (7+ seats)"},
+      {id:"rental-van", fr:"Minibus et vans passagers", en:"Passenger vans"},
+      {id:"rental-luxury", fr:"Voitures de luxe", en:"Luxury cars"}
+    ]}]
+  },
   voit:{
     fr:"Véhicules",
     en:"Vehicles",
     groups:[
       {fr:"Véhicules", en:"Vehicles", items:[
         {id:"car-sale", fr:"Voitures", en:"Cars"},
+        {id:"van-sale", fr:"Fourgons et fourgonnettes", en:"Vans"},
         {id:"motorbike-sale", fr:"Motos", en:"Motorcycles"},
         {id:"scooter-sale", fr:"Scooters", en:"Scooters"},
         {id:"truck-sale", fr:"Trucks / utilitaires", en:"Trucks"},
@@ -282,6 +296,7 @@ const SUBCATS = {
       ]},
       {fr:"Auto & bâtiment", en:"Auto and construction", items:[
         {id:"mechanic-service", fr:"Mécanicien", en:"Mechanic"},
+        {id:"auto-body-repair", fr:"Carrosserie automobile", en:"Auto body repair"},
         {id:"construction-service", fr:"Construction", en:"Construction"},
         {id:"moving-service", fr:"Déménagement", en:"Moving"}
       ]},
@@ -2295,7 +2310,9 @@ function hasNoStatedPrice(l){
 function listingPriceHTML(l){
   if(!hasNoStatedPrice(l)){
     const unit = priceUnitFor(l.cat, l.sub, l.details?.f?.period);
-    return priceHTML(l) + (unit ? `<small class="price-unit">/ ${state.lang === "fr" ? unit[0] : unit[1]}</small>` : "");
+    const weekly = l.cat === "locvoit" ? Number(l.details?.f?.week) : 0;
+    return priceHTML(l) + (unit ? `<small class="price-unit">/ ${state.lang === "fr" ? unit[0] : unit[1]}</small>` : "") +
+      (weekly > 0 && Number.isFinite(weekly) ? `<small class="price-unit"> · ${listingMoney(weekly, l.cur === "eur" ? "eur" : "usd")} / ${state.lang === "fr" ? "semaine (7 jours)" : "week (7 days)"}</small>` : "");
   }
   const label = l.cat === "job"
     ? (state.lang==="fr" ? "Salaire à convenir" : "Pay negotiable")
@@ -6555,6 +6572,7 @@ function collectPostDraft(){
       color: g("newVehicleColor").value, fuel: g("newVehicleFuel").value,
       transmission: g("newVehicleTransmission").value
     } : null,
+    details: collectPostExtraDetails(g("newCat")?.value || "", g("newSubcat")?.value || "", g("newDesc")?.value || "", null),
     photos: Array.isArray(selectedPostPhotos) ? [...selectedPostPhotos] : []
   };
 }
@@ -6687,6 +6705,7 @@ function postExtraFieldSpec(cat, sub){
     if(spec) spec.furnished = !IMMO_NO_ROOMS.has(sub) && (IMMO_MONTHLY_SUBCATS.has(sub) || IMMO_NIGHTLY_SUBCATS.has(sub));
     return spec;
   }
+  if(cat === "locvoit") return pick("location", ["week"]);
   if(cat === "job") return pick("emploi", ["contract","period"]);
   if(cat === "billet"){
     const spec = pick("events", ["date","time"]);
@@ -6713,7 +6732,7 @@ function renderPostExtraFields(cat, sub){
     const req = spec.required?.includes(f.k) ? " required" : "";
     const control = f.t === "choice"
       ? `<select id="${id}" data-extra="${f.k}"${req}><option value="">—</option>${f.o.map(o=>`<option value="${esc(o[0])}">${esc(tr(o.slice(1, 3)))}</option>`).join("")}</select>`
-      : `<input id="${id}" data-extra="${f.k}" type="${f.t === "num" ? "number" : f.t === "date" ? "date" : "text"}"${f.t === "num" ? ' min="0" inputmode="numeric"' : ""}${f.ph ? ` placeholder="${esc(tr(f.ph))}"` : ""}${req}>`;
+      : `<input id="${id}" data-extra="${f.k}" type="${["num","money"].includes(f.t) ? "number" : f.t === "date" ? "date" : "text"}"${f.t === "money" ? ' min="0" step="0.01" inputmode="decimal"' : f.t === "num" ? ' min="0" inputmode="numeric"' : ""}${f.ph ? ` placeholder="${esc(tr(f.ph))}"` : ""}${req}>`;
     return `<div class="field"><label for="${id}">${esc(label)}</label>${control}</div>`;
   }).join("") + (spec.furnished ? `<label class="post-option"><input type="checkbox" id="newExtra-furnished"> ${state.lang === "fr" ? "Meublé" : "Furnished"}</label>` : "");
 }
@@ -6732,13 +6751,14 @@ function collectPostExtraDetails(cat, sub, desc, previous){
   spec.fields.forEach(x=>{
     const v = (document.getElementById("newExtra-" + x.k)?.value || "").trim();
     if(!v) delete f[x.k];
-    else f[x.k] = x.t === "num" ? Math.max(0, Number(v) || 0) : v;
+    else f[x.k] = ["num","money"].includes(x.t) ? Math.max(0, Number(v) || 0) : v;
   });
   if(spec.furnished){
     const features = (Array.isArray(f.features) ? f.features : []).filter(x=>x !== "furnished");
     if(document.getElementById("newExtra-furnished")?.checked) features.push("furnished");
     if(features.length) f.features = features; else delete f.features;
   }
+  if(cat === "locvoit") f.rentalType = sub || "";
   if(cat === "immo") f.deal = IMMO_NIGHTLY_SUBCATS.has(sub) ? "seasonal" : IMMO_MONTHLY_SUBCATS.has(sub) ? "rent" : "sale";
   return Object.keys(f).length ? {...(prev?.tpl === spec.tpl ? prev : {}), tpl:spec.tpl, v:1, autoDesc:false, own:desc, f} : null;
 }
@@ -7009,6 +7029,12 @@ async function createListing(e){
     return false;
   }
   const cat = document.getElementById("newCat").value;
+  const weekField = document.getElementById("newExtra-week");
+  if(cat === "locvoit" && weekField?.value && (!/^\d+(?:[.,]\d{1,2})?$/.test(weekField.value) || Number(weekField.value.replace(",", ".")) <= 0)){
+    showToast(state.lang === "fr" ? "Saisissez un tarif hebdomadaire valide." : "Enter a valid weekly rate.");
+    weekField.focus(); return false;
+  }
+
   const sub = document.getElementById("newSubcatField").hidden ? "" : document.getElementById("newSubcat").value;
   const profile = postFieldProfile(cat, sub);
   if(profile.photosRequired && !selectedPostPhotos.length){

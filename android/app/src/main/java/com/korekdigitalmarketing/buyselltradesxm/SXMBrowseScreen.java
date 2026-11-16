@@ -47,7 +47,7 @@ final class SXMBrowseScreen extends ScrollView {
     private static final int SEA = Color.rgb(11, 110, 127), INK = Color.rgb(19, 42, 46);
     private static final int PAPER = Color.rgb(251, 247, 239);
     private static final String ENDPOINT = "https://szhaxlmronirhnntlwyb.supabase.co/rest/v1/listings" +
-        "?select=id,title,title_fr,title_en,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords" +
+        "?select=id,title,title_fr,title_en,details,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords" +
         "&seller_id=not.is.null&or=(status.is.null,status.in.(active,reserved))&order=created_at.desc&limit=300";
     // Public publishable key; protected writes continue through the signed-in WebView.
     private static final String PUBLIC_KEY = "sb_publishable_2EgfSBNrfE-5rIC2qS__tg_dCoEFyac";
@@ -729,6 +729,8 @@ final class SXMBrowseScreen extends ScrollView {
             TextView value = label(priceText, 17, true);
             value.setTextColor(SEA); value.setPadding(dp(10), dp(5), dp(10), 0); box.addView(value);
         }
+        TextView weekly = label(weeklyRate(l), 12, false);
+        if (!weeklyRate(l).isEmpty()) { weekly.setTextColor(SEA); weekly.setPadding(dp(10), dp(4), dp(10), 0); box.addView(weekly); }
         TextView location = label(place(l), 11, false);
         location.setTextColor(Color.rgb(89, 110, 111));
         location.setMaxLines(2); location.setPadding(dp(10), dp(6), dp(10), 0);
@@ -740,11 +742,19 @@ final class SXMBrowseScreen extends ScrollView {
         return area + (area.isEmpty() ? "" : " · ") + (l.optString("side").equals("nl") ?
             (french ? "Côté hollandais" : "Dutch side") : (french ? "Côté français" : "French side"));
     }
+    private String weeklyRate(JSONObject l) {
+        if (!l.optString("category").equals("locvoit")) return "";
+        JSONObject details = l.optJSONObject("details");
+        JSONObject fields = details == null ? null : details.optJSONObject("f");
+        double rate = fields == null ? 0 : fields.optDouble("week", 0);
+        if (!(rate > 0)) return "";
+        return (l.optString("currency").equals("usd") ? "$" : "€") + java.text.NumberFormat.getNumberInstance().format(rate) + (french ? " / semaine (7 jours)" : " / week (7 days)");
+    }
     private String price(JSONObject l) {
         if (l.optString("category").equals("food")) return "";
         boolean usd = l.optString("currency").equals("usd");
         double amount = l.optDouble(usd ? "price_usd" : "price_eur", 0);
-        return amount > 0 ? (usd ? "$" : "€") + java.text.NumberFormat.getIntegerInstance().format(amount) : "";
+        return amount > 0 ? (usd ? "$" : "€") + java.text.NumberFormat.getIntegerInstance().format(amount) + (l.optString("category").equals("locvoit") ? (french ? " / jour" : " / day") : "") : "";
     }
     private void toggleSaved(String id) {
         if (!saved.add(id)) saved.remove(id);
@@ -816,6 +826,7 @@ final class SXMBrowseScreen extends ScrollView {
         if (!amount.isEmpty()) {
             TextView value = label(amount, 20, true); value.setTextColor(SEA); content.addView(value);
         }
+        if (!weeklyRate(l).isEmpty()) content.addView(label(weeklyRate(l), 15, false));
         TextView description = label(l.optString("description"), 15, false);
         LinearLayout.LayoutParams desc = new LinearLayout.LayoutParams(-1, -2);
         desc.topMargin = dp(12); content.addView(description, desc);
