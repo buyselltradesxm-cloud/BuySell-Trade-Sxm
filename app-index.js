@@ -5782,6 +5782,7 @@ async function createAccount(e){
   // Compte particulier gratuit via Supabase. Les plans Pro payants restent
   // sur le parcours démo local tant que Stripe n'est pas branché (slice suivante).
   if(useSupabase){
+    error.textContent = "";
     const signupPlan = "personal-free";
     if(isPaidPlan(accountPlan)) sessionStorage.setItem("bst-selected-pro-plan", accountPlan);
     const name = document.getElementById("accountName").value.trim();
@@ -5831,6 +5832,20 @@ async function createAccount(e){
         signup_failed: "Signup could not be completed. This address may already have an account, including one created with Google or Apple: sign in that way, or reset your password."
       };
       error.textContent = messages[code] || (state.lang === "fr" ? "Inscription non terminée. Essayez la connexion plus bas ou réinitialisez votre mot de passe si cette adresse a déjà un compte." : "Signup could not be completed. Try signing in below, or reset your password if this address already has an account.");
+      if(code === "signup_failed"){
+        const signIn = document.createElement("button");
+        signIn.type = "button";
+        signIn.className = "auth-pricing-link";
+        signIn.textContent = state.lang === "fr" ? "Aller à la connexion" : "Go to sign in";
+        signIn.addEventListener("click", () => {
+          const loginEmail = document.getElementById("loginEmail");
+          loginEmail.value = email;
+          loginEmail.scrollIntoView({block:"center"});
+          loginEmail.focus({preventScroll:true});
+        });
+        error.append(" ", signIn);
+      }
+      error.scrollIntoView({block:"nearest"});
       return false;
     }
     if(data && data.session && data.user){
@@ -6230,13 +6245,41 @@ async function confirmSignupCode(){
 }
 
 async function resendSignupCode(){
-  if(!pendingSignupOtp) return;
+  const signup = pendingSignupOtp;
+  const button = document.querySelector('#signupOtpStep [data-click="resendSignupCode"]');
+  if(!signup || button.disabled) return;
   const otpError = document.getElementById("signupOtpError");
-  const { error } = await SB.resendSignupCode(pendingSignupOtp.email, pendingSignupOtp.userId);
-  otpError.textContent = error ? (error.code === "already_confirmed"
-    ? (state.lang === "fr" ? "Adresse email déjà confirmée. Connectez-vous avec votre mot de passe ci-dessous." : "Email already confirmed. Sign in with your password below.")
-    : (error.message || t().otpInvalid)) : "";
-  if(!error) showToast(t().otpResent);
+  const label = button.textContent;
+  const french = state.lang === "fr";
+  button.disabled = true;
+  button.textContent = french ? "Envoi du code…" : "Sending code…";
+  otpError.textContent = "";
+  let result;
+  try {
+    result = await SB.resendSignupCode(signup.email, signup.userId);
+  } catch (_) {
+    result = {error: {}};
+  } finally {
+    button.disabled = false;
+    button.textContent = label;
+  }
+  if(pendingSignupOtp !== signup) return;
+  if(!result.error){
+    showToast(t().otpResent);
+    return;
+  }
+  const messages = french ? {
+    already_confirmed: "Adresse email déjà confirmée. Connectez-vous avec votre mot de passe ci-dessous.",
+    signup_rate_limited: "Trop de demandes de code. Attendez une heure avant de réessayer.",
+    captcha_failed: "La vérification anti-robot a échoué. Réessayez dans un instant."
+  } : {
+    already_confirmed: "Email already confirmed. Sign in with your password below.",
+    signup_rate_limited: "Too many code requests. Wait an hour before trying again.",
+    captcha_failed: "The anti-bot check failed. Try again in a moment."
+  };
+  otpError.textContent = messages[result.error.code] || (french
+    ? "Le code n’a pas pu être renvoyé. Réessayez dans quelques instants."
+    : "The code could not be resent. Please try again shortly.");
 }
 
 function openPasswordReset(){

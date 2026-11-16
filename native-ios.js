@@ -68,7 +68,7 @@
     return result;
   }
   async function products() {
-    if (catalog) return catalog;
+    if (catalog && Object.keys(catalog).length > 0) return catalog;
     if (!catalogRequest) catalogRequest = (isAndroid() ? playPlugin() : plugin()).products().then(result => {
       catalog = Object.fromEntries(result.products.map(product => [product.id, product]));
       return catalog;
@@ -113,7 +113,8 @@
       document.querySelectorAll("[data-apple-only]").forEach(el => { el.hidden = false; });
     };
     update();
-    try { await products(); update(); } catch (error) { catalog = null; message(error); }
+    try { await products(); } catch (error) { catalog = {}; message(error); }
+    update();
   }
   async function deliver(signedTransaction) {
     const result = await api({ action: "verify", signedTransaction });

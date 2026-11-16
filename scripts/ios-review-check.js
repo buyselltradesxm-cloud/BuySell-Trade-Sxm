@@ -24,9 +24,15 @@ const server = http.createServer((req, res) => {
       page.on("pageerror", error => errors.push(error.message));
       await page.addInitScript(() => {
         window.CapacitorCustomPlatform = { name: "ios" }; // the bundled Capacitor recomputes the platform; it sees no native bridge here
-        window.calls = []; window.purchaseResult = { cancelled: true };
+        window.calls = []; window.purchaseResult = { cancelled: true }; window.productRequests = null;
         window.Capacitor = { getPlatform: () => "ios", isNativePlatform: () => true, Plugins: { SXMNative: {
-          products: async () => ({ products: ["starter", "business", "premium", "elite", "unlimited"].map(tier => ({ id: "com.korekdigitalmarketing.buyselltradesxm.pro_" + tier + "_monthly", price: "€12.34" })).concat([3, 7, 14].map(days => ({ id: "com.korekdigitalmarketing.buyselltradesxm.boost_" + days + "_days", price: "€4.56" }))) }),
+          products: async () => {
+            if (productRequests === null) return { products: [] };
+            window.productRequests++;
+            if (productRequests === 1) throw new Error("StoreKit temporarily unavailable");
+            if (productRequests === 2) return { products: [] };
+            return { products: ["starter", "business", "premium", "elite", "unlimited"].map(tier => ({ id: "com.korekdigitalmarketing.buyselltradesxm.pro_" + tier + "_monthly", price: "€12.34" })).concat([3, 7, 14].map(days => ({ id: "com.korekdigitalmarketing.buyselltradesxm.boost_" + days + "_days", price: "€4.56" }))) };
+          },
           purchase: async args => { calls.push(["purchase", args]); return purchaseResult; },
           finish: async args => { calls.push(["finish", args]); },
           authenticate: async args => { calls.push(["authenticate", args]); return { url: "buyselltradesxm://auth/callback?code=pkce-test" }; },
@@ -42,6 +48,20 @@ const server = http.createServer((req, res) => {
           contentType: "application/json", body: JSON.stringify(body.action === "prepare" ? { appAccountToken: "a7cd2b01-01a0-48a0-b99d-27969d673661" } : failed ? { error: "Verification unavailable" } : { transactionId: "123" }) });
       });
       await page.goto(`http://127.0.0.1:${server.address().port}/${filename}?local=1`);
+      const pricingLabel = page.locator('[data-click="chooseProPlan"][data-click-args*="pro-starter"] .pricing-price');
+      await page.evaluate(async () => {
+        await SXM.refreshPrices();
+        window.productRequests = 0;
+        document.documentElement.lang = "en";
+        await SXM.refreshPrices();
+      });
+      assert.match(await pricingLabel.textContent(), /Unavailable in the App Store/);
+      await page.evaluate(() => SXM.refreshPrices());
+      assert.match(await pricingLabel.textContent(), /Unavailable in the App Store/);
+      await page.evaluate(() => SXM.refreshPrices());
+      assert.match(await pricingLabel.textContent(), /€12\.34/);
+      await page.evaluate(() => SXM.refreshPrices());
+      assert.equal(await page.evaluate(() => productRequests), 3, "Retry failed and empty catalogs, then cache the populated catalog");
       await page.evaluate(() => {
         window.db = { auth: {
           getSession: async () => ({ data: { session: { access_token: "test", user: { id: "test-user" } } } }),
