@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=6d9cf4a3a117a5f9"></script>
-<script src="/telemetry.js?v=6d9cf4a3a117a5f9"></script>
-<script src="/pwa.js?v=6d9cf4a3a117a5f9" defer></script>
-<link href="/fonts/fonts.css?v=6d9cf4a3a117a5f9" rel="stylesheet">
+<script src="/frame-guard.js?v=d98d4e5d03500f7d"></script>
+<script src="/telemetry.js?v=d98d4e5d03500f7d"></script>
+<script src="/pwa.js?v=d98d4e5d03500f7d" defer></script>
+<link href="/fonts/fonts.css?v=d98d4e5d03500f7d" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -2307,8 +2307,8 @@
   }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
-<link rel="stylesheet" href="market-design.css?v=6d9cf4a3a117a5f9">
-<link rel="stylesheet" href="pro-studio.css?v=6d9cf4a3a117a5f9">
+<link rel="stylesheet" href="market-design.css?v=d98d4e5d03500f7d">
+<link rel="stylesheet" href="pro-studio.css?v=d98d4e5d03500f7d">
 </head>
 <body>
 
@@ -2740,18 +2740,18 @@
           <div class="field field-consent">
             <label>
               <input id="accountTermsConsent" type="checkbox" required aria-describedby="socialSignupError">
-              <span id="termsConsentLabel"></span>
+              <span data-terms-consent-label></span>
             </label>
             <p class="field-error" id="socialSignupError" role="alert" hidden></p>
           </div>
           <div class="social-auth">
-            <button type="button" class="social-btn google" data-click="socialAuth" data-click-args='["google","signup"]'>
-              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
-              <span data-i18n="freeGoogle">Créer gratuitement avec Google</span>
-            </button>
             <button type="button" class="social-btn apple" data-click="socialAuth" data-click-args='["apple","signup"]'>
               <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.5 12.2c0-2.1 1.7-3.1 1.8-3.2-1-1.5-2.5-1.7-3-1.7-1.3-.1-2.5.8-3.1.8-.7 0-1.7-.8-2.8-.7-1.4 0-2.7.8-3.4 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.5 2.2 2.7 2.1 1.1 0 1.5-.7 2.8-.7s1.7.7 2.8.7c1.2 0 1.9-1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.5 0 0-2.3-.9-2.3-3.3ZM14.4 5.9c.6-.7 1-1.7.9-2.7-.9 0-1.9.6-2.5 1.3-.6.6-1 1.6-.9 2.6.9.1 1.9-.5 2.5-1.2Z"/></svg>
               <span data-i18n="freeApple">Créer gratuitement avec Apple</span>
+            </button>
+            <button type="button" class="social-btn google" data-click="socialAuth" data-click-args='["google","signup"]'>
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+              <span data-i18n="freeGoogle">Créer gratuitement avec Google</span>
             </button>
           </div>
           <div class="social-divider"><span data-i18n="createWithEmail">ou créez votre compte avec email</span></div>
@@ -2804,14 +2804,21 @@
               <span data-i18n="proBenefit3">Abonnement requis avant publication Pro</span>
             </div>
           </div>
+          <div class="field field-consent">
+            <label>
+              <input id="proTermsConsent" type="checkbox" aria-describedby="proSignupError">
+              <span data-terms-consent-label></span>
+            </label>
+            <p class="field-error" id="proSignupError" role="alert" hidden></p>
+          </div>
           <div class="social-auth">
-            <button type="button" class="social-btn google" data-click="startProGoogleAuth">
-              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
-              <span data-i18n="proGoogle">Continuer Pro avec Google</span>
-            </button>
             <button type="button" class="social-btn apple" data-click="startProSocialAuth" data-click-args='["apple"]'>
               <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.5 12.2c0-2.1 1.7-3.1 1.8-3.2-1-1.5-2.5-1.7-3-1.7-1.3-.1-2.5.8-3.1.8-.7 0-1.7-.8-2.8-.7-1.4 0-2.7.8-3.4 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.5 2.2 2.7 2.1 1.1 0 1.5-.7 2.8-.7s1.7.7 2.8.7c1.2 0 1.9-1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.5 0 0-2.3-.9-2.3-3.3ZM14.4 5.9c.6-.7 1-1.7.9-2.7-.9 0-1.9.6-2.5 1.3-.6.6-1 1.6-.9 2.6.9.1 1.9-.5 2.5-1.2Z"/></svg>
               <span data-i18n="proApple">Continuer Pro avec Apple</span>
+            </button>
+            <button type="button" class="social-btn google" data-click="startProGoogleAuth">
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+              <span data-i18n="proGoogle">Continuer Pro avec Google</span>
             </button>
           </div>
           <div class="pro-explainer"><small data-i18n="proPlansHint">Comparez le nombre d'annonces, les boosts et la visibilité avant de choisir.</small><button type="button" class="auth-pricing-link" data-click="closeAccountModalThenPricing" data-i18n="viewProPlans">Découvrir tous les comptes Pro</button></div>
@@ -3278,23 +3285,23 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=6d9cf4a3a117a5f9" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=6d9cf4a3a117a5f9"></script>
-<script src="native-ios.js?v=6d9cf4a3a117a5f9"></script>
-<script src="captcha.js?v=6d9cf4a3a117a5f9"></script>
-<script src="supabase-api.js?v=6d9cf4a3a117a5f9"></script>
-<script src="img-utils.js?v=6d9cf4a3a117a5f9"></script>
-<script src="draft-store.js?v=6d9cf4a3a117a5f9"></script>
-<script src="push-config.js?v=6d9cf4a3a117a5f9"></script>
-<script src="push-notifications.js?v=6d9cf4a3a117a5f9"></script>
-<script src="consent.js?v=6d9cf4a3a117a5f9" defer></script>
-<script src="ads-config.js?v=6d9cf4a3a117a5f9"></script>
-<script src="admob-plugin.js?v=6d9cf4a3a117a5f9"></script>
-<script src="native-admob.js?v=6d9cf4a3a117a5f9"></script>
-<script src="ads.js?v=6d9cf4a3a117a5f9" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=d98d4e5d03500f7d" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=d98d4e5d03500f7d"></script>
+<script src="native-ios.js?v=d98d4e5d03500f7d"></script>
+<script src="captcha.js?v=d98d4e5d03500f7d"></script>
+<script src="supabase-api.js?v=d98d4e5d03500f7d"></script>
+<script src="img-utils.js?v=d98d4e5d03500f7d"></script>
+<script src="draft-store.js?v=d98d4e5d03500f7d"></script>
+<script src="push-config.js?v=d98d4e5d03500f7d"></script>
+<script src="push-notifications.js?v=d98d4e5d03500f7d"></script>
+<script src="consent.js?v=d98d4e5d03500f7d" defer></script>
+<script src="ads-config.js?v=d98d4e5d03500f7d"></script>
+<script src="admob-plugin.js?v=d98d4e5d03500f7d"></script>
+<script src="native-admob.js?v=d98d4e5d03500f7d"></script>
+<script src="ads.js?v=d98d4e5d03500f7d" defer></script>
 
-<script src="app-index.js?v=6d9cf4a3a117a5f9"></script>
-<script src="pro-studio.js?v=6d9cf4a3a117a5f9"></script>
-<script src="native-workflows.js?v=6d9cf4a3a117a5f9"></script>
+<script src="app-index.js?v=d98d4e5d03500f7d"></script>
+<script src="pro-studio.js?v=d98d4e5d03500f7d"></script>
+<script src="native-workflows.js?v=d98d4e5d03500f7d"></script>
 </body>
 </html>

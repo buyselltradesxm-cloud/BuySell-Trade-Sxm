@@ -1565,10 +1565,13 @@ function _dispatchDelegated(evtName, event){
   document.addEventListener(evtName, function(event){ _dispatchDelegated(evtName, event); });
 });
 document.addEventListener("submit", function(event){ _dispatchDelegated("submit", event); });
-document.getElementById("accountTermsConsent")?.addEventListener("change", () => {
-  const error = document.getElementById("socialSignupError");
-  if(error){ error.textContent = ""; error.hidden = true; }
-});
+for(const id of ["accountTermsConsent", "proTermsConsent"]){
+  const consent = document.getElementById(id);
+  consent?.addEventListener("change", () => {
+    const error = document.getElementById(consent.getAttribute("aria-describedby"));
+    if(error){ error.textContent = ""; error.hidden = true; }
+  });
+}
 
 /* Small named wrappers for the onclick= patterns that chained multiple
  * calls or held real logic, instead of a single function call -- kept
@@ -3345,9 +3348,7 @@ function toggleFilters(open){
 // Content here is 100% static/hardcoded, never derived from user or
 // remote data, so building it with createElement is just about
 // surviving re-renders, not an XSS concern.
-function updateTermsConsentLabel(){
-  const el = document.getElementById("termsConsentLabel");
-  if(!el) return;
+function updateTermsConsentLabel(el){
   el.textContent = "";
   const parts = state.lang==="fr"
     ? ["J'ai 18 ans ou plus et j'accepte les ", "Conditions d'utilisation", " et la ", "Politique de confidentialité", "."]
@@ -3392,7 +3393,7 @@ function setLang(lang){
     if(t().postShort) el.setAttribute("data-mobile-label", t().postShort);
   });
   if(window.SXM) SXM.refreshPrices();
-  updateTermsConsentLabel();
+  document.querySelectorAll("[data-terms-consent-label]").forEach(updateTermsConsentLabel);
   const accountPlan = document.getElementById("accountPlan");
   const accountSubmit = document.querySelector("#accountModal .auth-card button[type=submit]");
   if(accountPlan && accountSubmit) accountSubmit.textContent = isPaidPlan(accountPlan.value) ? t().continueToPayment : t().accountSubmit;
@@ -6110,19 +6111,7 @@ async function socialAuth(provider, mode){
   // it must not skip the 18+ / Terms checkbox that the email path requires.
   // Only the "create account" buttons pass mode "signup"; returning users
   // signing in with Google/Apple from the same modal are not blocked.
-  const consent = document.getElementById("accountTermsConsent");
-  if(mode === "signup" && consent && !consent.checked){
-    const err = document.getElementById("socialSignupError");
-    if(err){
-      err.textContent = state.lang==="fr"
-        ? "Cochez d'abord la case confirmant que vous avez 18 ans ou plus et acceptez les Conditions."
-        : "First tick the box confirming you are 18 or older and agree to the Terms.";
-      err.hidden = false;
-    }
-    consent.scrollIntoView({block:"nearest"});
-    consent.focus({preventScroll:true});
-    return;
-  }
+  if(mode === "signup" && !confirmSocialSignupConsent("accountTermsConsent")) return;
   const { data, error } = await SB.signInWithOAuth(provider);
   if(error){
     // Closing the sign-in sheet is a choice, not a failure worth a message.
@@ -6153,7 +6142,24 @@ async function finishInAppSocialAuth(sbUser){
   completeAuth();
 }
 
+function confirmSocialSignupConsent(id){
+  const consent = document.getElementById(id);
+  if(consent?.checked) return true;
+  if(!consent) return false;
+  const error = document.getElementById(consent.getAttribute("aria-describedby"));
+  if(error){
+    error.textContent = state.lang==="fr"
+      ? "Cochez d'abord la case confirmant que vous avez 18 ans ou plus et acceptez les Conditions."
+      : "First tick the box confirming you are 18 or older and agree to the Terms.";
+    error.hidden = false;
+  }
+  consent.scrollIntoView({block:"nearest"});
+  consent.focus({preventScroll:true});
+  return false;
+}
+
 function startProSocialAuth(provider){
+  if(!confirmSocialSignupConsent("proTermsConsent")) return;
   sessionStorage.setItem("bst-auth-intent", "pro");
   sessionStorage.setItem("bst-auth-provider", provider);
   socialAuth(provider);

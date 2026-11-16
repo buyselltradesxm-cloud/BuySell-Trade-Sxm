@@ -39,7 +39,12 @@ const { chromium } = require("playwright");
   await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /login|se connecter/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
-  await page.locator('.social-btn.apple[data-click-args*="signup"]').click();
+  const appleSignup = page.locator('.social-btn.apple[data-click-args*="signup"]');
+  if (!await appleSignup.evaluate(button => button === button.parentElement.firstElementChild &&
+      Boolean(button.parentElement.previousElementSibling.querySelector("#accountTermsConsent")))) {
+    errors.push("The free signup checkbox should be directly above Apple.");
+  }
+  await appleSignup.click();
   await consentError.waitFor({ state: "visible" });
   await page.locator("#accountTermsConsent").check();
   const appleBeforeUrl = page.url();
@@ -55,6 +60,26 @@ const { chromium } = require("playwright");
   await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /login|se connecter/i }).first().click();
   await page.locator("#accountModal.open").waitFor();
+  const proApple = page.locator('.social-btn.apple[data-click="startProSocialAuth"]');
+  if (!await proApple.evaluate(button => button === button.parentElement.firstElementChild &&
+      Boolean(button.parentElement.previousElementSibling.querySelector("#proTermsConsent")))) {
+    errors.push("The Pro signup checkbox should be directly above Apple.");
+  }
+  await page.evaluate(() => {
+    window.proSignupProvider = null;
+    SB.signInWithOAuth = async provider => { window.proSignupProvider = provider; return {}; };
+  });
+  await proApple.click();
+  await page.locator("#proSignupError").waitFor({ state: "visible" });
+  if (await page.evaluate(() => window.proSignupProvider || sessionStorage.getItem("bst-auth-intent"))) {
+    errors.push("Pro signup should wait for its age and Terms checkbox.");
+  }
+  await page.locator("#proTermsConsent").check();
+  await page.locator("#proSignupError").waitFor({ state: "hidden" });
+  await proApple.click();
+  if (!await page.evaluate(() => window.proSignupProvider === "apple" && sessionStorage.getItem("bst-auth-intent") === "pro")) {
+    errors.push("Accepting Pro signup terms should open the Apple flow.");
+  }
   const removedSocialProvider = "Face" + "book";
   const removedProviderButtonCount = await page.getByRole("button", { name: new RegExp(removedSocialProvider, "i") }).count();
   results.push({ provider: "removed social provider", visibleButtons: removedProviderButtonCount });
