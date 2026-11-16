@@ -101,7 +101,7 @@
     var p = document.createElement("p");
     p.textContent = t("msg") + " ";
     var a = document.createElement("a");
-    a.href = "/privacy.html"; a.textContent = t("more");
+    a.href = "https://buyselltradesxm-cloud.github.io/legal/privacy.html"; a.textContent = t("more");
     p.appendChild(a);
     box.appendChild(p);
 

@@ -3383,7 +3383,7 @@ function updateTermsConsentLabel(el){
   el.appendChild(terms);
   el.appendChild(document.createTextNode(parts[2]));
   const privacy = document.createElement("a");
-  privacy.href = "/privacy.html"; privacy.target = "_blank"; privacy.rel = "noopener"; privacy.textContent = parts[3];
+  privacy.href = "https://buyselltradesxm-cloud.github.io/legal/privacy.html"; privacy.target = "_blank"; privacy.rel = "noopener"; privacy.textContent = parts[3];
   el.appendChild(privacy);
   el.appendChild(document.createTextNode(parts[4]));
 }
