@@ -16,6 +16,11 @@ Vehicle types are subcategories; rental prices are fields. Car rentals use a dai
 
 A business showcase link uses ?business=<seller-id>. A listing link uses ?listing=<listing-id>. Closing the detail removes either parameter. Read-only business pages may load signed out. Creating an offer uses existing account, subscription and publication-limit guards.
 
+Website language defaults to English, including old saved language values without
+an explicit-choice marker. FR/EN actions persist `langExplicit`; startup does not
+mark a choice. Existing native language preferences remain intact. `setLang`
+also synchronizes `bst_lang` for consent and advertising copy.
+
 Verification: scripts/business-showcase-check.js exercises storefront filtering, mobile layout route, navigation, activity presets, and inactive-plan guard. Category and listing editor checks cover the canonical forms.
 
 ## Native iOS workflows (shell 5)

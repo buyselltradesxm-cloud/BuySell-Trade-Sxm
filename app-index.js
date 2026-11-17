@@ -971,7 +971,7 @@ const BASE_LISTINGS = L.map(item=>({...item}));
 
 /* ---------------- STATE ---------------- */
 const state = {
-  lang:"en", cur:"eur", cat:"all",
+  lang:"en", langExplicit:false, cur:"eur", cat:"all",
   q:"", area:"",
   subcat:"",
   sides:new Set(), conds:new Set(),
@@ -1371,7 +1371,11 @@ function loadLocalState(){
     const raw = localStorage.getItem("bstsxm-state");
     if(!raw) return;
     const data = JSON.parse(raw);
-    if(data.lang && I18N[data.lang]) state.lang = data.lang;
+    const nativeApp = !!window.Capacitor?.isNativePlatform?.();
+    state.langExplicit = data.langExplicit === true;
+    // Old site snapshots saved the initial French default as if it were a choice.
+    // Web returns to English once; explicit choices and native preferences survive.
+    if((state.langExplicit || nativeApp) && data.lang && I18N[data.lang]) state.lang = data.lang;
     if(data.cur) state.cur = data.cur;
     if(data.user) state.user = normalizeUser(data.user);
     if(data.usersByEmail) usersByEmail = data.usersByEmail;
@@ -1421,7 +1425,7 @@ function restoreListingsIfNeeded(){
 
 function persistState(){
   localStorage.setItem("bstsxm-state", JSON.stringify({
-    lang:state.lang, cur:state.cur, user:state.user,
+    lang:state.lang, langExplicit:state.langExplicit, cur:state.cur, user:state.user,
     usersByEmail:isLocalDevHost() ? usersByEmail : {},
     favs:[...state.favs], saved:state.saved,
     chatThreads:isLocalDevHost() ? chatThreads : {},
@@ -3389,9 +3393,11 @@ function updateTermsConsentLabel(el){
 }
 
 /* ---------------- I18N SWAP ---------------- */
-function setLang(lang){
+function setLang(lang, remember = true){
   if(!I18N[lang]) lang = "en";
   state.lang = lang;
+  if(remember) state.langExplicit = true;
+  try { localStorage.setItem("bst_lang", lang); } catch(e) {}
   document.documentElement.lang = lang;
   document.querySelectorAll(".lang button").forEach(b=>
     b.setAttribute("aria-pressed", b.textContent.trim().toLowerCase()===lang));
@@ -7412,7 +7418,7 @@ async function handleIncomingMessage(message){
 }
 
 /* ---------------- INIT ---------------- */
-loadLocalState(); syncAdFree(); setupPasswordVisibilityControls(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); applyAutomaticIncludedBoosts({silent:true}); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang); setCurrency(state.cur); render(); openListingFromUrl(!willLoadListingsFromBackend()); openAdminFromUrl(); handleListingRenewalActionFromUrl(); handleUnsubscribeFromUrl(); if(new URLSearchParams(location.search).get("reset") === "1") setTimeout(openPasswordReset, 250);
+loadLocalState(); syncAdFree(); setupPasswordVisibilityControls(); applyLocalAdminTestMode(); restoreListingsIfNeeded(); applyAutomaticIncludedBoosts({silent:true}); buildAreas(); buildCats(); buildFilters(); buildSort(); setLang(state.lang, false); setCurrency(state.cur); render(); openListingFromUrl(!willLoadListingsFromBackend()); openAdminFromUrl(); handleListingRenewalActionFromUrl(); handleUnsubscribeFromUrl(); if(new URLSearchParams(location.search).get("reset") === "1") setTimeout(openPasswordReset, 250);
 
 handlePaymentReturnFromUrl();
 
