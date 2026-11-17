@@ -117,7 +117,7 @@ window.AdsConfig = {
     interstitialOptions: {
       cooldownMs: 120000,          // 2 minutes of foreground use between ads
       firstSessionDelayMs: 60000,  // first ad only after 60 seconds of foreground use
-      maxPerSession: 7             // hard cap per session
+      maxPerSession: 5             // hard cap per session
     }
     // testingDevices: ["YOUR_DEVICE_ID"], // needed to see real-looking test ads on a physical device
   },
