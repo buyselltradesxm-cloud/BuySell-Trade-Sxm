@@ -4,7 +4,7 @@ const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch();
   try {
-    for (const scenario of ['google-eu', 'google-non-eu', 'fallback', 'late-google', 'ios']) {
+    for (const scenario of ['google-eu', 'google-no-message', 'google-completed', 'google-non-eu', 'fallback', 'late-google', 'ios']) {
       const page = await browser.newPage();
       await page.goto('http://127.0.0.1:5173/offline.html');
       await page.evaluate(scenario => {
@@ -14,9 +14,15 @@ const { chromium } = require('playwright');
         window.revocations = 0;
         window.Capacitor = { isNativePlatform: () => scenario === 'ios', getPlatform: () => 'ios' };
         if (scenario !== 'fallback') {
-          window.googlefc = { callbackQueue: [], showRevocationMessage: () => window.revocations++ };
+          window.googlefc = { callbackQueue: [], showRevocationMessage: () => {
+            window.revocations++;
+            if (scenario !== 'google-no-message') window.tcfListener({ gdprApplies: true, eventStatus: scenario === 'google-completed' ? 'useractioncomplete' : 'cmpuishown' }, true);
+          } };
           window.__tcfapi = (command, version, callback) => {
-            if (command === 'addEventListener') callback({ gdprApplies: scenario !== 'google-non-eu' }, true);
+            if (command === 'addEventListener') {
+              window.tcfListener = callback;
+              callback({ gdprApplies: scenario !== 'google-non-eu' }, true);
+            }
           };
         }
       }, scenario);
@@ -34,9 +40,10 @@ const { chromium } = require('playwright');
         assert.equal(await page.evaluate(() => cmpObservedReady), true, 'Google CMP readiness must be observed');
       }
       await page.evaluate(() => BstConsent.open());
-      const google = ['google-eu', 'late-google'].includes(scenario);
+      if (scenario.startsWith('google-') && scenario !== 'google-non-eu') await page.waitForTimeout(4200);
+      const google = ['google-eu', 'late-google', 'google-no-message', 'google-completed'].includes(scenario);
       assert.equal(await page.evaluate(() => revocations), google ? 1 : 0, scenario);
-      assert.equal(await page.locator('#bst-consent').count(), google || scenario === 'ios' ? 0 : 1, scenario);
+      assert.equal(await page.locator('#bst-consent').count(), (google && scenario !== 'google-no-message') || scenario === 'ios' ? 0 : 1, scenario);
       assert.equal(await page.evaluate(() => localStorage.getItem('bst_consent')), null, 'Opening choices must not grant consent');
       if (scenario === 'fallback') {
         await page.getByRole('button', { name: 'Decline', exact: true }).click();
