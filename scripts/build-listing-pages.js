@@ -14,7 +14,6 @@
 */
 const fs = require("fs");
 const path = require("path");
-const sharp = require("sharp");
 
 const root = path.join(__dirname, "..");
 const args = process.argv.slice(2);
@@ -25,7 +24,8 @@ const includeSamples = args.includes("--samples");
 const SITE = "https://buyselltradesxm.com";
 const PAGE_SIZE = 1000;
 const STATIC_URLS = [
-  { loc: `${SITE}/`, lastmod: "2026-09-29" },
+  { loc: `${SITE}/` },
+  { loc: `${SITE}/l/` },
   { loc: `${SITE}/privacy.html` },
   { loc: `${SITE}/terms.html` }
 ];
@@ -93,6 +93,7 @@ function firstPhoto(l) {
 // 1200x630 preview: the whole photo over a blurred copy of itself, logo badge bottom-right
 // of the centre square, so it survives apps that crop the preview to a square.
 async function shareImage(photoUrl) {
+  const sharp = require("sharp");
   // Listing rows are seller-written: only fetch from our own photo storage, bounded in time and size.
   if (!photoUrl.startsWith(`${url}/storage/v1/object/public/`)) throw new Error("photo not in project storage");
   const res = await fetch(photoUrl, { redirect: "error", signal: AbortSignal.timeout(15000) });
@@ -193,12 +194,12 @@ function pageFor(l, shareImg) {
 <link rel="stylesheet" href="/listing-page.css">
 ${ldJson ? `<script type="application/ld+json">${ldJson}</script>\n` : ""}</head>
 <body>
-<header><a href="/">Buy Sell Trade SXM</a></header>
+<header><a href="/">Buy Sell Trade SXM</a> · <a href="/l/">Toutes les annonces / All listings</a></header>
 <main>
 ${photo ? `<img class="photo" src="${esc(photo)}" alt="${esc(l.title)}">\n` : ""}<h1>${esc(l.title)}</h1>
 ${price ? `<p class="price">${esc(price.label)}</p>\n` : ""}<p class="meta">${esc([category, place].filter(Boolean).join(" · "))}</p>
 ${description ? `<p class="description">${esc(description)}</p>\n` : ""}<p><a class="cta" href="${esc(appUrl)}">Voir l'annonce et contacter le vendeur<br><span lang="en">View the listing and contact the seller</span></a></p>
-<p class="more"><a href="/">Toutes les petites annonces de Saint-Martin et Sint Maarten</a></p>
+<p class="more"><a href="/l/">Toutes les petites annonces de Saint-Martin et Sint Maarten</a></p>
 </main>
 </body>
 </html>
@@ -215,12 +216,44 @@ function sitemapFor(listings) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
 
-(async () => {
+function directoryFor(listings) {
+  const items = listings.map(l => {
+    const price = priceOf(l);
+    const place = [l.area, l.side === "nl" ? "Sint Maarten" : "Saint-Martin"].filter(Boolean).join(", ");
+    return `<li><h2><a href="/l/${esc(l.id)}.html">${esc(l.title)}</a></h2><p class="meta">${esc([place, price ? price.label + (l.category === "locvoit" ? " / day" : "") : ""].filter(Boolean).join(" · "))}</p></li>`;
+  }).join("\n");
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marketplace listings in Saint-Martin &amp; Sint Maarten | Buy Sell Trade SXM</title>
+<meta name="description" content="Browse local marketplace listings across Saint-Martin and Sint Maarten. Find second-hand items, vehicles, rentals and services, and contact sellers on Buy Sell Trade SXM.">
+<link rel="canonical" href="${SITE}/l/">
+<link rel="stylesheet" href="/listing-page.css">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+</head>
+<body>
+<header><a href="/">Buy Sell Trade SXM</a></header>
+<main>
+<h1>Marketplace listings in Saint-Martin &amp; Sint Maarten</h1>
+<p>Browse listings from local sellers on both sides of the island. Open a listing for photos and details, then contact the seller through the marketplace.</p>
+<p lang="fr">Petites annonces de Saint-Martin et Sint Maarten : consultez les photos et les détails, puis contactez le vendeur sur la marketplace.</p>
+${items ? `<ul class="listing-directory">${items}</ul>` : "<p>No listings available at the moment. Please check back soon.</p>"}
+<p class="more"><a href="/#browse">Search and filter the marketplace</a></p>
+</main>
+</body>
+</html>
+`;
+}
+
+async function main() {
   const listings = (await fetchListings()).filter(l => /^[\w-]+$/.test(String(l.id)) && l.title);
   const dir = path.join(outRoot, "l");
   fs.mkdirSync(dir, { recursive: true });
 
-  const wanted = new Set(listings.map(l => `${l.id}.html`));
+  const wanted = new Set(["index.html", ...listings.map(l => `${l.id}.html`)]);
   let removed = 0;
   for (const file of fs.readdirSync(dir)) {
     if (file.endsWith(".html") && !wanted.has(file)) {
@@ -253,12 +286,17 @@ function sitemapFor(listings) {
     fs.writeFileSync(path.join(dir, `${l.id}.html`), pageFor(l, shareImg));
     fs.writeFileSync(path.join(shareDir, `${l.id}.html`), sharePageFor(l, shareImg || photo || `${SITE}/og-image.jpg`));
   }
+  fs.writeFileSync(path.join(dir, "index.html"), directoryFor(listings));
   // Git does not track an empty folder; don't leave one behind.
   for (const d of [dir, shareDir]) if (!fs.readdirSync(d).length) fs.rmdirSync(d);
 
   fs.writeFileSync(path.join(outRoot, "sitemap.xml"), sitemapFor(listings));
   console.log(`${listings.length} listing page(s) written (${branded} share image(s)), ${removed} removed, sitemap has ${STATIC_URLS.length + listings.length} URLs`);
-})().catch(err => {
+}
+
+module.exports = { directoryFor, pageFor, sitemapFor };
+
+if (require.main === module) main().catch(err => {
   console.error(err.message || err);
   process.exit(1);
 });

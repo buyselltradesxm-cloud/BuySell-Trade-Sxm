@@ -31,7 +31,9 @@ jobs:
         run: npm install --prefix /tmp/img sharp@0.33.5 --no-audit --no-fund
 
       - name: Build listing pages, share pages and sitemap
-        run: node scripts/build-listing-pages.js
+        run: |
+          node scripts/seo-discovery-check.js
+          node scripts/build-listing-pages.js
         env:
           NODE_PATH: /tmp/img/node_modules
 
