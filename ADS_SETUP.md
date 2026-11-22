@@ -1,5 +1,43 @@
 # Advertising setup — Buy Sell Trade Sxm
 
+## Verified website status — 22 November 2026
+
+AdSense publisher `pub-7816106453580174`, site `buyselltradesxm.com`:
+
+- **Approval: Getting ready.** Review was requested on 21 November at 17:14
+  in AdSense. Google says review can take a few days, sometimes 2–4 weeks.
+  Loading the tag or seeing an ad preview does not establish live ad serving.
+- **Auto ads and vignette ads are already enabled**, including desktop and
+  additional vignette triggers. The saved minimum repeat interval is 10 minutes.
+  Anchor and side-rail formats are also enabled. No account setting was changed.
+- **ads.txt is currently reachable:** HTTP 200, text/plain, correct publisher
+  line, checked via HTTPS root, HTTPS www and HTTP root using the
+  Mediapartners-Google user agent. robots.txt allows Google ad crawlers.
+  AdSense still shows the last crawl's Not found result; allow its crawler to
+  update. Do not delete/re-add the site or reset the pending review to fix this.
+- **Google's European consent message is published**, French plus one other
+  language. The Google consent script and TCF API load on the live website.
+- The publisher tag loads once on mobile/desktop, without observed CSP or
+  JavaScript errors. All nine manual ad-unit IDs are configured.
+- The footer's Cookie choices action now reopens Google's EU consent message
+  when it applies. Elsewhere it retains the local notice. Native iOS continues
+  to leave consent to its native SDK. Opening choices never grants consent.
+
+Run `node scripts/consent-cmp-check.js` with the local server on
+127.0.0.1:5173 to verify EU/non-EU, fallback, late CMP and native iOS paths.
+
+Google controls eligibility and fill for vignette ads. Do not add custom timed
+AdSense overlays or repeatedly trigger production ads to test their appearance.
+
+References:
+https://support.google.com/adsense/answer/16531962
+https://support.google.com/adsense/answer/13956167
+https://support.google.com/adsense/answer/12171244
+https://developers.google.com/funding-choices/fc-api-docs
+
+The sections below retain historical setup instructions and examples; their
+September approval/empty-slot statements are superseded by this status.
+
 ## Non-personalized advertising
 
 Account setup (September 10, 2026):
