@@ -66,9 +66,18 @@ jobs:
           test ! -e _site/supabase
           test ! -e _site/APP_QA_STATUS.md
           node scripts/check-site-secrets.js _site
-      - uses: actions/upload-pages-artifact@v4
+      # upload-pages-artifact v4 excludes all dot directories, including .well-known.
+      - name: Archive Pages including verified app links
+        run: |
+          tar --dereference --hard-dereference --directory _site -cf "$RUNNER_TEMP/artifact.tar" --exclude=.git --exclude=.github .
+          tar -tf "$RUNNER_TEMP/artifact.tar" | grep -Fx './.well-known/assetlinks.json'
+          tar -tf "$RUNNER_TEMP/artifact.tar" | grep -Fx './.well-known/apple-app-site-association'
+      - uses: actions/upload-artifact@v4
         with:
-          path: ./_site
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar
+          retention-days: 1
+          if-no-files-found: error
   deploy:
     needs: build
     runs-on: ubuntu-latest
