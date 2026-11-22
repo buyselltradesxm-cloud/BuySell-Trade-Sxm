@@ -212,8 +212,6 @@ window.AdsConfig = {
   /* Lazy-load distance in px before a slot scrolls into view. */
   lazyMargin: 320,
 
-  /* Optional GA4 — only to measure traffic (helps you optimise
-   * ads and is basically required for AdSense review). Paste a
-   * measurement id like "G-XXXXXXX" to switch it on. */
-  analytics: { ga4: "" }
+  /* Website traffic and store-link clicks, only after analytics consent. */
+  analytics: { ga4: "G-SLB7ZS2GCR" }
 };

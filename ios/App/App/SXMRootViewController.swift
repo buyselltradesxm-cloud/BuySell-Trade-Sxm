@@ -246,6 +246,23 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
         }
     }
 
+    @discardableResult func openListingURL(_ url: URL) -> Bool {
+        guard url.scheme == "https", url.host == "buyselltradesxm.com",
+              !workflowModel.busy else { return false }
+        let parts = url.path.split(separator: "/")
+        let id: String?
+        if parts.count == 2, ["l", "s"].contains(String(parts[0])), parts[1].hasSuffix(".html") {
+            id = String(parts[1].dropLast(5))
+        } else if url.path == "/" {
+            id = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "listing" }?.value
+        } else { return false }
+        guard let id = id, id.range(of: "^[A-Za-z0-9_-]+$", options: .regularExpression) != nil else { return false }
+        loadViewIfNeeded()
+        hideWorkflow()
+        showInWeb(listing: id)
+        return true
+    }
+
     func takePendingTab() -> String? {
         defer { pendingTab = nil }
         return pendingTab?.rawValue

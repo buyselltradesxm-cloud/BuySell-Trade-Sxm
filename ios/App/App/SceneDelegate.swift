@@ -12,6 +12,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = root
         window?.makeKeyAndVisible()
         if let shortcut = connectionOptions.shortcutItem { root.open(shortcut: shortcut) }
+        if let url = connectionOptions.userActivities.compactMap({ $0.webpageURL }).first {
+            root.openListingURL(url)
+        }
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }
@@ -26,6 +29,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+        if let url = userActivity.webpageURL,
+           (window?.rootViewController as? SXMRootViewController)?.openListingURL(url) == true { return }
         SceneDelegateProxy.shared.scene(scene, continue: userActivity)
     }
 }

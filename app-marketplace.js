@@ -7165,10 +7165,12 @@ async function createListing(e){
   if(!current()) return false;
   render();
   showToast(editing ? (state.lang==="fr" ? "Annonce modifiée" : "Listing updated") : t().listingPublished);
+  const reviewRequested = !editing && window.BstReview ? await window.BstReview.success() : false;
+  if(!current()) return false;
   // Natural transition point in the packaged app: a brand-new listing was
   // just created. Fire a throttled AdMob interstitial (native-admob.js
   // enforces cooldown, session cap, first-delay). No-op on the web.
-  if(!editing && typeof window.__BST_ADMOB_INTERSTITIAL__ === "function"){
+  if(!editing && !reviewRequested && typeof window.__BST_ADMOB_INTERSTITIAL__ === "function"){
     try { window.__BST_ADMOB_INTERSTITIAL__(); } catch(e) {}
   }
   setTimeout(()=>{ if(current()) openListing(finalListing.id); }, 250);

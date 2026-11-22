@@ -26,6 +26,8 @@ const PAGE_SIZE = 1000;
 const STATIC_URLS = [
   { loc: `${SITE}/` },
   { loc: `${SITE}/l/` },
+  { loc: `${SITE}/app.html` },
+  { loc: `${SITE}/app-fr.html` },
   { loc: `${SITE}/privacy.html` },
   { loc: `${SITE}/terms.html` }
 ];

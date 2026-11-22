@@ -50,7 +50,7 @@ android {
             manifestPlaceholders = [appLabel: "Buy Sell Trade SXM Preview"]
         }
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             if (hasReleaseSigning) {
                 signingConfig signingConfigs.release
@@ -66,6 +66,7 @@ repositories {
 }
 
 dependencies {
+    implementation "com.google.android.play:review:2.0.2"
     implementation "com.android.billingclient:billing:8.0.0"
     // The native browse feed uses the same Ads SDK and UMP consent state as the Capacitor AdMob plugin.
     implementation "com.google.android.gms:play-services-ads:25.4.0"

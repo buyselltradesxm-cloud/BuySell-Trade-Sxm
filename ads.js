@@ -77,18 +77,7 @@
   // ---- GA4 (optional, traffic measurement only) ---------------------
   // Only loads after the visitor has granted consent (consent.js).
   function ensureGA() {
-    var id = CFG && CFG.analytics && CFG.analytics.ga4;
-    if (!id || window.__bstGA) return;
-    if (window.BstConsent && !window.BstConsent.granted()) return;
-    window.__bstGA = true;
-    var s = document.createElement("script");
-    s.async = true;
-    s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(id);
-    document.head.appendChild(s);
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function () { window.dataLayer.push(arguments); };
-    window.gtag("js", new Date());
-    window.gtag("config", id, { anonymize_ip: true });
+    if (window.BstAnalytics) window.BstAnalytics.start();
   }
 
   // ---- AdSense loader ------------------------------------------------

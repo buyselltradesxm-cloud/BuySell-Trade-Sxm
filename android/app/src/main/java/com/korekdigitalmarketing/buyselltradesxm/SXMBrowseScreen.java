@@ -542,7 +542,7 @@ final class SXMBrowseScreen extends ScrollView {
             getResources().getString(R.string.admob_browse_banner_id));
         int width = Math.max(250, (int) ((getResources().getDisplayMetrics().widthPixels - dp(36)) /
             getResources().getDisplayMetrics().density));
-        view.setAdSize(AdSize.getInlineAdaptiveBannerAdSize(width, 110));
+        view.setAdSize(AdSize.getInlineAdaptiveBannerAdSize(width, 300));
         view.setAdListener(new AdListener() {
             @Override public void onAdLoaded() {
                 if (inlineAd == view) {
@@ -666,6 +666,7 @@ final class SXMBrowseScreen extends ScrollView {
         }
         int width = getResources().getDisplayMetrics().widthPixels;
         boolean twoColumns = width >= dp(300);
+        int adAfter = shown.size() <= 4 ? 2 : shown.size() <= 12 ? 4 : 8;
         for (int i = 0; i < Math.min(shown.size(), visibleLimit); i += twoColumns ? 2 : 1) {
             LinearLayout row = new LinearLayout(getContext());
             LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2); rp.bottomMargin = dp(12);
@@ -679,7 +680,7 @@ final class SXMBrowseScreen extends ScrollView {
                     LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(0, 1, 1); sp.leftMargin = dp(10); row.addView(spacer, sp);
                 }
             }
-            if (i == 0) {
+            if (i + (twoColumns ? 2 : 1) == adAfter && shown.size() > adAfter) {
                 LinearLayout.LayoutParams adParams = new LinearLayout.LayoutParams(-1, -2);
                 adParams.topMargin = dp(6);
                 adParams.bottomMargin = dp(18);

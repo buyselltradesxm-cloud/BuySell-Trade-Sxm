@@ -24,6 +24,17 @@
             </intent-filter>
 
             <!-- Google / Apple sign-in runs in a Chrome Custom Tab (Google
+                 blocks sign-in inside WebViews). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="buyselltradesxm.com" />
+                <data android:pathPrefix="/l/" />
+                <data android:pathPrefix="/s/" />
+                <data android:path="/" />
+            </intent-filter>
+            <!-- Google / Apple sign-in runs in a Chrome Custom Tab (Google
                  blocks sign-in inside WebViews). auth-callback.html then
                  hands the result back to the app through this link. -->
             <intent-filter>
