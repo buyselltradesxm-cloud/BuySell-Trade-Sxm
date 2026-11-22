@@ -11,3 +11,8 @@ h1{font-size:1.5rem;line-height:1.25;margin:16px 0 4px}
 .cta{display:block;padding:14px 16px;border-radius:12px;background:#0B6E7F;color:#fff;font-weight:700;text-align:center;text-decoration:none}
 .cta span{font-weight:400;font-size:.9rem}
 .more a{color:#0B6E7F}
+.listing-directory{list-style:none;padding:0}
+.listing-directory li{padding:16px 0;border-bottom:1px solid #F0E7D4}
+.listing-directory h2{font-size:1.1rem;line-height:1.4;margin:0 0 4px;overflow-wrap:anywhere}
+.listing-directory a{color:#0B6E7F;text-underline-offset:3px}
+.listing-directory .meta{margin:0}
