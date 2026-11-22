@@ -1,0 +1,21 @@
+Review candidate: version 1.0.8, build 1. This replaces the rejected 1.0.6 (1).
+
+Buy Sell Trade SXM is a local marketplace for buyers and independent sellers across Saint-Martin and Sint Maarten. Native SwiftUI Discover and Saved screens provide listing discovery, island-side/area filtering, photos and saved listings. Native Post provides camera/photo selection and on-device drafts. Native Messages provides the inbox and seller conversations. Profile, account and subscription screens use the app's web bridge.
+
+Regarding the November 18 Guideline 2.1(a) report: Profile content requires access to https://buyselltradesxm.com. The domain previously had an availability incident. Public DNS resolution and HTTPS access were rechecked on November 22 and are currently working. This is a possible contributor to the reported failure; we have not confirmed its historical cause.
+
+On November 22, Discover and the signed-out Profile/sign-in screen passed WebKit browser checks at the iPad Air 11-inch screen dimensions in portrait (820x1180) and landscape (1180x820). These are browser emulation results, not a physical iPad or iPadOS 27.0.1 acceptance test. On November 22, after receiving TestFlight 1.0.8 (1), the owner reported that everything works fine on their iPhone. This is owner-reported internal testing; no physical iPad acceptance result or external-beta result is claimed.
+
+Review steps:
+1. Browse Discover without signing in. Filter by island side or area, open listing photos and change FR/EN.
+2. Tap Profile. When signed out, an account screen opens. Select Log in and use the demo credentials supplied in App Review Information. No new account is required.
+3. After login, open Profile to view account details and listings. Open Post, add a photo/title, then leave and return to check the on-device draft.
+4. Open a seller listing and contact the seller; use Messages for the inbox and conversations.
+5. Under Car rentals, select a vehicle type and check daily and optional seven-day rates. Vans and Auto body repair are also available in the shared category form.
+6. Open Pricing to review monthly Pro subscriptions and Restore Purchases using Apple sandbox. The purchase screen includes localized price, monthly duration, renewal terms, Apple Standard EULA and privacy links.
+
+Privacy and account deletion instructions: https://buyselltradesxm-cloud.github.io/legal/privacy.html
+Terms: https://buyselltradesxm.com/terms.html
+EULA: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+The November 16 response in the review thread addresses the earlier questions under guidelines 4.3 and 4.2.6. The intended USD purchase prices were confirmed in our November 17 response.

@@ -1,0 +1,21 @@
+EN — Please test this 1.0.8 build before App Review resubmission.
+
+1. Cold-launch the app. Open Discover, then Profile. Confirm the account screen loads. Choose Log in, sign in, and confirm your profile and listings appear. Log out and repeat.
+2. Browse listings, open photos, save an item, and switch English/French.
+3. Open Post, select a photo, enter a title and category, leave and return to confirm your draft. Publish only if you intend to create the listing.
+4. Open Messages and an existing seller conversation.
+5. Check the inline advertising placement, consent behavior and that ads do not cover navigation or account controls. Report a blank screen, stuck loading or blocked button.
+6. If available, test iPad portrait/landscape. Briefly disconnect/reconnect and confirm Profile can load after returning online.
+
+Send the version/build, device/OS, steps and a screenshot for any issue. Tablet-sized browser checks have passed; installed iPad acceptance remains to be confirmed. Do not make a real purchase just to test.
+
+FR — Merci de tester cette version 1.0.8 avant la nouvelle soumission à Apple.
+
+1. Relancez l’app. Ouvrez Découvrir, puis Profil. Vérifiez que l’écran du compte s’affiche. Choisissez Connexion, connectez-vous et vérifiez le profil et les annonces. Déconnectez-vous et recommencez.
+2. Parcourez les annonces, ouvrez les photos, ajoutez un favori et changez FR/EN.
+3. Ouvrez Publier, ajoutez une photo, un titre et une catégorie, puis quittez et revenez pour vérifier le brouillon. Ne publiez que si vous souhaitez créer l’annonce.
+4. Ouvrez Messages et une conversation existante.
+5. Vérifiez la publicité intégrée, le consentement et l’accès à la navigation et au compte. Signalez tout écran blanc, chargement bloqué ou bouton inaccessible.
+6. Si possible, testez l’iPad en portrait et paysage, puis le retour à Profil après une brève coupure réseau.
+
+Pour chaque problème, indiquez version/build, appareil/système, étapes et capture d’écran. Les tests navigateur au format iPad sont passés ; le test de l’app installée sur iPad reste à confirmer. Aucun achat réel n’est nécessaire.
