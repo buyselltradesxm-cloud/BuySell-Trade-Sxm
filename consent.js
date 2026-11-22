@@ -14,9 +14,7 @@
   "use strict";
   var KEY = "bst_consent";
 
-  // The iOS app ships without ads or analytics (see native-admob.js and the
-  // App Privacy answers in App Store Connect). There is nothing to consent
-  // to there: no notice is shown and the answer is always "denied".
+  // Native iOS consent is handled by the AdMob SDK, not this web banner.
   var IOS_APP = (function () {
     try {
       var cap = window.Capacitor;
@@ -24,6 +22,19 @@
                 cap.getPlatform && cap.getPlatform() === "ios");
     } catch (e) { return false; }
   })();
+
+  var googleConsentApplies = false;
+  if (!IOS_APP) {
+    window.googlefc = window.googlefc || {};
+    window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
+    window.googlefc.callbackQueue.push({ CONSENT_API_READY: function () {
+      if (typeof window.__tcfapi !== 'function') return;
+      window.__tcfapi('addEventListener', 2, function (data, success) {
+        googleConsentApplies = !!(success && data && data.gdprApplies);
+        if (googleConsentApplies) hide();
+      });
+    } });
+  }
 
   function read() {
     if (IOS_APP) return "denied";
@@ -43,7 +54,12 @@
     granted: function () { return read() === "granted"; },
     set: function (v) { hide(); write(v === "granted" ? "granted" : "denied"); },
     onChange: function (cb) { if (typeof cb === "function") listeners.push(cb); },
-    open: function () { show(true); }
+    open: function () {
+      if (googleConsentApplies && typeof window.googlefc.showRevocationMessage === 'function') {
+        hide();
+        window.googlefc.showRevocationMessage();
+      } else { show(true); }
+    }
   };
   window.addEventListener("bst:consent", function (e) {
     listeners.forEach(function (cb) { try { cb(e.detail.state); } catch (x) {} });
