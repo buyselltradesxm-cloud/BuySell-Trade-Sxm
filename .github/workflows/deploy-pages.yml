@@ -40,6 +40,9 @@ jobs:
           node --check pro-studio.js
           node --check supabase-api.js
           node --check native-workflows.js
+          node --check analytics.js
+          node --check app-review.js
+          node scripts/app-growth-check.js
           node scripts/native-workflows-check.js
           npm run test:store-recovery
           node --check push-notifications.js
@@ -55,6 +58,10 @@ jobs:
           test -f _site/pro-studio.css
           test -f _site/supabase-api.js
           test -f _site/native-workflows.js
+          test -f _site/app.html
+          test -f _site/app-fr.html
+          test -f _site/.well-known/assetlinks.json
+          test -f _site/.well-known/apple-app-site-association
           test ! -e _site/scripts
           test ! -e _site/supabase
           test ! -e _site/APP_QA_STATUS.md

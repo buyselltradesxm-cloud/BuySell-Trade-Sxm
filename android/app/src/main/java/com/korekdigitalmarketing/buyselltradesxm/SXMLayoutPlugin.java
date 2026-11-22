@@ -6,6 +6,25 @@ import com.getcapacitor.JSObject;
 import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "SXMLayout")
 public class SXMLayoutPlugin extends Plugin {
+    @PluginMethod public void requestReview(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            android.content.SharedPreferences prefs = getContext().getSharedPreferences("sxm.review", 0);
+            long now = System.currentTimeMillis(), first = prefs.getLong("first", now);
+            int count = prefs.getInt("successes", 0) + 1;
+            prefs.edit().putLong("first", first).putInt("successes", count).apply();
+            JSObject result = new JSObject(); result.put("requested", false);
+            if (count < 2 || now - first < 7L * 86400000 || now - prefs.getLong("last", 0) < 120L * 86400000) {
+                call.resolve(result); return;
+            }
+            com.google.android.play.core.review.ReviewManager manager = com.google.android.play.core.review.ReviewManagerFactory.create(getContext());
+            manager.requestReviewFlow().addOnCompleteListener(task -> {
+                if (!task.isSuccessful() || getActivity().isFinishing()) { call.resolve(result); return; }
+                prefs.edit().putLong("last", now).apply();
+                manager.launchReviewFlow(getActivity(), task.getResult());
+                result.put("requested", true); call.resolve(result);
+            });
+        });
+    }
     @PluginMethod public void getBrowseState(PluginCall call) {
         JSObject result = new JSObject();
         result.put("visible", ((MainActivity)getActivity()).isNativeBrowseVisible());

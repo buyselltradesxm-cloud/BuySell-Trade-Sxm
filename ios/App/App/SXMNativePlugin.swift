@@ -5,6 +5,24 @@ import StoreKit
 import UserNotifications
 import WebKit
 
+@MainActor enum SXMReview {
+    static func recordSuccess(in scene: UIWindowScene?) -> Bool {
+        let defaults = UserDefaults.standard, now = Date().timeIntervalSince1970
+        let first = defaults.double(forKey: "sxm.review.first")
+        if first == 0 { defaults.set(now, forKey: "sxm.review.first") }
+        let count = defaults.integer(forKey: "sxm.review.successes") + 1
+        defaults.set(count, forKey: "sxm.review.successes")
+        let last = defaults.double(forKey: "sxm.review.last")
+        guard count >= 2, first > 0, now - first >= 7 * 86400,
+              now - last >= 120 * 86400, let scene = scene,
+              scene.activationState == .foregroundActive else { return false }
+        defaults.set(now, forKey: "sxm.review.last")
+        if #available(iOS 18.0, *) { AppStore.requestReview(in: scene) }
+        else { SKStoreReviewController.requestReview(in: scene) }
+        return true // The store decides whether a prompt is actually displayed.
+    }
+}
+
 final class SXMBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(SXMNativePlugin())
@@ -27,6 +45,7 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
         CAPPluginMethod(name: "authenticate", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "appleSignIn", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "ready", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestReview", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setTabs", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "nativeAdsState", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "openWorkflow", returnType: CAPPluginReturnPromise),
@@ -43,6 +62,12 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
         CAPPluginMethod(name: "manageSubscriptions", returnType: CAPPluginReturnPromise)
     ]
     private var authSession: ASWebAuthenticationSession?
+    @objc func requestReview(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [weak self] in
+            let requested = SXMReview.recordSuccess(in: self?.bridge?.viewController?.view.window?.windowScene)
+            call.resolve(["requested": requested])
+        }
+    }
     private var appleCall: CAPPluginCall?
     private var appleNonce: String?
     private var pushCall: CAPPluginCall?

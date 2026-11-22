@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
-const pages = ['index.html', 'marketplace.html', 'auth-callback.html'];
+const pages = ['index.html', 'marketplace.html', 'auth-callback.html', 'app.html', 'app-fr.html'];
 const reference = /((?:src|href)=["'])([^"']+\.(?:js|css))(?:\?[^"']*)?(["'])/g;
 const local = url => !/^(?:https?:|\/\/|data:)/.test(url);
 const assets = new Set(['sw.js']);

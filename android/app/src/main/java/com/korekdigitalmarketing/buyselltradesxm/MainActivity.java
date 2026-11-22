@@ -35,6 +35,27 @@ public class MainActivity extends BridgeActivity {
         web = getBridge().getWebView();
         installShell();
         syncWebLanguage(0);
+        openListingIntent(getIntent());
+    }
+
+    @Override protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        openListingIntent(intent);
+    }
+
+    private void openListingIntent(android.content.Intent intent) {
+        android.net.Uri uri = intent == null ? null : intent.getData();
+        if (uri == null || !"https".equals(uri.getScheme()) || !"buyselltradesxm.com".equals(uri.getHost())) return;
+        java.util.List<String> parts = uri.getPathSegments();
+        String id = null;
+        if (parts.size() == 2 && (parts.get(0).equals("l") || parts.get(0).equals("s")) && parts.get(1).endsWith(".html")) {
+            id = parts.get(1).substring(0, parts.get(1).length() - 5);
+        } else if ("/".equals(uri.getPath())) { id = uri.getQueryParameter("listing"); }
+        if (id == null || !id.matches("[A-Za-z0-9_-]+") || web == null) return;
+        if (browse != null) browse.setVisibility(View.GONE);
+        web.setVisibility(View.VISIBLE);
+        syncWebBanner(false);
+        web.loadUrl("https://buyselltradesxm.com/?listing=" + android.net.Uri.encode(id));
     }
 
     public void reserveBanner(int height) {

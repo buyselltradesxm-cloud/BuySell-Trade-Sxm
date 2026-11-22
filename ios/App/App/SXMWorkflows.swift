@@ -368,6 +368,9 @@ struct SXMPostView: View {
             try model.save(pending, owner: owner)
             let _: SXMWriteResult = try await model.request("publish", ["draft": draft.payload])
             published = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                _ = SXMReview.recordSuccess(in: UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first { $0.activationState == .foregroundActive })
+            }
             do { try model.discard(owner: owner); draft = SXMPostDraft(); saved = false }
             catch { storageError = model.text("Annonce publiée. Le brouillon n'a pas pu être effacé.", "Listing published. The draft could not be removed.") }
         } catch {
