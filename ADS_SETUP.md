@@ -20,11 +20,14 @@ AdSense publisher `pub-7816106453580174`, site `buyselltradesxm.com`:
 - The publisher tag loads once on mobile/desktop, without observed CSP or
   JavaScript errors. All nine manual ad-unit IDs are configured.
 - The footer's Cookie choices action now reopens Google's EU consent message
-  when it applies. Elsewhere it retains the local notice. Native iOS continues
+  when it applies. If Google exposes its API but shows no message, the local
+  notice appears after four seconds; a shown/completed Google message cancels
+  that fallback. Elsewhere it retains the local notice. Native iOS continues
   to leave consent to its native SDK. Opening choices never grants consent.
 
 Run `node scripts/consent-cmp-check.js` with the local server on
-127.0.0.1:5173 to verify EU/non-EU, fallback, late CMP and native iOS paths.
+127.0.0.1:5173 to verify seven scenarios: EU/non-EU, unavailable/completed
+Google messages, fallback, late CMP and native iOS.
 
 Google controls eligibility and fill for vignette ads. Do not add custom timed
 AdSense overlays or repeatedly trigger production ads to test their appearance.

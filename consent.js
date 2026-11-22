@@ -24,6 +24,7 @@
   })();
 
   var googleConsentApplies = false;
+  var googleChoicesTimer;
   if (!IOS_APP) {
     window.googlefc = window.googlefc || {};
     window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
@@ -31,7 +32,10 @@
       if (typeof window.__tcfapi !== 'function') return;
       window.__tcfapi('addEventListener', 2, function (data, success) {
         googleConsentApplies = !!(success && data && data.gdprApplies);
-        if (googleConsentApplies) hide();
+        if (googleConsentApplies) {
+          hide();
+          if (data.eventStatus === 'cmpuishown' || data.eventStatus === 'useractioncomplete') clearTimeout(googleChoicesTimer);
+        }
       });
     } });
   }
@@ -57,6 +61,9 @@
     open: function () {
       if (googleConsentApplies && typeof window.googlefc.showRevocationMessage === 'function') {
         hide();
+        clearTimeout(googleChoicesTimer);
+        // Google may expose its API before this site can display a message.
+        googleChoicesTimer = setTimeout(function () { show(true); }, 4000);
         window.googlefc.showRevocationMessage();
       } else { show(true); }
     }
