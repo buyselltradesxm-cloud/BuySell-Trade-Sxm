@@ -36,8 +36,9 @@ and full descriptions <=4000 characters, verified locally.
 
 Four Play changes (EN/FR short and full descriptions) were saved and sent for
 review. Check Publishing overview for quick-check and review completion.
-Apple metadata must be saved only where the current status permits editing;
-preserve the existing 1.0.8 submission rather than withdrawing it for ASO.
+Apple allowed edits while Waiting for Review: EN/FR subtitles, descriptions
+and keywords were saved in App Store Connect. Apple descriptions append the
+standard Apple EULA link. The existing 1.0.8 submission was preserved.
 
 ## Next native build
 
@@ -56,7 +57,8 @@ Play flags release 1.0.6 DEX obfuscation at 0%, deadline February 2027. R8 is
 enabled for release builds with Capacitor bridge keep rules and line numbers.
 Crash/ANR data is unavailable, not zero. Existing JS error reporting remains.
 
-Native builds are validation artifacts only: iOS upload disabled and Android
-track none. They do not replace the current store build or prove installed-device
+Native 1.0.9 validation builds succeeded: signed iOS run 45070529524 (upload
+disabled) and signed Android run 45070507143 (track none). They do not replace
+the current store build or prove installed-device
 deep links, prompts or optimization percentages. Check signed build results,
 verify association response MIME, and test actual devices before release.

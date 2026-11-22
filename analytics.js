@@ -24,7 +24,7 @@
       window.gtag = function () { window.dataLayer.push(arguments); };
       gtag('consent', 'default', {analytics_storage:'granted',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
       gtag('js', new Date());
-      gtag('config', id, {send_page_view:false, page_location:cleanUrl(), page_referrer:'', allow_google_signals:false, allow_ad_personalization_signals:false});
+      gtag('config', id, {send_page_view:false, page_location:cleanUrl(), page_referrer:'', page_title:'Buy Sell Trade SXM', allow_google_signals:false, allow_ad_personalization_signals:false});
       var script = document.createElement('script');
       script.async = true;
       script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
@@ -53,7 +53,7 @@
     if (typeof window.__tcfapi !== 'function') { start(); return; }
     window.__tcfapi('addEventListener', 2, function (data, ok) {
       if (!ok || !data) return;
-      googleApplies = data.gdprApplies;
+      googleApplies = typeof data.gdprApplies === 'boolean' ? data.gdprApplies : null;
       googleAllowed = !!(data.purpose && data.purpose.consents && data.purpose.consents[1] && data.purpose.consents[10] && data.vendor && data.vendor.consents && data.vendor.consents[755]);
       start();
     });

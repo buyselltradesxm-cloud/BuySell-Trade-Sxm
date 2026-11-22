@@ -23,8 +23,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Google / Apple sign-in runs in a Chrome Custom Tab (Google
-                 blocks sign-in inside WebViews). -->
+            <!-- Verified listing links are separate from authentication callbacks. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
