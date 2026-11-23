@@ -205,12 +205,25 @@
   function renderHouse(container, key, promo) {
     if (!promo) { collapse(container); return; }
     var b = el("button", "ad-unit ad-house");
+    if (promo.id === "pro") {
+      b.classList.add("ad-house-pro");
+      var effects = el("span", "ad-pro-effects");
+      effects.setAttribute("aria-hidden", "true");
+      for (var i = 0; i < 3; i++) effects.appendChild(el("span", "ad-pro-spark", "✦"));
+      b.appendChild(effects);
+    }
     b.type = "button";
     b.appendChild(flag(L(CFG.houseLabel) || "Buy Sell Trade Sxm", "ad-flag-house"));
     var body = el("span", "ad-body");
     body.appendChild(el("strong", "ad-head", L(promo.headline)));
     body.appendChild(el("span", "ad-text", L(promo.text)));
-    body.appendChild(el("span", "ad-cta", L(promo.cta) + " ›"));
+    var cta = el("span", "ad-cta", L(promo.cta) + (promo.id === "pro" ? " " : " ›"));
+    if (promo.id === "pro") {
+      var arrow = el("span", "ad-pro-arrow", "→");
+      arrow.setAttribute("aria-hidden", "true");
+      cta.appendChild(arrow);
+    }
+    body.appendChild(cta);
     b.appendChild(body);
     b.addEventListener("click", function () {
       track("ad_click", { slot: key, type: "house", id: promo.id });
@@ -516,6 +529,28 @@
       ".ad-house:hover{border-color:var(--sun,#F2B705);",
       "  box-shadow:0 0 0 1px rgba(242,183,5,.25),0 8px 26px rgba(242,183,5,.3);}",
       ".ad-house .ad-cta{color:#B8860B;}",
+      /* A short welcome moment, then rest: no continuous motion while reading. */
+      ".ad-house-pro{isolation:isolate;border-color:#dbbc65;background:linear-gradient(115deg,#fff2cd,#fffdf8 58%,#e7f4ef);box-shadow:0 0 0 1px #f2b70520,0 8px 28px #b48a1926;}",
+      ".ad-house-pro::before{content:'';position:absolute;inset:-40% -15%;pointer-events:none;z-index:-1;background:linear-gradient(110deg,transparent 35%,#ffe49a66 44%,#ffffffed 50%,#fff3c566 56%,transparent 65%);transform:translateX(-120%);animation:ad-pro-light 1.7s .2s 2 ease-out both;}",
+      ".ad-house-pro::after{content:'';position:absolute;right:-35px;top:-60px;width:200px;height:200px;pointer-events:none;z-index:-2;border-radius:50%;background:radial-gradient(circle,#e7c66f66,transparent 68%);animation:ad-pro-halo 1.2s .2s 3 ease-in-out;}",
+      ".ad-house-pro .ad-body{padding-right:32px;}.ad-house-pro .ad-flag{margin-right:32px;}",
+      ".ad-pro-effects{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit;}",
+      ".ad-pro-spark{position:absolute;right:18px;top:20%;font-size:20px;line-height:1;color:#b58829;opacity:.65;animation:ad-pro-spark 1.1s .2s 3 ease-in-out both;}",
+      ".ad-pro-spark:nth-child(2){right:42px;top:58%;font-size:11px;animation-delay:.45s;color:var(--sea,#0a7d8c);}",
+      ".ad-pro-spark:nth-child(3){right:12px;top:78%;font-size:9px;animation-delay:.65s;}",
+      ".ad-house-pro .ad-head,.ad-house-pro .ad-text,.ad-house-pro .ad-cta{animation:ad-pro-arrive .65s ease-out both;}",
+      ".ad-house-pro .ad-text{animation-delay:.12s;}.ad-house-pro .ad-cta{animation-delay:.24s;}",
+      ".ad-house-pro .ad-flag{animation:ad-pro-glow 1.2s .3s 3 ease-in-out;}",
+      ".ad-pro-arrow{display:inline-block;margin-left:4px;animation:ad-pro-arrow .9s .8s 3 ease-in-out;transition:transform .2s;}",
+      ".ad-house-pro:hover .ad-pro-arrow{transform:translateX(4px);}",
+      ".ad-house-pro:focus-visible{outline:3px solid var(--sea,#0a7d8c);outline-offset:3px;}",
+      "@keyframes ad-pro-light{to{transform:translateX(120%);}}",
+      "@keyframes ad-pro-halo{50%{transform:scale(1.25);opacity:.55;}}",
+      "@keyframes ad-pro-spark{0%,100%{transform:translateY(0) scale(.8);opacity:.45;}50%{transform:translateY(-5px) scale(1.15);opacity:1;}}",
+      "@keyframes ad-pro-arrive{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:translateY(0);}}",
+      "@keyframes ad-pro-glow{50%{box-shadow:0 0 0 5px rgba(10,125,140,.1);}}",
+      "@keyframes ad-pro-arrow{50%{transform:translateX(4px);}}",
+      "@media(prefers-reduced-motion:reduce){.ad-house-pro::before,.ad-house-pro::after,.ad-house-pro .ad-head,.ad-house-pro .ad-text,.ad-house-pro .ad-cta,.ad-house-pro .ad-flag,.ad-house-pro .ad-pro-arrow,.ad-house-pro .ad-pro-spark{animation:none;transition:none;}.ad-house-pro:hover .ad-pro-arrow{transform:none;}}",
       ".ad-media{width:100%;max-height:140px;object-fit:cover;border-radius:9px;display:block;}",
       ".ad-body{display:flex;flex-direction:column;gap:3px;}",
       ".ad-head{font-family:'Space Grotesk',sans-serif;font-size:16px;line-height:1.15;}",

@@ -32,10 +32,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=845fa04c74cbd743"></script>
-<script src="/telemetry.js?v=845fa04c74cbd743"></script>
-<script src="/pwa.js?v=845fa04c74cbd743" defer></script>
-<link href="/fonts/fonts.css?v=845fa04c74cbd743" rel="stylesheet">
+<script src="/frame-guard.js?v=d7d05772499e7897"></script>
+<script src="/telemetry.js?v=d7d05772499e7897"></script>
+<script src="/pwa.js?v=d7d05772499e7897" defer></script>
+<link href="/fonts/fonts.css?v=d7d05772499e7897" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -2254,8 +2254,8 @@
   }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
-<link rel="stylesheet" href="market-design.css?v=845fa04c74cbd743">
-<link rel="stylesheet" href="pro-studio.css?v=845fa04c74cbd743">
+<link rel="stylesheet" href="market-design.css?v=d7d05772499e7897">
+<link rel="stylesheet" href="pro-studio.css?v=d7d05772499e7897">
 </head>
 <body>
 
@@ -2285,7 +2285,7 @@
     </form>
 
     <div class="bar-actions">
-      <button type="button" class="market-bell icon-btn" data-click="toggleNotifPanel" data-click-args='["__EVENT__"]' aria-label="Notifications"><img class="market-icon" src="icons/market/bell.svg" alt="" aria-hidden="true"><span class="n" id="mobileNotifCount" hidden>0</span></button>
+      <button type="button" class="market-bell icon-btn" aria-controls="notifPanel" aria-expanded="false" data-click="toggleNotifPanel" data-click-args='["__EVENT__"]' aria-label="Notifications"><img class="market-icon" src="icons/market/bell.svg" alt="" aria-hidden="true"><span class="n" id="mobileNotifCount" hidden>0</span></button>
       <div class="lang" role="group" aria-label="Language">
         <button type="button" aria-pressed="false" data-click="setLang" data-click-args='["fr"]'>FR</button>
         <button type="button" aria-pressed="true" data-click="setLang" data-click-args='["en"]'>EN</button>
@@ -2301,22 +2301,34 @@
         <span class="n" id="msgCount" hidden>0</span>
       </button>
       <span class="notif-wrap">
-        <button type="button" class="icon-btn" id="notifBtn" data-click="toggleNotifPanel" data-click-args='["__EVENT__"]' aria-expanded="false" aria-haspopup="true">
+        <button type="button" class="icon-btn" id="notifBtn" data-click="toggleNotifPanel" data-click-args='["__EVENT__"]' aria-expanded="false" aria-controls="notifPanel">
           <span aria-hidden="true">&#128276;</span>
           <span class="label" data-i18n="notifLabel">Alerts</span>
           <span class="n" id="notifCount" hidden>0</span>
         </button>
-        <div class="notif-panel" id="notifPanel" hidden role="menu" aria-label="Notifications">
+        <div class="notif-panel" id="notifPanel" hidden role="region" aria-labelledby="notifPanelTitle">
           <div class="notif-panel-head">
-            <b data-i18n="notifTitle">Notifications</b>
-            <button type="button" class="notif-clear" data-click="clearNotifications" data-i18n="notifClear">Clear all</button>
+            <span class="notif-heading-icon" aria-hidden="true"><img src="icons/market/bell.svg" alt=""></span>
+            <div class="notif-heading-copy"><b id="notifPanelTitle" data-i18n="notifTitle">Notifications</b><span data-i18n="notifSubtitle">Messages &amp; updates</span></div>
+            <div class="notif-header-actions"><button type="button" class="notif-clear" data-click="clearNotifications" data-i18n="notifClear" hidden>Clear all</button>
+            <button type="button" class="notif-close" data-click="closeNotifPanel" data-click-args='[true]' aria-label="Close notifications">×</button></div>
           </div>
-          <div class="notif-push" id="pushControl" hidden>
-            <span id="pushStatusText" data-i18n="pushDefault">Receive alerts on this device</span>
-            <button type="button" id="pushToggle" data-click="togglePushNotifications" data-click-args='["__EVENT__"]' data-i18n="pushEnable">Enable</button>
+          <div class="notif-panel-body">
+            <div class="notif-list" id="notifList"></div>
+            <div class="notif-preferences">
+              <p class="notif-preferences-heading" data-i18n="notifPreferences">Your preferences</p>
+              <div class="notif-push" id="pushControl" hidden>
+                <span class="notif-pref-icon" aria-hidden="true"><img src="icons/market/smartphone.svg" alt=""></span>
+                <div class="notif-pref-copy"><b data-i18n="notifDevice">On this device</b><span id="pushStatusText" data-i18n="notifPushHint">Get notified about new messages.</span></div>
+                <button type="button" id="pushToggle" role="switch" aria-checked="false" aria-label="On this device" aria-describedby="pushStatusText" data-click="togglePushNotifications" data-click-args='["__EVENT__"]'>Off</button>
+              </div>
+              <div class="search-alert-entry"><button type="button" data-click="openSearchAlerts">
+                <span class="notif-pref-icon" aria-hidden="true"><img src="icons/market/search.svg" alt=""></span>
+                <span class="notif-pref-copy"><b data-i18n="notifSearchTitle">Search alerts</b><span data-i18n="notifSearchHint">New finds, chosen by you. By email.</span></span>
+                <svg class="notif-search-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+              </button></div>
+            </div>
           </div>
-          <div class="search-alert-entry"><button type="button" data-click="openSearchAlerts" data-i18n="searchAlertsLabel">My search alerts · email preferences</button></div>
-          <div class="notif-list" id="notifList"></div>
         </div>
       </span>
       <button type="button" class="icon-btn" id="profileBtn" data-click="openProfile">
@@ -3216,27 +3228,28 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=845fa04c74cbd743" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=845fa04c74cbd743"></script>
-<script src="native-ios.js?v=845fa04c74cbd743"></script>
-<script src="captcha.js?v=845fa04c74cbd743"></script>
-<script src="supabase-api.js?v=845fa04c74cbd743"></script>
-<script src="img-utils.js?v=845fa04c74cbd743"></script>
-<script src="draft-store.js?v=845fa04c74cbd743"></script>
-<script src="push-config.js?v=845fa04c74cbd743"></script>
-<script src="push-notifications.js?v=845fa04c74cbd743"></script>
-<script src="consent.js?v=845fa04c74cbd743" defer></script>
-<script src="ads-config.js?v=845fa04c74cbd743"></script>
-<script src="admob-plugin.js?v=845fa04c74cbd743"></script>
-<script src="native-admob.js?v=845fa04c74cbd743"></script>
-<script src="analytics.js?v=845fa04c74cbd743" defer></script>
-<script src="app-review.js?v=845fa04c74cbd743" defer></script>
-<script src="ads.js?v=845fa04c74cbd743" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=d7d05772499e7897" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=d7d05772499e7897"></script>
+<script src="native-ios.js?v=d7d05772499e7897"></script>
+<script src="captcha.js?v=d7d05772499e7897"></script>
+<script src="supabase-api.js?v=d7d05772499e7897"></script>
+<script src="img-utils.js?v=d7d05772499e7897"></script>
+<script src="draft-store.js?v=d7d05772499e7897"></script>
+<script src="push-config.js?v=d7d05772499e7897"></script>
+<script src="push-notifications.js?v=d7d05772499e7897"></script>
+<script src="consent.js?v=d7d05772499e7897" defer></script>
+<script src="ads-config.js?v=d7d05772499e7897"></script>
+<script src="admob-plugin.js?v=d7d05772499e7897"></script>
+<script src="native-admob.js?v=d7d05772499e7897"></script>
+<script src="analytics.js?v=d7d05772499e7897" defer></script>
+<script src="app-review.js?v=d7d05772499e7897" defer></script>
+<script src="ads.js?v=d7d05772499e7897" defer></script>
 
-<script src="app-marketplace.js?v=845fa04c74cbd743"></script>
-<script src="pro-studio.js?v=845fa04c74cbd743"></script>
-<script src="native-workflows.js?v=845fa04c74cbd743"></script>
-<link rel="stylesheet" href="search-alerts.css?v=845fa04c74cbd743">
-<script src="search-alerts.js?v=845fa04c74cbd743"></script>
+<script src="app-marketplace.js?v=d7d05772499e7897"></script>
+<script src="pro-studio.js?v=d7d05772499e7897"></script>
+<script src="native-workflows.js?v=d7d05772499e7897"></script>
+<link rel="stylesheet" href="search-alerts.css?v=d7d05772499e7897">
+<link rel="stylesheet" href="notifications.css?v=d7d05772499e7897">
+<script src="search-alerts.js?v=d7d05772499e7897"></script>
 </body>
 </html>

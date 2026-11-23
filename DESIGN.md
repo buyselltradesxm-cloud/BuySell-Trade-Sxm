@@ -49,6 +49,10 @@ Keep the featured carousel's left/right buttons and its reduced-motion behavior.
 The native photo gallery also has labelled 44-point previous/next controls.
 Native navigation is Discover, Saved, Post, Messages, Profile; alerts remain available via the home bell.
 The bell links to saved-search email preferences, shared across web and native shells.
+`notifications.css` gives the bell panel a white rounded activity surface and an ivory
+preferences footer. Empty activity uses a quiet bell/check illustration and explains
+where new messages appear. Device and search preferences use compact icon rows;
+device activation uses an accessible On/Off switch, teal when on and gray when off. Hide Clear all when there is nothing to clear.
 Search alerts reuse existing modal, font, teal action, and native select controls.
 Email consent is unchecked for a new alert; loading/error text stays in the dialog.
 The standalone unsubscribe page has no analytics and removes its private token from the URL.

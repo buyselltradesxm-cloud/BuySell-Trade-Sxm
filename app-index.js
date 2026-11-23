@@ -356,6 +356,7 @@ function usesVehicleFields(cat, sub){
 const I18N = {
   fr:{searchPh:"Que cherchez-vous ?",searchBtn:"Rechercher",postAd:"Publier une annonce",postShort:"Publier",favoris:"Favoris",messages:"Messages",
   searchAlertsLabel:"Mes alertes de recherche · préférences email",
+  notifSubtitle:"Messages et nouveautés",notifPreferences:"Vos préférences",notifDevice:"Sur cet appareil",notifPushHint:"Soyez prévenu des nouveaux messages.",notifClose:"Fermer les notifications",notifEmptyTitle:"Vous êtes à jour",notifEmptyBody:"Vos nouveaux messages et les mises à jour de vos annonces apparaîtront ici.",notifSearchTitle:"Alertes de recherche",notifSearchHint:"Les annonces qui vous intéressent, par email.",
   socialGoogle:"Continuer avec Google",socialApple:"Continuer avec Apple",socialOr:"ou",
   inboxPick:"Choisissez une conversation pour répondre.",inboxSend:"Envoyer",inboxViewListing:"Voir l'annonce",inboxWrite:"Écrivez votre réponse…",
   notifLabel:"Alertes",notifTitle:"Notifications",notifClear:"Tout effacer",pushDefault:"Recevoir les alertes sur cet appareil",pushLogin:"Connectez-vous pour activer les alertes.",pushOn:"Alertes activées sur cet appareil.",pushReady:"Alertes prêtes. Appuyez sur Activer.",pushDenied:"Alertes bloquées dans le navigateur.",pushUnsupported:"Alertes non disponibles sur ce navigateur.",pushEnable:"Activer",pushDisable:"Désactiver",
@@ -384,6 +385,7 @@ const I18N = {
       dlOn:"Télécharger sur",getOn:"Disponible sur"},
   en:{searchPh:"What are you looking for?",searchBtn:"Search",postAd:"Post an ad",postShort:"Post",favoris:"Saved",messages:"Messages",
   searchAlertsLabel:"My search alerts · email preferences",
+  notifSubtitle:"Messages & updates",notifPreferences:"Your preferences",notifDevice:"On this device",notifPushHint:"Get notified about new messages.",notifClose:"Close notifications",notifEmptyTitle:"You're all caught up",notifEmptyBody:"New messages and updates about your listings will appear here.",notifSearchTitle:"Search alerts",notifSearchHint:"New finds, chosen by you. By email.",
   socialGoogle:"Continue with Google",socialApple:"Continue with Apple",socialOr:"or",
   inboxPick:"Pick a conversation to reply.",inboxSend:"Send",inboxViewListing:"View listing",inboxWrite:"Write your reply…",
   notifLabel:"Alerts",notifTitle:"Notifications",notifClear:"Clear all",pushDefault:"Receive alerts on this device",pushLogin:"Log in to turn on alerts.",pushOn:"Alerts are on for this device.",pushReady:"Alerts are ready. Tap Enable.",pushDenied:"Alerts are blocked in the browser.",pushUnsupported:"Alerts are not available in this browser.",pushEnable:"Enable",pushDisable:"Turn off",
@@ -1057,13 +1059,11 @@ const LISTING_EXPIRY_WARNING_DAYS = 3;
 let notifications = [];          // { id, kind, title, text, at, seen, listingId, convKey }
 let dismissedNotificationIds = new Set();
 let notifPanelOpen = false;
+let notifPanelTrigger = null;
 
 function notifIcon(kind){
-  return kind === "message" ? "✉️"
-    : kind === "listing_expiring" ? "⏳"
-    : kind === "listing_flagged" ? "⚠️"
-    : kind === "report" ? "✅"
-    : "🔔";
+  const icon = kind === "message" ? "mail" : "bell";
+  return '<img src="icons/market/' + icon + '.svg" alt="" aria-hidden="true">';
 }
 
 function unseenNotifCount(){
@@ -1090,9 +1090,11 @@ async function refreshPushControl(){
     return;
   }
   wrap.hidden = false;
+  btn.setAttribute("aria-label", t().notifDevice);
   if(!state.user || state.user.provider !== "supabase"){
     text.textContent = t().pushLogin;
-    btn.textContent = t().pushEnable;
+    btn.textContent = "Off";
+    btn.setAttribute("aria-checked", "false");
     btn.disabled = true;
     btn.classList.remove("is-on");
     return;
@@ -1100,11 +1102,12 @@ async function refreshPushControl(){
   btn.disabled = false;
   const status = await Push.status();
   btn.classList.toggle("is-on", status === "on");
-  btn.textContent = status === "on" ? t().pushDisable : t().pushEnable;
+  btn.textContent = status === "on" ? "On" : "Off";
+  btn.setAttribute("aria-checked", String(status === "on"));
   text.textContent = status === "on" ? t().pushOn
     : status === "denied" ? t().pushDenied
     : status === "unsupported" ? t().pushUnsupported
-    : t().pushReady;
+    : t().notifPushHint;
   btn.disabled = status === "denied" || status === "unsupported";
   refreshPushCard();
 }
@@ -1162,14 +1165,17 @@ function pushNotification(note){
 function renderNotifPanel(){
   const list = document.getElementById("notifList");
   if(!list) return;
+  const clear = document.querySelector("#notifPanel .notif-clear");
+  if(clear) clear.hidden = !notifications.length;
+  document.querySelector("#notifPanel .notif-close")?.setAttribute("aria-label", t().notifClose);
   if(!notifications.length){
-    list.innerHTML = `<p class="notif-empty">${state.lang==="fr" ? "Aucune notification." : "No notifications."}</p>`;
+    list.innerHTML = `<div class="notif-empty"><span class="notif-empty-icon" aria-hidden="true"><img src="icons/market/bell.svg" alt=""><span class="notif-empty-check"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m3 8 3 3 7-7"/></svg></span></span><b>${esc(t().notifEmptyTitle)}</b><p>${esc(t().notifEmptyBody)}</p></div>`;
     return;
   }
   list.innerHTML = notifications.map(n=>`
     <div class="notif-item ${n.seen ? "" : "unseen"}">
     <button type="button" class="notif-open" data-notif-id="${esc(n.id)}" data-click="openNotification" data-click-args='${dataArgs(["__DATA__:notifId"])}'>
-      <span class="notif-ico">${notifIcon(n.kind)}</span>
+      <span class="notif-ico" aria-hidden="true">${notifIcon(n.kind)}</span>
       <span class="notif-item-main">
         <b>${esc(n.title)}</b>
         <span>${esc(n.text)}</span>
@@ -1204,9 +1210,9 @@ function toggleNotifPanel(e){
   if(e) e.stopPropagation();
   notifPanelOpen = !notifPanelOpen;
   const panel = document.getElementById("notifPanel");
-  const btn = document.getElementById("notifBtn");
+  if(notifPanelOpen) notifPanelTrigger = e?.target?.closest('[data-click="toggleNotifPanel"]') || document.querySelector('[data-click="toggleNotifPanel"]:focus');
   if(panel) panel.hidden = !notifPanelOpen;
-  if(btn) btn.setAttribute("aria-expanded", String(notifPanelOpen));
+  document.querySelectorAll('[data-click="toggleNotifPanel"]').forEach(button=>button.setAttribute("aria-expanded", String(notifPanelOpen)));
   if(notifPanelOpen){
     refreshPushControl();
     renderNotifPanel();
@@ -1219,13 +1225,13 @@ function toggleNotifPanel(e){
   }
 }
 
-function closeNotifPanel(){
+function closeNotifPanel(restoreFocus = false){
   if(!notifPanelOpen) return;
   notifPanelOpen = false;
   const panel = document.getElementById("notifPanel");
-  const btn = document.getElementById("notifBtn");
   if(panel) panel.hidden = true;
-  if(btn) btn.setAttribute("aria-expanded", "false");
+  document.querySelectorAll('[data-click="toggleNotifPanel"]').forEach(button=>button.setAttribute("aria-expanded", "false"));
+  if(restoreFocus && notifPanelTrigger?.isConnected) notifPanelTrigger.focus();
 }
 
 function clearNotifications(){
@@ -1250,7 +1256,7 @@ function openNotification(id){
 document.addEventListener("click", (e)=>{
   if(notifPanelOpen && !e.target.closest('.notif-wrap, [data-click="toggleNotifPanel"]')) closeNotifPanel();
 });
-document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeNotifPanel(); });
+document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeNotifPanel(true); });
 
 Object.assign(window, { toggleNotifPanel, clearNotifications, openNotification, refreshPushControl, refreshPushCard, togglePushNotifications });
 
@@ -1972,7 +1978,12 @@ function formatProfileDate(value){
   if(Number.isNaN(date.getTime())) return state.lang === "fr" ? "Non configuré" : "Not configured";
   return date.toLocaleDateString(state.lang === "fr" ? "fr-FR" : "en-US", {day:"2-digit", month:"short", year:"numeric"});
 }
+function hasComplimentaryOwnerPlan(user){
+  return user?.role === "admin" && user.accountPlan === "pro-unlimited" && hasActiveProSubscription(user) &&
+    !user.subscriptionCurrentPeriodEnd && !user.subscriptionProvider && !user.paypalSubscriptionId && !user.stripeCustomerId;
+}
 function subscriptionPeriodEndFor(user){
+  if(hasComplimentaryOwnerPlan(user)) return null;
   if(user?.subscriptionCurrentPeriodEnd) return user.subscriptionCurrentPeriodEnd;
   if(!hasActiveProSubscription(user) || !user?.subscriptionStarted) return null;
   const started = new Date(user.subscriptionStarted);
@@ -4541,36 +4552,37 @@ function renderProfile(){
 function subscriptionDashboardHTML(user, own){
   const isBusiness = user.accountType === "business";
   const proActive = hasActiveProSubscription(user);
+  const complimentary = hasComplimentaryOwnerPlan(user);
   const fr = state.lang === "fr";
   const limit = listingLimitFor(user);
   const used = publicationUsageCountFor(user);
   const quota = Number.isFinite(limit) ? `${used} / ${limit}` : `${used} / ${fr ? "Illimité" : "Unlimited"}`;
   const filled = Number.isFinite(limit) && limit > 0 ? Math.min(100, Math.round(used / limit * 100)) : null;
   const periodEnd = subscriptionPeriodEndFor(user);
-  const renewal = isBusiness
+  const renewal = complimentary ? (fr ? "Sans expiration" : "No expiration") : isBusiness
     ? (periodEnd ? formatProfileDate(periodEnd) : (fr ? "Après connexion Stripe" : "After Stripe setup"))
     : (fr ? "Le 1er du mois" : "1st of the month");
   const statusClass = proActive || !isBusiness ? "active" : "pending";
-  const statusText = proTrialActive(user) ? (fr ? "Essai gratuit" : "Free trial") : subscriptionStatusLabel(user);
+  const statusText = complimentary ? (fr ? "Accès propriétaire offert" : "Complimentary owner access") : proTrialActive(user) ? (fr ? "Essai gratuit" : "Free trial") : subscriptionStatusLabel(user);
   const kv = (label, value) => `<div class="pf-kv"><span>${label}</span><b>${value}</b></div>`;
   return `
     <h3 class="pf-label">${fr ? "Mon abonnement" : "My subscription"}</h3>
     <section class="pf-group">
       <div class="pf-plan">
         <div>
-          <b>${esc(planLabel(user.accountPlan))}</b>${isBusiness && !proTrialActive(user) && !(window.SXM && SXM.isIOS()) ? `<small>${esc(planPriceLabel(user.accountPlan))}</small>` : ""}
+          <b>${esc(planLabel(user.accountPlan))}</b>${complimentary ? `<small>${fr ? "Offert — aucun paiement" : "Complimentary — no payment"}</small>` : isBusiness && !proTrialActive(user) && !(window.SXM && SXM.isIOS()) ? `<small>${esc(planPriceLabel(user.accountPlan))}</small>` : ""}
           <div class="subscription-badges"><span class="${statusClass}">${esc(statusText)}</span></div>
         </div>
-      <button type="button" class="pf-link" data-click="closeProfileModalThenPricing">${fr ? "Changer de plan" : "Change plan"}</button>
+      ${complimentary ? "" : `<button type="button" class="pf-link" data-click="closeProfileModalThenPricing">${fr ? "Changer de plan" : "Change plan"}</button>`}
       </div>
       ${isBusiness && !proActive ? `<p class="pf-note">${fr ? "Paiement requis avant publication Pro." : "Payment is required before Pro publishing."}</p>` : ""}
       <div class="pf-usage">
         ${kv(isBusiness ? (fr ? "Annonces actives" : "Active listings") : (fr ? "Annonces ce mois" : "Listings this month"), quota)}
         ${filled === null ? "" : `<div class="pf-meter"><i style="width:${filled}%"></i></div>`}
       </div>
-      ${kv(isBusiness ? (proTrialActive(user) ? (fr ? "Fin de l’essai" : "Trial ends") : (fr ? "Renouvellement" : "Renewal")) : (fr ? "Remise à zéro" : "Resets on"), esc(renewal))}
+      ${kv(complimentary ? (fr ? "Validité" : "Validity") : isBusiness ? (proTrialActive(user) ? (fr ? "Fin de l’essai" : "Trial ends") : (fr ? "Renouvellement" : "Renewal")) : (fr ? "Remise à zéro" : "Resets on"), esc(renewal))}
       ${isBusiness ? kv(fr ? "Boosts auto ce mois" : "Auto boosts this month", `${autoBoostUsedCountFor(user)} / ${includedBoostLimitFor(user)}`) : ""}
-      ${isBusiness && !proTrialActive(user) ? `<button type="button" class="pf-row" data-click="manageSubscription"><b>${fr ? "Gérer / annuler" : "Manage / cancel"}</b></button>` : ""}
+      ${isBusiness && !complimentary && !proTrialActive(user) ? `<button type="button" class="pf-row" data-click="manageSubscription"><b>${fr ? "Gérer / annuler" : "Manage / cancel"}</b></button>` : ""}
     </section>`;
 }
 
