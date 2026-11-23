@@ -185,6 +185,9 @@
       img.src = imgSrc;
       img.alt = L(c.alt) || c.sponsor || "";
       img.loading = "lazy";
+      img.addEventListener("load", function () {
+        if (img.naturalHeight > img.naturalWidth * 1.1) a.classList.add("ad-portrait");
+      });
       a.appendChild(img);
     }
     if (L(c.headline) || L(c.text)) {
@@ -431,7 +434,8 @@
       });
       if (!mapped.length) return;
       CFG.campaigns = mapped.concat(CFG.campaigns || []);
-      document.querySelectorAll('[data-ad-kind="house"]').forEach(function (n) {
+      document.querySelectorAll('[data-ad-kind="house"], [data-ad-kind="network"]').forEach(function (n) {
+        if (n.getAttribute("data-ad-kind") === "network" && !pickCampaign(normKey(n))) return;
         n.removeAttribute("data-ad-state");
         n.removeAttribute("data-ad-kind");
       });
@@ -552,6 +556,7 @@
       "@keyframes ad-pro-arrow{50%{transform:translateX(4px);}}",
       "@media(prefers-reduced-motion:reduce){.ad-house-pro::before,.ad-house-pro::after,.ad-house-pro .ad-head,.ad-house-pro .ad-text,.ad-house-pro .ad-cta,.ad-house-pro .ad-flag,.ad-house-pro .ad-pro-arrow,.ad-house-pro .ad-pro-spark{animation:none;transition:none;}.ad-house-pro:hover .ad-pro-arrow{transform:none;}}",
       ".ad-media{width:100%;max-height:140px;object-fit:cover;border-radius:9px;display:block;}",
+      ".ad-campaign.ad-portrait .ad-media{max-height:360px;object-fit:contain;}",
       ".ad-body{display:flex;flex-direction:column;gap:3px;}",
       ".ad-head{font-family:'Space Grotesk',sans-serif;font-size:16px;line-height:1.15;}",
       ".ad-text{font-size:12.5px;line-height:1.35;color:var(--mute,#5b6b6e);font-weight:600;}",
