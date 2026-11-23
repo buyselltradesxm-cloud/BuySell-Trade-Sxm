@@ -557,6 +557,7 @@
       "@media(prefers-reduced-motion:reduce){.ad-house-pro::before,.ad-house-pro::after,.ad-house-pro .ad-head,.ad-house-pro .ad-text,.ad-house-pro .ad-cta,.ad-house-pro .ad-flag,.ad-house-pro .ad-pro-arrow,.ad-house-pro .ad-pro-spark{animation:none;transition:none;}.ad-house-pro:hover .ad-pro-arrow{transform:none;}}",
       ".ad-media{width:100%;max-height:140px;object-fit:cover;border-radius:9px;display:block;}",
       ".ad-campaign.ad-portrait .ad-media{max-height:360px;object-fit:contain;}",
+      ".feed-ad .ad-campaign .ad-media,.mobile-top-ad .ad-campaign .ad-media{height:auto;max-height:none;object-fit:contain;}",
       ".ad-body{display:flex;flex-direction:column;gap:3px;}",
       ".ad-head{font-family:'Space Grotesk',sans-serif;font-size:16px;line-height:1.15;}",
       ".ad-text{font-size:12.5px;line-height:1.35;color:var(--mute,#5b6b6e);font-weight:600;}",
