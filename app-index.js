@@ -355,6 +355,7 @@ function usesVehicleFields(cat, sub){
 
 const I18N = {
   fr:{searchPh:"Que cherchez-vous ?",searchBtn:"Rechercher",postAd:"Publier une annonce",postShort:"Publier",favoris:"Favoris",messages:"Messages",
+  searchAlertsLabel:"Mes alertes de recherche · préférences email",
   socialGoogle:"Continuer avec Google",socialApple:"Continuer avec Apple",socialOr:"ou",
   inboxPick:"Choisissez une conversation pour répondre.",inboxSend:"Envoyer",inboxViewListing:"Voir l'annonce",inboxWrite:"Écrivez votre réponse…",
   notifLabel:"Alertes",notifTitle:"Notifications",notifClear:"Tout effacer",pushDefault:"Recevoir les alertes sur cet appareil",pushLogin:"Connectez-vous pour activer les alertes.",pushOn:"Alertes activées sur cet appareil.",pushReady:"Alertes prêtes. Appuyez sur Activer.",pushDenied:"Alertes bloquées dans le navigateur.",pushUnsupported:"Alertes non disponibles sur ce navigateur.",pushEnable:"Activer",pushDisable:"Désactiver",
@@ -382,6 +383,7 @@ const I18N = {
       getH:"Publiez votre première annonce aujourd'hui",getP:"C'est gratuit, c'est local, et votre voisin cherche sans doute déjà ce que vous vendez.",leaderAdTitle:"Assistance digitale pour votre business",leaderAdText:"Un emplacement premium pour les services, boutiques et offres locales qui veulent être vus sur toute l'île.",leaderAdCta:"En savoir plus",sponsoredTitle:"Boostez votre annonce",sponsoredText:"Option payante: mettez votre annonce en avant sur la page d'accueil pour toucher plus d'acheteurs à Saint-Martin et Sint Maarten.",sponsoredCta:"Mettre en avant",adLabel:"Pub",mobileAdTop:"Espace AdMob mobile",mobileAdFeed:"Annonce sponsorisée dans le fil",mobileAdBottom:"Annonce mobile sponsorisée",
       dlOn:"Télécharger sur",getOn:"Disponible sur"},
   en:{searchPh:"What are you looking for?",searchBtn:"Search",postAd:"Post an ad",postShort:"Post",favoris:"Saved",messages:"Messages",
+  searchAlertsLabel:"My search alerts · email preferences",
   socialGoogle:"Continue with Google",socialApple:"Continue with Apple",socialOr:"or",
   inboxPick:"Pick a conversation to reply.",inboxSend:"Send",inboxViewListing:"View listing",inboxWrite:"Write your reply…",
   notifLabel:"Alerts",notifTitle:"Notifications",notifClear:"Clear all",pushDefault:"Receive alerts on this device",pushLogin:"Log in to turn on alerts.",pushOn:"Alerts are on for this device.",pushReady:"Alerts are ready. Tap Enable.",pushDenied:"Alerts are blocked in the browser.",pushUnsupported:"Alerts are not available in this browser.",pushEnable:"Enable",pushDisable:"Turn off",
@@ -4708,6 +4710,7 @@ function completeAuth(){
   if(action === "post") openPostModal();
   else if(action === "profile") openProfile();
   else if(action === "messages") openMessages();
+  else if(action === "search-alerts") window.SearchAlerts?.open();
   else if(action?.startsWith("native-contact:")) window.SXM?.openWorkflow?.("messages", action.slice("native-contact:".length));
   else if(action === "boost") startBoostFlow();
   else if(action === "admin") openAdmin();
@@ -7337,8 +7340,11 @@ window.__bstState = state;
 
 const receivedMessageIds = new Set();
 let authProjectionRevision = 0;
+let authIdentityRevision = 0;
 function clearAccountMessaging(){
   authProjectionRevision++;
+  authIdentityRevision++;
+  window.SearchAlerts?.clear();
   blockedUsers = [];
   inboxConvs = [];
   activeConvKey = null;

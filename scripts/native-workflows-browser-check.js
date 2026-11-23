@@ -32,6 +32,13 @@ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg
         },native);
         await page.goto('http://127.0.0.1/'+filename+'?local=1');
         await page.evaluate(()=>{state.user=normalizeUser({id:'11111111-1111-4111-8111-111111111111',provider:'supabase',accountType:'personal',name:'QA'});});
+        assert.equal(await page.evaluate(()=>{
+          const identity=authIdentityRevision;
+          authProjectionRevision++;
+          if(authIdentityRevision!==identity) return false;
+          clearAccountMessaging();
+          return authIdentityRevision===identity+1;
+        }),true,'Only account cleanup advances the chat identity revision');
         await page.evaluate(()=>openPostModal());
         assert.equal(await page.locator('#postModal.open').count(),native?0:1,JSON.stringify(await page.evaluate(()=>({shell:window.SXM?.shell(),user:state.user?.accountType,calls:window.calls,api:!!window.SXM})))+' '+errors.join(';'));
         if(native) {

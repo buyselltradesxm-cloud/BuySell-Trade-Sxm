@@ -59,10 +59,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://szhaxlmronirhnntlwyb.supabase.co" crossorigin>
-<script src="/frame-guard.js?v=c8c45181a1d03005"></script>
-<script src="/telemetry.js?v=c8c45181a1d03005"></script>
-<script src="/pwa.js?v=c8c45181a1d03005" defer></script>
-<link href="/fonts/fonts.css?v=c8c45181a1d03005" rel="stylesheet">
+<script src="/frame-guard.js?v=08841d4e0d28fea4"></script>
+<script src="/telemetry.js?v=08841d4e0d28fea4"></script>
+<script src="/pwa.js?v=08841d4e0d28fea4" defer></script>
+<link href="/fonts/fonts.css?v=08841d4e0d28fea4" rel="stylesheet">
 <style>
   :root{
     --sea:#0B6E7F;
@@ -2299,8 +2299,8 @@
   }
   @media (prefers-reduced-motion:reduce){.card,.post{transition:none}.card:hover,.post:hover{transform:none}}
 </style>
-<link rel="stylesheet" href="market-design.css?v=c8c45181a1d03005">
-<link rel="stylesheet" href="pro-studio.css?v=c8c45181a1d03005">
+<link rel="stylesheet" href="market-design.css?v=08841d4e0d28fea4">
+<link rel="stylesheet" href="pro-studio.css?v=08841d4e0d28fea4">
 </head>
 <body>
 
@@ -2360,6 +2360,7 @@
             <span id="pushStatusText" data-i18n="pushDefault">Receive alerts on this device</span>
             <button type="button" id="pushToggle" data-click="togglePushNotifications" data-click-args='["__EVENT__"]' data-i18n="pushEnable">Enable</button>
           </div>
+          <div class="search-alert-entry"><button type="button" data-click="openSearchAlerts" data-i18n="searchAlertsLabel">My search alerts · email preferences</button></div>
           <div class="notif-list" id="notifList"></div>
         </div>
       </span>
@@ -3260,25 +3261,27 @@
 
 <!-- Supabase : librairie CDN + config + pont applicatif (window.SB).
      Tant que supabase-config.js n'est pas rempli, l'app tourne en mode local. -->
-<script src="/lib/supabase-2.74.0.min.js?v=c8c45181a1d03005" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
-<script src="supabase-config.js?v=c8c45181a1d03005"></script>
-<script src="native-ios.js?v=c8c45181a1d03005"></script>
-<script src="captcha.js?v=c8c45181a1d03005"></script>
-<script src="supabase-api.js?v=c8c45181a1d03005"></script>
-<script src="img-utils.js?v=c8c45181a1d03005"></script>
-<script src="draft-store.js?v=c8c45181a1d03005"></script>
-<script src="push-config.js?v=c8c45181a1d03005"></script>
-<script src="push-notifications.js?v=c8c45181a1d03005"></script>
-<script src="consent.js?v=c8c45181a1d03005" defer></script>
-<script src="ads-config.js?v=c8c45181a1d03005"></script>
-<script src="admob-plugin.js?v=c8c45181a1d03005"></script>
-<script src="native-admob.js?v=c8c45181a1d03005"></script>
-<script src="analytics.js?v=c8c45181a1d03005" defer></script>
-<script src="app-review.js?v=c8c45181a1d03005" defer></script>
-<script src="ads.js?v=c8c45181a1d03005" defer></script>
+<script src="/lib/supabase-2.74.0.min.js?v=08841d4e0d28fea4" integrity="sha384-b+VshJ+niaJb5lNc3Bqqo9KUTg3Hq/ZavF5+sP4EKFaHtYBTU+2K7JqGBPumqhlW"></script>
+<script src="supabase-config.js?v=08841d4e0d28fea4"></script>
+<script src="native-ios.js?v=08841d4e0d28fea4"></script>
+<script src="captcha.js?v=08841d4e0d28fea4"></script>
+<script src="supabase-api.js?v=08841d4e0d28fea4"></script>
+<script src="img-utils.js?v=08841d4e0d28fea4"></script>
+<script src="draft-store.js?v=08841d4e0d28fea4"></script>
+<script src="push-config.js?v=08841d4e0d28fea4"></script>
+<script src="push-notifications.js?v=08841d4e0d28fea4"></script>
+<script src="consent.js?v=08841d4e0d28fea4" defer></script>
+<script src="ads-config.js?v=08841d4e0d28fea4"></script>
+<script src="admob-plugin.js?v=08841d4e0d28fea4"></script>
+<script src="native-admob.js?v=08841d4e0d28fea4"></script>
+<script src="analytics.js?v=08841d4e0d28fea4" defer></script>
+<script src="app-review.js?v=08841d4e0d28fea4" defer></script>
+<script src="ads.js?v=08841d4e0d28fea4" defer></script>
 
-<script src="app-index.js?v=c8c45181a1d03005"></script>
-<script src="pro-studio.js?v=c8c45181a1d03005"></script>
-<script src="native-workflows.js?v=c8c45181a1d03005"></script>
+<script src="app-index.js?v=08841d4e0d28fea4"></script>
+<script src="pro-studio.js?v=08841d4e0d28fea4"></script>
+<script src="native-workflows.js?v=08841d4e0d28fea4"></script>
+<link rel="stylesheet" href="search-alerts.css?v=08841d4e0d28fea4">
+<script src="search-alerts.js?v=08841d4e0d28fea4"></script>
 </body>
 </html>

@@ -48,6 +48,10 @@ Use existing bundled Instrument Sans / Space Grotesk on web, system fonts and SF
 Keep the featured carousel's left/right buttons and its reduced-motion behavior.
 The native photo gallery also has labelled 44-point previous/next controls.
 Native navigation is Discover, Saved, Post, Messages, Profile; alerts remain available via the home bell.
+The bell links to saved-search email preferences, shared across web and native shells.
+Search alerts reuse existing modal, font, teal action, and native select controls.
+Email consent is unchecked for a new alert; loading/error text stays in the dialog.
+The standalone unsubscribe page has no analytics and removes its private token from the URL.
 Builds advertising `nativeWorkflows` use SXMWorkflows.swift for posting and messages.
 Native Forms, Pickers, Lists and navigation retain the established system-font/teal treatment.
 The authenticated data adapter reuses the web Supabase client and the shared publication schema;

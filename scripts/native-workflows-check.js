@@ -12,7 +12,7 @@ function fixture() {
     calls.push([name,...args]); return query;
   }});
   const c = { console, File, Uint8Array, atob, setTimeout, clearTimeout,
-    state:{user,lang:'en'}, authProjectionRevision:1,
+    state:{user,lang:'en'}, authProjectionRevision:1, authIdentityRevision:1,
     CATS:[{id:'all',en:'All'},{id:'elec',en:'Electronics'},{id:'serv',en:'Services'}],
     SUBCATS:{elec:{groups:[{items:[{id:'phones',en:'Phones'}]}]}}, adminCategoryStatus:{},
     AREAS:{fr:['Marigot'],nl:['Marigot','Maho']}, CONDS:[{id:'bon',en:'Good'}],
@@ -58,6 +58,50 @@ const draft=()=>({title:'Good phone',description:'A real phone',category:'elec',
   assert.equal((await f.request('publish',{draft:draft()})).ok,false);
   f.c.authProjectionRevision++;release({full:['https://example.com/a.jpg'],thumbs:[]});
   assert.equal((await pending).code,'AUTH_REQUIRED');assert.ok(!f.calls.some(c=>c[0]==='insert'));
+  f=fixture();f.result.data={id:42,seller_id:peer,title:'Seller phone',seller_name:'Seller'};
+  r=await f.request('contact',{listingId:'42'});
+  assert.equal(r.ok,true);assert.equal(r.data.listingId,'42');assert.equal(r.data.otherId,peer);
+  assert.equal(r.data.otherName,'Seller');assert.equal(r.data.title,'Seller phone');
+  assert.ok(!f.calls.some(c=>['insert','update','delete'].includes(c[0])),'Opening contact must not send a message');
+  f.result.data.seller_id=owner;
+  assert.match((await f.request('contact',{listingId:'42'})).error,/your listing/);
+  f.result.data.seller_id=null;
+  assert.match((await f.request('contact',{listingId:'42'})).error,/no longer accessible/);
+  f.result.data=null;
+  assert.equal((await f.request('contact',{listingId:'42'})).ok,false);
+  assert.equal((await f.request('contact',{listingId:'invalid'})).ok,false);
+  f=fixture();f.result.error={message:'Network unavailable'};
+  assert.equal((await f.request('contact',{listingId:'42'})).ok,false);
+  for(const accountChanged of [false,true]) {
+    f=fixture();let finishLookup;
+    const query={select:()=>query,eq:()=>query,maybeSingle:()=>new Promise(resolve=>{finishLookup=resolve;})};
+    f.c.db.from=()=>query;
+    const contacting=f.request('contact',{listingId:'42'});
+    await new Promise(resolve=>setImmediate(resolve));
+    f.c.authProjectionRevision++;
+    if(accountChanged) f.c.authIdentityRevision++;
+    finishLookup({data:{id:42,seller_id:peer,title:'Seller phone'},error:null});
+    assert.equal((await contacting).ok,!accountChanged,'Same-account profile refresh must preserve contact; account exit must cancel it');
+  }
+  for(const action of ['inbox','thread']) {
+    for(const accountChanged of [false,true]) {
+      f=fixture();let finishBlocks;
+      f.c.SB.fetchBlocks=()=>new Promise(resolve=>{finishBlocks=resolve;});
+      const loading=f.request(action,{otherId:peer,listingId:'42'});
+      await new Promise(resolve=>setImmediate(resolve));
+      f.c.authProjectionRevision++;
+      if(accountChanged) f.c.authIdentityRevision++;
+      finishBlocks([]);
+      assert.equal((await loading).ok,!accountChanged,action+' must survive profile refresh and reject account exit');
+    }
+  }
+  f=fixture();let finishIdentity;
+  f.c.SB.currentUser=()=>new Promise(resolve=>{finishIdentity=resolve;});
+  const oldContact=f.request('contact',{listingId:'42'});
+  f.c.authIdentityRevision++;
+  finishIdentity({id:owner});
+  assert.equal((await oldContact).code,'AUTH_REQUIRED','Reject a previous session even when the same account signs back in');
+  assert.equal(f.calls.length,0,'Stale identity must fail before listing lookup');
   f=fixture();r=await f.request('send',{otherId:peer,listingId:null,body:'Hello'});assert.equal(r.ok,true);assert.equal(f.calls[0][1].expectedUserId,owner);
   f.c.SB.sendMessage=async()=>null;assert.equal((await f.request('send',{otherId:peer,body:'Hello'})).code,'UNCERTAIN_WRITE');
   f.c.SB.sendMessage=async()=>{throw new Error('Connection lost');};assert.equal((await f.request('send',{otherId:peer,body:'Hello'})).code,'UNCERTAIN_WRITE');

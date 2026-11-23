@@ -22,14 +22,15 @@
       areas:[...new Set([...AREAS.fr,...AREAS.nl])], conditions:CONDS.map(c=>({id:c.id,name:c[state.lang]}))
     };
   }
-  async function identity(expected) {
+  async function identity(expected, readOnly) {
     if(!window.SB || !SB.enabled()) fail("Connexion au service indisponible.", "Service connection unavailable.");
+    const identityRevision = authIdentityRevision;
     const user = await SB.currentUser();
-    if(!user || (expected && expected !== user.id) || state.user?.id !== user.id)
+    if(!user || identityRevision !== authIdentityRevision || (expected && expected !== user.id) || state.user?.id !== user.id)
       fail("Connectez-vous avec votre compte pour continuer.", "Sign in with your account to continue.", "AUTH_REQUIRED");
     const revision = authProjectionRevision;
     return {user, check:()=>{
-      if(state.user?.id !== user.id || authProjectionRevision !== revision)
+      if(state.user?.id !== user.id || authIdentityRevision !== identityRevision || (!readOnly && authProjectionRevision !== revision))
         fail("Le compte a changé. Recommencez.", "The account changed. Please try again.", "AUTH_REQUIRED");
     }};
   }
@@ -49,7 +50,8 @@
         const user = window.SB && SB.enabled() ? await SB.currentUser() : null;
         return {ok:true,data:{userId:user && state.user?.id === user.id ? user.id : null, french:state.lang === "fr", schema:schema()}};
       }
-      const {user,check} = await identity(payload.userId);
+      // Profile/token refreshes keep the same account and must not cancel chat loading.
+      const {user,check} = await identity(payload.userId, ["contact","inbox","thread"].includes(action));
       if(["publish","send","block","report"].includes(action)) {
         lock = user.id + ":" + action;
         if(locks.has(lock)) fail("Une opération est déjà en cours.", "An operation is already in progress.");
