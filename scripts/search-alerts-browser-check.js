@@ -72,7 +72,10 @@ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg
       });
       assert.equal(await page.locator('#searchAlertsList').innerText().then(s=>s.includes('Old private search')),false);
       await page.keyboard.press('Escape');
-      await page.evaluate(()=>toggleNotifPanel());await page.locator('.search-alert-entry button').click();
+      await page.locator('.market-bell').click();await page.locator('.search-alert-entry button').click();
+      await page.locator('#searchAlertsModal.open').waitFor();await page.keyboard.press('Escape');
+      await page.setViewportSize({width:768,height:1024});
+      await page.locator('.market-bell').click();await page.locator('.search-alert-entry button').click();
       await page.locator('#searchAlertsModal.open').waitFor();await page.keyboard.press('Escape');
       assert.deepEqual(errors,[]);console.log(file+' '+lang+': opt-in, sign-in, CRUD, budgets, offline, escaping, mobile and session races passed.');
       await page.close();

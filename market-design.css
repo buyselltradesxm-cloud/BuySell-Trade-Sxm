@@ -57,6 +57,9 @@ body{background:var(--paper);color:var(--ink)}
 .mobile-nav .hot{background:var(--sun);color:var(--ink);border:0;border-radius:16px;transform:none;box-shadow:none}
 .mobile-nav .nav-login,.mobile-nav .nav-login:not(.is-auth),.mobile-nav .nav-login.is-auth{background:transparent;color:var(--ink);border:0;box-shadow:none;border-radius:0}
 .market-bell{display:none}
+@media(max-width:900px){
+  .bar-actions .market-bell{display:grid;place-items:center;width:44px;height:44px;border:0;background:transparent}
+}
 .safety-marquee{display:none} /* Rules remain in the footer and publishing consent. */
 .hero,.sponsored-strip{display:none}
 .market-all-categories .catrail-inner{box-shadow:none}
@@ -70,7 +73,6 @@ body{background:var(--paper);color:var(--ink)}
   .bar-actions{gap:4px}
   .lang button{min-width:34px;min-height:44px;padding:6px;font-size:12px}
   .bar-actions .post{display:none}
-  .bar-actions .market-bell{display:grid;place-items:center;width:44px;height:44px;border:0;background:transparent}
   .search{margin:0;min-height:52px;border-radius:16px;grid-template-columns:minmax(0,1fr) 48px}
   .search input[type=text]{min-width:0;font-size:16px;padding:0 14px}
   .search .go{width:44px;min-height:44px;padding:0;margin:4px;border-radius:12px}
