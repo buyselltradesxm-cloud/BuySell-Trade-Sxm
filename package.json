@@ -13,6 +13,7 @@
   "main": "index.js",
   "scripts": {
     "test:search-digests": "node scripts/search-digest-check.js && node scripts/search-alerts-browser-check.js",
+    "test:notification-panel": "node scripts/notification-panel-check.js",
     "test:search-digests-db": "node scripts/search-digest-database-check.js",
     "test:rental-categories": "node scripts/rental-category-check.js",
     "test:listing-titles": "node scripts/listing-title-check.js",
