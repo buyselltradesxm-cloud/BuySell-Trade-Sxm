@@ -74,6 +74,7 @@ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg
       await page.keyboard.press('Escape');
       await page.locator('.market-bell').click();await page.locator('.search-alert-entry button').click();
       await page.locator('#searchAlertsModal.open').waitFor();await page.keyboard.press('Escape');
+      assert.equal(await page.locator('.market-bell').evaluate(node=>document.activeElement===node),true,'Return keyboard focus to the visible bell');
       await page.setViewportSize({width:768,height:1024});
       await page.locator('.market-bell').click();await page.locator('.search-alert-entry button').click();
       await page.locator('#searchAlertsModal.open').waitFor();await page.keyboard.press('Escape');

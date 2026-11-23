@@ -35,6 +35,7 @@
     el('alertCategory').value=row?.category||state.cat||'all';
     subs(el('alertCategory').value,row?.subcategory||(row? '':state.subcat));
     el('alertKeywords').value=row?.keywords??state.q??'';
+    modal.querySelector('[data-alert-clear]').hidden=!el('alertKeywords').value;
     el('alertArea').value=row?.area??state.area??'';
     el('alertCurrency').value=row?.currency||state.cur||'eur';
     el('alertMin').value=row?.min_price??(row?'':el('pmin')?.value||'');
@@ -57,7 +58,9 @@
   async function openSearchAlerts(){
     closeNotifPanel();
     if(!state.user){requireAccount('search-alerts');return;}
-    owner=state.user.id;revision={auth:authIdentityRevision};rows=[];busy=false;editId=null;returnFocus=document.activeElement;
+    owner=state.user.id;revision={auth:authIdentityRevision};rows=[];busy=false;editId=null;
+    returnFocus=document.activeElement?.getClientRects().length?document.activeElement:
+      [...document.querySelectorAll('[data-click="toggleNotifPanel"]')].find(node=>node.getClientRects().length);
     const areas=[...new Set([...AREAS.fr,...AREAS.nl])];
     modal.innerHTML=`<section class="dialog search-alert-dialog" role="dialog" aria-modal="true" aria-labelledby="searchAlertsTitle" aria-describedby="searchAlertsHelp">
       <div class="dialog-head"><h2 id="searchAlertsTitle">${tr('Mes alertes de recherche','My search alerts')}</h2><button type="button" class="icon-btn" data-alert-close aria-label="${tr('Fermer','Close')}">×</button></div>
