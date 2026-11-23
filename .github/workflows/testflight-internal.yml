@@ -1,0 +1,37 @@
+name: Configure internal TestFlight
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing uploaded version to verify and assign to SXM Internal Testing
+        required: true
+        default: '1.0.9'
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: testflight-internal
+  cancel-in-progress: false
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify helper safety checks
+        run: node scripts/testflight-internal-check.js
+      - name: Verify processing, save notes and assign existing internal group
+        run: node scripts/configure-testflight-internal.js
+        env:
+          TESTFLIGHT_VERSION: ${{ inputs.version }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: testflight-internal-result
+          path: testflight-internal-result.json
+          if-no-files-found: error

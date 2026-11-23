@@ -23,6 +23,9 @@ sessions with a store click / consenting download-page sessions. These events
 are not install confirmations. Google Play's own acquisition/conversion reports
 and App Store Connect Analytics measure actual store performance separately.
 The Play link carries a fixed website campaign referrer.
+`app_store_click` is configured as a GA4 key event, once per session, with
+no invented monetary value. Live ingestion and install attribution are not
+established by the code tests; check real consented traffic and store reports.
 
 Google Play baseline shown for 23 October–19 November 2026: default listing
 27 visitors, 29.6% conversion. Small samples are volatile. No improvement is
@@ -62,3 +65,22 @@ disabled) and signed Android run 45070507143 (track none). They do not replace
 the current store build or prove installed-device
 deep links, prompts or optimization percentages. Check signed build results,
 verify association response MIME, and test actual devices before release.
+
+## Live verification completed 23 November 2026
+
+PR 13 merged as e8feca2b3a4616f4292eb2648902fd563a220f7a. PR 14 fixed the
+Pages archive excluding dot directories and merged as
+4bf6a8c51b97c2028f49bf3fd3c31db8dbe7ab20. Deployment 45071279385 succeeded.
+Live asset release: c8c45181a1d03005. All 23 sitemap URLs return HTTP 200.
+Both download pages expose correct language/canonical/store links.
+
+Both association endpoints return HTTP 200 without redirects and parse as JSON.
+Cloudflare response-header rule 9b77b24133d4494684e5036531aa691b sets
+`Content-Type: application/json` only when URI Path equals
+`/.well-known/apple-app-site-association`. This corrects GitHub Pages' default
+application/octet-stream response for the extensionless file. Existing security
+headers remain active. Android assetlinks.json already has the correct MIME.
+
+Local evidence is in scripts/artifacts/: app-growth-ga-key-event-2026-11-22.jpg,
+app-growth-play-review-2026-11-22.jpg, app-growth-link-rule-2026-11-23.jpg and
+app-download-{390,1440}-{en,fr}.jpg. These ignored proof files remain local.

@@ -1,0 +1,19 @@
+ENGLISH — 1.0.9
+This build adds verified links for shared marketplace listings and prepares native App Store review requests after successful publishing. It preserves the existing marketplace and native browse layout.
+
+1. Install 1.0.9 from TestFlight and open Discover, then Profile. Confirm that login or your profile content appears.
+2. Copy a current listing's share link into Notes. Tap it while the app is closed, then again while the app is already open. Confirm that the matching listing opens. Pasting a link into Safari's address bar is not a universal-link test.
+3. Check Saved, Messages, and the posting form. Only publish a genuine listing you intend to make public; do not post test or duplicate listings.
+4. Open the same listing on a browser without the app installed. It must remain accessible on the website.
+
+Apple does not display StoreKit review prompts in TestFlight. No review popup is expected in this beta. The production request is limited to successful publishing over at least seven days, with a 120-day cooldown. Store clicks are not counted as confirmed installs.
+
+FRANÇAIS — 1.0.9
+Cette version ajoute les liens vérifiés vers les annonces partagées et prépare les demandes d’avis natives après des publications réussies. Elle conserve la marketplace et la présentation native des annonces.
+
+1. Installez la version 1.0.9 depuis TestFlight, ouvrez Découvrir puis Profil. Vérifiez que la connexion ou votre profil s’affiche.
+2. Copiez le lien de partage d’une annonce actuelle dans Notes. Touchez-le lorsque l’app est fermée, puis lorsqu’elle est déjà ouverte. Vérifiez que la bonne annonce s’ouvre. Coller un lien dans la barre d’adresse Safari ne teste pas les liens universels.
+3. Vérifiez Favoris, Messages et le formulaire de publication. Publiez uniquement une vraie annonce destinée au public ; pas d’annonce de test ou en double.
+4. Ouvrez la même annonce dans un navigateur sans l’app installée : le site doit rester accessible.
+
+Apple n’affiche pas les demandes d’avis StoreKit dans TestFlight. Aucune fenêtre d’avis n’est donc attendue dans cette bêta. En production, la demande suit des publications réussies sur au moins sept jours, avec un délai de 120 jours entre les demandes. Un clic vers une boutique n’est pas une installation confirmée.
