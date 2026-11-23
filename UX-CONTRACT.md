@@ -53,3 +53,7 @@ uncertain on disk until confirmed or rejected, including when the process is kil
 Messages are held in memory only; changing accounts clears native conversation content.
 Native controls own keyboard, focus, safe-area layout, and Dynamic Type behavior; these
 platform behaviors still require iPhone/iPad acceptance testing.
+
+
+## Owner administration
+`/admin/` opens the authenticated owner workspace through the canonical app shell. Admin-only database RPCs own the system snapshot and versioned settings updates. The workspace reuses existing account/listing/moderation actions. Settings saves wait for server confirmation; a concurrent update requires refresh and never silently overwrites another administrator. Sign-out/account changes clear private workspace data and reject stale responses. Public messages use text nodes. Publishing suspension is a restrictive PostgreSQL INSERT policy, with an administrator exception; it does not disable messages or erase existing listings. Backup status links to the authoritative GitHub workflow rather than inventing a green status.
