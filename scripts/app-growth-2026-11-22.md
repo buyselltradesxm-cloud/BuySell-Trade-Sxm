@@ -84,3 +84,29 @@ headers remain active. Android assetlinks.json already has the correct MIME.
 Local evidence is in scripts/artifacts/: app-growth-ga-key-event-2026-11-22.jpg,
 app-growth-play-review-2026-11-22.jpg, app-growth-link-rule-2026-11-23.jpg and
 app-download-{390,1440}-{en,fr}.jpg. These ignored proof files remain local.
+
+## TestFlight delivery completed 23 November 2026
+
+Signed iOS 1.0.9 (1) uploaded successfully in workflow run 45141355298 from
+8a2b7d0c65ce06811f41f141154f860c074d3462. App Store Connect processed the build
+(UUID a6f122d8-f387-455f-8a9b-515acd40e364). Bilingual test notes were saved,
+and the build was assigned to SXM Internal Testing, shown with one tester.
+Local proof: scripts/artifacts/testflight-1.0.9-internal-2026-11-23.jpg.
+Installed-device verification is still required; TestFlight does not display
+the native App Store review prompt. The existing public submission 1.0.8 (1)
+remains Waiting for Review and was not replaced.
+
+Apple's successful-delivery email reports ITMS-90725: this build uses iOS 26.5
+SDK, with iOS 27 SDK / Xcode 27 required starting April 2027. This is a future
+requirement warning, not a rejected delivery. Current macos-latest selected
+Xcode 26.6. GitHub's standard macOS 26 inventory lists Xcode 26.6 as default;
+its Xcode 27 preview announcement still describes a beta toolchain. Before
+April 2027, select a stable Xcode 27+ runner, rebuild, verify the actual SDK in
+the build log, and test the resulting signed app before public submission.
+Sources:
+https://github.com/actions/runner-images/blob/main/images/macos/macos-26-Readme.md
+https://github.com/actions/runner-images/issues/14404
+
+PR 15 merged the optional internal TestFlight API helper and its focused tests
+as 5422a67ccb93e5442522b7e993bb3fb5854e095e. The helper was not run against Apple;
+the group assignment and notes above were completed and verified in the UI.
