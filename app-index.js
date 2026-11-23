@@ -989,6 +989,7 @@ let adminTab = "overview";
 let adminReports = [];
 let adminBanned = [];
 let adminProfiles = [];
+let adminListingRecords = null;
 let adminCategoryStatus = {};
 let adminModerationRules = { categories:[], keywords:[] };
 let adminAdCampaigns = [];
@@ -3570,7 +3571,7 @@ function syncListingToUrl(id){
 
 function openListing(id, syncUrl = true){
   restoreListingsIfNeeded();
-  const l = L.find(x=>String(x.id)===String(id));
+  const l = isAdminUser() ? findAdminListing(id) : L.find(x=>String(x.id)===String(id));
   if(!l) return;
   if(!demoListingsAllowed() && !l.sellerId) return;
   const profile = postFieldProfile(l.cat, l.sub || "");
@@ -4791,7 +4792,8 @@ function profileFromRow(row){
 
 async function loadSupabaseAdminData(){
   if(!canUseSupabaseAdmin()) return false;
-  const [reports, banned, profiles, categoryStatus, rules, campaigns, counts, siteStats] = await Promise.all([
+  const adminOwner = state.user.id;
+  const results = await Promise.allSettled([
     SB.fetchReports ? SB.fetchReports() : null,
     SB.fetchBannedUsers ? SB.fetchBannedUsers() : null,
     SB.fetchProfiles ? SB.fetchProfiles() : null,
@@ -4799,8 +4801,13 @@ async function loadSupabaseAdminData(){
     SB.fetchModerationRules ? SB.fetchModerationRules() : null,
     SB.fetchAdCampaigns ? SB.fetchAdCampaigns() : null,
     SB.fetchDailyCounts ? SB.fetchDailyCounts(14) : null,
-    SB.fetchSiteStats ? SB.fetchSiteStats(14) : null
+    SB.fetchSiteStats ? SB.fetchSiteStats(14) : null,
+    SB.fetchListings ? SB.fetchListings({realOnly:true}) : null
   ]);
+  if(state.user?.id !== adminOwner || !canUseSupabaseAdmin()) return false;
+  const [reports, banned, profiles, categoryStatus, rules, campaigns, counts, siteStats, listings] = results.map(result=>result.status === "fulfilled" ? result.value : null);
+  window.adminDataLoadFailed = results.some((result,index)=>result.status === "rejected" || (![3,4].includes(index) && result.value === null));
+  if(Array.isArray(listings)) adminListingRecords = listings;
   if(Array.isArray(reports)) adminReports = reports.map(reportFromRow);
   if(Array.isArray(banned)) adminBanned = banned.map(row=>String(row.user_id));
   if(Array.isArray(profiles)) adminProfiles = profiles.map(profileFromRow);
@@ -4832,10 +4839,20 @@ function adminPrice(l){
   return listingPriceHTML(l).replace(/<[^>]*>/g," ").trim();
 }
 
+function adminListingItems(){ return isAdminUser() && Array.isArray(adminListingRecords) ? adminListingRecords : L; }
+function findAdminListing(id){ return adminListingItems().find(l=>String(l.id) === String(id)) || L.find(l=>String(l.id) === String(id)); }
+function syncAdminPublicListing(listing){
+  const index = L.findIndex(l=>String(l.id) === String(listing.id));
+  if(listing.moderationStatus && listing.moderationStatus !== "approved"){
+    if(index >= 0) L.splice(index,1);
+  }else if(index >= 0) Object.assign(L[index],listing);
+  else if(listing.sellerId && !listing.sold && (!listing.status || listing.status === "active")) L.unshift(listing);
+}
+
 function adminUsers(){
   if(adminProfiles.length){
     const counts = new Map();
-    L.forEach(l=>{
+    adminListingItems().forEach(l=>{
       const key = l.ownerId || l.sellerId;
       if(key) counts.set(String(key), (counts.get(String(key)) || 0) + 1);
     });
@@ -4845,9 +4862,9 @@ function adminUsers(){
   Object.values(usersByEmail).forEach(user=>{
     if(!user?.email) return;
     const u = normalizeUser(user);
-    map.set(u.id || u.email, {...u, listings:L.filter(l=>l.ownerId === u.id || l.sellerId === u.id).length});
+    map.set(u.id || u.email, {...u, listings:adminListingItems().filter(l=>l.ownerId === u.id || l.sellerId === u.id).length});
   });
-  L.forEach(l=>{
+  adminListingItems().forEach(l=>{
     const key = l.ownerId || l.sellerId || sellerName(l);
     if(map.has(key)) return;
     map.set(key, {
@@ -4856,20 +4873,20 @@ function adminUsers(){
       email:l.sellerId ? "Supabase user" : "Demo seller",
       role:"seller",
       accountType:l.pro ? "business" : "personal",
-      listings:L.filter(x=>(x.ownerId || x.sellerId || sellerName(x)) === key).length
+      listings:adminListingItems().filter(x=>(x.ownerId || x.sellerId || sellerName(x)) === key).length
     });
   });
   return [...map.values()];
 }
 
 function adminStats(){
-  const boosted = L.filter(l=>l.boosted || l.feat);
-  const boostRevenue = L.reduce((sum,l)=>sum + (l.boost?.paid ? Number(l.boost.eur || 0) : 0), 0);
+  const boosted = adminListingItems().filter(l=>l.boosted || l.feat);
+  const boostRevenue = adminListingItems().reduce((sum,l)=>sum + (l.boost?.paid ? Number(l.boost.eur || 0) : 0), 0);
   const proRevenue = Object.values(usersByEmail).reduce((sum,u)=>sum + (hasActiveProSubscription(normalizeUser(u)) ? 29 : 0), 0);
   return {
-    listings:L.length,
-    active:L.filter(l=>!l.sold).length,
-    pending:L.filter(l=>l.moderationStatus === "pending").length,
+    listings:adminListingItems().length,
+    active:adminListingItems().filter(l=>!l.sold).length,
+    pending:adminListingItems().filter(l=>l.moderationStatus === "pending").length,
     reports:adminReports.filter(r=>r.status !== "resolved").length,
     boosted:boosted.length,
     users:adminUsers().length,
@@ -4887,13 +4904,18 @@ async function openAdmin(){
     showToast(state.lang==="fr" ? "Accès admin réservé." : "Admin access only.");
     return;
   }
-  if(canUseSupabaseAdmin()) await loadSupabaseAdminData();
-  else ensureAdminReports();
+  if(canUseSupabaseAdmin()){
+    const adminOwner = state.user.id;
+    await Promise.all([loadSupabaseAdminData(), window.AdminConsole?.load()]);
+    if(state.user?.id !== adminOwner || !isAdminUser()) return;
+  }else ensureAdminReports();
   renderAdmin(adminTab);
   openModal("adminModal");
 }
 
 function renderAdmin(tab=adminTab){
+  if(!isAdminUser()) return;
+  if(window.AdminConsole) return AdminConsole.render(tab);
   adminTab = tab;
   const body = document.getElementById("adminBody");
   if(!body) return;
@@ -4928,7 +4950,7 @@ function renderAdmin(tab=adminTab){
 }
 
 function adminPanelHTML(tab){
-  if(tab === "listings") return adminListingsHTML(L);
+  if(tab === "listings") return adminListingsHTML(adminListingItems());
   if(tab === "moderation") return adminModerationHTML();
   if(tab === "reports") return adminReportsHTML();
   if(tab === "users") return adminUsersHTML();
@@ -4936,7 +4958,7 @@ function adminPanelHTML(tab){
   if(tab === "ads") return adminAdsHTML();
   if(tab === "categories") return adminCategoriesHTML();
   if(tab === "stats") return adminStatsHTML();
-  const recent = [...L].slice(0,5);
+  const recent = [...adminListingItems()].slice(0,5);
   return `
     <div class="admin-grid">
       <section class="admin-panel"><h3>${state.lang==="fr" ? "Dernières annonces" : "Latest listings"}</h3>${adminListingRows(recent)}</section>
@@ -4968,7 +4990,7 @@ function filterListingsBySearch(items, q){
 function filterAdminListings(value){
   adminListingSearch = value;
   const el = document.getElementById("adminListingResults");
-  if(el) el.innerHTML = adminListingRows(filterListingsBySearch(L, adminListingSearch));
+  if(el) el.innerHTML = adminListingRows(filterListingsBySearch(adminListingItems(), adminListingSearch));
 }
 
 function adminListingsHTML(items){
@@ -4986,7 +5008,7 @@ function adminEditListing(id){
 
 function adminReportRows(items){
   return `<div class="admin-table">${items.map(r=>{
-    const l = L.find(x=>String(x.id) === String(r.listingId));
+    const l = adminListingItems().find(x=>String(x.id) === String(r.listingId));
     return `<div class="admin-row ${l ? "" : "no-img"}">
       ${l ? `<img src="${esc(cardMediaFor(l).img)}" alt="" loading="lazy">` : ""}
       <div><b>${esc(l ? titleFor(l) : "Listing removed")}</b><br><small>${esc(r.reason)} · ${r.createdAt ? new Date(r.createdAt).toLocaleDateString(state.lang==="fr"?"fr-FR":"en-US") : ""} · ${esc(r.status)}</small>${r.notes ? `<br><small>${esc(r.notes)}</small>` : ""}</div>
@@ -5003,7 +5025,7 @@ function adminReportsHTML(){
 }
 
 function adminModerationHTML(){
-  const pending = L.filter(l=>l.moderationStatus === "pending");
+  const pending = adminListingItems().filter(l=>l.moderationStatus === "pending");
   const catOptions = CATS.filter(c=>c.id!=="all");
   return `<section class="admin-panel">
     <h3>${state.lang==="fr" ? "Annonces à valider" : "Listings to review"}</h3>
@@ -5042,11 +5064,12 @@ function adminModerationHTML(){
 }
 
 async function setModerationStatusAdmin(id, status){
-  const l = L.find(x=>String(x.id) === String(id));
+  const l = adminListingItems().find(x=>String(x.id) === String(id));
   if(!l) return;
   const ok = await confirmedAdminWrite(()=>SB.setListingModerationStatus(id, status));
   if(!ok){ showToast(state.lang==="fr" ? "Échec" : "Failed"); return; }
   l.moderationStatus = status;
+  syncAdminPublicListing(l);
   refreshAdmin();
   showToast(status === "approved"
     ? (state.lang==="fr" ? "Annonce approuvée" : "Listing approved")
@@ -5064,7 +5087,7 @@ async function saveModerationRulesAdmin(){
 }
 
 async function scanListingPhotosAdmin(id, btn){
-  const l = L.find(x=>String(x.id) === String(id));
+  const l = adminListingItems().find(x=>String(x.id) === String(id));
   const box = document.getElementById("aiScan-" + id);
   if(!l || !l.photos || !l.photos.length){ if(box) box.textContent = state.lang==="fr" ? "Aucune photo." : "No photo."; return; }
   if(!canUseSupabaseAdmin()){ if(box) box.textContent = state.lang==="fr" ? "Nécessite Supabase." : "Requires Supabase."; return; }
@@ -5130,7 +5153,7 @@ function adminUserRows(list){
       <div><b>${esc(u.businessName || u.name || u.email)}</b><br><small>${esc(u.email || "")} · ${esc(u.accountType || "personal")}${esc(adminPlanLabel(u))} · ${u.listings || 0} listings · ${banned ? "Banned" : "Active"}${u.role === "admin" ? " · Admin" : ""}</small></div>
       <div class="admin-actions">
         ${adminGrantButtonHTML(u)}
-        <button type="button" data-click="toggleAdminRole" data-click-args='${dataArgs([String(u.id)])}' ${canManage ? "" : "disabled"}>${u.role === "admin" ? "User" : "Admin"}</button>
+        <button type="button" data-click="toggleAdminRole" data-click-args='${dataArgs([String(u.id)])}' ${canManage ? "" : "disabled"}>${u.role === "admin" ? (state.lang==="fr" ? "Retirer les droits admin" : "Remove admin role") : (state.lang==="fr" ? "Donner les droits admin" : "Grant admin role")}</button>
         <button type="button" class="danger" data-click="toggleBanUser" data-click-args='${dataArgs([String(u.id)])}' ${canManage ? "" : "disabled"}>${banned ? (state.lang==="fr" ? "Débloquer" : "Unban") : (state.lang==="fr" ? "Bannir" : "Ban")}</button>
         <button type="button" class="danger" data-click="deleteUserAdmin" data-click-args='${dataArgs([String(u.id)])}' ${canUseSupabaseAdmin() && isUuid(u.id) ? "" : "disabled"}>${state.lang==="fr" ? "Supprimer le compte" : "Delete account"}</button>
       </div>
@@ -5177,7 +5200,7 @@ async function deleteUserAdmin(id){
 }
 
 function adminBoostsHTML(){
-  const boosted = L.filter(l=>l.boosted || l.feat);
+  const boosted = adminListingItems().filter(l=>l.boosted || l.feat);
   return `<section class="admin-panel"><h3>${state.lang==="fr" ? "Boosts et visibilité payante" : "Boosts and paid visibility"}</h3>${adminListingRows(boosted)}
     <div class="detail-actions"><button type="button" class="primary-btn" data-click="renderAdmin" data-click-args='${dataArgs(['listings'])}'>${state.lang==="fr" ? "Choisir une annonce à booster" : "Choose a listing to boost"}</button></div>
   </section>`;
@@ -5281,7 +5304,7 @@ function adminCategoriesHTML(){
   return `<section class="admin-panel"><h3>${state.lang==="fr" ? "Catégories" : "Categories"}</h3><div class="admin-table">
     ${CATS.filter(c=>c.id!=="all").map(c=>{
       const hidden = !!adminCategoryStatus[c.id]?.hidden;
-      const count = L.filter(l=>l.cat===c.id).length;
+      const count = adminListingItems().filter(l=>l.cat===c.id).length;
       return `<div class="admin-row">
         <img src="${G[c.id].img}" alt="">
         <div><b>${c[state.lang]}</b><br><small>${count} listings · ${hidden ? "Hidden" : "Visible"}</small></div>
@@ -5345,39 +5368,43 @@ async function confirmedAdminWrite(write, localValue=true){
 }
 
 function refreshAdmin(){
+  window.AdminConsole?.load().then(()=>{ if(isAdminUser() && document.getElementById("adminModal").classList.contains("open")) renderAdmin(adminTab); });
   persistState();
   render();
   renderAdmin(adminTab);
 }
 
 async function toggleFeaturedAdmin(id){
-  const l = L.find(x=>String(x.id) === String(id));
+  const l = adminListingItems().find(x=>String(x.id) === String(id));
   if(!l) return;
   const candidate = {...l, feat:!l.feat};
   if(candidate.feat && !candidate.boosted) candidate.boosted = true;
   const saved = await syncAdminListing(candidate);
   if(!saved) return;
   Object.assign(l, typeof saved === "object" ? saved : candidate);
+  syncAdminPublicListing(l);
   refreshAdmin();
 }
 
 async function markListingStatusAdmin(id, status){
-  const l = L.find(x=>String(x.id) === String(id));
+  const l = adminListingItems().find(x=>String(x.id) === String(id));
   if(!l) return;
   const candidate = {...l, status, sold:status === "sold", reserved:status === "reserved"};
   const saved = await confirmedAdminWrite(()=>SB.adminSetListingStatus(id, status), candidate);
   if(!saved) return;
   Object.assign(l, typeof saved === "object" ? saved : candidate);
+  syncAdminPublicListing(l);
   refreshAdmin();
 }
 
 async function removeListingAdmin(id){
-  const index = L.findIndex(x=>String(x.id) === String(id));
+  const index = adminListingItems().findIndex(x=>String(x.id) === String(id));
   if(index < 0) return;
-  const removed = L[index];
+  const removed = adminListingItems()[index];
   if(!(await syncAdminListing(removed, true))) return;
-  const currentIndex = L.indexOf(removed);
+  const currentIndex = L.findIndex(x=>String(x.id) === String(id));
   if(currentIndex >= 0) L.splice(currentIndex, 1);
+  if(adminListingRecords) adminListingRecords = adminListingRecords.filter(x=>String(x.id) !== String(id));
   userListings = userListings.filter(x=>String(x.id) !== String(id));
   adminReports = adminReports.map(r=>String(r.listingId) === String(id) ? {...r,status:"resolved"} : r);
   refreshAdmin();
@@ -5483,6 +5510,10 @@ async function toggleCategoryAdmin(id){
 }
 
 function openPostModal(){
+  if(window.SiteConsole?.paused() && !isAdminUser()){
+    showToast(state.lang === "fr" ? "Les nouvelles annonces sont temporairement suspendues." : "New listings are temporarily paused.");
+    return;
+  }
   if(!state.user){
     requireAccount("post");
     return;
@@ -5524,7 +5555,7 @@ function setPostModalMode(isEditing){
 
 function openEditListing(id, e){
   if(e) e.stopPropagation();
-  const listing = L.find(item=>idKey(item.id)===idKey(id));
+  const listing = isAdminUser() ? findAdminListing(id) : L.find(item=>idKey(item.id)===idKey(id));
   if(!listing || (!isOwnListing(listing) && !isAdminUser())){
     showToast(state.lang==="fr" ? "Vous ne pouvez modifier que vos propres annonces." : "You can only edit your own listings.");
     return;
@@ -7038,7 +7069,7 @@ async function createListing(e){
   const uploadIndexes = selectedPostPhotos.map((_,i)=>i).filter(i=>selectedPostFiles[i]);
   const photoFiles = uploadIndexes.map(i=>selectedPostFiles[i]);
   const thumbFiles = uploadIndexes.map(i=>selectedPostThumbFiles[i]);
-  const editing = editingListingId ? L.find(item=>idKey(item.id)===idKey(editingListingId)) : null;
+  const editing = editingListingId ? (isAdminUser() ? findAdminListing(editingListingId) : L.find(item=>idKey(item.id)===idKey(editingListingId))) : null;
   if(editingListingId && (!editing || (!isOwnListing(editing) && !isAdminUser()))){
     showToast(state.lang==="fr" ? "Modification impossible." : "Could not edit this listing.");
     return false;
@@ -7156,6 +7187,11 @@ async function createListing(e){
   if(editing){
     const lIndex = L.findIndex(item=>idKey(item.id)===idKey(editing.id));
     if(lIndex >= 0) L[lIndex] = finalListing;
+    if(isAdminUser() && adminListingRecords){
+      const adminIndex = adminListingRecords.findIndex(item=>idKey(item.id)===idKey(editing.id));
+      if(adminIndex >= 0) adminListingRecords[adminIndex] = finalListing;
+      syncAdminPublicListing(finalListing);
+    }
     const uIndex = userListings.findIndex(item=>idKey(item.id)===idKey(editing.id));
     if(uIndex >= 0) userListings[uIndex] = finalListing;
     else if(!published) userListings.unshift(finalListing);
@@ -7354,6 +7390,11 @@ const receivedMessageIds = new Set();
 let authProjectionRevision = 0;
 let authIdentityRevision = 0;
 function clearAccountMessaging(){
+  window.AdminConsole?.clear();
+  closeModal("adminModal");
+  adminProfiles = []; adminListingRecords = null; adminReports = []; adminBanned = []; adminAdCampaigns = [];
+  adminDailyCounts = []; adminSiteStats = {days:[],errors:[]};
+  window.adminDataLoadFailed = false;
   authProjectionRevision++;
   authIdentityRevision++;
   window.SearchAlerts?.clear();

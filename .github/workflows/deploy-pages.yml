@@ -42,6 +42,8 @@ jobs:
           node --check native-workflows.js
           node --check search-alerts.js
           node --check search-unsubscribe.js
+          node --check admin-console.js
+          node --check site-console.js
           node scripts/search-digest-check.js
           node --check analytics.js
           node --check app-review.js
@@ -63,6 +65,10 @@ jobs:
           test -f _site/native-workflows.js
           test -f _site/search-alerts.js
           test -f _site/search-alerts.css
+          test -f _site/admin-console.js
+          test -f _site/admin-console.css
+          test -f _site/site-console.js
+          test -f _site/admin/recovery.html
           test -f _site/search-unsubscribe.html
           test -f _site/app.html
           test -f _site/app-fr.html

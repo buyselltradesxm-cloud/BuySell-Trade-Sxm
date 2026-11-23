@@ -62,3 +62,7 @@ The authenticated data adapter reuses the web Supabase client and the shared pub
 account, payment and alert screens remain in the web bridge. Older builds retain their existing workflows.
 An Xcode build and device acceptance tests remain necessary before App Review submission.
 See design-qa.md and scripts/appstore-review-2026-11-05.md for verification boundaries.
+
+
+## Owner control center
+`admin-console.js` and `admin-console.css` turn the existing authenticated admin dialog into a full-screen responsive workspace. Reuse canonical listing, user, category, moderation and campaign actions; keep private data behind the database admin role. Real server metrics replace demo revenue. Never mark backups/restoration or provider health as verified without evidence. `site-console.js` renders escaped FR/EN public messages and pause notices; the restrictive listing INSERT policy enforces publishing suspension independently of the UI.
