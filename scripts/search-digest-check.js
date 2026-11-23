@@ -52,5 +52,9 @@ const job={id:'job-1',recipient_email:'qa@example.invalid',payload:{language:'fr
   assert.equal(databaseCalls,0,'Reject unauthenticated callers before database access');
   assert.equal((await worker(new Request('https://example.supabase.co/worker',{method:'POST',headers:{'x-email-worker-secret':'private-worker-secret'}}))).status,200);
   assert.equal(databaseCalls,2,'Authenticated empty queue does not contact the provider');
+  const listeners={};
+  const workerContext={self:{location:{origin:'https://buyselltradesxm.com'},addEventListener:(name,fn)=>listeners[name]=fn},URL,console};
+  vm.createContext(workerContext);vm.runInContext(fs.readFileSync(path.join(__dirname,'../sw.js'),'utf8'),workerContext);
+  listeners.fetch({request:new Request('https://buyselltradesxm.com/search-unsubscribe.html?token='+token),respondWith:()=>{throw new Error('Private unsubscribe URL reached service worker cache');}});
   console.log('Search digest email and worker: locale, escaping, unsubscribe, quotas, uncertain delivery and failure recovery passed.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
