@@ -1,6 +1,19 @@
 # Marketplace interaction ownership
 
 The authoritative product scope is advertising and connecting customers to sellers. No transaction or booking confirmation is introduced.
+
+Saved-search emails are optional and account-scoped. The home bell opens `search-alerts.js`
+through the existing modal and sign-in continuation. Native selects follow the existing
+OS-owned popup contract. Alerts use only the visible category, type, keywords, area,
+currency and budget fields; other browse filters are not silently copied. New email
+consent starts unchecked. Up to five alerts per account; editing or removing an alert
+waits for server confirmation. Account cleanup clears the modal and invalidates responses.
+The server groups at most 20 unseen listings into one digest per 24 hours. Extra matches
+remain eligible. Daily/monthly attempt reservations cap this feature at 70/2,000; they do
+not account for independent authentication or renewal email traffic. Provider quota errors
+defer jobs. Uncertain deliveries are held for manual provider verification, never retried
+automatically. Unsubscribe pauses all saved-search emails without changing private-message
+notifications. All new users are opted out until explicit consent.
 Vehicle types are subcategories; rental prices are fields. Car rentals use a daily headline rate with an optional seller-entered weekly rate covering seven days in the same currency. Never infer a weekly discount by multiplying the daily rate. Preserve the original category IDs and stored weekly rates during edits.
 
 | Capability | Canonical owner | Variant |

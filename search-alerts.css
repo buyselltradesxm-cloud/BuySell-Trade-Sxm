@@ -1,0 +1,26 @@
+.search-alert-entry{padding:10px 14px;border-bottom:1px solid var(--line)}
+.search-alert-entry button,.search-alert-dialog button{font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:10px;min-height:44px;padding:9px 14px;background:var(--white,#fff);color:var(--ink)}
+.search-alert-entry button{width:100%;text-align:left;color:var(--sea);font-weight:700}
+.search-alert-entry button:hover,.search-alert-dialog button:hover{background:#e4efed}
+.search-alert-entry button:focus-visible,.search-alert-dialog :is(button,input,select):focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.search-alert-dialog{width:min(680px,100%)}
+.search-alert-dialog .dialog-body{display:block}
+.search-alert-dialog p{line-height:1.5}
+.search-alert-list{list-style:none;padding:0;margin:20px 0;display:grid;gap:10px}
+.search-alert-list li{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;overflow-wrap:anywhere}
+.search-alert-list li>div{flex:1 1 220px}
+.search-alert-list p{font-size:13px;margin:5px 0 0;color:var(--mute)}
+.search-alert-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0}
+.search-alert-fields label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600;min-width:0}
+.search-alert-fields :is(input,select){font:inherit;min-height:44px;width:100%;min-width:0;border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px;color:var(--ink)}
+.search-alert-consent{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--sea);border-radius:12px;cursor:pointer}
+.search-alert-consent input{width:22px;height:22px;flex-shrink:0;accent-color:var(--sea)}
+.search-alert-note{font-size:13px;color:var(--mute)}
+#searchAlertsStatus{min-height:3em;margin:12px 0;font-weight:600;overflow-wrap:anywhere}
+.search-alert-actions{display:flex;gap:10px;flex-wrap:wrap}
+#searchAlertSave{background:var(--sea);color:white;min-width:190px}
+.search-alert-dialog button:disabled{cursor:default;opacity:.55}
+.search-alert-dialog button:active{transform:translateY(1px)}
+.search-alert-dialog [hidden]{display:none!important}
+@media(max-width:480px){.search-alert-fields{grid-template-columns:1fr}.search-alert-dialog .dialog-body{padding:14px}.search-alert-dialog .dialog-head{gap:10px}.search-alert-dialog .dialog-head h2{font-size:18px}}
+@media(prefers-reduced-motion:reduce){.search-alert-dialog *{transition:none!important;animation:none!important}}
