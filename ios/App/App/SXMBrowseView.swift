@@ -608,7 +608,8 @@ struct SXMListingGrid: View {
                 SXMSponsoredSection(origin: model.sponsoredOrigin, placement: "feed", french: model.french)
                     .id(revision)
             }
-            if listings.count > adAfter && model.adsAllowed {
+            // Saved already has the pinned bottom banner (bottomAd): one Google ad per screen.
+            if listings.count > adAfter && model.adsAllowed && !model.showingSaved {
                 SXMInlineAdSection(french: model.french)
             }
             if listings.count > adAfter { listingRows(Array(listings.dropFirst(adAfter))) }

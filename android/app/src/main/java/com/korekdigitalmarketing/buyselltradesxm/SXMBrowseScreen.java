@@ -649,7 +649,8 @@ final class SXMBrowseScreen extends ScrollView {
         else { inlineAd.pause(); inlineAd.setVisibility(View.GONE); }
     }
 
-    void resumeAd() { if (inlineAd != null) inlineAd.resume(); }
+    // Coming back to the app must not restart the ad while this screen is hidden behind the web page.
+    void resumeAd() { if (inlineAd != null && getVisibility() == View.VISIBLE) inlineAd.resume(); }
     void pauseAd() { if (inlineAd != null) inlineAd.pause(); }
     void destroyAd() { removeCallbacks(adRetry); if (inlineAd != null) { inlineAd.destroy(); inlineAd = null; } io.shutdownNow(); }
     private void setRows(JSONArray rows) {
