@@ -641,6 +641,14 @@ final class SXMBrowseScreen extends ScrollView {
         view.loadAd(new AdRequest.Builder().build());
     }
 
+    // Hiding this screen must also hide and pause the ad, or its video layer can keep painting over the web listing page.
+    @Override protected void onVisibilityChanged(View changed, int visibility) {
+        super.onVisibilityChanged(changed, visibility);
+        if (changed != this || inlineAd == null) return;
+        if (visibility == View.VISIBLE) { inlineAd.setVisibility(View.VISIBLE); inlineAd.resume(); }
+        else { inlineAd.pause(); inlineAd.setVisibility(View.GONE); }
+    }
+
     void resumeAd() { if (inlineAd != null) inlineAd.resume(); }
     void pauseAd() { if (inlineAd != null) inlineAd.pause(); }
     void destroyAd() { removeCallbacks(adRetry); if (inlineAd != null) { inlineAd.destroy(); inlineAd = null; } io.shutdownNow(); }
@@ -730,6 +738,7 @@ final class SXMBrowseScreen extends ScrollView {
             empty.setPadding(dp(18), dp(22), dp(18), dp(22));
             empty.setBackground(shape(Color.WHITE, 15));
             grid.addView(empty);
+            if (savedOnly) addSavedAd();
             return;
         }
         int width = getResources().getDisplayMetrics().widthPixels;
@@ -755,17 +764,27 @@ final class SXMBrowseScreen extends ScrollView {
                     if (sponsoredFeed.getUrl() == null) sponsoredFeed.loadCampaign(french);
                     sponsoredFeed.post(sponsoredFeed::refreshVisibility);
                 }
-                LinearLayout.LayoutParams adParams = new LinearLayout.LayoutParams(-1, -2);
-                adParams.topMargin = dp(6);
-                adParams.bottomMargin = dp(18);
-                grid.addView(adContainer, adParams);
+                if (!savedOnly) {
+                    LinearLayout.LayoutParams adParams = new LinearLayout.LayoutParams(-1, -2);
+                    adParams.topMargin = dp(6);
+                    adParams.bottomMargin = dp(18);
+                    grid.addView(adContainer, adParams);
+                }
             }
         }
+        if (savedOnly) addSavedAd();
         if (shown.size() > visibleLimit) {
             TextView more = button(french ? "Afficher plus d’annonces" : "Show more listings");
             grid.addView(more, new LinearLayout.LayoutParams(-1, dp(50)));
             more.setOnClickListener(v -> { visibleLimit += 40; render(); });
         }
+    }
+    // Saved list: always one banner after the last card, even with only a few favourites.
+    private void addSavedAd() {
+        LinearLayout.LayoutParams adParams = new LinearLayout.LayoutParams(-1, -2);
+        adParams.topMargin = dp(6);
+        adParams.bottomMargin = dp(18);
+        grid.addView(adContainer, adParams);
     }
     private View card(JSONObject l, int currentGeneration) {
         LinearLayout box = new LinearLayout(getContext()); box.setOrientation(LinearLayout.VERTICAL);

@@ -188,6 +188,7 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
 
     func setNativeAdsAllowed(_ allowed: Bool) {
         browseModel.adsAllowed = allowed
+        workflowModel.adsAllowed = allowed
         syncProfileAd()
     }
 
