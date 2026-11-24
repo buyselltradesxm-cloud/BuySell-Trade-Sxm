@@ -5,8 +5,48 @@
   padding-block: 24px;
 }
 
-.download-preview .actions [hidden] {
-  display: none;
+.download-preview .actions .button {
+  --store-glow: rgb(30 122 151 / 36%);
+  display: grid;
+  min-height: 54px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 24%);
+  background: linear-gradient(145deg, #273645, #101820);
+  box-shadow: 0 3px 12px var(--store-glow);
+  text-align: center;
+  animation: store-light 2.4s ease-in-out 3;
+}
+
+.download-preview #google-play {
+  --store-glow: rgb(11 125 122 / 42%);
+  background: linear-gradient(145deg, #087469, #064e5b);
+  animation-delay: 0.35s;
+}
+
+.download-preview .actions .store-suggested {
+  border-color: #83d7d1;
+  outline: 2px solid #0b6e7f;
+  outline-offset: 2px;
+}
+
+.download-preview .actions .button:hover,
+.download-preview .actions .button:focus-visible {
+  filter: brightness(1.18);
+}
+
+.download-preview .actions .button:focus-visible {
+  outline: 3px solid #0b6e7f;
+  outline-offset: 4px;
+}
+
+@keyframes store-light {
+  50% { box-shadow: 0 0 0 3px var(--store-glow), 0 0 18px var(--store-glow); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .download-preview .actions .button {
+    animation: none;
+  }
 }
 
 #app-preview {

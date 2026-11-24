@@ -10,11 +10,7 @@
     ? document.getElementById(isAndroid ? "google-play" : "app-store")
     : null;
   var video = document.getElementById("app-preview");
-  if (store) {
-    document.querySelectorAll(".actions a").forEach(function (link) {
-      link.hidden = link !== store;
-    });
-  }
+  if (store) store.classList.add("store-suggested");
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   if (store) video.addEventListener("ended", function () {
     window.location.replace(store.href);
