@@ -290,12 +290,6 @@
   }
   function startShell() {
     if (!shell().tabs) return;
-    // The native bar replaces the page's own bottom navigation.
-    const style = document.createElement("style");
-    style.textContent = "html.sxm-native-tabs .mobile-nav{display:none!important}" +
-      "html.sxm-native-tabs body{padding-bottom:0!important}" +
-      "@media (max-width:900px){html.sxm-native-tabs .notif-panel{bottom:12px!important}}";
-    document.head.appendChild(style);
     document.documentElement.classList.add("sxm-native-tabs");
     window.addEventListener("sxmTab", event => { if (event.tab) showTab(event.tab); });
     window.addEventListener("sxmRefresh", refreshFromPull);
