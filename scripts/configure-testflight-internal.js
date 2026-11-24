@@ -53,11 +53,11 @@ async function configure(api, version, notes, pause = ms => new Promise(resolve=
   } else {
     await api('/v1/betaBuildLocalizations','POST',{data:{type:'betaBuildLocalizations',attributes:{locale:'en-US',whatsNew:notes},relationships:{build:{data:{type:'builds',id:build.id}}}}});
   }
-  const groupRoute = `/v1/builds/${id}/relationships/betaGroups?limit=200`;
-  if (!(await api(groupRoute)).data.some(g=>g.id===group.id)) {
+  const groupRoute = `/v1/betaGroups/${groupID}/relationships/builds?limit=200`;
+  if (!(await api(groupRoute)).data.some(item=>item.id===build.id)) {
     await api(`/v1/betaGroups/${groupID}/relationships/builds`,'POST',{data:[{type:'builds',id:build.id}]});
   }
-  if (!(await api(groupRoute)).data.some(g=>g.id===group.id)) throw new Error('Tester-group assignment was not confirmed');
+  if (!(await api(groupRoute)).data.some(item=>item.id===build.id)) throw new Error('Tester-group assignment was not confirmed');
   if (!(await api(localizationRoute)).data.some(l=>l.attributes.locale==='en-US' && l.attributes.whatsNew===notes)) throw new Error('Saved test notes did not match');
   const testers = await api(`/v1/betaGroups/${groupID}/relationships/betaTesters?limit=200`);
   const detail = await api(`/v1/builds/${id}/buildBetaDetail`);

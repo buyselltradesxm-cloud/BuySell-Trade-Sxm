@@ -11,7 +11,7 @@ function fixture({internal = true, processing = 'VALID'} = {}) {
     if (route.startsWith('/v1/betaGroups?')) return {data:[{id:'internal-group',attributes:{name:'SXM Internal Testing',isInternalGroup:internal}}]};
     if (route.includes('/betaBuildLocalizations?')) return {data:localization?[localization]:[]};
     if (route==='/v1/betaBuildLocalizations' && method==='POST') { localization={id:'notes',attributes:body.data.attributes};return {}; }
-    if (route.includes('/relationships/betaGroups?')) return {data:assigned?[{id:'internal-group'}]:[]};
+    if (route==='/v1/betaGroups/internal-group/relationships/builds?limit=200') return {data:assigned?[{id:'new-build'}]:[]};
     if (route==='/v1/betaGroups/internal-group/relationships/builds' && method==='POST') {assert.deepEqual(body.data,[{type:'builds',id:'new-build'}]);assigned=true;return {};}
     if (route.includes('/relationships/betaTesters?')) return {data:[{id:'tester-id-not-in-report'}]};
     if (route.endsWith('/buildBetaDetail')) return {data:{attributes:{internalBuildState:'IN_BETA_TESTING'}}};
