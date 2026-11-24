@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <script src="/frame-guard.js"></script>
+  <title>About | Buy Sell Trade Sxm</title>
+  <meta name="description" content="Buy Sell Trade SXM is the free local marketplace for Saint-Martin and Sint Maarten: buy, sell and trade on both sides of the island. À propos de la place de marché locale de Saint-Martin.">
+  <link rel="canonical" href="https://buyselltradesxm.com/about.html">
+  <style>
+    :root{--paper:#faf7ef;--ink:#09262d;--muted:#536469;--line:#12343b;--accent:#0f7d8b}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--paper);color:var(--ink);line-height:1.6}
+    header,main,footer{max-width:900px;margin:0 auto;padding:24px}
+    header{border-bottom:2px solid var(--line)}
+    h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1;margin:20px 0 12px}
+    h2{font-size:1.25rem;margin-top:28px}
+    p,li{color:var(--muted)}
+    a{color:var(--accent);font-weight:700}
+    .brand{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+    .home{border:2px solid var(--line);border-radius:8px;padding:10px 14px;text-decoration:none;color:var(--ink)}
+    footer{border-top:2px solid var(--line);font-size:.95rem;display:flex;gap:18px;flex-wrap:wrap}
+    .lang-btn{border:2px solid var(--accent);border-radius:8px;padding:8px 14px;background:none;color:var(--accent);font-weight:700;cursor:pointer;font-size:.9rem}
+    [data-lang="fr"] .en-only{display:none}
+    [data-lang="en"] .fr-only{display:none}
+  </style>
+  <script>
+    (function(){
+      // The language chosen on the marketplace wins, then the one chosen here
+      // before, then French, the site's default.
+      var l=null;
+      try{
+        l=(JSON.parse(localStorage.getItem("bstsxm-state")||"{}")||{}).lang||localStorage.getItem("lang");
+      }catch(e){}
+      l=l==="en"?"en":"fr";
+      document.documentElement.setAttribute("data-lang",l);
+      document.documentElement.lang=l;
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <strong>Buy Sell Trade Sxm</strong>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="lang-btn" onclick="toggleLang()">FR / EN</button>
+        <a class="home" href="/">
+          <span class="en-only">Back to marketplace</span>
+          <span class="fr-only">Retour à la marketplace</span>
+        </a>
+      </div>
+    </div>
+    <h1>
+      <span class="en-only">About Buy Sell Trade Sxm</span>
+      <span class="fr-only">À propos de Buy Sell Trade Sxm</span>
+    </h1>
+    <p>
+      <span class="en-only">The local marketplace for Saint-Martin and Sint Maarten.</span>
+      <span class="fr-only">La place de marché locale de Saint-Martin et Sint Maarten.</span>
+    </p>
+  </header>
+  <main>
+
+    <h2>
+      <span class="en-only">What we do</span>
+      <span class="fr-only">Ce que nous faisons</span>
+    </h2>
+    <p class="en-only">Buy Sell Trade Sxm helps people on the island buy, sell and trade with each other, on both the French side and the Dutch side. Residents post what they want to sell, buyers find it by area and category, and both talk directly in the built-in chat before meeting up.</p>
+    <p class="fr-only">Buy Sell Trade Sxm aide les habitants de l'île à acheter, vendre et échanger entre eux, côté français comme côté hollandais. Les vendeurs publient ce qu'ils veulent vendre, les acheteurs le trouvent par quartier et par catégorie, et les deux échangent directement dans la messagerie intégrée avant de se rencontrer.</p>
+
+    <h2>
+      <span class="en-only">What you can find</span>
+      <span class="fr-only">Ce que vous y trouvez</span>
+    </h2>
+    <p class="en-only">Vehicles, scooters and boats, property, electronics, home and furniture, fashion, jobs, local services, car rentals, restaurants and outings, tours and activities, and more. Every listing shows its area on the island, its price in euros or dollars, and real photos from the seller.</p>
+    <p class="fr-only">Véhicules, scooters et bateaux, immobilier, électronique, maison et meubles, mode, emploi, services locaux, locations de voitures, restaurants et sorties, excursions et activités, et bien plus. Chaque annonce indique son quartier sur l'île, son prix en euros ou en dollars, et de vraies photos du vendeur.</p>
+
+    <h2>
+      <span class="en-only">Free for individuals</span>
+      <span class="fr-only">Gratuit pour les particuliers</span>
+    </h2>
+    <p class="en-only">Creating an account, posting a listing and selling personal items is free. Businesses can choose optional Pro plans and paid boosts for more visibility. See our <a href="/terms.html">Terms of Use</a> for details.</p>
+    <p class="fr-only">Créer un compte, publier une annonce et vendre ses objets personnels est gratuit. Les professionnels peuvent choisir des offres Pro et des boosts payants, en option, pour plus de visibilité. Voir nos <a href="/terms.html">Conditions d'utilisation</a> pour le détail.</p>
+
+    <h2>
+      <span class="en-only">Safety first</span>
+      <span class="fr-only">La sécurité d'abord</span>
+    </h2>
+    <ul class="en-only">
+      <li>Listings are checked, and any listing can be reported with the &ldquo;Report&rdquo; button.</li>
+      <li>Illegal items, weapons, drugs, counterfeit goods and scams are not allowed; accounts that break the rules are removed.</li>
+      <li>Meet in a public place, check the item before paying, and never send money in advance to someone you have not met.</li>
+    </ul>
+    <ul class="fr-only">
+      <li>Les annonces sont vérifiées, et toute annonce peut être signalée avec le bouton &laquo;&nbsp;Signaler&nbsp;&raquo;.</li>
+      <li>Les objets illégaux, armes, drogues, contrefaçons et arnaques sont interdits ; les comptes qui enfreignent les règles sont supprimés.</li>
+      <li>Rencontrez-vous dans un lieu public, vérifiez l'objet avant de payer, et n'envoyez jamais d'argent à l'avance à quelqu'un que vous n'avez pas rencontré.</li>
+    </ul>
+
+    <h2>
+      <span class="en-only">On your phone</span>
+      <span class="fr-only">Sur votre téléphone</span>
+    </h2>
+    <p class="en-only">Buy Sell Trade Sxm is available on the web, on the App Store and on Google Play, in French and English. <a href="/app.html">Get the app</a>.</p>
+    <p class="fr-only">Buy Sell Trade Sxm est disponible sur le web, sur l'App Store et sur Google Play, en français et en anglais. <a href="/app-fr.html">Télécharger l'application</a>.</p>
+
+    <h2>
+      <span class="en-only">Who runs it</span>
+      <span class="fr-only">Qui est derrière</span>
+    </h2>
+    <p class="en-only">Buy Sell Trade Sxm is operated by <strong>Association Korek Digital</strong>, a French declared association. Legal details and hosting are listed in our <a href="/terms.html">Terms of Use</a>. Questions or ideas? <a href="/contact.html">Contact us</a>.</p>
+    <p class="fr-only">Buy Sell Trade Sxm est exploité par <strong>Association Korek Digital</strong>, une association française déclarée. Les mentions légales et l'hébergement figurent dans nos <a href="/terms.html">Conditions d'utilisation</a>. Une question, une idée ? <a href="/contact.html">Contactez-nous</a>.</p>
+
+  </main>
+  <footer>
+    <a href="/contact.html">Contact</a>
+    <a href="/terms.html">
+      <span class="en-only">Terms of Use</span>
+      <span class="fr-only">Conditions d'utilisation</span>
+    </a>
+    <a href="https://buyselltradesxm-cloud.github.io/legal/privacy.html">
+      <span class="en-only">Privacy Policy</span>
+      <span class="fr-only">Politique de confidentialité</span>
+    </a>
+  </footer>
+  <script>
+    function toggleLang(){
+      var html=document.documentElement;
+      var next=html.getAttribute("data-lang")==="fr"?"en":"fr";
+      html.setAttribute("data-lang",next);
+      html.lang=next;
+      try{localStorage.setItem("lang",next);}catch(e){}
+    }
+  </script>
+</body>
+</html>
