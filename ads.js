@@ -179,8 +179,26 @@
     a.rel = "sponsored noopener nofollow";
     a.setAttribute("data-ad-id", c.id || "");
     a.appendChild(flag(L(CFG.label) || "Sponsored"));
+    var flyers = CFG.campaignFlyers && CFG.campaignFlyers[c.id];
+    var frenchFlyer = flyers && safeImageSrc(flyers.fr);
+    var englishFlyer = flyers && safeImageSrc(flyers.en);
+    if (frenchFlyer && englishFlyer) {
+      a.classList.add("ad-flyer-campaign");
+      a.setAttribute("aria-label", [L(CFG.label), c.sponsor, L(c.text), L(c.cta)].filter(Boolean).join(". "));
+      var stack = el("span", "ad-flyers");
+      var orderedFlyers = lang() === "fr" ? [frenchFlyer, englishFlyer] : [englishFlyer, frenchFlyer];
+      orderedFlyers.forEach(function (src) {
+        var flyer = el("img");
+        flyer.src = src;
+        flyer.alt = "";
+        flyer.width = 1536;
+        flyer.height = 1024;
+        stack.appendChild(flyer);
+      });
+      a.appendChild(stack);
+    }
     var imgSrc = safeImageSrc(c.image);
-    if (imgSrc) {
+    if (!stack && imgSrc) {
       var img = el("img", "ad-media");
       img.src = imgSrc;
       img.alt = L(c.alt) || c.sponsor || "";
@@ -190,14 +208,14 @@
       });
       a.appendChild(img);
     }
-    if (L(c.headline) || L(c.text)) {
+    if (!stack && (L(c.headline) || L(c.text))) {
       var body = el("span", "ad-body");
       if (L(c.headline)) body.appendChild(el("strong", "ad-head", L(c.headline)));
       if (L(c.text)) body.appendChild(el("span", "ad-text", L(c.text)));
       if (L(c.cta)) body.appendChild(el("span", "ad-cta", L(c.cta)));
       a.appendChild(body);
     }
-    if (c.sponsor) a.appendChild(el("span", "ad-sponsor", c.sponsor));
+    if (!stack && c.sponsor) a.appendChild(el("span", "ad-sponsor", c.sponsor));
     a.addEventListener("click", function () {
       track("ad_click", { slot: key, type: "campaign", id: c.id });
     });
@@ -588,7 +606,17 @@
       "  .desktop-leaderboard-ad .ad-flag,.content-ad .ad-flag{position:absolute;right:12px;top:12px;}",
       "  .desktop-leaderboard-ad .ad-head,.content-ad .ad-head{font-size:20px;}",
       "  .desktop-leaderboard-ad .ad-body,.content-ad .ad-body{flex:1;}",
-      "}"
+      "}",
+      ".content-ad .ad-unit.ad-flyer-campaign{flex-direction:column;align-items:center;gap:8px;animation:ad-flyer-arrive .55s ease-out both;}",
+      ".content-ad .ad-flyer-campaign .ad-flag{position:static;align-self:flex-start;}",
+      ".ad-flyers{display:grid;width:100%;max-width:720px;}",
+      ".ad-flyers img{grid-area:1/1;display:block;width:100%;height:auto;border-radius:9px;}",
+      ".ad-flyers img+img{opacity:0;animation:ad-flyer-switch 14s ease-in-out infinite;}",
+      ".ad-flyer-campaign:focus-visible .ad-flyers img+img{animation-play-state:paused;}",
+      "@media(hover:hover){.ad-flyer-campaign:hover .ad-flyers img+img{animation-play-state:paused;}}",
+      "@media(prefers-reduced-motion:reduce){.content-ad .ad-unit.ad-flyer-campaign,.ad-flyers img+img{animation:none;}}",
+      "@keyframes ad-flyer-arrive{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}",
+      "@keyframes ad-flyer-switch{0%,47%,100%{opacity:0;}50%,97%{opacity:1;}}"
     ].join("");
     document.head.appendChild(s);
   }
