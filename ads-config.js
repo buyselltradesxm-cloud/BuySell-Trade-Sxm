@@ -177,6 +177,13 @@ window.AdsConfig = {
     }
   },
 
+  campaignReels: {
+    "majesty-car-rental": {
+      flyer: "/ads/majesty-rental-flyer.webp",
+      video: "/ads/majesty-rental-reel.mp4"
+    }
+  },
+
   /* ---- House promos (fallback fill) ---------------------- */
   house: {
     enabled: true,
