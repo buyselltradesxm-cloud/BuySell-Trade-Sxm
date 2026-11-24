@@ -170,14 +170,14 @@
     return f;
   }
 
-  function renderReel(first, flyer, source) {
+  function renderReel(images, source) {
     var stage = el("span", "ad-reel");
     var video = el("video");
     video.muted = true;
     video.playsInline = true;
     video.preload = "none";
     video.setAttribute("aria-hidden", "true");
-    [first, flyer].forEach(function (src) {
+    images.forEach(function (src) {
       var image = el("img");
       image.src = src;
       image.alt = "";
@@ -186,14 +186,22 @@
     });
     stage.appendChild(video);
 
+    var videoSlide = images.length;
     var slide = 0;
+    var current = stage.firstElementChild;
+    current.classList.add("ad-reel-current");
+    function showSlide() {
+      current.classList.remove("ad-reel-current");
+      current = stage.children[slide];
+      current.classList.add("ad-reel-current");
+    }
     var timer;
     var playback = 0;
     var visible = false;
     var motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     function next() {
       if (!visible || !stage.isConnected) return;
-      slide = (slide + 1) % 3;
+      slide = (slide + 1) % stage.children.length;
       schedule();
     }
     function schedule() {
@@ -201,20 +209,20 @@
       clearTimeout(timer);
       video.pause();
       if (!visible || motion.matches) return;
-      if (slide !== 2) {
-        stage.dataset.slide = slide;
+      if (slide !== videoSlide) {
+        showSlide();
         timer = setTimeout(next, 5000);
         return;
       }
       if (!video.src) video.src = source;
       video.play().then(function () {
-        if (attempt === playback && stage.isConnected) stage.dataset.slide = slide;
+        if (attempt === playback && stage.isConnected) showSlide();
       }).catch(function () {
         if (attempt === playback) next();
       });
     }
-    video.addEventListener("ended", function () { video.currentTime = 0; if (slide === 2) next(); });
-    video.addEventListener("error", function () { if (slide === 2) next(); });
+    video.addEventListener("ended", function () { video.currentTime = 0; if (slide === videoSlide) next(); });
+    video.addEventListener("error", function () { if (slide === videoSlide) next(); });
     if (window.IntersectionObserver && !motion.matches) {
       var observer = new IntersectionObserver(function (entries) {
         if (!stage.isConnected) { observer.disconnect(); clearTimeout(timer); video.pause(); return; }
@@ -238,8 +246,9 @@
     var stack;
     var imgSrc = safeImageSrc(c.image);
     var reel = CFG.campaignReels && CFG.campaignReels[c.id];
-    if (key === "feed" && imgSrc && reel && safeImageSrc(reel.flyer) && safeImageSrc(reel.video)) {
-      stack = renderReel(imgSrc, reel.flyer, reel.video);
+    if (key === "feed" && imgSrc && reel && safeImageSrc(reel.video)) {
+      var images = [imgSrc].concat(reel.flyers || []).map(safeImageSrc).filter(Boolean);
+      stack = renderReel(images, reel.video);
       a.appendChild(stack);
     }
     var flyers = CFG.campaignFlyers && CFG.campaignFlyers[c.id];
@@ -674,8 +683,7 @@
       ".ad-flyers{display:grid;width:100%;max-width:720px;}",
       ".ad-reel{display:block;position:relative;width:100%;max-width:600px;aspect-ratio:4/3;margin-inline:auto;background:#101820;border-radius:9px;overflow:hidden;}",
       ".ad-reel img,.ad-reel video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .3s ease;}",
-      ".ad-reel img:first-child,.ad-reel[data-slide='1'] img:nth-child(2),.ad-reel[data-slide='2'] video{opacity:1;}",
-      ".ad-reel[data-slide='1'] img:first-child,.ad-reel[data-slide='2'] img:first-child{opacity:0;}",
+      ".ad-reel .ad-reel-current{opacity:1;}",
       ".ad-flyers img{grid-area:1/1;display:block;width:100%;height:auto;border-radius:9px;}",
       ".ad-flyers img+img{opacity:0;animation:ad-flyer-switch 10s ease-in-out infinite;}",
       ".ad-flyer-campaign:focus-visible .ad-flyers img+img{animation-play-state:paused;}",
