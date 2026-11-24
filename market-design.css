@@ -56,6 +56,9 @@ body{background:var(--paper);color:var(--ink)}
 .mobile-nav button,.mobile-nav a{color:var(--ink);border:0;box-shadow:none;min-width:0}
 .mobile-nav .hot{background:var(--sun);color:var(--ink);border:0;border-radius:16px;transform:none;box-shadow:none}
 .mobile-nav .nav-login,.mobile-nav .nav-login:not(.is-auth),.mobile-nav .nav-login.is-auth{background:transparent;color:var(--ink);border:0;box-shadow:none;border-radius:0}
+html.sxm-native-tabs .mobile-nav{display:none!important}
+html.sxm-native-tabs body{padding-bottom:0!important}
+@media(max-width:900px){html.sxm-native-tabs .notif-panel{bottom:12px!important}}
 .market-bell{display:none}
 @media(max-width:900px){
   .bar-actions .market-bell{display:grid;place-items:center;width:44px;height:44px;border:0;background:transparent}
