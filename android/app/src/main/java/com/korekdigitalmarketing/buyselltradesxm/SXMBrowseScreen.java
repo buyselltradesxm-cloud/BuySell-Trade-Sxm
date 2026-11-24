@@ -166,6 +166,9 @@ final class SXMBrowseScreen extends ScrollView {
     private boolean french;
     private final LinearLayout grid, filters;
     private final LinearLayout adContainer;
+    private final LinearLayout searchAdContainer;
+    private AdView searchAd;
+    private TextView searchAdDisclosure;
     private final SXMSponsoredView sponsoredTop, sponsoredFeed;
     private AdView inlineAd;
     private TextView adDisclosure;
@@ -256,6 +259,16 @@ final class SXMBrowseScreen extends ScrollView {
         search.setPadding(dp(16), 0, dp(14), 0);
         LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(-1, dp(48));
         searchParams.topMargin = dp(3); page.addView(search, searchParams);
+        searchAdContainer = new LinearLayout(context);
+        searchAdContainer.setOrientation(LinearLayout.VERTICAL);
+        searchAdContainer.setGravity(Gravity.CENTER_HORIZONTAL);
+        searchAdContainer.setPadding(dp(10), dp(8), dp(10), dp(8));
+        searchAdContainer.setBackground(outlinedShape(Color.rgb(244, 249, 247), 12, Color.rgb(218, 230, 227)));
+        searchAdContainer.setVisibility(View.GONE);
+        LinearLayout.LayoutParams searchAdParams = new LinearLayout.LayoutParams(-1, -2);
+        searchAdParams.topMargin = dp(12);
+        searchAdParams.bottomMargin = dp(12);
+        page.addView(searchAdContainer, searchAdParams);
         search.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             public void onTextChanged(CharSequence s, int start, int before, int count) { render(); }
@@ -428,6 +441,7 @@ final class SXMBrowseScreen extends ScrollView {
         enButton.setContentDescription(french ? "Passer en anglais" : "English selected");
         frButton.setSelected(french); enButton.setSelected(!french);
         if (adDisclosure != null) adDisclosure.setText(french ? "PUBLICITÉ" : "ADVERTISEMENT");
+        if (searchAdDisclosure != null) searchAdDisclosure.setText(french ? "PUBLICITÉ" : "ADVERTISEMENT");
         globe.setContentDescription(french ? "Langue" : "Language");
         cta.setText(french ? "+  Publier une annonce" : "+  Post a listing");
         spotlightTitle.setText(french ? "Deux côtés. Un marché." : "Two sides. One market.");
@@ -523,6 +537,7 @@ final class SXMBrowseScreen extends ScrollView {
     }
     void showSaved(boolean value) {
         savedOnly = value; search.setText(""); render(); scrollTo(0, 0);
+        syncSearchAd();
         spotlight.setVisibility(savedOnly ? View.GONE : View.VISIBLE);
         sponsoredTop.setVisibility(savedOnly ? View.GONE : View.VISIBLE);
         sponsoredTop.refreshVisibility();
@@ -534,12 +549,53 @@ final class SXMBrowseScreen extends ScrollView {
 
     void setAdsAllowed(boolean allowed) {
         adsAllowed = allowed;
+        syncSearchAd();
         if (!allowed) {
             removeCallbacks(adRetry);
             adContainer.setVisibility(View.GONE);
             if (inlineAd != null) { inlineAd.destroy(); inlineAd = null; adContainer.removeAllViews(); adDisclosure = null; }
             lastAdAttemptAt = 0;
         } else loadInlineAd();
+    }
+
+    private void clearSearchAd() {
+        searchAdContainer.setVisibility(View.GONE);
+        if (searchAd != null) {
+            searchAdContainer.removeAllViews();
+            searchAd.destroy();
+            searchAd = null;
+            searchAdDisclosure = null;
+        }
+    }
+
+    private void syncSearchAd() {
+        if (!adsAllowed || savedOnly || !UserMessagingPlatform.getConsentInformation(getContext()).canRequestAds()) {
+            clearSearchAd();
+            return;
+        }
+        if (searchAd != null) return;
+        int width = Math.min(420, getResources().getConfiguration().screenWidthDp - 52);
+        if (width < 250) return;
+        boolean debug = (getContext().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        AdView banner = new AdView(getContext());
+        searchAd = banner;
+        banner.setAdUnitId(debug ? "ca-app-pub-3940256099942544/6300978111" :
+            getResources().getString(R.string.admob_browse_banner_id));
+        banner.setAdSize(AdSize.getInlineAdaptiveBannerAdSize(width, 60));
+        searchAdDisclosure = label(french ? "PUBLICITÉ" : "ADVERTISEMENT", 10, true);
+        searchAdDisclosure.setTextColor(SEA);
+        searchAdDisclosure.setPadding(0, 0, 0, dp(4));
+        searchAdContainer.addView(searchAdDisclosure, new LinearLayout.LayoutParams(-1, -2));
+        searchAdContainer.addView(banner, new LinearLayout.LayoutParams(-1, -2));
+        banner.setAdListener(new AdListener() {
+            @Override public void onAdLoaded() {
+                if (searchAd == banner) searchAdContainer.setVisibility(View.VISIBLE);
+            }
+            @Override public void onAdFailedToLoad(LoadAdError error) {
+                if (searchAd == banner) clearSearchAd();
+            }
+        });
+        banner.loadAd(new AdRequest.Builder().build());
     }
 
     private void loadInlineAd() {
@@ -955,5 +1011,9 @@ final class SXMBrowseScreen extends ScrollView {
         if (sponsoredFeed != null) sponsoredFeed.refreshVisibility();
     }
 
-    @Override protected void onDetachedFromWindow() { super.onDetachedFromWindow(); io.shutdownNow(); }
+    @Override protected void onDetachedFromWindow() {
+        clearSearchAd();
+        super.onDetachedFromWindow();
+        io.shutdownNow();
+    }
 }
