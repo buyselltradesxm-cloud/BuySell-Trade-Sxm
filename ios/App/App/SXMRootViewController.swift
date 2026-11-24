@@ -51,6 +51,10 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     /// screen shortcut, or while a legal page was showing).
     private var pendingTab: Tab?
     private var pendingContact: String?
+    private var profileAdEligible = false
+    private var profileAd: UIHostingController<SXMInlineAdSection>?
+    private var profileAdHeight: NSLayoutConstraint?
+    private var webBottom: NSLayoutConstraint?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -61,11 +65,13 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
         view.addSubview(web.view)
         tabBar.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tabBar)
+        let webBottom = web.view.bottomAnchor.constraint(equalTo: tabBar.topAnchor)
+        self.webBottom = webBottom
         NSLayoutConstraint.activate([
             web.view.topAnchor.constraint(equalTo: view.topAnchor),
             web.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             web.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            web.view.bottomAnchor.constraint(equalTo: tabBar.topAnchor),
+            webBottom,
             tabBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tabBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tabBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -73,6 +79,7 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
             tabBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -49)
         ])
         web.didMove(toParent: self)
+        if let origin = web.bridge?.config.serverURL { browseModel.sponsoredOrigin = origin }
 
         addChild(browse)
         browse.view.translatesAutoresizingMaskIntoConstraints = false
@@ -151,6 +158,10 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     func open(_ tab: Tab) {
         if workflowModel.busy { select(workflowTab ?? .browse); return }
         hideWorkflow()
+        if tab != .profile {
+            profileAdEligible = false
+            syncProfileAd()
+        }
         pendingContact = nil
         select(tab)
         // For Browse the page still closes whatever it had open behind the native screen.
@@ -171,11 +182,50 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
 
     private func showNativeBrowse(_ on: Bool) {
         browse.view.isHidden = !on
+        browseModel.discoverVisible = on
         setNeedsStatusBarAppearanceUpdate()
     }
 
     func setNativeAdsAllowed(_ allowed: Bool) {
         browseModel.adsAllowed = allowed
+        syncProfileAd()
+    }
+
+    private func syncProfileAd() {
+        if !profileAdEligible || !browseModel.adsAllowed || workflow != nil {
+            if let ad = profileAd {
+                profileAd = nil
+                profileAdHeight = nil
+                webBottom?.constant = 0
+                ad.willMove(toParent: nil)
+                ad.view.removeFromSuperview()
+                ad.removeFromParent()
+            }
+            return
+        }
+        guard profileAd == nil else { return }
+        let ad = UIHostingController(rootView: SXMInlineAdSection(french: french, heightChanged: { [weak self] height in
+            guard let self = self, let constraint = self.profileAdHeight else { return }
+            constraint.constant = height
+            self.webBottom?.constant = height > 0 ? -(height + 16) : 0
+        }))
+        profileAd = ad
+        addChild(ad)
+        ad.view.backgroundColor = .clear
+        ad.view.translatesAutoresizingMaskIntoConstraints = false
+        view.insertSubview(ad.view, belowSubview: tabBar)
+        let height = ad.view.heightAnchor.constraint(equalToConstant: 1)
+        profileAdHeight = height
+        let width = ad.view.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9)
+        width.priority = .defaultHigh
+        NSLayoutConstraint.activate([
+            ad.view.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            width,
+            ad.view.widthAnchor.constraint(lessThanOrEqualToConstant: 460),
+            ad.view.bottomAnchor.constraint(equalTo: tabBar.topAnchor, constant: -16),
+            height
+        ])
+        ad.didMove(toParent: self)
     }
 
     private func setBrowseLanguage(_ useFrench: Bool) {
@@ -205,6 +255,7 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
             close: { [weak self] in self?.open(.browse) }, profile: { [weak self] in self?.open(.profile) })
         let controller = UIHostingController(rootView: screen)
         workflow = controller; workflowTab = chosen
+        syncProfileAd()
         addChild(controller)
         controller.view.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(controller.view)
@@ -274,7 +325,8 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     }
 
     /// The page reports what it is showing, in which language, and its unread counts.
-    func update(selected: String?, french: Bool?, badges: [String: Int], titles: [String: String], detail: Bool? = nil) {
+    func update(selected: String?, french: Bool?, badges: [String: Int], titles: [String: String],
+                detail: Bool? = nil, profileAd: Bool = false) {
         if let french = french, french != browseModel.french { browseModel.french = french }
         // `detail`: the page has a screen open outside the tabs (a listing from a shared
         // link or from "Contact the seller", pricing...). It shows over Browse until closed.
@@ -293,6 +345,8 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
             UserDefaults.standard.set(french, forKey: "sxm.language.french")
         }
         let chosen = selected.flatMap(Tab.init(rawValue:))
+        profileAdEligible = chosen == .profile && profileAd
+        syncProfileAd()
         if retitled || languageChanged {
             let current = tabBar.selectedItem.flatMap { Tab.allCases.indices.contains($0.tag) ? Tab.allCases[$0.tag] : nil }
             buildItems(selected: chosen ?? current ?? .browse)

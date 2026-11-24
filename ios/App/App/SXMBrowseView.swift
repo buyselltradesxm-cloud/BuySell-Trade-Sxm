@@ -2,6 +2,7 @@ import MapKit
 import GoogleMobileAds
 import SwiftUI
 import UIKit
+import WebKit
 
 /// The native "Browse" tab: listings read straight from the marketplace's
 /// public API, searchable and filterable, with a native detail screen
@@ -245,6 +246,8 @@ final class SXMBrowseModel: ObservableObject {
     @Published var french: Bool
     @Published var showingSaved = false
     @Published var adsAllowed = false
+    @Published var discoverVisible = true
+    var sponsoredOrigin = URL(string: "https://buyselltradesxm.com")!
     @Published var searchWords = SXMSearchWords()
     private var loadedOnce = false
 
@@ -372,6 +375,7 @@ struct SXMBrowseView: View {
     @State private var side: String?
     @State private var area: String?
     @State private var showFilters = false
+    @State private var sponsoredRevision = 0
     private var fr: Bool { model.french }
     private var shown: [SXMListing] {
         let terms = model.searchWords.terms(query)
@@ -390,6 +394,10 @@ struct SXMBrowseView: View {
                     header
                     search
                     if !model.showingSaved { spotlight }
+                    if !model.showingSaved && model.discoverVisible {
+                        SXMSponsoredSection(origin: model.sponsoredOrigin, placement: "content-1", french: fr)
+                            .id(sponsoredRevision).padding(.horizontal, 20)
+                    }
                     shortcuts
                     locationPicker
                     if model.offline {
@@ -410,7 +418,7 @@ struct SXMBrowseView: View {
                             }
                         }.foregroundColor(ink).frame(maxWidth: .infinity).padding(24)
                     } else {
-                        SXMListingGrid(listings: shown, model: model)
+                        SXMListingGrid(listings: shown, model: model, sponsoredRevision: sponsoredRevision)
                     }
                     Button { model.post() } label: {
                         Label(fr ? "Un objet à vendre ? Ajoutez vos photos" : "Selling something? Add your photos", systemImage: "camera")
@@ -421,7 +429,7 @@ struct SXMBrowseView: View {
                 }.padding(.vertical, 20)
             }
             .background(paper.ignoresSafeArea())
-            .refreshable { await model.refresh() }
+            .refreshable { await model.refresh(); sponsoredRevision += 1 }
             .navigationBarHidden(true)
             .sheet(isPresented: $showFilters) { filters }
         }
@@ -586,12 +594,17 @@ struct SXMBrowseView: View {
 struct SXMListingGrid: View {
     let listings: [SXMListing]
     @ObservedObject var model: SXMBrowseModel
+    var sponsoredRevision: Int? = nil
     @Environment(\.sizeCategory) private var sizeCategory
     private var adAfter: Int { listings.count <= 4 ? 2 : listings.count <= 12 ? 4 : 8 }
     var body: some View {
         VStack(spacing: 20) {
             listingRows(Array(listings.prefix(adAfter)))
-            if listings.count > adAfter && !model.showingSaved && model.adsAllowed {
+            if let revision = sponsoredRevision, !model.showingSaved && model.discoverVisible {
+                SXMSponsoredSection(origin: model.sponsoredOrigin, placement: "feed", french: model.french)
+                    .id(revision)
+            }
+            if listings.count > adAfter && model.adsAllowed {
                 SXMInlineAdSection(french: model.french)
             }
             if listings.count > adAfter { listingRows(Array(listings.dropFirst(adAfter))) }
@@ -618,10 +631,133 @@ struct SXMListingGrid: View {
     }
 }
 
+private struct SXMSponsoredSection: View {
+    let origin: URL
+    let placement: String
+    let french: Bool
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var height: CGFloat = 0
+    @State private var onscreen = false
+
+    var body: some View {
+        SXMSponsoredWebView(origin: origin, placement: placement, french: french,
+                            visible: onscreen && scenePhase == .active, height: $height)
+            .frame(height: max(1, height))
+            .accessibilityHidden(height == 0)
+            .background {
+                GeometryReader { geometry in
+                    let frame = geometry.frame(in: .global)
+                    Color.clear
+                        .onAppear { updateVisibility(frame) }
+                        .onChange(of: frame) { updateVisibility($0) }
+                }
+            }
+    }
+
+    private func updateVisibility(_ frame: CGRect) {
+        let overlap = frame.intersection(UIScreen.main.bounds.inset(by: UIEdgeInsets(top: 24, left: 0, bottom: 54, right: 0)))
+        onscreen = !overlap.isNull && overlap.height >= frame.height / 2
+    }
+}
+
+private struct SXMSponsoredWebView: UIViewRepresentable {
+    let origin: URL
+    let placement: String
+    let french: Bool
+    let visible: Bool
+    @Binding var height: CGFloat
+
+    func makeCoordinator() -> Coordinator { Coordinator(height: $height) }
+
+    func makeUIView(context: Context) -> WKWebView {
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .nonPersistent()
+        configuration.allowsInlineMediaPlayback = true
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+        configuration.userContentController.add(context.coordinator, name: "sponsoredHeight")
+        let view = WKWebView(frame: .zero, configuration: configuration)
+        view.isOpaque = false
+        view.backgroundColor = .clear
+        view.scrollView.isScrollEnabled = false
+        view.scrollView.contentInsetAdjustmentBehavior = .never
+        view.navigationDelegate = context.coordinator
+        view.uiDelegate = context.coordinator
+        return view
+    }
+
+    func updateUIView(_ view: WKWebView, context: Context) {
+        let coordinator = context.coordinator
+        var url = URLComponents(url: origin, resolvingAgainstBaseURL: false)
+        url?.path = "/native-sponsored.html"
+        url?.queryItems = [URLQueryItem(name: "placement", value: placement),
+                           URLQueryItem(name: "lang", value: french ? "fr" : "en")]
+        if let request = url?.url, request != coordinator.url {
+            coordinator.url = request
+            coordinator.visible = visible
+            view.load(URLRequest(url: request, cachePolicy: .reloadRevalidatingCacheData))
+        } else if coordinator.visible != visible {
+            coordinator.visible = visible
+            coordinator.syncVisibility(view)
+        }
+    }
+
+    static func dismantleUIView(_ view: WKWebView, coordinator: Coordinator) {
+        view.configuration.userContentController.removeScriptMessageHandler(forName: "sponsoredHeight")
+        view.stopLoading()
+    }
+
+    final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
+        var url: URL?
+        var visible = false
+        let height: Binding<CGFloat>
+
+        init(height: Binding<CGFloat>) { self.height = height }
+
+        func syncVisibility(_ view: WKWebView) {
+            view.evaluateJavaScript("window.setSponsoredVisibility?.(\(visible ? "true" : "false"))", completionHandler: nil)
+        }
+
+        func webView(_ view: WKWebView, didFinish navigation: WKNavigation!) {
+            syncVisibility(view)
+        }
+
+        func webView(_ view: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
+                     for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+            if action.navigationType == .linkActivated, let destination = action.request.url,
+               destination.scheme == "https" || destination.scheme == "http" {
+                UIApplication.shared.open(destination)
+            }
+            return nil
+        }
+
+        func webView(_ view: WKWebView, decidePolicyFor action: WKNavigationAction,
+                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            if let destination = action.request.url, action.navigationType == .linkActivated,
+               destination.scheme == "https" || destination.scheme == "http" {
+                UIApplication.shared.open(destination)
+                decisionHandler(.cancel)
+                return
+            }
+            decisionHandler(action.request.url == url ? .allow : .cancel)
+        }
+
+        func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+            guard message.frameInfo.isMainFrame, message.frameInfo.request.url == url,
+                  let raw = message.body as? NSNumber, (0...1200).contains(raw.doubleValue) else { return }
+            height.wrappedValue = CGFloat(raw.doubleValue)
+        }
+
+        func webView(_ view: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            if (error as NSError).code != NSURLErrorCancelled { height.wrappedValue = 0 }
+        }
+    }
+}
+
 /// One clearly labelled native banner between listing rows. It never loads
 /// without consent and the label appears only after an actual ad loads.
-private struct SXMInlineAdSection: View {
+struct SXMInlineAdSection: View {
     let french: Bool
+    var heightChanged: ((CGFloat) -> Void)? = nil
     @State private var adHeight: CGFloat = 0
     @State private var attempt = 0
 
@@ -650,6 +786,7 @@ private struct SXMInlineAdSection: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
         .frame(height: adHeight > 0 ? adHeight + 48 : 1)
+        .onChange(of: adHeight) { heightChanged?($0 > 0 ? $0 + 48 : 0) }
         .accessibilityElement(children: .contain)
     }
 }
@@ -794,6 +931,9 @@ struct SXMListingDetail: View {
                             .font(.caption).foregroundColor(ink.opacity(0.6))
                     }
                     .padding(.horizontal)
+                }
+                if model.adsAllowed {
+                    SXMInlineAdSection(french: fr).padding(.horizontal).padding(.top, 16)
                 }
             }
             .padding(.bottom, 24)

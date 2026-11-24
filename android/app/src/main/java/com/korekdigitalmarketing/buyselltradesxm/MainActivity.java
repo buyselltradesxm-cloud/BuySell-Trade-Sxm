@@ -11,6 +11,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.getcapacitor.BridgeActivity;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.ump.UserMessagingPlatform;
 
 /** Native browse/navigation wrapped around the existing authenticated marketplace. */
 public class MainActivity extends BridgeActivity {
@@ -23,6 +29,8 @@ public class MainActivity extends BridgeActivity {
     private LinearLayout bar;
     private SXMBrowseScreen browse;
     private WebView web;
+    private LinearLayout pageAdSection;
+    private AdView pageAd;
     private String selected = "browse";
     private boolean french;
 
@@ -64,6 +72,43 @@ public class MainActivity extends BridgeActivity {
 
     public void setNativeAdsAllowed(boolean allowed) {
         if (browse != null) browse.setAdsAllowed(allowed);
+        if (!allowed) setPageAdAllowed(false);
+    }
+
+    public void setPageAdAllowed(boolean allowed) {
+        if (pageAdSection == null) return;
+        if (!allowed || isNativeBrowseVisible() || !UserMessagingPlatform.getConsentInformation(this).canRequestAds()) {
+            pageAdSection.setVisibility(View.GONE);
+            if (pageAd != null) {
+                pageAdSection.removeAllViews();
+                pageAd.destroy();
+                pageAd = null;
+            }
+            return;
+        }
+        if (pageAd != null) return;
+        TextView label = new TextView(this);
+        label.setText(french ? "PUBLICITÉ" : "ADVERTISEMENT");
+        label.setTextSize(10);
+        label.setTextColor(SEA);
+        label.setPadding(0, 0, 0, dp(6));
+        pageAdSection.addView(label);
+        AdView banner = new AdView(this);
+        pageAd = banner;
+        boolean debug = (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        banner.setAdUnitId(debug ? "ca-app-pub-3940256099942544/6300978111" : getString(R.string.admob_browse_banner_id));
+        int width = Math.min(420, getResources().getConfiguration().screenWidthDp - 40);
+        banner.setAdSize(AdSize.getInlineAdaptiveBannerAdSize(Math.max(250, width), 300));
+        banner.setAdListener(new AdListener() {
+            @Override public void onAdLoaded() {
+                if (pageAd == banner) pageAdSection.setVisibility(View.VISIBLE);
+            }
+            @Override public void onAdFailedToLoad(LoadAdError error) {
+                if (pageAd == banner) setPageAdAllowed(false);
+            }
+        });
+        pageAdSection.addView(banner);
+        banner.loadAd(new AdRequest.Builder().build());
     }
 
     public boolean isNativeBrowseVisible() {
@@ -97,6 +142,12 @@ public class MainActivity extends BridgeActivity {
         browse = new SXMBrowseScreen(this, this::openListing, () -> select("post"),
             () -> select("alerts"), this::setLanguage, french);
         content.addView(browse, new FrameLayout.LayoutParams(-1, -1));
+        pageAdSection = new LinearLayout(this);
+        pageAdSection.setOrientation(LinearLayout.VERTICAL);
+        pageAdSection.setGravity(Gravity.CENTER_HORIZONTAL);
+        pageAdSection.setPadding(dp(16), dp(8), dp(16), dp(16));
+        pageAdSection.setVisibility(View.GONE);
+        root.addView(pageAdSection, new LinearLayout.LayoutParams(-1, -2));
         bar = new LinearLayout(this);
         bar.setBackgroundColor(PAPER);
         bar.setElevation(dp(8));
@@ -115,6 +166,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void openListing(String id) {
+        setPageAdAllowed(false);
         selected = "browse";
         browse.setVisibility(View.GONE);
         renderBar();
@@ -126,9 +178,11 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void select(String tab) {
+        if (!selected.equals(tab)) setPageAdAllowed(false);
         selected = tab;
         boolean nativeBrowse = tab.equals("browse") || tab.equals("saved");
         browse.setVisibility(nativeBrowse ? View.VISIBLE : View.GONE);
+        browse.refreshSponsorVisibility();
         syncWebBanner(nativeBrowse);
         if (nativeBrowse) {
             browse.showSaved(tab.equals("saved"));

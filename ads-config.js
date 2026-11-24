@@ -104,7 +104,7 @@ window.AdsConfig = {
       ios: "ca-app-pub-7816106453580174/6796030440"      // SXM iOS App Open
     },
     appOpenOptions: {
-      minLoadMs: 5000,        // let the feed paint before the ad covers it
+      minLoadMs: 3000,        // only show a ready ad during the cold-open window
       resumeAfterMs: 30000,   // only after a real absence, not a quick switch
       cooldownMs: 120000,     // never two open ads back to back
       maxPerSession: 3
