@@ -393,6 +393,9 @@ struct SXMBrowseView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
                     search
+                    if !model.showingSaved && model.discoverVisible && model.adsAllowed {
+                        SXMInlineAdSection(french: fr, maxHeight: 60).padding(.horizontal, 20)
+                    }
                     if !model.showingSaved { spotlight }
                     if !model.showingSaved && model.discoverVisible {
                         SXMSponsoredSection(origin: model.sponsoredOrigin, placement: "content-1", french: fr)
