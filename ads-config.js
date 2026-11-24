@@ -179,6 +179,7 @@ window.AdsConfig = {
 
   campaignReels: {
     "majesty-car-rental": {
+      onceInFeed: true,
       flyers: ["/ads/majesty-rental-flyer.webp", "/ads/majesty-tahoe-flyer.webp"],
       video: "/ads/majesty-experience.mp4"
     }
