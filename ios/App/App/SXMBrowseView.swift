@@ -165,24 +165,45 @@ struct SXMListing: Codable, Identifiable, Equatable {
     /// Same rows, labels and order as the website's vehicleDetailsHTML().
     func vehicleSpecs(french fr: Bool) -> [SXMSpec] {
         guard let v = vehicle, category == "locvoit" || SXMListing.vehicleSubcategories.contains(subcategory ?? "") else { return [] }
-        let fuels = ["gas": fr ? "Essence" : "Gasoline", "diesel": "Diesel", "hybrid": fr ? "Hybride" : "Hybrid",
-                     "electric": fr ? "Électrique" : "Electric", "other": fr ? "Autre" : "Other"]
-        let gears = ["automatic": fr ? "Automatique" : "Automatic", "manual": fr ? "Manuelle" : "Manual", "other": fr ? "Autre" : "Other"]
-        var km = v.km
+        // Simple statements only: large mixed literals slow Xcode's type checker down to a build failure.
+        var fuels: [String: String] = [:]
+        fuels["gas"] = fr ? "Essence" : "Gasoline"
+        fuels["diesel"] = "Diesel"
+        fuels["hybrid"] = fr ? "Hybride" : "Hybrid"
+        fuels["electric"] = fr ? "Électrique" : "Electric"
+        fuels["other"] = fr ? "Autre" : "Other"
+        var gears: [String: String] = [:]
+        gears["automatic"] = fr ? "Automatique" : "Automatic"
+        gears["manual"] = fr ? "Manuelle" : "Manual"
+        gears["other"] = fr ? "Autre" : "Other"
+        var km: String? = v.km
         if let raw = v.km, let n = Double(raw.replacingOccurrences(of: " ", with: "")) {
             let f = NumberFormatter()
-            f.numberStyle = .decimal; f.maximumFractionDigits = 0
+            f.numberStyle = .decimal
+            f.maximumFractionDigits = 0
             f.locale = Locale(identifier: fr ? "fr_FR" : "en_US")
-            km = (f.string(from: NSNumber(value: n)) ?? raw) + " km"
+            let number: String = f.string(from: NSNumber(value: n)) ?? raw
+            km = number + " km"
         }
-        var rows: [(String, String?)] = [(fr ? "Année" : "Year", v.year)]
-        if category != "locvoit" { rows += [(fr ? "Kilométrage" : "Mileage", km), (fr ? "Couleur" : "Color", v.color)] }
-        rows += [(fr ? "Motorisation" : "Engine", v.fuel.map { fuels[$0] ?? $0 }),
-                 ("Transmission", v.transmission.map { gears[$0] ?? $0 }),
-                 (fr ? "Intérieur / extérieur" : "Interior / exterior", v.body),
-                 (fr ? "Mécanique & entretien" : "Mechanics & maintenance", v.mechanical),
-                 (fr ? "Papiers & disponibilité" : "Paperwork & availability", v.docs)]
-        return rows.compactMap { label, value in value.map { SXMSpec(label: label, value: $0) } }
+        var fuel: String? = nil
+        if let code = v.fuel { fuel = fuels[code] ?? code }
+        var gear: String? = nil
+        if let code = v.transmission { gear = gears[code] ?? code }
+        var specs: [SXMSpec] = []
+        func add(_ label: String, _ value: String?) {
+            if let value = value { specs.append(SXMSpec(label: label, value: value)) }
+        }
+        add(fr ? "Année" : "Year", v.year)
+        if category != "locvoit" {
+            add(fr ? "Kilométrage" : "Mileage", km)
+            add(fr ? "Couleur" : "Color", v.color)
+        }
+        add(fr ? "Motorisation" : "Engine", fuel)
+        add("Transmission", gear)
+        add(fr ? "Intérieur / extérieur" : "Interior / exterior", v.body)
+        add(fr ? "Mécanique & entretien" : "Mechanics & maintenance", v.mechanical)
+        add(fr ? "Papiers & disponibilité" : "Paperwork & availability", v.docs)
+        return specs
     }
 }
 
@@ -199,11 +220,18 @@ struct SXMVehicle: Codable, Equatable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
+        // Kept as simple statements: one chained expression here timed out Xcode's type checker.
         func text(_ key: CodingKeys) -> String? {
-            let value = (try? c.decode(String.self, forKey: key))
-                ?? (try? c.decode(Double.self, forKey: key)).map { $0 == $0.rounded() ? String(Int64($0)) : String($0) }
-            let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines)
-            return trimmed?.isEmpty == false ? trimmed : nil
+            var value: String? = nil
+            if let s = try? c.decode(String.self, forKey: key) {
+                value = s
+            } else if let n = try? c.decode(Double.self, forKey: key) {
+                if n == n.rounded() { value = String(Int64(n)) } else { value = String(n) }
+            }
+            guard let raw = value else { return nil }
+            let trimmed: String = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty { return nil }
+            return trimmed
         }
         year = text(.year); km = text(.km); color = text(.color); fuel = text(.fuel)
         transmission = text(.transmission); body = text(.body); mechanical = text(.mechanical); docs = text(.docs)
