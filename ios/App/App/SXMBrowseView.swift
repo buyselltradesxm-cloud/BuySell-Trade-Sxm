@@ -432,6 +432,7 @@ struct SXMBrowseView: View {
                 }.padding(.vertical, 20)
             }
             .background(paper.ignoresSafeArea())
+            .bottomAd(model.showingSaved && model.adsAllowed)
             .refreshable { await model.refresh(); sponsoredRevision += 1 }
             .navigationBarHidden(true)
             .sheet(isPresented: $showFilters) { filters }
@@ -795,14 +796,47 @@ struct SXMInlineAdSection: View {
     }
 }
 
+/// Slim banner pinned to the bottom of the native Saved, Post and Messages screens.
+/// It stays collapsed (1 pt) until an ad loads and while the keyboard is up.
+struct SXMBottomAd: View {
+    @State private var adHeight: CGFloat = 0
+    @State private var attempt = 0
+    @State private var keyboardUp = false
+    var body: some View {
+        let width = UIScreen.main.bounds.width
+        SXMInlineAdBanner(width: width, anchored: true, onLoad: { adHeight = $0 }, onFailure: {
+            adHeight = 0
+            let failedAttempt = attempt
+            DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
+                if attempt == failedAttempt { attempt += 1 }
+            }
+        })
+        .id(attempt)
+        .frame(width: width, height: keyboardUp ? 0 : max(1, adHeight))
+        .clipped()
+        .background(adHeight > 0 ? Color.white : Color.clear)
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardUp = false }
+    }
+}
+
+extension View {
+    /// Adds the bottom banner when ads are allowed (UMP consent, not Pro).
+    func bottomAd(_ allowed: Bool) -> some View {
+        safeAreaInset(edge: .bottom, spacing: 0) { if allowed { SXMBottomAd() } }
+    }
+}
+
 private struct SXMInlineAdBanner: UIViewRepresentable {
     let width: CGFloat
-    let maxHeight: Int
+    var maxHeight = 300
+    var anchored = false
     let onLoad: (CGFloat) -> Void
     let onFailure: () -> Void
 
     func makeUIView(context: Context) -> BannerView {
-        let banner = BannerView(adSize: inlineAdaptiveBanner(width: width, maxHeight: CGFloat(maxHeight)))
+        let banner = BannerView(adSize: anchored ? currentOrientationAnchoredAdaptiveBanner(width: width)
+                                                 : inlineAdaptiveBanner(width: width, maxHeight: CGFloat(maxHeight)))
         #if DEBUG
         banner.adUnitID = "ca-app-pub-3940256099942544/2435281174"
         #else
