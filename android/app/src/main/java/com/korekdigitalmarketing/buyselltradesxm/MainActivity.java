@@ -31,6 +31,7 @@ public class MainActivity extends BridgeActivity {
     private WebView web;
     private LinearLayout pageAdSection;
     private AdView pageAd;
+    private boolean compactPageAd;
     private String selected = "browse";
     private boolean french;
 
@@ -76,6 +77,10 @@ public class MainActivity extends BridgeActivity {
     }
 
     public void setPageAdAllowed(boolean allowed) {
+        setPageAdAllowed(allowed, false);
+    }
+
+    public void setPageAdAllowed(boolean allowed, boolean compact) {
         if (pageAdSection == null) return;
         if (!allowed || isNativeBrowseVisible() || !UserMessagingPlatform.getConsentInformation(this).canRequestAds()) {
             pageAdSection.setVisibility(View.GONE);
@@ -86,7 +91,13 @@ public class MainActivity extends BridgeActivity {
             }
             return;
         }
-        if (pageAd != null) return;
+        if (pageAd != null) {
+            if (compactPageAd == compact) return;
+            setPageAdAllowed(false);
+        }
+        int width = Math.min(420, getResources().getConfiguration().screenWidthDp - 40);
+        if (width < 250) return;
+        compactPageAd = compact;
         TextView label = new TextView(this);
         label.setText(french ? "PUBLICITÉ" : "ADVERTISEMENT");
         label.setTextSize(10);
@@ -97,8 +108,7 @@ public class MainActivity extends BridgeActivity {
         pageAd = banner;
         boolean debug = (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         banner.setAdUnitId(debug ? "ca-app-pub-3940256099942544/6300978111" : getString(R.string.admob_browse_banner_id));
-        int width = Math.min(420, getResources().getConfiguration().screenWidthDp - 40);
-        banner.setAdSize(AdSize.getInlineAdaptiveBannerAdSize(Math.max(250, width), 300));
+        banner.setAdSize(AdSize.getInlineAdaptiveBannerAdSize(width, compact ? 60 : 300));
         banner.setAdListener(new AdListener() {
             @Override public void onAdLoaded() {
                 if (pageAd == banner) pageAdSection.setVisibility(View.VISIBLE);
