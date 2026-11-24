@@ -1,4 +1,8 @@
 ENGLISH — 1.0.9
+Build 3 uses the iOS 27.1 SDK. On Discover, check that Tchala Plus appears near the top and Majesty Car Rental appears once in the listing feed. The flyers should rotate every five seconds.
+
+On a signed-in Profile, check that the AdMob section leaves the navigation and account controls usable when Google serves an ad. A launch ad is eligible at three seconds if consent is complete and an ad is ready.
+
 This build adds verified links for shared marketplace listings and prepares native App Store review requests after successful publishing. It preserves the existing marketplace and native browse layout.
 
 1. Install 1.0.9 from TestFlight and open Discover, then Profile. Confirm that login or your profile content appears.
@@ -9,6 +13,10 @@ This build adds verified links for shared marketplace listings and prepares nati
 Apple does not display StoreKit review prompts in TestFlight. No review popup is expected in this beta. The production request is limited to successful publishing over at least seven days, with a 120-day cooldown. Store clicks are not counted as confirmed installs.
 
 FRANÇAIS — 1.0.9
+Le build 3 utilise le SDK iOS 27.1. Dans Découvrir, vérifiez que Tchala Plus apparaît en haut de la page et que Majesty Car Rental apparaît une seule fois dans le fil. Les visuels changent toutes les cinq secondes.
+
+Dans le profil connecté, vérifiez que la section AdMob laisse la navigation et les commandes accessibles lorsqu’une annonce est diffusée. Une publicité au démarrage peut s’afficher après trois secondes si le consentement est déjà traité et qu’une annonce est prête.
+
 Cette version ajoute les liens vérifiés vers les annonces partagées et prépare les demandes d’avis natives après des publications réussies. Elle conserve la marketplace et la présentation native des annonces.
 
 1. Installez la version 1.0.9 depuis TestFlight, ouvrez Découvrir puis Profil. Vérifiez que la connexion ou votre profil s’affiche.
