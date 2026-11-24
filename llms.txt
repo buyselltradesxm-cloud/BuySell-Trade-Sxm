@@ -1,0 +1,17 @@
+# Buy Sell Trade SXM
+
+> Local online marketplace to buy, sell and trade second-hand items and services across Saint-Martin and Sint Maarten. Prices in euros or US dollars, site and app in English and French.
+
+## Main pages
+- [Marketplace app](https://buyselltradesxm.com/app.html): what the app does, English
+- [Application (français)](https://buyselltradesxm.com/app-fr.html): présentation de l'application
+- [All listings](https://buyselltradesxm.com/l/): current listings, one page per listing
+- [Home](https://buyselltradesxm.com/): search and browse listings, post an ad
+
+## Legal
+- [Privacy policy](https://buyselltradesxm.com/privacy.html)
+- [Terms of use](https://buyselltradesxm.com/terms.html)
+
+## Notes
+- Each listing page (https://buyselltradesxm.com/l/<id>.html) has the title, price, area and photos of one item.
+- Sitemap: https://buyselltradesxm.com/sitemap.xml

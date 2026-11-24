@@ -73,6 +73,7 @@ const PRECACHE_URLS = [
   '/ads.js',
   '/logo-192.webp',
   '/og-image.jpg',
+  '/og-hero.webp',
   '/fonts/fonts.css',
   '/fonts/spacegrotesk-V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2',
   '/fonts/spacegrotesk-V8mDoQDjQSkFtoMM3T6r8E7mPb94C-s0.woff2',
