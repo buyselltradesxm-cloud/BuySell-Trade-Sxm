@@ -180,7 +180,7 @@ window.AdsConfig = {
   campaignReels: {
     "majesty-car-rental": {
       flyer: "/ads/majesty-rental-flyer.webp",
-      video: "/ads/majesty-rental-reel.mp4"
+      video: "/ads/majesty-experience.mp4"
     }
   },
 
