@@ -1056,7 +1056,6 @@ let unreadMessageCount = 0;
 /* ================= NOTIFICATIONS (cloche + panneau) ================= */
 // Keep the browser fallback aligned with confirm_listing_available in SQL.
 const LISTING_ACTIVE_DAYS = 30;
-const LISTING_EXPIRY_WARNING_DAYS = 3;
 let notifications = [];          // { id, kind, title, text, at, seen, listingId, convKey }
 let dismissedNotificationIds = new Set();
 let notifPanelOpen = false;
@@ -1068,7 +1067,16 @@ function notifIcon(kind){
 }
 
 function unseenNotifCount(){
-  return notifications.filter(n=>!n.seen).length;
+  return notifications.filter(n=>!n.seen && canShowNotification(n)).length;
+}
+
+function isFreeSeller(){
+  return state.user?.accountType === "personal" &&
+    (state.user.accountPlan || "personal-free") === "personal-free";
+}
+
+function canShowNotification(notification){
+  return notification.kind !== "listing_expiring" || isFreeSeller();
 }
 
 function refreshNotifBadge(){
@@ -1166,14 +1174,15 @@ function pushNotification(note){
 function renderNotifPanel(){
   const list = document.getElementById("notifList");
   if(!list) return;
+  const visible = notifications.filter(canShowNotification);
   const clear = document.querySelector("#notifPanel .notif-clear");
-  if(clear) clear.hidden = !notifications.length;
+  if(clear) clear.hidden = !visible.length;
   document.querySelector("#notifPanel .notif-close")?.setAttribute("aria-label", t().notifClose);
-  if(!notifications.length){
+  if(!visible.length){
     list.innerHTML = `<div class="notif-empty"><span class="notif-empty-icon" aria-hidden="true"><img src="icons/market/bell.svg" alt=""><span class="notif-empty-check"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m3 8 3 3 7-7"/></svg></span></span><b>${esc(t().notifEmptyTitle)}</b><p>${esc(t().notifEmptyBody)}</p></div>`;
     return;
   }
-  list.innerHTML = notifications.map(n=>`
+  list.innerHTML = visible.map(n=>`
     <div class="notif-item ${n.seen ? "" : "unseen"}">
     <button type="button" class="notif-open" data-notif-id="${esc(n.id)}" data-click="openNotification" data-click-args='${dataArgs(["__DATA__:notifId"])}'>
       <span class="notif-ico" aria-hidden="true">${notifIcon(n.kind)}</span>
@@ -1191,8 +1200,7 @@ function notificationActionsHTML(n){
   const p = idKey(n.listingId);
   return `<div class="notif-actions">
     <button type="button" class="notif-action keep" data-click="confirmListingAvailable" data-click-args='${dataArgs([p, "__EVENT__"])}'>${state.lang==="fr" ? "Oui, garder" : "Keep listing"}</button>
-    <button type="button" class="notif-action sold" data-click="markSoldAndRemove" data-click-args='${dataArgs([p, "__EVENT__"])}'>${state.lang==="fr" ? "Vendu" : "Sold"}</button>
-    <button type="button" class="notif-action delete" data-click="deleteOwnListing" data-click-args='${dataArgs([p, "__EVENT__"])}'>${state.lang==="fr" ? "Supprimer" : "Delete"}</button>
+    <button type="button" class="notif-action sold" data-click="markSoldAndRemove" data-click-args='${dataArgs([p, "__EVENT__"])}'>${state.lang==="fr" ? "Marquer comme vendu" : "Mark as sold"}</button>
   </div>`;
 }
 
@@ -1217,8 +1225,10 @@ function toggleNotifPanel(e){
   if(notifPanelOpen){
     refreshPushControl();
     renderNotifPanel();
+    refreshBackendNotifications();
     notifications.forEach(n=>{
-      if(!n.seen && n.backendId && window.SB && SB.markNotificationRead) SB.markNotificationRead(n.backendId);
+      if(!canShowNotification(n)) return;
+      if(!n.seen && n.kind !== "listing_expiring" && n.backendId && window.SB && SB.markNotificationRead) SB.markNotificationRead(n.backendId);
       n.seen = true;
     });
     persistState();
@@ -1311,38 +1321,29 @@ function listingCreatedAtMs(l){
   return Number.isFinite(numericId) ? numericId : NaN;
 }
 
-function listingExpiryInfo(l){
+function listingReminderDue(l){
   const explicit = l?.expiresAt ? new Date(l.expiresAt).getTime() : NaN;
   const created = listingCreatedAtMs(l);
-  if(!Number.isFinite(explicit) && !Number.isFinite(created)) return null;
+  if(!Number.isFinite(explicit) && !Number.isFinite(created)) return false;
   const expiresAt = Number.isFinite(explicit) ? explicit : created + LISTING_ACTIVE_DAYS * 86400000;
-  const daysLeft = Math.ceil((expiresAt - Date.now()) / 86400000);
-  return {
-    daysLeft,
-    expired: daysLeft <= 0,
-    expiringSoon: daysLeft > 0 && daysLeft <= LISTING_EXPIRY_WARNING_DAYS
-  };
+  return expiresAt <= Date.now();
+}
+
+function listingReminderCopy(title){
+  return state.lang === "fr"
+    ? {title:"Votre article est-il vendu ?", text:`${title} est en ligne depuis 30 jours. Marquez-le comme vendu ou gardez l’annonce en ligne.`}
+    : {title:"Has your item sold?", text:`${title} has been listed for 30 days. Mark it as sold or keep it listed.`};
 }
 
 function seedListingExpiryNotifications(){
-  if(!state.user || typeof pushNotification !== "function") return;
+  notifications = notifications.filter(n=>!String(n.id || "").startsWith("listing-expiry-"));
+  if(!isFreeSeller() || state.user.provider === "supabase") return;
   L.forEach(l=>{
-    if(!isOwnListing(l) || l.sold || l.status === "sold") return;
-    const info = listingExpiryInfo(l);
-    if(!info || (!info.expired && !info.expiringSoon)) return;
-    const expired = info.expired;
-    const title = state.lang === "fr"
-      ? (expired ? "Annonce expirée" : "Annonce bientôt expirée")
-      : (expired ? "Listing expired" : "Listing expiring soon");
-    const timing = state.lang === "fr"
-      ? (expired ? "est expirée" : `expire dans ${info.daysLeft} jour${info.daysLeft > 1 ? "s" : ""}`)
-      : (expired ? "has expired" : `expires in ${info.daysLeft} day${info.daysLeft > 1 ? "s" : ""}`);
-    const action = state.lang === "fr" ? "Modifiez ou republiez si besoin." : "Edit or renew it if needed.";
+    if(!isOwnListing(l) || listingIsSold(l) || !listingReminderDue(l)) return;
     pushNotification({
-      id: `listing-expiry-${idKey(l.id)}-${expired ? "expired" : "soon"}`,
+      id: `listing-sale-${idKey(l.id)}`,
       kind: "listing_expiring",
-      title,
-      text: `${titleFor(l)} ${timing}. ${action}`,
+      ...listingReminderCopy(titleFor(l)),
       at: new Date().toISOString(),
       listingId: l.id,
       actionRequired: true
@@ -1362,12 +1363,15 @@ async function refreshBackendNotifications(){
   if(!Array.isArray(rows) || state.user?.id !== userId) return;
   rows.forEach(row=>{
     const kind = row.kind === "listing_renewal_required" ? "listing_expiring" : row.kind;
+    if(!canShowNotification({kind})) return;
+    const copy = kind === "listing_expiring" && row.metadata?.listing_title
+      ? listingReminderCopy(row.metadata.listing_title)
+      : {title:row.title, text:row.body};
     pushNotification({
       id: `db-${row.id}`,
       backendId: row.id,
       kind,
-      title: row.title,
-      text: row.body,
+      ...copy,
       at: row.created_at,
       listingId: row.listing_id,
       actionRequired: row.action_required
@@ -5621,7 +5625,7 @@ async function saveOwnListingChange(listing, patch, {renew=false, remove=false} 
 
 async function confirmListingAvailable(id, e){
   if(e) e.stopPropagation();
-  const l = L.find(x=>idKey(x.id)===idKey(id));
+  const l = [...L, ...userListings].find(x=>idKey(x.id)===idKey(id));
   if(!l || !isOwnListing(l)) return;
   const now = new Date();
   const expiresAt = new Date(now.getTime() + LISTING_ACTIVE_DAYS * 86400000).toISOString();
@@ -5694,7 +5698,7 @@ async function deleteOwnListing(id, e){
 // the site instead of accumulating.
 async function markSoldAndRemove(id, e){
   if(e) e.stopPropagation();
-  const l = L.find(x=>idKey(x.id)===idKey(id));
+  const l = [...L, ...userListings].find(x=>idKey(x.id)===idKey(id));
   if(!l || !isOwnListing(l)) return;
   if(!await saveOwnListingChange(l, null, {remove:true})) return false;
   const idx = L.findIndex(x=>idKey(x.id)===idKey(id));
