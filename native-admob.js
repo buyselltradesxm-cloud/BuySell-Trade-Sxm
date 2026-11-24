@@ -105,12 +105,11 @@
     }
     window.__BST_ADMOB_SET_BROWSE__ = function (visible) {
       nativeBrowseVisible = !!visible;
-      if (layout) layout.bannerSize({height: nativeBrowseVisible ? 0 : bannerHeight}).catch(function () {});
       syncBanner();
     };
     AdMob.addListener('bannerAdSizeChanged', function (size) {
       bannerHeight = Math.ceil(Number(size.height) || 0);
-      if (layout) layout.bannerSize({height:nativeBrowseVisible ? 0 : bannerHeight}).catch(function () {});
+      syncBanner();
     });
     // showBanner resolves when the request starts, not when Google supplies an ad.
     // Listen for asynchronous failures too, otherwise a failed first request stays blank.
@@ -146,9 +145,8 @@
         if (layout) {
           var visible = document.querySelectorAll(".modal.open");
           var modal = visible.length === 1 ? visible[0] : null;
-          var eligible = !!(bannerAllowed && !nativeBrowseVisible && modal &&
-            ((modal.id === "profileModal" && modal.querySelector("#profileBody .pf-id") && !modal.querySelector("form")) ||
-             (modal.id === "detailModal" && modal.querySelector("#detailBody img"))));
+          var eligible = !!(bannerAllowed && !nativeBrowseVisible && modal?.id === "profileModal" &&
+            modal.querySelector("#profileBody .pf-id") && !modal.querySelector("form"));
           if (eligible !== sentPageAd) {
             sentPageAd = eligible;
             layout.nativePageAd({allowed: eligible}).catch(function () {});
@@ -156,8 +154,10 @@
         }
         return;
       }
-      if (bannerAllowed && !bannerRequested && !nativeBrowseVisible) { showBanner(); return; }
-      var hide = purchaseOpen() || !bannerAllowed || nativeBrowseVisible;
+      var detailOpen = document.getElementById("detailModal")?.classList.contains("open");
+      var hide = detailOpen || purchaseOpen() || !bannerAllowed || nativeBrowseVisible;
+      if (layout) layout.bannerSize({height: hide || !bannerShown ? 0 : bannerHeight}).catch(function () {});
+      if (!hide && !bannerRequested) { showBanner(); return; }
       if (!bannerShown || hide === bannerHidden) return;
       bannerHidden = hide;
       (hide ? AdMob.hideBanner() : AdMob.resumeBanner()).catch(function () {});
@@ -169,7 +169,7 @@
     });
     ready(function () {
       var purchaseWatch = new MutationObserver(syncBanner);
-      PURCHASE_MODALS.forEach(function (id) {
+      PURCHASE_MODALS.concat("detailModal").forEach(function (id) {
         var modal = document.getElementById(id);
         if (modal) purchaseWatch.observe(modal, { attributes: true, attributeFilter: ["class"] });
       });
@@ -177,10 +177,8 @@
         document.querySelectorAll(".modal").forEach(function (modal) {
           purchaseWatch.observe(modal, { attributes: true, attributeFilter: ["class"] });
         });
-        ["profileBody", "detailBody"].forEach(function (id) {
-          var body = document.getElementById(id);
-          if (body) purchaseWatch.observe(body, { childList: true, subtree: true });
-        });
+        var profile = document.getElementById("profileBody");
+        if (profile) purchaseWatch.observe(profile, { childList: true, subtree: true });
       }
     });
 
