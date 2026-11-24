@@ -40,8 +40,12 @@ const before = google.context.dataLayer.length; google.click(); assert.equal(goo
 for (const file of ['app.html','app-fr.html']) {
   const html = fs.readFileSync(path.join(root,file),'utf8');
   assert(html.includes('data-store="google_play"'));
-  assert(!html.includes('apps.apple.com'), 'Do not advertise the unapproved iOS release');
+  assert.match(html, /data-store="app_store"[^>]*href="https:\/\/apps\.apple\.com\/app\/id6809964445"/);
   assert(html.includes('hreflang="en"') && html.includes('hreflang="fr"'));
+}
+for (const file of ['index.html','marketplace.html']) {
+  const html = fs.readFileSync(path.join(root,file),'utf8');
+  assert.match(html, /data-store="app_store"[^>]*href="https:\/\/apps\.apple\.com\/app\/id6809964445"/);
 }
 const links = JSON.parse(fs.readFileSync(path.join(root,'.well-known/assetlinks.json')));
 assert.equal(links[0].target.package_name,'com.korekdigitalmarketing.buyselltradesxm');
