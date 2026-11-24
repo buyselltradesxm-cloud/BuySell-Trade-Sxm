@@ -46,10 +46,25 @@ function check(name, ok, detail) {
 
     // Same photo, thumb forced to JPEG, and thumb asked for in a type no
     // browser can encode (what Safari does with WebP).
-    const rJpeg = await window.ImgUtils.compressForListing(big, { thumbMime: 'image/jpeg', thumbQuality: 0.68 });
+    // Size comparison on a smooth, photo-like image: on pure noise neither
+    // codec can win, so WebP-vs-JPEG there is a coin toss.
+    const sc = document.createElement('canvas'); sc.width = 2000; sc.height = 1500;
+    const sctx = sc.getContext('2d');
+    const grad = sctx.createLinearGradient(0, 0, 2000, 1500); grad.addColorStop(0, '#1d6fa5'); grad.addColorStop(1, '#f2c14e');
+    sctx.fillStyle = grad; sctx.fillRect(0, 0, 2000, 1500);
+    for (let i = 0; i < 60; i++) { sctx.fillStyle = `hsl(${i * 37 % 360},60%,50%)`; sctx.beginPath(); sctx.arc(i * 97 % 2000, i * 53 % 1500, 40 + i % 90, 0, 7); sctx.fill(); }
+    const smooth = await new Promise((res) => sc.toBlob((b) => res(new File([b], 'smooth.jpg', { type: 'image/jpeg' })), 'image/jpeg', 0.95));
+    const rWebpSmooth = await window.ImgUtils.compressForListing(smooth);
+    const rJpeg = await window.ImgUtils.compressForListing(smooth, { thumbMime: 'image/jpeg', thumbQuality: 0.68 });
     const rUnsupported = await window.ImgUtils.compressForListing(big, { thumbMime: 'image/x-not-a-real-type' });
 
+    // Portrait photo: card crops it to fill, so its WIDTH must reach 480 too.
+    const rPortrait = await window.ImgUtils.compressForListing(await makePhoto(1500, 3000));
+
     return {
+      portraitThumb: rPortrait.thumbWidth + 'x' + rPortrait.thumbHeight,
+      smallThumb: rs.thumbWidth + 'x' + rs.thumbHeight,
+      webpSmoothThumbBytes: rWebpSmooth.thumbBytes,
       thumbType: r.thumbFile.type,
       thumbName: r.thumbFile.name,
       jpegThumbBytes: rJpeg.thumbBytes,
@@ -84,11 +99,13 @@ function check(name, ok, detail) {
   check('tiny photo passes through (not optimized)', out.smallOptimized === false);
   check('tiny photo keeps its size', out.smallW === 320, String(out.smallW));
   check('thumb output is a File', out.thumbIsFile);
-  check('thumb longest edge capped at 480', out.thumbW === 480 && out.thumbH <= 480, out.thumbW + 'x' + out.thumbH);
+  check('thumb shortest edge is 480', out.thumbW === 640 && out.thumbH === 480, out.thumbW + 'x' + out.thumbH);
+  check('portrait thumb is 480 wide (sharp on a card)', out.portraitThumb === '480x960', out.portraitThumb);
+  check('tiny photo thumb is not upscaled', out.smallThumb === '320x240', out.smallThumb);
   check('thumb aspect ratio preserved', out.thumbAspectKept);
   check('thumb much smaller than full photo', out.thumbBytes < out.outBytes, out.thumbBytes + ' vs ' + out.outBytes + ' bytes');
   check('thumb encoded as WebP', out.thumbType === 'image/webp' && out.thumbName === 'thumb.webp', out.thumbType + ' ' + out.thumbName);
-  check('WebP thumb smaller than the JPEG thumb', out.thumbBytes < out.jpegThumbBytes, out.thumbBytes + ' vs ' + out.jpegThumbBytes + ' bytes');
+  check('WebP thumb smaller than the JPEG thumb', out.webpSmoothThumbBytes < out.jpegThumbBytes, out.webpSmoothThumbBytes + ' vs ' + out.jpegThumbBytes + ' bytes');
   check('unsupported thumb type falls back to JPEG', out.fallbackThumbType === 'image/jpeg' && out.fallbackThumbName === 'thumb.jpg', out.fallbackThumbType + ' ' + out.fallbackThumbName);
 
   await browser.close();
