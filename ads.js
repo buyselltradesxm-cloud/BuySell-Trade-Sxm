@@ -611,7 +611,7 @@
       ".content-ad .ad-flyer-campaign .ad-flag{position:static;align-self:flex-start;}",
       ".ad-flyers{display:grid;width:100%;max-width:720px;}",
       ".ad-flyers img{grid-area:1/1;display:block;width:100%;height:auto;border-radius:9px;}",
-      ".ad-flyers img+img{opacity:0;animation:ad-flyer-switch 14s ease-in-out infinite;}",
+      ".ad-flyers img+img{opacity:0;animation:ad-flyer-switch 10s ease-in-out infinite;}",
       ".ad-flyer-campaign:focus-visible .ad-flyers img+img{animation-play-state:paused;}",
       "@media(hover:hover){.ad-flyer-campaign:hover .ad-flyers img+img{animation-play-state:paused;}}",
       "@media(prefers-reduced-motion:reduce){.content-ad .ad-unit.ad-flyer-campaign,.ad-flyers img+img{animation:none;}}",
