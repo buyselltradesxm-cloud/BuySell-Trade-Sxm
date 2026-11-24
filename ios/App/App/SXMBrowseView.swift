@@ -972,13 +972,13 @@ struct SXMListingDetail: View {
                     }
                     .padding(.horizontal)
                 }
-                if model.adsAllowed {
-                    SXMInlineAdSection(french: fr, maxHeight: 60).padding(.horizontal).padding(.top, 16)
-                }
             }
             .padding(.bottom, 24)
         }
         .background(paper.ignoresSafeArea())
+        // Pinned, so it shows while the buyer looks at the photos and reads the description,
+        // not only after scrolling past the map. One Google ad on this screen.
+        .bottomAd(model.adsAllowed)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarHidden(false)
         .toolbar {
