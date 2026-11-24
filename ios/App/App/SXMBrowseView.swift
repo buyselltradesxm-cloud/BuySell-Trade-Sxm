@@ -932,9 +932,6 @@ struct SXMListingDetail: View {
                     }
                     .padding(.horizontal)
                 }
-                if model.adsAllowed {
-                    SXMInlineAdSection(french: fr).padding(.horizontal).padding(.top, 16)
-                }
             }
             .padding(.bottom, 24)
         }

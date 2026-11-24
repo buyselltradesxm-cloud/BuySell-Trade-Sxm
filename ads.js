@@ -407,7 +407,7 @@
   function fill(container) {
     if (container.getAttribute("data-ad-state") === "filled") return;
     var key = normKey(container);
-    if (!key) { collapse(container); return; }
+    if (!key || (NATIVE_ADS && key === "listing-detail")) { collapse(container); return; }
     if (key === "sticky-bottom") {
       if (stickyDismissed()) { collapse(container); return; }
       // don't stack the sticky banner under the consent notice; give the
