@@ -169,6 +169,14 @@ window.AdsConfig = {
     }
   ],
 
+  /* Paired flyers for campaigns managed in the admin panel. */
+  campaignFlyers: {
+    "tchala-plus": {
+      fr: "/ads/tchala-plus-fr.webp",
+      en: "/ads/tchala-plus-en.webp"
+    }
+  },
+
   /* ---- House promos (fallback fill) ---------------------- */
   house: {
     enabled: true,
