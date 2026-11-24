@@ -34,7 +34,7 @@ jobs:
   simulator-build:
     name: iOS simulator build
     if: ${{ github.event.inputs.build_type == 'simulator' }}
-    runs-on: macos-latest
+    runs-on: xcode-27
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -122,7 +122,7 @@ jobs:
   app-store-ipa:
     name: Signed iOS IPA
     if: ${{ github.event.inputs.build_type == 'app-store' }}
-    runs-on: macos-latest
+    runs-on: xcode-27
     env:
       APP_BUNDLE_ID: com.korekdigitalmarketing.buyselltradesxm
       APPLE_TEAM_ID: CJ7X9S5JDT
@@ -273,6 +273,12 @@ jobs:
           mkdir -p "$VERIFY_PATH"
           ditto -x -k "$IPA_PATH" "$VERIFY_PATH"
           APP_PATH="$VERIFY_PATH/Payload/App.app"
+          SDK_NAME="$(/usr/libexec/PlistBuddy -c 'Print :DTSDKName' "$APP_PATH/Info.plist")"
+          if [[ ! "$SDK_NAME" =~ ^iphoneos([0-9]+)(\.|$) ]] || (( BASH_REMATCH[1] < 27 )); then
+            echo "::error::The signed app uses $SDK_NAME; App Store builds require the iOS 27 SDK or later."
+            exit 1
+          fi
+          echo "Verified signed app SDK: $SDK_NAME"
           plutil -lint "$APP_PATH/PrivacyInfo.xcprivacy"
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
           # Sign in with Apple only works if the signed app carries its entitlement.
