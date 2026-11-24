@@ -11,7 +11,7 @@
  * }>
  * window.ImgUtils.compressMany(files, opts) -> Promise<Array<same>>
  *
- * Every photo also gets a small "thumb" variant (~480px) alongside the full
+ * Every photo also gets a small "thumb" variant (480px short side) alongside the full
  * ~1600px one, from the same decode pass. Listing grids/cards should use the
  * thumb — it's a fraction of the size — and only load the full file on the
  * detail view. See mediaFor() in app-index.js / app-marketplace.js.
@@ -24,7 +24,8 @@
     quality: 0.82,          // JPEG quality
     mime: 'image/jpeg',
     skipBelowBytes: 320 * 1024,  // don't bother re-encoding an already-small photo
-    thumbMaxEdge: 480,      // longest side, px — grid/card thumbnail
+    thumbMinEdge: 480,      // SHORTEST side, px: cards crop to fill (object-fit:cover), so the short side is what shows; 480 stays sharp on a 3x phone card
+    thumbMaxEdge: 960,      // longest side cap, so a panorama thumb stays light
     thumbQuality: 0.7,
     thumbMime: 'image/webp',
     thumbFallbackQuality: 0.68,
@@ -75,6 +76,12 @@
     return { w: Math.round(w * s), h: Math.round(h * s) };
   }
 
+  // Thumb size: short side down to minEdge (never upscaled), long side capped at maxEdge.
+  function thumbSize(w, h, minEdge, maxEdge) {
+    var s = Math.min(1, minEdge / Math.min(w, h), maxEdge / Math.max(w, h));
+    return { w: Math.round(w * s), h: Math.round(h * s) };
+  }
+
   function renameToJpg(name) {
     return String(name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
   }
@@ -112,7 +119,7 @@
     return decode(file).then(function (src) {
       var sw = src.width, sh = src.height;
       var target = fitWithin(sw, sh, o.maxEdge);
-      var thumbTarget = fitWithin(sw, sh, o.thumbMaxEdge);
+      var thumbTarget = thumbSize(sw, sh, o.thumbMinEdge, o.thumbMaxEdge);
       var sameSize = target.w === sw && target.h === sh;
 
       var fullPromise;
