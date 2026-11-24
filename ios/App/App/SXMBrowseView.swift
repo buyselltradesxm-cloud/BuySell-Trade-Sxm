@@ -757,6 +757,7 @@ private struct SXMSponsoredWebView: UIViewRepresentable {
 /// without consent and the label appears only after an actual ad loads.
 struct SXMInlineAdSection: View {
     let french: Bool
+    var maxHeight: Int = 300
     var heightChanged: ((CGFloat) -> Void)? = nil
     @State private var adHeight: CGFloat = 0
     @State private var attempt = 0
@@ -770,7 +771,7 @@ struct SXMInlineAdSection: View {
                         .font(.system(size: 10, weight: .bold)).tracking(1.2)
                         .foregroundColor(sea)
                 }
-                SXMInlineAdBanner(width: width, onLoad: { adHeight = $0 }, onFailure: {
+                SXMInlineAdBanner(width: width, maxHeight: maxHeight, onLoad: { adHeight = $0 }, onFailure: {
                     adHeight = 0
                     let failedAttempt = attempt
                     DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
@@ -793,11 +794,12 @@ struct SXMInlineAdSection: View {
 
 private struct SXMInlineAdBanner: UIViewRepresentable {
     let width: CGFloat
+    let maxHeight: Int
     let onLoad: (CGFloat) -> Void
     let onFailure: () -> Void
 
     func makeUIView(context: Context) -> BannerView {
-        let banner = BannerView(adSize: inlineAdaptiveBanner(width: width, maxHeight: 300))
+        let banner = BannerView(adSize: inlineAdaptiveBanner(width: width, maxHeight: CGFloat(maxHeight)))
         #if DEBUG
         banner.adUnitID = "ca-app-pub-3940256099942544/2435281174"
         #else
@@ -931,6 +933,9 @@ struct SXMListingDetail: View {
                             .font(.caption).foregroundColor(ink.opacity(0.6))
                     }
                     .padding(.horizontal)
+                }
+                if model.adsAllowed {
+                    SXMInlineAdSection(french: fr, maxHeight: 60).padding(.horizontal).padding(.top, 16)
                 }
             }
             .padding(.bottom, 24)

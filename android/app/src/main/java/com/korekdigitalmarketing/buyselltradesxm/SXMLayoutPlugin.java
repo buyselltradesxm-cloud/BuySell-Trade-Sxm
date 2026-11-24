@@ -29,6 +29,7 @@ public class SXMLayoutPlugin extends Plugin {
         JSObject result = new JSObject();
         result.put("visible", ((MainActivity)getActivity()).isNativeBrowseVisible());
         result.put("placementAds", true);
+        result.put("compactListingAds", true);
         call.resolve(result);
     }
     @PluginMethod public void bannerSize(PluginCall call) {
@@ -47,8 +48,9 @@ public class SXMLayoutPlugin extends Plugin {
     }
     @PluginMethod public void nativePageAd(PluginCall call) {
         boolean allowed = call.getBoolean("allowed", false);
+        boolean compact = call.getBoolean("compact", false);
         getActivity().runOnUiThread(() -> {
-            ((MainActivity)getActivity()).setPageAdAllowed(allowed);
+            ((MainActivity)getActivity()).setPageAdAllowed(allowed, compact);
             call.resolve();
         });
     }

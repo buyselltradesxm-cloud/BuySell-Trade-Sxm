@@ -89,6 +89,7 @@
       (platform === 'ios' && !!window.SXMNativeInfo?.nativeBrowse);
     var bannerHeight = 0;
     var nativePlacementAds = platform === "ios" && !!window.SXMNativeInfo?.placementAds;
+    var compactListingAds = false;
     var sentPageAd;
     var layout = platform === 'android' && window.Capacitor.isPluginAvailable?.('SXMLayout')
       ? (window.Capacitor.Plugins?.SXMLayout || window.Capacitor.registerPlugin('SXMLayout')) : null;
@@ -97,6 +98,7 @@
     if (layout) layout.getBrowseState().then(function (state) {
       nativeBrowseVisible = !!state.visible;
       nativePlacementAds = !!state.placementAds;
+      compactListingAds = state.compactListingAds === true;
       syncBanner();
     }).catch(function () {});
     function syncNativeAds() {
@@ -145,11 +147,17 @@
         if (layout) {
           var visible = document.querySelectorAll(".modal.open");
           var modal = visible.length === 1 ? visible[0] : null;
-          var eligible = !!(bannerAllowed && !nativeBrowseVisible && modal?.id === "profileModal" &&
-            modal.querySelector("#profileBody .pf-id") && !modal.querySelector("form"));
-          if (eligible !== sentPageAd) {
-            sentPageAd = eligible;
-            layout.nativePageAd({allowed: eligible}).catch(function () {});
+          var placement = "";
+          if (bannerAllowed && !nativeBrowseVisible && modal) {
+            if (modal.id === "profileModal" && modal.querySelector("#profileBody .pf-id") && !modal.querySelector("form")) {
+              placement = "profile";
+            } else if (compactListingAds && modal.id === "detailModal" && modal.querySelector("#detailBody img")) {
+              placement = "listing-detail";
+            }
+          }
+          if (placement !== sentPageAd) {
+            sentPageAd = placement;
+            layout.nativePageAd({allowed: !!placement, compact: placement === "listing-detail"}).catch(function () {});
           }
         }
         return;
@@ -179,6 +187,8 @@
         });
         var profile = document.getElementById("profileBody");
         if (profile) purchaseWatch.observe(profile, { childList: true, subtree: true });
+        var detail = document.getElementById("detailBody");
+        if (detail) purchaseWatch.observe(detail, { childList: true, subtree: true });
       }
     });
 
