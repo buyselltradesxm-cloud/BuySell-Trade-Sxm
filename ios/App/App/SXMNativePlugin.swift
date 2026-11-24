@@ -28,7 +28,7 @@ final class SXMBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(SXMNativePlugin())
         // The site is shared with older builds and with browsers: tell it,
         // before its scripts run, what this build can do natively.
-        let info = "window.SXMNativeInfo={shell:5,tabs:true,appleSignIn:true,refresh:true,push:true,nativeBrowse:true,nativeWorkflows:true};" +
+        let info = "window.SXMNativeInfo={shell:5,tabs:true,appleSignIn:true,refresh:true,push:true,nativeBrowse:true,nativeWorkflows:true,placementAds:true};" +
             "document.documentElement&&document.documentElement.classList.add('sxm-native-tabs');"
         webView?.configuration.userContentController.addUserScript(
             WKUserScript(source: info, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -309,8 +309,9 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
             if let text = value as? String { titles[name] = text }
         }
         let detail = call.getBool("detail")
+        let profileAd = call.getBool("profileAd") ?? false
         DispatchQueue.main.async { [weak self] in
-            self?.root?.update(selected: selected, french: french, badges: badges, titles: titles, detail: detail)
+            self?.root?.update(selected: selected, french: french, badges: badges, titles: titles, detail: detail, profileAd: profileAd)
             call.resolve()
         }
     }

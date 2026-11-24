@@ -28,6 +28,7 @@ public class SXMLayoutPlugin extends Plugin {
     @PluginMethod public void getBrowseState(PluginCall call) {
         JSObject result = new JSObject();
         result.put("visible", ((MainActivity)getActivity()).isNativeBrowseVisible());
+        result.put("placementAds", true);
         call.resolve(result);
     }
     @PluginMethod public void bannerSize(PluginCall call) {
@@ -41,6 +42,13 @@ public class SXMLayoutPlugin extends Plugin {
         boolean allowed = call.getBoolean("allowed", false);
         getActivity().runOnUiThread(() -> {
             ((MainActivity)getActivity()).setNativeAdsAllowed(allowed);
+            call.resolve();
+        });
+    }
+    @PluginMethod public void nativePageAd(PluginCall call) {
+        boolean allowed = call.getBoolean("allowed", false);
+        getActivity().runOnUiThread(() -> {
+            ((MainActivity)getActivity()).setPageAdAllowed(allowed);
             call.resolve();
         });
     }

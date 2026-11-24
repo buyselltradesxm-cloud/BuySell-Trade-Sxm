@@ -166,6 +166,7 @@ final class SXMBrowseScreen extends ScrollView {
     private boolean french;
     private final LinearLayout grid, filters;
     private final LinearLayout adContainer;
+    private final SXMSponsoredView sponsoredTop, sponsoredFeed;
     private AdView inlineAd;
     private TextView adDisclosure;
     private final Runnable adRetry = this::loadInlineAd;
@@ -326,6 +327,12 @@ final class SXMBrowseScreen extends ScrollView {
         spotlightAction.setOnClickListener(v -> post.run());
         LinearLayout.LayoutParams spotlightActionParams = new LinearLayout.LayoutParams(dp(82), dp(40));
         spotlightActionParams.leftMargin = dp(8); spotlight.addView(spotlightAction, spotlightActionParams);
+        sponsoredTop = new SXMSponsoredView(context, "content-1");
+        sponsoredFeed = new SXMSponsoredView(context, "feed");
+        LinearLayout.LayoutParams sponsoredParams = new LinearLayout.LayoutParams(-1, 1);
+        sponsoredParams.topMargin = dp(12);
+        page.addView(sponsoredTop, sponsoredParams);
+        sponsoredTop.loadCampaign(french);
         heading = label("", 25, true);
         LinearLayout.LayoutParams headingParams = new LinearLayout.LayoutParams(-1, -2);
         headingParams.topMargin = dp(15); headingParams.bottomMargin = dp(2);
@@ -401,6 +408,8 @@ final class SXMBrowseScreen extends ScrollView {
     void applyLanguage(boolean useFrench) {
         if (french == useFrench) return;
         french = useFrench;
+        sponsoredTop.loadCampaign(french);
+        if (sponsoredFeed.getUrl() != null) sponsoredFeed.loadCampaign(french);
         getContext().getSharedPreferences("sxm.browse", 0).edit().putBoolean("french", french).apply();
         status.setText("");
         updateLanguageText();
@@ -515,9 +524,12 @@ final class SXMBrowseScreen extends ScrollView {
     void showSaved(boolean value) {
         savedOnly = value; search.setText(""); render(); scrollTo(0, 0);
         spotlight.setVisibility(savedOnly ? View.GONE : View.VISIBLE);
+        sponsoredTop.setVisibility(savedOnly ? View.GONE : View.VISIBLE);
+        sponsoredTop.refreshVisibility();
+        sponsoredFeed.refreshVisibility();
         header.setText(savedOnly ? (french ? "Favoris" : "Saved") : (french ? "Découvrir" : "Discover"));
-        if (adContainer != null) adContainer.setVisibility(!savedOnly && adsAllowed && inlineAd != null && inlineAd.getTag() == Boolean.TRUE ? View.VISIBLE : View.GONE);
-        if (!savedOnly) loadInlineAd();
+        adContainer.setVisibility(adsAllowed && inlineAd != null && inlineAd.getTag() == Boolean.TRUE ? View.VISIBLE : View.GONE);
+        loadInlineAd();
     }
 
     void setAdsAllowed(boolean allowed) {
@@ -531,7 +543,7 @@ final class SXMBrowseScreen extends ScrollView {
     }
 
     private void loadInlineAd() {
-        if (!adsAllowed || savedOnly || inlineAd != null ||
+        if (!adsAllowed || inlineAd != null ||
             !UserMessagingPlatform.getConsentInformation(getContext()).canRequestAds() ||
             (lastAdAttemptAt != 0 && android.os.SystemClock.elapsedRealtime() - lastAdAttemptAt < 60000)) return;
         lastAdAttemptAt = android.os.SystemClock.elapsedRealtime();
@@ -547,7 +559,7 @@ final class SXMBrowseScreen extends ScrollView {
             @Override public void onAdLoaded() {
                 if (inlineAd == view) {
                     view.setTag(Boolean.TRUE);
-                    adContainer.setVisibility(adsAllowed && !savedOnly ? View.VISIBLE : View.GONE);
+                    adContainer.setVisibility(adsAllowed ? View.VISIBLE : View.GONE);
                 }
             }
             @Override public void onAdFailedToLoad(LoadAdError error) {
@@ -681,6 +693,12 @@ final class SXMBrowseScreen extends ScrollView {
                 }
             }
             if (i + (twoColumns ? 2 : 1) == adAfter && shown.size() > adAfter) {
+                if (!savedOnly) {
+                    int previousHeight = sponsoredFeed.getLayoutParams() == null ? 1 : sponsoredFeed.getLayoutParams().height;
+                    grid.addView(sponsoredFeed, new LinearLayout.LayoutParams(-1, previousHeight));
+                    if (sponsoredFeed.getUrl() == null) sponsoredFeed.loadCampaign(french);
+                    sponsoredFeed.post(sponsoredFeed::refreshVisibility);
+                }
                 LinearLayout.LayoutParams adParams = new LinearLayout.LayoutParams(-1, -2);
                 adParams.topMargin = dp(6);
                 adParams.bottomMargin = dp(18);
@@ -922,5 +940,20 @@ final class SXMBrowseScreen extends ScrollView {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setMinHeight(dp(48));
     }
+    @Override protected void onScrollChanged(int x, int y, int previousX, int previousY) {
+        super.onScrollChanged(x, y, previousX, previousY);
+        refreshSponsorVisibility();
+    }
+
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        refreshSponsorVisibility();
+    }
+
+    void refreshSponsorVisibility() {
+        if (sponsoredTop != null) sponsoredTop.refreshVisibility();
+        if (sponsoredFeed != null) sponsoredFeed.refreshVisibility();
+    }
+
     @Override protected void onDetachedFromWindow() { super.onDetachedFromWindow(); io.shutdownNow(); }
 }

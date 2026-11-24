@@ -88,12 +88,15 @@
     var nativeBrowseVisible = platform === 'android' ||
       (platform === 'ios' && !!window.SXMNativeInfo?.nativeBrowse);
     var bannerHeight = 0;
+    var nativePlacementAds = platform === "ios" && !!window.SXMNativeInfo?.placementAds;
+    var sentPageAd;
     var layout = platform === 'android' && window.Capacitor.isPluginAvailable?.('SXMLayout')
       ? (window.Capacitor.Plugins?.SXMLayout || window.Capacitor.registerPlugin('SXMLayout')) : null;
     var iosShell = platform === 'ios' && window.SXMNativeInfo?.nativeBrowse
       ? (window.Capacitor.Plugins?.SXMNative || window.Capacitor.registerPlugin('SXMNative')) : null;
     if (layout) layout.getBrowseState().then(function (state) {
       nativeBrowseVisible = !!state.visible;
+      nativePlacementAds = !!state.placementAds;
       syncBanner();
     }).catch(function () {});
     function syncNativeAds() {
@@ -139,6 +142,20 @@
     // full-screen ads. The page sets the flag and fires "bst:ad-free" on account changes.
     function proMember() { return window.__BST_AD_FREE__ === true; }
     function syncBanner() {
+      if (nativePlacementAds) {
+        if (layout) {
+          var visible = document.querySelectorAll(".modal.open");
+          var modal = visible.length === 1 ? visible[0] : null;
+          var eligible = !!(bannerAllowed && !nativeBrowseVisible && modal &&
+            ((modal.id === "profileModal" && modal.querySelector("#profileBody .pf-id") && !modal.querySelector("form")) ||
+             (modal.id === "detailModal" && modal.querySelector("#detailBody img"))));
+          if (eligible !== sentPageAd) {
+            sentPageAd = eligible;
+            layout.nativePageAd({allowed: eligible}).catch(function () {});
+          }
+        }
+        return;
+      }
       if (bannerAllowed && !bannerRequested && !nativeBrowseVisible) { showBanner(); return; }
       var hide = purchaseOpen() || !bannerAllowed || nativeBrowseVisible;
       if (!bannerShown || hide === bannerHidden) return;
@@ -156,6 +173,15 @@
         var modal = document.getElementById(id);
         if (modal) purchaseWatch.observe(modal, { attributes: true, attributeFilter: ["class"] });
       });
+      if (layout) {
+        document.querySelectorAll(".modal").forEach(function (modal) {
+          purchaseWatch.observe(modal, { attributes: true, attributeFilter: ["class"] });
+        });
+        ["profileBody", "detailBody"].forEach(function (id) {
+          var body = document.getElementById(id);
+          if (body) purchaseWatch.observe(body, { childList: true, subtree: true });
+        });
+      }
     });
 
     function showBanner() {
@@ -203,7 +229,7 @@
        resume after a real absence. Pro members never see it. */
     var appOpenAdId = (CFG.appOpen && CFG.appOpen[platform]) || "";
     var openOpts = CFG.appOpenOptions || {};
-    var OPEN_MIN_LOAD_MS = openOpts.minLoadMs == null ? 5000 : openOpts.minLoadMs;
+    var OPEN_MIN_LOAD_MS = openOpts.minLoadMs == null ? 3000 : openOpts.minLoadMs;
     var OPEN_RESUME_AFTER_MS = openOpts.resumeAfterMs == null ? 30000 : openOpts.resumeAfterMs;
     var OPEN_COOLDOWN_MS = openOpts.cooldownMs == null ? 120000 : openOpts.cooldownMs;
     var OPEN_MAX_PER_SESSION = openOpts.maxPerSession == null ? 3 : openOpts.maxPerSession;
@@ -213,16 +239,25 @@
     // full delay with the app in front of them, however fast consent resolves.
     var startedAt = (window.performance && performance.timeOrigin) || Date.now();
     var hiddenAt = 0;
+    var interacted = false;
+    document.addEventListener("pointerdown", function () { interacted = true; }, { once: true, capture: true });
+    window.addEventListener("sxmTab", function () { interacted = true; });
+
+    function scheduleColdOpen() {
+      var remaining = OPEN_MIN_LOAD_MS - (Date.now() - startedAt);
+      if (remaining < 0) return;
+      setTimeout(function () { if (!interacted) showAppOpen(); }, remaining);
+    }
 
     function loadAppOpen() {
-      if (!appOpenAdId || openReady || openLoading || proMember() || !AdMob.loadAppOpen) return;
+      if (!bannerAllowed || !appOpenAdId || openReady || openLoading || proMember() || !AdMob.loadAppOpen) return;
       openLoading = true;
       AdMob.loadAppOpen({ adId: appOpenAdId, isTesting: testing })
         .then(function () { openReady = true; openLoading = false; })
         .catch(function () { openLoading = false; setTimeout(loadAppOpen, 30000); });
     }
     function showAppOpen() {
-      if (!openReady || openShowing || proMember()) return;
+      if (!bannerAllowed || !openReady || openShowing || proMember() || document.hidden) return;
       if (openShownCount >= OPEN_MAX_PER_SESSION) return;
       if (Date.now() - openLastShownAt < OPEN_COOLDOWN_MS) return;
       // Never cover a form, a conversation or a purchase sheet the user opened.
@@ -308,7 +343,7 @@
               .then(function () {
                 bannerAllowed = true; syncNativeAds(); syncBanner(); prepareInterstitial();
                 loadAppOpen();
-                setTimeout(showAppOpen, Math.max(0, OPEN_MIN_LOAD_MS - (Date.now() - startedAt)));
+                scheduleColdOpen();
               });
           }
           bannerAllowed = true;
@@ -317,7 +352,7 @@
           prepareInterstitial();
           loadAppOpen();
           // Cold start: let the feed paint first, then show it if it is ready.
-          setTimeout(showAppOpen, Math.max(0, OPEN_MIN_LOAD_MS - (Date.now() - startedAt)));
+          scheduleColdOpen();
         }
       })
       .catch(function () {});

@@ -22,6 +22,7 @@
   // shows a real AdMob banner instead — so every AdSense path is skipped
   // here and house promos / direct-sold campaigns keep filling the rest.
   var NATIVE_ADS = !!window.__BST_NATIVE_ADS__;
+  var DIRECT_ONLY = document.documentElement.hasAttribute("data-native-sponsored");
 
   // ---- kill switches -----------------------------------------------------
   var OFF = false;
@@ -211,7 +212,7 @@
       var attempt = ++playback;
       clearTimeout(timer);
       video.pause();
-      if (!visible || motion.matches) return;
+      if (!visible || motion.matches || (DIRECT_ONLY && !window.__BST_AD_VISIBLE__)) return;
       if (slide !== videoSlide) {
         showSlide();
         timer = setTimeout(next, 5000);
@@ -226,6 +227,7 @@
     }
     video.addEventListener("ended", function () { video.currentTime = 0; if (slide === videoSlide) next(); });
     video.addEventListener("error", function () { if (slide === videoSlide) next(); });
+    if (DIRECT_ONLY) window.addEventListener("bst:native-ad-visibility", schedule);
     if (window.IntersectionObserver && !motion.matches) {
       var observer = new IntersectionObserver(function (entries) {
         if (!stage.isConnected) { observer.disconnect(); clearTimeout(timer); video.pause(); return; }
@@ -424,6 +426,7 @@
 
     var c = pickCampaign(key, container);
     if (c) { renderCampaign(container, key, c); return; }
+    if (DIRECT_ONLY) { collapse(container); return; }
 
     var unit = !NATIVE_ADS && CFG.adsense && CFG.adsense.client &&
                CFG.adsense.slots && CFG.adsense.slots[key];
@@ -511,8 +514,8 @@
   // once loaded, house-filled slots are re-evaluated in case a
   // campaign now outranks them.
   function loadDbCampaigns() {
-    if (!(window.SB && SB.enabled() && SB.fetchAdCampaigns)) return;
-    SB.fetchAdCampaigns().then(function (rows) {
+    if (!(window.SB && SB.enabled() && SB.fetchAdCampaigns)) return Promise.resolve();
+    return SB.fetchAdCampaigns().then(function (rows) {
       if (!Array.isArray(rows) || !rows.length) return;
       var mapped = rows.filter(function (r) { return r.active !== false; }).map(function (r) {
         return {
@@ -526,6 +529,7 @@
       });
       if (!mapped.length) return;
       CFG.campaigns = mapped.concat(CFG.campaigns || []);
+      if (DIRECT_ONLY) return;
       document.querySelectorAll('[data-ad-kind="house"], [data-ad-kind="network"]').forEach(function (n) {
         if (n.getAttribute("data-ad-kind") === "network" && !pickCampaign(normKey(n), n)) return;
         n.removeAttribute("data-ad-state");
@@ -540,6 +544,11 @@
   function boot() {
     if (OFF) {
       document.querySelectorAll("[data-ad-placement], [data-admob-placement]").forEach(collapse);
+      return;
+    }
+    if (DIRECT_ONLY) {
+      injectCSS();
+      loadDbCampaigns().then(function () { scan(document, true); });
       return;
     }
     ensureGA();
