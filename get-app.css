@@ -1,0 +1,46 @@
+.download-preview .hero {
+  min-height: 100svh;
+  grid-template-columns: 1fr auto;
+  gap: clamp(24px, 6vw, 96px);
+  padding-block: 24px;
+}
+
+.download-preview .actions [hidden] {
+  display: none;
+}
+
+#app-preview {
+  display: block;
+  width: min(100%, 360px, 43svh);
+  height: auto;
+  aspect-ratio: 9 / 16;
+  justify-self: center;
+  border-radius: 18px;
+  background: #132a2e;
+}
+
+@media (max-width: 700px) {
+  .download-preview {
+    width: min(100% - 32px, 440px);
+  }
+
+  .download-preview .hero {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .download-preview h1 {
+    margin: 12px 0;
+    font-size: clamp(26px, 8vw, 38px);
+  }
+
+  .download-preview .actions {
+    gap: 8px;
+    margin-top: 0;
+  }
+
+  #app-preview {
+    width: min(100%, 320px, 34svh);
+  }
+}
