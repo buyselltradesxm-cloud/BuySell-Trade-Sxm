@@ -893,10 +893,16 @@ final class SXMBrowseScreen extends ScrollView {
         if (photos == null || photos.length() == 0) photos = l.optJSONArray("thumb_photos");
         final JSONArray gallery = photos;
         final int[] page = {0};
+        // This window is only a quick preview: after PREVIEW_MS the full listing page opens
+        // (all details + chat). Opening the full-screen photo viewer keeps the preview.
+        final boolean[] stay = {false};
+        TextView opening = label(french ? "Ouverture de l’annonce complète…" : "Opening the full listing…", 13, true);
+        opening.setTextColor(SEA);
+        content.addView(opening);
         if (gallery != null && gallery.length() > 0) {
             loadPhoto(gallery.optString(0), photo, generation, 2);
             photo.setContentDescription(french ? "Voir la photo en grand" : "View photo full screen");
-            photo.setOnClickListener(v -> showPhotoViewer(gallery, page[0]));
+            photo.setOnClickListener(v -> { stay[0] = true; opening.setVisibility(View.GONE); showPhotoViewer(gallery, page[0]); });
         }
         if (gallery != null && gallery.length() > 1) {
             LinearLayout controls = new LinearLayout(getContext());
@@ -937,6 +943,7 @@ final class SXMBrowseScreen extends ScrollView {
         TextView share = label(french ? "Partager l’annonce" : "Share listing", 16, true);
         actionIcon(share, R.drawable.ic_share, INK);
         share.setOnClickListener(v -> {
+            stay[0] = true; opening.setVisibility(View.GONE);
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
             send.putExtra(Intent.EXTRA_TEXT, "https://buyselltradesxm.com/?listing=" + Uri.encode(id));
@@ -948,6 +955,7 @@ final class SXMBrowseScreen extends ScrollView {
             TextView map = label(french ? "Voir le secteur sur la carte" : "View area on map", 16, true);
             actionIcon(map, R.drawable.ic_location, INK);
             map.setOnClickListener(v -> {
+                stay[0] = true; opening.setVisibility(View.GONE);
                 Uri uri = Uri.parse("geo:0,0?q=" + Uri.encode(area +
                     (l.optString("side").equals("nl") ? ", Sint Maarten" : ", Saint-Martin")));
                 Intent intent = new Intent(Intent.ACTION_VIEW, uri);
@@ -965,7 +973,11 @@ final class SXMBrowseScreen extends ScrollView {
             .setNegativeButton(french ? "Fermer" : "Close", (d, which) -> {}).create();
         contact.setOnClickListener(v -> { dialog.dismiss(); open.accept(id); });
         dialog.show();
+        postDelayed(() -> {
+            if (dialog.isShowing() && !stay[0]) { dialog.dismiss(); open.accept(id); }
+        }, PREVIEW_MS);
     }
+    private static final long PREVIEW_MS = 3000;
     /** Full-screen black viewer: full-quality photo, ◀ ▶ between photos, tap the photo or ✕ to close. */
     private void showPhotoViewer(JSONArray gallery, int start) {
         android.app.Dialog viewer = new android.app.Dialog(getContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
