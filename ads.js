@@ -137,10 +137,13 @@
   }
 
   // ---- pickers -----------------------------------------------------
-  function pickCampaign(key) {
+  function pickCampaign(key, container) {
     var list = (CFG.campaigns || []).filter(function (c) {
       if (!c || !safeHttpUrl(c.url)) return false;
       if (!(c.placements || []).some(function (p) { return p === key; })) return false;
+      var reel = CFG.campaignReels && CFG.campaignReels[c.id];
+      if (key === "feed" && reel && reel.onceInFeed &&
+          container !== document.querySelector('[data-ad-placement="feed"]')) return false;
       var t = todayStr();
       if (c.start && c.start > t) return false;
       if (c.end && c.end < t) return false;
@@ -419,7 +422,7 @@
       }
     }
 
-    var c = pickCampaign(key);
+    var c = pickCampaign(key, container);
     if (c) { renderCampaign(container, key, c); return; }
 
     var unit = !NATIVE_ADS && CFG.adsense && CFG.adsense.client &&
@@ -524,7 +527,7 @@
       if (!mapped.length) return;
       CFG.campaigns = mapped.concat(CFG.campaigns || []);
       document.querySelectorAll('[data-ad-kind="house"], [data-ad-kind="network"]').forEach(function (n) {
-        if (n.getAttribute("data-ad-kind") === "network" && !pickCampaign(normKey(n))) return;
+        if (n.getAttribute("data-ad-kind") === "network" && !pickCampaign(normKey(n), n)) return;
         n.removeAttribute("data-ad-state");
         n.removeAttribute("data-ad-kind");
       });
@@ -681,7 +684,7 @@
       ".content-ad .ad-unit.ad-flyer-campaign{flex-direction:column;align-items:center;gap:8px;animation:ad-flyer-arrive .55s ease-out both;}",
       ".content-ad .ad-flyer-campaign .ad-flag{position:static;align-self:flex-start;}",
       ".ad-flyers{display:grid;width:100%;max-width:720px;}",
-      ".ad-reel{display:block;position:relative;width:100%;max-width:600px;aspect-ratio:4/3;margin-inline:auto;background:#101820;border-radius:9px;overflow:hidden;}",
+      ".ad-reel{display:block;position:relative;width:100%;max-width:380px;aspect-ratio:676/920;margin-inline:auto;background:#101820;border-radius:9px;overflow:hidden;}",
       ".ad-reel img,.ad-reel video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .3s ease;}",
       ".ad-reel .ad-reel-current{opacity:1;}",
       ".ad-flyers img{grid-area:1/1;display:block;width:100%;height:auto;border-radius:9px;}",
