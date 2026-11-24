@@ -43,6 +43,8 @@ struct SXMListing: Codable, Identifiable, Equatable {
     let createdAt: String?
     /// Hidden French + English search words from the listing-keywords function (never shown).
     let searchKeywords: String?
+    let sellerName: String?
+    let vehicle: SXMVehicle?
 
     enum CodingKeys: String, CodingKey {
         case id, title, description, category, subcategory, area, side, currency, photos
@@ -50,6 +52,7 @@ struct SXMListing: Codable, Identifiable, Equatable {
         case details
         case priceEur = "price_eur", priceUsd = "price_usd", thumbPhotos = "thumb_photos", createdAt = "created_at"
         case searchKeywords = "search_keywords"
+        case sellerName = "seller_name", vehicle
     }
 
     init(from decoder: Decoder) throws {
@@ -75,6 +78,8 @@ struct SXMListing: Codable, Identifiable, Equatable {
         thumbPhotos = try? c.decode([String].self, forKey: .thumbPhotos)
         createdAt = try? c.decode(String.self, forKey: .createdAt)
         searchKeywords = try? c.decode(String.self, forKey: .searchKeywords)
+        sellerName = (try? c.decode(String.self, forKey: .sellerName)).flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 }
+        vehicle = try? c.decode(SXMVehicle.self, forKey: .vehicle)
     }
 
     /// Same words as the website's searchAliases(), so "bike" finds a scooter filed under Vehicles.
@@ -136,6 +141,72 @@ struct SXMListing: Codable, Identifiable, Equatable {
     }
     var place: String {
         [area, side == "nl" ? "Sint Maarten" : "Saint-Martin"].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
+    }
+
+    /// "Seller name · Posted 3 days ago", like the website's seller box.
+    func sellerLine(french fr: Bool) -> String? {
+        var parts: [String] = []
+        if let name = sellerName { parts.append(name) }
+        if let raw = createdAt {
+            let iso = ISO8601DateFormatter()
+            iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let date = iso.date(from: raw) ?? ISO8601DateFormatter().date(from: raw)
+            if let date = date {
+                let rel = RelativeDateTimeFormatter()
+                rel.locale = Locale(identifier: fr ? "fr_FR" : "en_US")
+                parts.append((fr ? "Publiée " : "Posted ") + rel.localizedString(for: min(date, Date()), relativeTo: Date()))
+            }
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    static let vehicleSubcategories: Set<String> = ["car-sale", "motorbike-sale", "scooter-sale", "truck-sale", "dealer-inventory", "boat-sale", "jet-ski-sale"]
+
+    /// Same rows, labels and order as the website's vehicleDetailsHTML().
+    func vehicleSpecs(french fr: Bool) -> [SXMSpec] {
+        guard let v = vehicle, category == "locvoit" || SXMListing.vehicleSubcategories.contains(subcategory ?? "") else { return [] }
+        let fuels = ["gas": fr ? "Essence" : "Gasoline", "diesel": "Diesel", "hybrid": fr ? "Hybride" : "Hybrid",
+                     "electric": fr ? "Électrique" : "Electric", "other": fr ? "Autre" : "Other"]
+        let gears = ["automatic": fr ? "Automatique" : "Automatic", "manual": fr ? "Manuelle" : "Manual", "other": fr ? "Autre" : "Other"]
+        var km = v.km
+        if let raw = v.km, let n = Double(raw.replacingOccurrences(of: " ", with: "")) {
+            let f = NumberFormatter()
+            f.numberStyle = .decimal; f.maximumFractionDigits = 0
+            f.locale = Locale(identifier: fr ? "fr_FR" : "en_US")
+            km = (f.string(from: NSNumber(value: n)) ?? raw) + " km"
+        }
+        var rows: [(String, String?)] = [(fr ? "Année" : "Year", v.year)]
+        if category != "locvoit" { rows += [(fr ? "Kilométrage" : "Mileage", km), (fr ? "Couleur" : "Color", v.color)] }
+        rows += [(fr ? "Motorisation" : "Engine", v.fuel.map { fuels[$0] ?? $0 }),
+                 ("Transmission", v.transmission.map { gears[$0] ?? $0 }),
+                 (fr ? "Intérieur / extérieur" : "Interior / exterior", v.body),
+                 (fr ? "Mécanique & entretien" : "Mechanics & maintenance", v.mechanical),
+                 (fr ? "Papiers & disponibilité" : "Paperwork & availability", v.docs)]
+        return rows.compactMap { label, value in value.map { SXMSpec(label: label, value: $0) } }
+    }
+}
+
+struct SXMSpec: Identifiable {
+    let label: String
+    let value: String
+    var id: String { label }
+}
+
+/// The listing's `vehicle` column (website vehicle form). Values arrive as text or numbers; blanks are dropped.
+struct SXMVehicle: Codable, Equatable {
+    let year, km, color, fuel, transmission, body, mechanical, docs: String?
+    enum CodingKeys: String, CodingKey { case year, km, color, fuel, transmission, body, mechanical, docs }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func text(_ key: CodingKeys) -> String? {
+            let value = (try? c.decode(String.self, forKey: key))
+                ?? (try? c.decode(Double.self, forKey: key)).map { $0 == $0.rounded() ? String(Int64($0)) : String($0) }
+            let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed?.isEmpty == false ? trimmed : nil
+        }
+        year = text(.year); km = text(.km); color = text(.color); fuel = text(.fuel)
+        transmission = text(.transmission); body = text(.body); mechanical = text(.mechanical); docs = text(.docs)
     }
 }
 
@@ -285,7 +356,7 @@ final class SXMBrowseModel: ObservableObject {
         defer { loading = false }
         var parts = URLComponents(string: "\(Self.supabaseURL)/rest/v1/listings")!
         parts.queryItems = [
-            URLQueryItem(name: "select", value: "id,title,title_fr,title_en,details,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords"),
+            URLQueryItem(name: "select", value: "id,title,title_fr,title_en,details,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords,seller_name,vehicle"),
             URLQueryItem(name: "seller_id", value: "not.is.null"),
             URLQueryItem(name: "or", value: "(status.is.null,status.in.(active,reserved))"),
             URLQueryItem(name: "order", value: "created_at.desc"),
@@ -356,6 +427,8 @@ extension SXMListing {
         try c.encodeIfPresent(createdAt, forKey: .createdAt)
         try c.encodeIfPresent(subcategory, forKey: .subcategory)
         try c.encodeIfPresent(searchKeywords, forKey: .searchKeywords)
+        try c.encodeIfPresent(sellerName, forKey: .sellerName)
+        try c.encodeIfPresent(vehicle, forKey: .vehicle)
     }
 }
 
@@ -432,6 +505,7 @@ struct SXMBrowseView: View {
                 }.padding(.vertical, 20)
             }
             .background(paper.ignoresSafeArea())
+            .bottomAd(model.showingSaved && model.adsAllowed)
             .refreshable { await model.refresh(); sponsoredRevision += 1 }
             .navigationBarHidden(true)
             .sheet(isPresented: $showFilters) { filters }
@@ -607,7 +681,8 @@ struct SXMListingGrid: View {
                 SXMSponsoredSection(origin: model.sponsoredOrigin, placement: "feed", french: model.french)
                     .id(revision)
             }
-            if listings.count > adAfter && model.adsAllowed {
+            // Saved already has the pinned bottom banner (bottomAd): one Google ad per screen.
+            if listings.count > adAfter && model.adsAllowed && !model.showingSaved {
                 SXMInlineAdSection(french: model.french)
             }
             if listings.count > adAfter { listingRows(Array(listings.dropFirst(adAfter))) }
@@ -795,14 +870,47 @@ struct SXMInlineAdSection: View {
     }
 }
 
+/// Slim banner pinned to the bottom of the native Saved, Post and Messages screens.
+/// It stays collapsed (1 pt) until an ad loads and while the keyboard is up.
+struct SXMBottomAd: View {
+    @State private var adHeight: CGFloat = 0
+    @State private var attempt = 0
+    @State private var keyboardUp = false
+    var body: some View {
+        let width = UIScreen.main.bounds.width
+        SXMInlineAdBanner(width: width, anchored: true, onLoad: { adHeight = $0 }, onFailure: {
+            adHeight = 0
+            let failedAttempt = attempt
+            DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
+                if attempt == failedAttempt { attempt += 1 }
+            }
+        })
+        .id(attempt)
+        .frame(width: width, height: keyboardUp ? 0 : max(1, adHeight))
+        .clipped()
+        .background(adHeight > 0 ? Color.white : Color.clear)
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardUp = false }
+    }
+}
+
+extension View {
+    /// Adds the bottom banner when ads are allowed (UMP consent, not Pro).
+    func bottomAd(_ allowed: Bool) -> some View {
+        safeAreaInset(edge: .bottom, spacing: 0) { if allowed { SXMBottomAd() } }
+    }
+}
+
 private struct SXMInlineAdBanner: UIViewRepresentable {
     let width: CGFloat
-    let maxHeight: Int
+    var maxHeight = 300
+    var anchored = false
     let onLoad: (CGFloat) -> Void
     let onFailure: () -> Void
 
     func makeUIView(context: Context) -> BannerView {
-        let banner = BannerView(adSize: inlineAdaptiveBanner(width: width, maxHeight: CGFloat(maxHeight)))
+        let banner = BannerView(adSize: anchored ? currentOrientationAnchoredAdaptiveBanner(width: width)
+                                                 : inlineAdaptiveBanner(width: width, maxHeight: CGFloat(maxHeight)))
         #if DEBUG
         banner.adUnitID = "ca-app-pub-3940256099942544/2435281174"
         #else
@@ -905,6 +1013,10 @@ struct SXMListingDetail: View {
                         if let cat = SXMCategories.name(listing.category, french: fr) { Text("· \(cat)") }
                     }
                     .font(.subheadline).foregroundColor(ink.opacity(0.7))
+                    if let seller = listing.sellerLine(french: fr) {
+                        Label(seller, systemImage: "person.crop.circle")
+                            .font(.subheadline).foregroundColor(ink.opacity(0.7))
+                    }
                 }
                 .padding(.horizontal)
 
@@ -923,6 +1035,22 @@ struct SXMListingDetail: View {
                         .textSelection(.enabled)
                 }
 
+                let specs = listing.vehicleSpecs(french: fr)
+                if !specs.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(fr ? "Détails véhicule" : "Vehicle details").font(.headline).foregroundColor(ink)
+                        ForEach(specs) { spec in
+                            HStack(alignment: .top, spacing: 12) {
+                                Text(spec.label).foregroundColor(ink.opacity(0.65))
+                                Spacer(minLength: 8)
+                                Text(spec.value).fontWeight(.semibold).foregroundColor(ink).multilineTextAlignment(.trailing)
+                            }
+                            .font(.subheadline)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+
                 if let region = region {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(fr ? "Secteur" : "Area").font(.headline).foregroundColor(ink)
@@ -937,13 +1065,13 @@ struct SXMListingDetail: View {
                     }
                     .padding(.horizontal)
                 }
-                if model.adsAllowed {
-                    SXMInlineAdSection(french: fr, maxHeight: 60).padding(.horizontal).padding(.top, 16)
-                }
             }
             .padding(.bottom, 24)
         }
         .background(paper.ignoresSafeArea())
+        // Pinned, so it shows while the buyer looks at the photos and reads the description,
+        // not only after scrolling past the map. One Google ad on this screen.
+        .bottomAd(model.adsAllowed)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarHidden(false)
         .toolbar {

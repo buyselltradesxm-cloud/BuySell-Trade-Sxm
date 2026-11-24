@@ -63,6 +63,7 @@ final class SXMWorkflowModel: ObservableObject {
     @Published var error = ""
     @Published var loading = false
     @Published var busy = false
+    @Published var adsAllowed = false // UMP consent and not Pro; set by the root controller
     @Published var threads: [SXMThread] = []
     @Published var messageDrafts: [String: String] = [:]
     private var generation = UUID()
@@ -164,11 +165,11 @@ struct SXMWorkflowView: View {
             Group {
                 if let id = model.session?.userId {
                     if tab == "post" {
-                        SXMPostView(model: model, owner: id, profile: profile).id(id)
+                        SXMPostView(model: model, owner: id, profile: profile).id(id).bottomAd(model.adsAllowed)
                     } else if listingId != nil {
                         if let contact = contact { SXMThreadView(model: model, thread: contact) }
                         else { status }
-                    } else { SXMInboxView(model: model) }
+                    } else { SXMInboxView(model: model).bottomAd(model.adsAllowed) }
                 } else { status }
             }
             .navigationTitle(tab == "post" ? model.text("Publier", "Post") : model.text("Messages", "Messages"))
