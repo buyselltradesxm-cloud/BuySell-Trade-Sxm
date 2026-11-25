@@ -685,7 +685,7 @@
       ".ad-download-link{color:var(--sea-deep,#0a5a66);font-weight:700;text-decoration:underline;text-underline-offset:2px;}",
       ".content-ad .ad-restaurant{flex-direction:column;align-items:stretch;gap:10px;max-width:720px;margin-inline:auto;}",
       ".ad-restaurant .ad-flag{position:static;align-self:flex-start;}",
-      ".ad-restaurant .ad-media{height:220px;max-height:none;object-fit:cover;}",
+      ".content-ad .ad-unit.ad-restaurant .ad-media{width:100%;height:auto;max-height:none;max-width:420px;margin-inline:auto;object-fit:contain;}",
       ".ad-restaurant .ad-head{font-size:20px;line-height:1.25;}",
       ".ad-restaurant .ad-text{font-size:13px;line-height:1.5;}",
       ".ad-network{padding:8px;}",
