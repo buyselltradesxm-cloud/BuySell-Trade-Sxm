@@ -346,11 +346,7 @@ final class SXMBrowseScreen extends ScrollView {
         LinearLayout.LayoutParams sponsoredParams = new LinearLayout.LayoutParams(-1, 1);
         sponsoredParams.topMargin = dp(12);
         page.addView(sponsoredTop, sponsoredParams);
-        LinearLayout.LayoutParams restaurantParams = new LinearLayout.LayoutParams(-1, 1);
-        restaurantParams.setMargins(dp(18), dp(10), dp(18), dp(10));
-        page.addView(sponsoredRestaurant, restaurantParams);
         sponsoredTop.loadCampaign(french);
-        sponsoredRestaurant.loadCampaign(french);
         heading = label("", 25, true);
         LinearLayout.LayoutParams headingParams = new LinearLayout.LayoutParams(-1, -2);
         headingParams.topMargin = dp(15); headingParams.bottomMargin = dp(2);
@@ -427,7 +423,7 @@ final class SXMBrowseScreen extends ScrollView {
         if (french == useFrench) return;
         french = useFrench;
         sponsoredTop.loadCampaign(french);
-        sponsoredRestaurant.loadCampaign(french);
+        if (sponsoredRestaurant.getUrl() != null) sponsoredRestaurant.loadCampaign(french);
         if (sponsoredFeed.getUrl() != null) sponsoredFeed.loadCampaign(french);
         getContext().getSharedPreferences("sxm.browse", 0).edit().putBoolean("french", french).apply();
         status.setText("");
@@ -779,6 +775,15 @@ final class SXMBrowseScreen extends ScrollView {
                     adParams.bottomMargin = dp(18);
                     grid.addView(adContainer, adParams);
                 }
+            }
+            if (!savedOnly && i + (twoColumns ? 2 : 1) == 16 && shown.size() > 16) {
+                int previousHeight = sponsoredRestaurant.getLayoutParams() == null ? 1 : sponsoredRestaurant.getLayoutParams().height;
+                LinearLayout.LayoutParams restaurantParams = new LinearLayout.LayoutParams(-1, previousHeight);
+                restaurantParams.topMargin = dp(8);
+                restaurantParams.bottomMargin = dp(18);
+                grid.addView(sponsoredRestaurant, restaurantParams);
+                if (sponsoredRestaurant.getUrl() == null) sponsoredRestaurant.loadCampaign(french);
+                sponsoredRestaurant.post(sponsoredRestaurant::refreshVisibility);
             }
         }
         if (savedOnly) addSavedAd();

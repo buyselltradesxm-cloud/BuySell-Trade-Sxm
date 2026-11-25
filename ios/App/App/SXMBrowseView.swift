@@ -501,8 +501,6 @@ struct SXMBrowseView: View {
                     if !model.showingSaved && model.discoverVisible {
                         SXMSponsoredSection(origin: model.sponsoredOrigin, placement: "content-1", french: fr)
                             .id(sponsoredRevision).padding(.horizontal, 20)
-                        SXMSponsoredSection(origin: model.sponsoredOrigin, placement: "restaurant", french: fr)
-                            .id(sponsoredRevision).padding(.horizontal, 20)
                     }
                     shortcuts
                     locationPicker
@@ -715,7 +713,16 @@ struct SXMListingGrid: View {
             if listings.count > adAfter && model.adsAllowed && !model.showingSaved {
                 SXMInlineAdSection(french: model.french)
             }
-            if listings.count > adAfter { listingRows(Array(listings.dropFirst(adAfter))) }
+            if listings.count > 16 && sponsoredRevision != nil && !model.showingSaved {
+                listingRows(Array(listings[adAfter..<16]))
+                if let revision = sponsoredRevision, model.discoverVisible {
+                    SXMSponsoredSection(origin: model.sponsoredOrigin, placement: "restaurant", french: model.french)
+                        .id("restaurant-\(revision)")
+                }
+                listingRows(Array(listings.dropFirst(16)))
+            } else if listings.count > adAfter {
+                listingRows(Array(listings.dropFirst(adAfter)))
+            }
         }.padding(.horizontal, 20)
     }
 
