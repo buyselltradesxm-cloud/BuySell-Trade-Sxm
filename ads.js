@@ -36,15 +36,16 @@
 
   // ---- helpers ---------------------------------------------------------
   function lang() {
+    if (DIRECT_ONLY) return document.documentElement.lang === "fr" ? "fr" : "en";
     try {
       return (localStorage.getItem("bst_lang") ||
-              document.documentElement.lang || "fr").slice(0, 2).toLowerCase();
-    } catch (e) { return "fr"; }
+              document.documentElement.lang || "en").slice(0, 2).toLowerCase();
+    } catch (e) { return document.documentElement.lang === "fr" ? "fr" : "en"; }
   }
   function L(obj) {
     if (!obj) return "";
     if (typeof obj === "string") return obj;
-    return obj[lang()] || obj.fr || obj.en || "";
+    return obj[lang()] || obj.en || obj.fr || "";
   }
   function todayStr() {
     var d = new Date();
@@ -296,6 +297,21 @@
       track("ad_click", { slot: key, type: "campaign", id: c.id });
     });
     mount(container, a, "campaign", c.id);
+    var note = key === "content-1" && CFG.campaignDownloadNotes && CFG.campaignDownloadNotes[c.id];
+    var downloadUrl = note && safeHttpUrl(note.url);
+    if (downloadUrl) {
+      var caption = el("p", "ad-download-note");
+      var download = el("a", "ad-download-link", L(note.link));
+      download.href = downloadUrl;
+      download.target = "_blank";
+      download.rel = "sponsored noopener nofollow";
+      download.addEventListener("click", function () {
+        track("ad_click", { slot: key, type: "campaign", id: c.id });
+      });
+      caption.appendChild(download);
+      caption.appendChild(document.createTextNode(L(note.text)));
+      container.appendChild(caption);
+    }
     track("ad_impression", { slot: key, type: "campaign", id: c.id });
   }
 
@@ -664,6 +680,8 @@
       ".ad-text{font-size:12.5px;line-height:1.35;color:var(--mute,#5b6b6e);font-weight:600;}",
       ".ad-cta{margin-top:4px;font-size:12.5px;font-weight:900;color:var(--sea-deep,#0a5a66);}",
       ".ad-sponsor{font-size:10.5px;font-weight:700;color:var(--mute,#5b6b6e);}",
+      ".ad-download-note{max-width:720px;margin:10px auto 0;font-size:13px;line-height:1.5;color:var(--ink,#102a2f);text-align:left;}",
+      ".ad-download-link{color:var(--sea-deep,#0a5a66);font-weight:700;text-decoration:underline;text-underline-offset:2px;}",
       ".ad-network{padding:8px;}",
       ".ad-network .adsbygoogle{min-height:90px;}",
       /* in-grid card: span the full row of the results grid */

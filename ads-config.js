@@ -177,6 +177,17 @@ window.AdsConfig = {
     }
   },
 
+  campaignDownloadNotes: {
+    "tchala-plus": {
+      url: "https://tchalaplus.com/en.html",
+      link: { en: "Download Tchala Plus", fr: "Téléchargez Tchala Plus" },
+      text: {
+        en: " for the latest U.S. lottery results and international and Caribbean news updates.",
+        fr: " pour consulter les derniers résultats des loteries américaines et les actualités internationales et caribéennes."
+      }
+    }
+  },
+
   campaignReels: {
     "majesty-car-rental": {
       onceInFeed: true,
