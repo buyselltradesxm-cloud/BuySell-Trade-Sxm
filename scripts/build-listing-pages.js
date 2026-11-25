@@ -201,7 +201,7 @@ ${ldJson ? `<script type="application/ld+json">${ldJson}</script>\n` : ""}</head
 <header><a href="/">Buy Sell Trade SXM</a> · <a href="/l/">Toutes les annonces / All listings</a></header>
 <main>
 ${photo ? `<img class="photo" src="${esc(photo)}" alt="${esc(l.title)}">\n` : ""}<h1>${esc(l.title)}</h1>
-${price ? `<p class="price">${esc(price.label)}</p>\n` : ""}<p class="meta">${category ? esc(category) + " · " : ""}<span class="listing-location">${esc(place)}</span></p>
+${price ? `<p class="price">${esc(price.label)}</p>\n` : ""}<p class="meta">${category ? esc(category) + " · " : ""}<span class="listing-location notranslate" translate="no">${esc(place)}</span></p>
 ${description ? `<p class="description">${esc(description)}</p>\n` : ""}<p><a class="cta" href="${esc(appUrl)}">Voir l'annonce et contacter le vendeur<br><span lang="en">View the listing and contact the seller</span></a></p>
 <p class="more"><a href="/l/">Toutes les petites annonces de Saint-Martin et Sint Maarten</a></p>
 </main>
@@ -224,7 +224,7 @@ function directoryFor(listings) {
   const items = listings.map(l => {
     const price = priceOf(l);
     const place = [l.area, l.side === "nl" ? "Sint Maarten" : "Saint-Martin"].filter(Boolean).join(", ");
-    return `<li><h2><a href="/l/${esc(l.id)}.html">${esc(l.title)}</a></h2><p class="meta"><span class="listing-location">${esc(place)}</span>${price ? " · " + esc(price.label + (l.category === "locvoit" ? " / day" : "")) : ""}</p></li>`;
+    return `<li><h2><a href="/l/${esc(l.id)}.html">${esc(l.title)}</a></h2><p class="meta"><span class="listing-location notranslate" translate="no">${esc(place)}</span>${price ? " · " + esc(price.label + (l.category === "locvoit" ? " / day" : "")) : ""}</p></li>`;
   }).join("\n");
   return `<!DOCTYPE html>
 <html lang="en">

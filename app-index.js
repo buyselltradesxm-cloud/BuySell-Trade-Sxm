@@ -1482,7 +1482,7 @@ function applyLocalAdminTestMode(){
 const t = () => I18N[state.lang];
 const money = (n, c) => (c==="eur"?"€":"$") + Number(n || 0).toLocaleString("en-US");
 function listingLocationHTML(area){
-  return area ? `<span class="listing-location">${esc(area)}</span>` : "";
+  return area ? `<span class="listing-location notranslate" translate="no">${esc(area)}</span>` : "";
 }
 
 function esc(s){
