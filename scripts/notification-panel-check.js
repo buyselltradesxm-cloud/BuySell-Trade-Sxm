@@ -51,7 +51,7 @@ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg
    assert.equal(await page.locator('#notifList script').count(),0);
    assert.equal(await page.locator('.notif-panel-body').evaluate(node=>node.scrollHeight>node.clientHeight),true,'Long activity scrolls within the panel');
    await page.locator('.toast.show').waitFor({state:'hidden'});
-   await page.locator('.search-alert-entry button').click();await page.locator('#searchAlertsModal.open').waitFor();
+   await page.locator('[data-click="openSearchAlerts"]').click();await page.locator('#searchAlertsModal.open').waitFor();
    await page.keyboard.press('Escape');
    await trigger.click();await page.keyboard.press('Escape');assert.equal(await page.locator('#notifPanel').isVisible(),false);
    assert.equal(await trigger.evaluate(node=>document.activeElement===node),true);

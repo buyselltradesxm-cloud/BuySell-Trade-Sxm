@@ -356,7 +356,7 @@ function usesVehicleFields(cat, sub){
 const I18N = {
   fr:{searchPh:"Que cherchez-vous ?",searchBtn:"Rechercher",postAd:"Publier une annonce",postShort:"Publier",favoris:"Favoris",messages:"Messages",
   searchAlertsLabel:"Mes alertes de recherche · préférences email",
-  notifSubtitle:"Messages et nouveautés",notifPreferences:"Vos préférences",notifDevice:"Sur cet appareil",notifPushHint:"Soyez prévenu des nouveaux messages.",notifClose:"Fermer les notifications",notifEmptyTitle:"Vous êtes à jour",notifEmptyBody:"Vos nouveaux messages et les mises à jour de vos annonces apparaîtront ici.",notifSearchTitle:"Alertes de recherche",notifSearchHint:"Les annonces qui vous intéressent, par email.",
+  notifSubtitle:"Messages et nouveautés",notifPreferences:"Vos préférences",notifDevice:"Sur cet appareil",notifPushHint:"Soyez prévenu des nouveaux messages.",notifClose:"Fermer les notifications",notifEmptyTitle:"Vous êtes à jour",notifEmptyBody:"Vos nouveaux messages et les mises à jour de vos annonces apparaîtront ici.",notifSearchTitle:"Alertes de recherche",notifSearchHint:"Les annonces qui vous intéressent, par email.",notifFollowTitle:"Vendeurs suivis",notifFollowHint:"Leurs nouvelles annonces, sur votre téléphone.",
   socialGoogle:"Continuer avec Google",socialApple:"Continuer avec Apple",socialOr:"ou",
   inboxPick:"Choisissez une conversation pour répondre.",inboxSend:"Envoyer",inboxViewListing:"Voir l'annonce",inboxWrite:"Écrivez votre réponse…",
   notifLabel:"Alertes",notifTitle:"Notifications",notifClear:"Tout effacer",pushDefault:"Recevoir les alertes sur cet appareil",pushLogin:"Connectez-vous pour activer les alertes.",pushOn:"Alertes activées sur cet appareil.",pushReady:"Alertes prêtes. Appuyez sur Activer.",pushDenied:"Alertes bloquées dans le navigateur.",pushUnsupported:"Alertes non disponibles sur ce navigateur.",pushEnable:"Activer",pushDisable:"Désactiver",
@@ -385,7 +385,7 @@ const I18N = {
       dlOn:"Télécharger sur",getOn:"Disponible sur"},
   en:{searchPh:"What are you looking for?",searchBtn:"Search",postAd:"Post an ad",postShort:"Post",favoris:"Saved",messages:"Messages",
   searchAlertsLabel:"My search alerts · email preferences",
-  notifSubtitle:"Messages & updates",notifPreferences:"Your preferences",notifDevice:"On this device",notifPushHint:"Get notified about new messages.",notifClose:"Close notifications",notifEmptyTitle:"You're all caught up",notifEmptyBody:"New messages and updates about your listings will appear here.",notifSearchTitle:"Search alerts",notifSearchHint:"New finds, chosen by you. By email.",
+  notifSubtitle:"Messages & updates",notifPreferences:"Your preferences",notifDevice:"On this device",notifPushHint:"Get notified about new messages.",notifClose:"Close notifications",notifEmptyTitle:"You're all caught up",notifEmptyBody:"New messages and updates about your listings will appear here.",notifSearchTitle:"Search alerts",notifSearchHint:"New finds, chosen by you. By email.",notifFollowTitle:"Followed sellers",notifFollowHint:"Their new listings, on your phone.",
   socialGoogle:"Continue with Google",socialApple:"Continue with Apple",socialOr:"or",
   inboxPick:"Pick a conversation to reply.",inboxSend:"Send",inboxViewListing:"View listing",inboxWrite:"Write your reply…",
   notifLabel:"Alerts",notifTitle:"Notifications",notifClear:"Clear all",pushDefault:"Receive alerts on this device",pushLogin:"Log in to turn on alerts.",pushOn:"Alerts are on for this device.",pushReady:"Alerts are ready. Tap Enable.",pushDenied:"Alerts are blocked in the browser.",pushUnsupported:"Alerts are not available in this browser.",pushEnable:"Enable",pushDisable:"Turn off",
@@ -3612,6 +3612,7 @@ function openListing(id, syncUrl = true){
           <b>${esc(sellerName(l))} · ${l.pro ? t().sellerPro : t().sellerLocal}</b>
           <span>${listingLocationHTML(l.area)} · ${side} · ${agoHTML(l.ph)}</span>
           ${l.pro && l.sellerId ? `<button type="button" class="pf-link" data-click="openBusinessPage" data-click-args='${dataArgs([l.sellerId])}'>${state.lang==="fr" ? "Voir les offres de cette entreprise" : "View this business’s offers"}</button>` : ""}
+          ${window.SellerFollows?.buttonHTML(l) || ""}
           ${sellerPhoneHTML(l)}
           ${profile.delivery && l.delivery ? `<br><span>${deliveryLabel(l.delivery)}${profile.meetup && l.meetup ? " · " + meetupLabel(l.meetup) : ""}${profile.negotiable && l.negotiable ? " · " + t().negotiableLabel : ""}</span>` : ""}
           ${sellerTrustHTML(l)}
@@ -4734,6 +4735,8 @@ function completeAuth(){
   else if(action === "profile") openProfile();
   else if(action === "messages") openMessages();
   else if(action === "search-alerts") window.SearchAlerts?.open();
+  else if(action === "followed-sellers") window.SellerFollows?.open();
+  else if(action?.startsWith("follow:")) window.SellerFollows?.follow(action.slice("follow:".length));
   else if(action?.startsWith("native-contact:")) window.SXM?.openWorkflow?.("messages", action.slice("native-contact:".length));
   else if(action === "boost") startBoostFlow();
   else if(action === "admin") openAdmin();
