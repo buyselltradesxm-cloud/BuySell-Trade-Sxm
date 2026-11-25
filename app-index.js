@@ -2707,7 +2707,9 @@ function gridCardsHTML(from, to){
   let html = "";
   for(let idx = from; idx < to; idx++){
     html += cardHTML(gridList[idx], false);
-    if((idx + 1) % FEED_AD_INTERVAL === 0 && idx + 1 < gridList.length){
+    if(idx + 1 === 16 && idx + 1 < gridList.length){
+      html += `<aside class="feed-ad content-ad" aria-label="Triple R Bar &amp; Restaurant" data-ad-placement="restaurant" data-ad-feed-slot="restaurant-after-16"></aside>`;
+    } else if((idx + 1) % FEED_AD_INTERVAL === 0 && idx + 1 < gridList.length){
       html += mobileAdHTML("feed-after-" + (idx + 1));
     }
   }

@@ -1,0 +1,7 @@
+ENGLISH - 1.0.14
+Triple R's sponsored card has moved much farther down Discover, after the 16th listing, with listings before and after it. Tchala Plus stays in its original top section, and Majesty Car Rental and the ad banners keep their existing placements. Triple R retains the supplied full poster, website link and bilingual copy.
+Scroll through at least 17 listings in Discover. Confirm that Tchala is still at the top, Majesty appears earlier in the feed and Triple R appears after listing 16. Check both languages. When fewer than 17 listings match a filter, the lower Triple R placement is omitted.
+
+FRANÇAIS - 1.0.14
+La carte sponsorisée Triple R se trouve maintenant beaucoup plus bas dans Découvrir, après la 16e annonce, entre les publications. Tchala Plus reste dans sa section d'origine en haut. Majesty Car Rental et les bannières publicitaires conservent leurs emplacements. Triple R garde l'affiche fournie, son lien et ses textes bilingues.
+Parcourez au moins 17 annonces : Tchala reste en haut, Majesty apparaît plus tôt et Triple R après la 16e annonce. Vérifiez les deux langues. Si un filtre affiche moins de 17 annonces, la section Triple R du bas est omise.
