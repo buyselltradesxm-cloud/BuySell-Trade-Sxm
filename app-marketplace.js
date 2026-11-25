@@ -1481,6 +1481,10 @@ function applyLocalAdminTestMode(){
 /* ---------------- HELPERS ---------------- */
 const t = () => I18N[state.lang];
 const money = (n, c) => (c==="eur"?"€":"$") + Number(n || 0).toLocaleString("en-US");
+function listingLocationHTML(area){
+  return area ? `<span class="listing-location">${esc(area)}</span>` : "";
+}
+
 function esc(s){
   return String(s ?? "").replace(/[&<>"']/g, ch => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
@@ -2136,7 +2140,7 @@ function openBusinessPage(sellerId, syncUrl = true){
     </header>
     <div class="business-catalogue">${listings.map(l=>{const media=mediaFor(l);return `<article class="business-offer">
       <img src="${esc(safeUrl(media.img))}" alt="${esc(titleFor(l))}" loading="lazy">
-      <div><h3>${esc(titleFor(l))}</h3><p>${esc(l.area || "")}</p>
+      <div><h3>${esc(titleFor(l))}</h3><p>${listingLocationHTML(l.area)}</p>
       ${postFieldProfile(l.cat,l.sub||"").price ? `<div class="price">${listingPriceHTML(l)}${l.cat==="locvoit" ? `<small> / ${fr ? "jour" : "day"}</small>` : ""}</div>` : ""}
       ${vehicleDetailsHTML(l)}
       <button type="button" class="primary-btn" data-click="openListing" data-click-args='${dataArgs([l.id])}'>${fr ? "Voir l’offre et contacter" : "View offer & contact"}</button></div></article>`;}).join("") || `<p>${fr ? "Votre vitrine sera visible dès votre première offre publiée. Choisissez une activité dans votre espace Pro pour commencer." : "Your showcase goes live with your first published offer. Choose an activity in your Pro workspace to get started."}</p>`}</div>
@@ -2502,7 +2506,7 @@ function cardHTML(l, pinned, idx){
         <div class="ttl">${esc(titleFor(l))}</div>
         <div class="badges">${badges.join("")}</div>
         <div class="meta">
-          <span class="area"><span class="n ${esc(l.side)}"></span>${esc(l.area)}</span>
+          <span class="area">${listingLocationHTML(l.area)}</span>
           <span aria-hidden="true">·</span>
           <span>${l.side === "fr" ? t().frSide : t().nlSide}</span>
           <span aria-hidden="true">·</span>
@@ -3604,7 +3608,7 @@ function openListing(id, syncUrl = true){
         </div>
         <div class="seller-box">
           <b>${esc(sellerName(l))} · ${l.pro ? t().sellerPro : t().sellerLocal}</b>
-          <span>${esc(l.area)} · ${side} · ${agoHTML(l.ph)}</span>
+          <span>${listingLocationHTML(l.area)} · ${side} · ${agoHTML(l.ph)}</span>
           ${l.pro && l.sellerId ? `<button type="button" class="pf-link" data-click="openBusinessPage" data-click-args='${dataArgs([l.sellerId])}'>${state.lang==="fr" ? "Voir les offres de cette entreprise" : "View this business’s offers"}</button>` : ""}
           ${sellerPhoneHTML(l)}
           ${profile.delivery && l.delivery ? `<br><span>${deliveryLabel(l.delivery)}${profile.meetup && l.meetup ? " · " + meetupLabel(l.meetup) : ""}${profile.negotiable && l.negotiable ? " · " + t().negotiableLabel : ""}</span>` : ""}
@@ -4600,7 +4604,7 @@ function miniListingHTML(l){
     <div class="mini-row ${profile.photos ? "" : "no-media"}">
       ${profile.photos ? `<img src="${esc(media.img)}" alt="" loading="lazy">` : ""}
       <button type="button" class="mini-main" data-click="closeProfileModalThenOpenListing" data-click-args='${dataArgs([idParam])}'>
-        <b>${esc(titleFor(l))}</b><br><small>${esc(l.area)}${profile.price ? " · " + listingPriceHTML(l).replace(/<[^>]*>/g," ") : ""}</small>
+        <b>${esc(titleFor(l))}</b><br><small>${listingLocationHTML(l.area)}${profile.price ? " · " + listingPriceHTML(l).replace(/<[^>]*>/g," ") : ""}</small>
       </button>
       <div class="mini-actions">
         <small>${status}</small>
@@ -4974,7 +4978,7 @@ function adminListingRows(items){
   return `<div class="admin-table">${items.map(l=>`
     <div class="admin-row">
       <img src="${esc(cardMediaFor(l).img)}" alt="" loading="lazy">
-      <div><b>${esc(titleFor(l))}</b><br><small>${esc(l.area || "SXM")} · ${esc(adminPrice(l))} · ${esc(l.cat)}${l.boosted ? " · Boost" : ""}${l.sold ? " · Sold" : ""}${l.moderationStatus && l.moderationStatus !== "approved" ? " · " + (l.moderationStatus === "pending" ? (state.lang==="fr" ? "À valider" : "Pending") : (state.lang==="fr" ? "Rejetée" : "Rejected")) : ""}</small></div>
+      <div><b>${esc(titleFor(l))}</b><br><small>${listingLocationHTML(l.area || "SXM")} · ${esc(adminPrice(l))} · ${esc(l.cat)}${l.boosted ? " · Boost" : ""}${l.sold ? " · Sold" : ""}${l.moderationStatus && l.moderationStatus !== "approved" ? " · " + (l.moderationStatus === "pending" ? (state.lang==="fr" ? "À valider" : "Pending") : (state.lang==="fr" ? "Rejetée" : "Rejected")) : ""}</small></div>
       <div class="admin-actions">
         <button type="button" data-click="openListingFromAdmin" data-click-args='${dataArgs([l.id])}'>${state.lang==="fr" ? "Voir" : "View"}</button>
         <button type="button" data-click="adminEditListing" data-click-args='${dataArgs([l.id])}'>${state.lang==="fr" ? "Modifier" : "Edit"}</button>
@@ -5042,7 +5046,7 @@ function adminModerationHTML(){
           <img src="${esc(cardMediaFor(l).img)}" alt="" loading="lazy">
           <div>
             <b>${esc(titleFor(l))}</b><br>
-            <small>${esc(l.area || "SXM")} · ${esc(adminPrice(l))} · ${esc(l.cat)} · ${esc(sellerName(l))}</small>
+            <small>${listingLocationHTML(l.area || "SXM")} · ${esc(adminPrice(l))} · ${esc(l.cat)} · ${esc(sellerName(l))}</small>
             <div class="ai-scan-result" id="aiScan-${l.id}"></div>
           </div>
           <div class="admin-actions">

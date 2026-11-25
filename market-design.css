@@ -136,3 +136,7 @@ html.sxm-native-tabs body{padding-bottom:0!important}
 }
 @keyframes sxm-island-pan{from{transform:scale(1.1) translateX(-1%)}to{transform:scale(1.02) translateX(0)}}
 @media(prefers-reduced-motion:reduce){.hero::after{animation:none}}
+
+/* Listing neighbourhoods: the same red map pin on every listing surface. */
+.listing-location{display:inline-flex;align-items:center;gap:4px;color:#B91C1C;font-weight:600;vertical-align:baseline}
+.listing-location::before{content:"";display:inline-block;flex:0 0 14px;width:14px;height:14px;background:currentColor;-webkit-mask:url('/icons/market/location.svg') center/contain no-repeat;mask:url('/icons/market/location.svg') center/contain no-repeat}

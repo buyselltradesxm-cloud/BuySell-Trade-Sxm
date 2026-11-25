@@ -16,3 +16,7 @@ h1{font-size:1.5rem;line-height:1.25;margin:16px 0 4px}
 .listing-directory h2{font-size:1.1rem;line-height:1.4;margin:0 0 4px;overflow-wrap:anywhere}
 .listing-directory a{color:#0B6E7F;text-underline-offset:3px}
 .listing-directory .meta{margin:0}
+
+/* Listing neighbourhoods: the same red map pin on every listing surface. */
+.listing-location{display:inline-flex;align-items:center;gap:4px;color:#B91C1C;font-weight:600;vertical-align:baseline}
+.listing-location::before{content:"";display:inline-block;flex:0 0 14px;width:14px;height:14px;background:currentColor;-webkit-mask:url('/icons/market/location.svg') center/contain no-repeat;mask:url('/icons/market/location.svg') center/contain no-repeat}

@@ -984,8 +984,8 @@ struct SXMListingCard: View {
                 Text(price + (listing.category == "locvoit" ? (french ? " / jour" : " / day") : ""))
                     .font(.title3.weight(.bold)).foregroundColor(sea)
             }
-            Label(listing.area ?? listing.place, systemImage: "mappin.circle")
-                .font(.caption).foregroundColor(ink.opacity(0.7)).lineLimit(1)
+            Label(listing.area ?? listing.place, systemImage: "mappin.and.ellipse")
+                .font(.caption).foregroundColor(Color(red: 185.0/255, green: 28.0/255, blue: 28.0/255)).lineLimit(1)
             if let weekly = listing.weeklyRateLabel(french: french) { Text(weekly).font(.caption).foregroundColor(sea) }
         }.accessibilityElement(children: .combine)
     }
@@ -1036,8 +1036,8 @@ struct SXMListingDetail: View {
                     if let price = listing.priceLabel { Text(price + (listing.category == "locvoit" ? (fr ? " / jour" : " / day") : "")).font(.title3.weight(.heavy)).foregroundColor(sea) }
                     if let weekly = listing.weeklyRateLabel(french: fr) { Text(weekly).font(.subheadline).foregroundColor(sea) }
                     HStack(spacing: 6) {
-                        Image(systemName: "mappin.and.ellipse")
-                        Text(listing.place)
+                        Label(listing.place, systemImage: "mappin.and.ellipse")
+                            .foregroundColor(Color(red: 185.0/255, green: 28.0/255, blue: 28.0/255))
                         if let cat = SXMCategories.name(listing.category, french: fr) { Text("· \(cat)") }
                     }
                     .font(.subheadline).foregroundColor(ink.opacity(0.7))

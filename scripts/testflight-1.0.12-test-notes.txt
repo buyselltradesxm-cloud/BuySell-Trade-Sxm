@@ -1,0 +1,7 @@
+ENGLISH - 1.0.12
+Visible change: listing neighbourhood names now appear in red with a location pin in Discover, Saved and listing details. The website uses the same treatment in listing cards, details, profiles, business catalogues and the listing directory.
+Please check Marigot or Dutch Quarter on a listing, open its details, then check Saved. Check both English and French. Confirm that the pin and red text remain readable on iPhone and iPad.
+
+FRANÇAIS - 1.0.12
+Changement visible : les noms des quartiers apparaissent maintenant en rouge avec une épingle de localisation dans Découvrir, Favoris et les détails des annonces. Le site utilise le même affichage sur les cartes, détails, profils, vitrines professionnelles et l'annuaire des annonces.
+Vérifiez Marigot ou Dutch Quarter sur une annonce, ouvrez ses détails, puis consultez les Favoris. Essayez les deux langues. L'icône et le texte rouge doivent rester lisibles sur iPhone et iPad.
