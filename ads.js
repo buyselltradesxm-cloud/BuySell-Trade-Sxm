@@ -297,6 +297,11 @@
       a.appendChild(body);
     }
     if ((!stack || reel) && c.sponsor) a.appendChild(el("span", "ad-sponsor", c.sponsor));
+    if (c.id === "triple-r") {
+      var website = el("span", "ad-website", href);
+      website.setAttribute("translate", "no");
+      a.appendChild(website);
+    }
     a.addEventListener("click", function () {
       track("ad_click", { slot: key, type: "campaign", id: c.id });
     });
@@ -675,6 +680,7 @@
       ".ad-text{font-size:12.5px;line-height:1.35;color:var(--mute,#5b6b6e);font-weight:600;}",
       ".ad-cta{margin-top:4px;font-size:12.5px;font-weight:900;color:var(--sea-deep,#0a5a66);}",
       ".ad-sponsor{font-size:10.5px;font-weight:700;color:var(--mute,#5b6b6e);}",
+      ".ad-website{font-size:13px;font-weight:700;line-height:1.4;color:var(--sea-deep,#0a5a66);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere;}",
       ".ad-download-note{max-width:720px;margin:10px auto 0;font-size:13px;line-height:1.5;color:var(--ink,#102a2f);text-align:left;}",
       ".ad-download-link{color:var(--sea-deep,#0a5a66);font-weight:700;text-decoration:underline;text-underline-offset:2px;}",
       ".content-ad .ad-restaurant{flex-direction:column;align-items:stretch;gap:10px;max-width:720px;margin-inline:auto;}",
