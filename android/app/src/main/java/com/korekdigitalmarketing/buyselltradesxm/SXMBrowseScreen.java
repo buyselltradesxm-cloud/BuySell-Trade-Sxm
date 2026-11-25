@@ -826,11 +826,22 @@ final class SXMBrowseScreen extends ScrollView {
         }
         TextView weekly = label(weeklyRate(l), 12, false);
         if (!weeklyRate(l).isEmpty()) { weekly.setTextColor(SEA); weekly.setPadding(dp(10), dp(4), dp(10), 0); box.addView(weekly); }
-        TextView location = label(place(l), 11, false);
-        location.setTextColor(Color.rgb(89, 110, 111));
+        TextView location = locationLabel(l, 11);
         location.setMaxLines(2); location.setPadding(dp(10), dp(6), dp(10), 0);
         box.addView(location);
         return box;
+    }
+    private TextView locationLabel(JSONObject listing, int size) {
+        TextView row = label(place(listing), size, false);
+        int red = Color.rgb(185, 28, 28);
+        row.setTextColor(red);
+        android.graphics.drawable.Drawable pin = androidx.appcompat.content.res.AppCompatResources.getDrawable(getContext(), R.drawable.ic_location).mutate();
+        pin.setTint(red);
+        pin.setBounds(0, 0, dp(14), dp(14));
+        row.setCompoundDrawablesRelative(pin, null, null, null);
+        row.setCompoundDrawablePadding(dp(4));
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        return row;
     }
     private String place(JSONObject l) {
         String area = l.optString("area");
@@ -922,7 +933,7 @@ final class SXMBrowseScreen extends ScrollView {
             });
         }
         TextView title = label(displayTitle(l, french), 22, true); content.addView(title);
-        content.addView(label(place(l), 14, false));
+        content.addView(locationLabel(l, 14));
         String amount = price(l);
         if (!amount.isEmpty()) {
             TextView value = label(amount, 20, true); value.setTextColor(SEA); content.addView(value);

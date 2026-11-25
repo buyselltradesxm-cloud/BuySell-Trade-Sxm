@@ -1,0 +1,9 @@
+ENGLISH - 1.0.11
+Includes the latest native marketplace changes and uses the current live website: sponsored campaign rotation and video, sharper listing photos, expanded seller/date/vehicle details, compact ad placements, native navigation, owner subscription fixes and notification/search-alert controls.
+
+Please check Discover, Saved, Post, Messages and Profile on iPhone or iPad. Open and close a vehicle listing, check its seller and details, and confirm the listing opens correctly from a shared link. Check that ads respect consent and Pro eligibility, do not cover content and collapse while typing. Check English/French and portrait/landscape layouts. Only publish real listings intended for the public marketplace.
+
+FRANÇAIS - 1.0.11
+Cette version inclut les dernières modifications natives et utilise le site actuel : rotation des campagnes et vidéos sponsorisées, photos plus nettes, détails vendeur/date/véhicule, publicités compactes, navigation native, corrections des abonnements propriétaire et réglages des notifications/alertes de recherche.
+
+Vérifiez Découvrir, Favoris, Publier, Messages et Profil sur iPhone ou iPad. Ouvrez et fermez une annonce de véhicule, vérifiez ses détails et ouvrez un lien partagé. Vérifiez que les publicités respectent le consentement et le statut Pro, ne masquent pas le contenu et se replient pendant la saisie. Essayez les deux langues et orientations. Publiez uniquement de vraies annonces destinées au public.
