@@ -31,6 +31,10 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     private lazy var browseModel: SXMBrowseModel = {
         let model = SXMBrowseModel(french: french)
         model.contact = { [weak self] listing in self?.contactSeller(listing.id) }
+        model.follow = { [weak self] sellerId, change in
+            guard let self = self else { return false }
+            return try await self.followSeller(sellerId, change)
+        }
         model.post = { [weak self] in self?.open(.post) }
         model.alerts = { [weak self] in self?.open(.alerts) }
         model.languageChanged = { [weak self] useFrench in self?.setBrowseLanguage(useFrench) }
@@ -269,6 +273,18 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
         controller.didMove(toParent: self)
         showNativeBrowse(false)
         select(chosen)
+    }
+
+    /// "Follow this seller" from the native detail, through the signed-in web session.
+    private func followSeller(_ sellerId: String, _ change: Bool) async throws -> Bool? {
+        workflowModel.webView = web.webView
+        workflowModel.allowedOrigin = web.bridge?.config.serverURL
+        if workflowModel.session?.userId == nil {
+            await workflowModel.start()
+        }
+        let reply: SXMFollowReply = try await workflowModel.request("follow", ["sellerId": sellerId, "change": change])
+        if reply.own { return nil }
+        return reply.following
     }
 
     private func contactSeller(_ id: String) {

@@ -51,7 +51,7 @@
         return {ok:true,data:{userId:user && state.user?.id === user.id ? user.id : null, french:state.lang === "fr", schema:schema()}};
       }
       // Profile/token refreshes keep the same account and must not cancel chat loading.
-      const {user,check} = await identity(payload.userId, ["contact","inbox","thread"].includes(action));
+      const {user,check} = await identity(payload.userId, ["contact","inbox","thread"].includes(action) || (action === "follow" && !payload.change));
       if(["publish","send","block","report"].includes(action)) {
         lock = user.id + ":" + action;
         if(locks.has(lock)) fail("Une opération est déjà en cours.", "An operation is already in progress.");
@@ -125,6 +125,15 @@
         data = threads.map(t=>({key:t.key,listingId:t.listingId == null ? null : String(t.listingId),otherId:t.otherId,
           otherName:t.otherName || text("Membre SXM","SXM member"),title:listingTitle(L.find(l=>String(l.id)===String(t.listingId))) || text("Conversation","Conversation"),
           lastBody:t.lastBody || "",lastAt:t.lastAt,unread:t.unread}));
+      } else if(action === "follow") {
+        if(!validUser(payload.sellerId)) fail("Vendeur invalide.","Invalid seller.");
+        if(payload.sellerId === user.id) data = {following:false,own:true};
+        else {
+          let following;
+          try { const current = await window.SellerFollows.set(payload.sellerId, false, false); following = payload.change ? await window.SellerFollows.set(payload.sellerId, !current) : current; }
+          catch(_) { fail("Action non confirmée. Réessayez.","Not confirmed. Please try again."); }
+          check(); data = {following,own:false};
+        }
       } else if(action === "contact") {
         const l = await listing(payload.listingId); check();
         if(l.seller_id === user.id) fail("C’est votre annonce.","This is your listing.");

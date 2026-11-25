@@ -47,6 +47,14 @@ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg
       await page.waitForFunction(()=>calls.some(c=>c[0]==='delete')&&document.querySelector('#detailBody [data-follow-seller]').getAttribute('aria-pressed')==='false');
       await btn.click();
       await page.waitForFunction(()=>calls.filter(c=>c[0]==='insert').length===2);
+      // Native app bridge: read, toggle off, toggle on, own listing.
+      const native=await page.evaluate(async({me,seller})=>{
+        SB.currentUser=async()=>({id:me});
+        const ask=(sellerId,change)=>SXMNativeWorkflows.request('follow',{sellerId,change,userId:me});
+        return [await ask(seller,false),await ask(seller,true),await ask(seller,false),await ask(seller,true),await ask(me,false),await ask('bad',false)];
+      },{me,seller});
+      assert.deepEqual(native.slice(0,5).map(r=>r.data),[{following:true,own:false},{following:false,own:false},{following:false,own:false},{following:true,own:false},{following:false,own:true}]);
+      assert.equal(native[5].ok,false,'Invalid seller id refused');
       // Own listing: no button.
       await page.evaluate(()=>{L.unshift({...L[0],id:9902,sellerId:__me,ownerId:__me});openListing(9902,false);});
       assert.equal(await page.locator('#detailBody [data-follow-seller]').count(),0,'No follow button on own listing');

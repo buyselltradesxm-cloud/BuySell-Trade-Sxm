@@ -31,6 +31,7 @@ struct SXMMessagePage: Decodable { let messages: [SXMMessage]; let hasMore: Bool
 struct SXMWriteResult: Decodable { let id: String }
 struct SXMDone: Decodable { let done: Bool }
 private struct SXMReply<T: Decodable>: Decodable { let ok: Bool; let data: T?; let error, code: String? }
+struct SXMFollowReply: Decodable { let following: Bool; let own: Bool }
 struct SXMWorkflowError: LocalizedError {
     let message, code: String
     var errorDescription: String? { message }

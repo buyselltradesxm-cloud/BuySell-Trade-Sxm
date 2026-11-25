@@ -38,24 +38,36 @@
     return button(l.sellerId);
   }
 
+  // Sets the follow state for the signed-in user and returns it; throws when not confirmed.
+  // change=false only reads it (native screens).
+  async function setFollow(sellerId,want,change=true){
+    const id=state.user?.id;
+    if(!UUID.test(sellerId||'')||!id||!ready()) throw new Error('unavailable');
+    await load();
+    if(!followed||owner!==id) throw new Error('not loaded');
+    const on=followed.has(sellerId);
+    if(!change||want===on) return on;
+    const r=on
+      ?await db.from('seller_follows').delete().eq('follower_id',id).eq('seller_id',sellerId)
+      :await db.from('seller_follows').insert({follower_id:id,seller_id:sellerId});
+    if(r.error&&r.error.code!=='23505') throw r.error; // 23505: already following
+    if(owner!==id) throw new Error('account changed');
+    on?followed.delete(sellerId):followed.add(sellerId);
+    paint();
+    return !on;
+  }
+
   // want: true = follow only (after login), undefined = toggle.
   async function toggleFollowSeller(sellerId,btn,want){
     if(!UUID.test(sellerId||'')) return;
     if(!state.user){requireAccount('follow:'+sellerId);return;}
     if(!ready()||busy) return;
     busy=true;if(btn) btn.disabled=true;
-    const id=state.user.id;
     try{
       await load();
-      if(!followed||owner!==id) throw new Error('not loaded');
-      const on=followed.has(sellerId);
+      const on=isFollowed(sellerId);
       if(want===true&&on) return;
-      const r=on
-        ?await db.from('seller_follows').delete().eq('follower_id',id).eq('seller_id',sellerId)
-        :await db.from('seller_follows').insert({follower_id:id,seller_id:sellerId});
-      if(r.error&&r.error.code!=='23505') throw r.error; // 23505: already following
-      if(owner!==id) return;
-      on?followed.delete(sellerId):followed.add(sellerId);
+      await setFollow(sellerId,!on);
       showToast(on?tr('Vous ne suivez plus ce vendeur.','You unfollowed this seller.')
         :tr('Vendeur suivi. Vous serez prévenu de ses nouvelles annonces.','Following. You’ll be notified of their new listings.'));
       if(!on&&typeof schedulePushInvite==='function') schedulePushInvite(1500);
@@ -105,5 +117,5 @@
 
   window.toggleFollowSeller=toggleFollowSeller;
   window.openFollowedSellers=openFollowedSellers;
-  window.SellerFollows={buttonHTML,open:openFollowedSellers,follow:id=>toggleFollowSeller(id,null,true)};
+  window.SellerFollows={buttonHTML,open:openFollowedSellers,follow:id=>toggleFollowSeller(id,null,true),set:setFollow};
 })();

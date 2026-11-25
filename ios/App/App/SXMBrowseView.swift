@@ -44,6 +44,8 @@ struct SXMListing: Codable, Identifiable, Equatable {
     /// Hidden French + English search words from the listing-keywords function (never shown).
     let searchKeywords: String?
     let sellerName: String?
+    /// Seller account id, for the "Follow" button. Missing on listings cached before it existed.
+    let sellerId: String?
     let vehicle: SXMVehicle?
 
     enum CodingKeys: String, CodingKey {
@@ -53,6 +55,7 @@ struct SXMListing: Codable, Identifiable, Equatable {
         case priceEur = "price_eur", priceUsd = "price_usd", thumbPhotos = "thumb_photos", createdAt = "created_at"
         case searchKeywords = "search_keywords"
         case sellerName = "seller_name", vehicle
+        case sellerId = "seller_id"
     }
 
     init(from decoder: Decoder) throws {
@@ -80,6 +83,7 @@ struct SXMListing: Codable, Identifiable, Equatable {
         searchKeywords = try? c.decode(String.self, forKey: .searchKeywords)
         sellerName = (try? c.decode(String.self, forKey: .sellerName)).flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 }
         vehicle = try? c.decode(SXMVehicle.self, forKey: .vehicle)
+        sellerId = try? c.decode(String.self, forKey: .sellerId)
     }
 
     /// Same words as the website's searchAliases(), so "bike" finds a scooter filed under Vehicles.
@@ -352,6 +356,8 @@ final class SXMBrowseModel: ObservableObject {
 
     /// Opens the authenticated native conversation with this listing's seller.
     var contact: (SXMListing) -> Void = { _ in }
+    /// Reads (change false) or toggles (change true) "follow this seller". nil = own listing.
+    var follow: (_ sellerId: String, _ change: Bool) async throws -> Bool? = { _, _ in false }
     var post: () -> Void = {}
     var alerts: () -> Void = {}
     var languageChanged: (Bool) -> Void = { _ in }
@@ -384,7 +390,7 @@ final class SXMBrowseModel: ObservableObject {
         defer { loading = false }
         var parts = URLComponents(string: "\(Self.supabaseURL)/rest/v1/listings")!
         parts.queryItems = [
-            URLQueryItem(name: "select", value: "id,title,title_fr,title_en,details,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords,seller_name,vehicle"),
+            URLQueryItem(name: "select", value: "id,title,title_fr,title_en,details,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords,seller_name,seller_id,vehicle"),
             URLQueryItem(name: "seller_id", value: "not.is.null"),
             URLQueryItem(name: "or", value: "(status.is.null,status.in.(active,reserved))"),
             URLQueryItem(name: "order", value: "created_at.desc"),
@@ -456,6 +462,7 @@ extension SXMListing {
         try c.encodeIfPresent(subcategory, forKey: .subcategory)
         try c.encodeIfPresent(searchKeywords, forKey: .searchKeywords)
         try c.encodeIfPresent(sellerName, forKey: .sellerName)
+        try c.encodeIfPresent(sellerId, forKey: .sellerId)
         try c.encodeIfPresent(vehicle, forKey: .vehicle)
     }
 }
@@ -1033,6 +1040,9 @@ struct SXMListingDetail: View {
     @State private var zoomed: URL?
     @State private var sharing = false
     @State private var region: MKCoordinateRegion?
+    @State private var following: Bool? = false
+    @State private var followBusy = false
+    @State private var followNote = ""
 
     private var fr: Bool { model.french }
 
@@ -1054,6 +1064,7 @@ struct SXMListingDetail: View {
                         Label(seller, systemImage: "person.crop.circle")
                             .font(.subheadline).foregroundColor(ink.opacity(0.7))
                     }
+                    followButton
                 }
                 .padding(.horizontal)
 
@@ -1152,6 +1163,57 @@ struct SXMListingDetail: View {
                     galleryArrow("chevron.right", label: fr ? "Photo suivante" : "Next photo", delta: 1, count: urls.count)
                 }.padding(.horizontal, 12)
             }
+        }
+    }
+
+    @ViewBuilder private var followButton: some View {
+        if let sellerId = listing.sellerId, let on = following {
+            Button { toggleFollow(sellerId) } label: {
+                Text(followLabel(on))
+                    .font(.subheadline.weight(.bold))
+                    .padding(.horizontal, 18)
+                    .frame(minHeight: 44)
+                    .foregroundColor(on ? .white : sea)
+                    .background(Capsule().fill(on ? sea : Color.white))
+                    .overlay(Capsule().stroke(sea, lineWidth: 1.5))
+            }
+            .disabled(followBusy)
+            .task(id: sellerId) { await loadFollow(sellerId) }
+            if !followNote.isEmpty {
+                Text(followNote).font(.footnote).foregroundColor(ink.opacity(0.7))
+            }
+        }
+    }
+
+    private func followLabel(_ on: Bool) -> String {
+        if on {
+            return fr ? "Suivi ✓" : "Following ✓"
+        }
+        return fr ? "Suivre" : "Follow"
+    }
+
+    private func loadFollow(_ sellerId: String) async {
+        do {
+            following = try await model.follow(sellerId, false)
+        } catch {
+            following = false
+        }
+    }
+
+    private func toggleFollow(_ sellerId: String) {
+        followBusy = true
+        followNote = ""
+        Task {
+            do {
+                let now = try await model.follow(sellerId, true)
+                following = now
+                if now == true {
+                    followNote = fr ? "Vous serez prévenu de ses nouvelles annonces." : "You will be notified of their new listings."
+                }
+            } catch {
+                followNote = error.localizedDescription
+            }
+            followBusy = false
         }
     }
 
