@@ -154,6 +154,21 @@ window.AdsConfig = {
    */
   campaigns: [
     {
+      id: "triple-r",
+      placements: ["restaurant"],
+      weight: 1,
+      sponsor: "Triple R Bar & Restaurant",
+      url: "https://triplerbarrestaurant.com/",
+      image: "https://triplerbarrestaurant.com/pictures%20%26%20videos/Real.pic.Triple%20R%20Bar%20Restaurant.png",
+      alt: { en: "Triple R Bar & Restaurant in Sandy Ground", fr: "Triple R Bar & Restaurant à Sandy Ground" },
+      headline: { en: "Caribbean flavours. Sandy Ground vibes.", fr: "Saveurs caribéennes, ambiance Sandy Ground." },
+      text: {
+        en: "Discover Triple R Bar & Restaurant: Caribbean food, craft cocktails and DJ sessions in Sandy Ground, Saint Martin.",
+        fr: "Découvrez Triple R Bar & Restaurant : cuisine caribéenne, cocktails et sessions DJ à Sandy Ground, Saint-Martin."
+      },
+      cta: { en: "Explore the menu & book a table →", fr: "Voir le menu et réserver une table →" }
+    },
+    {
       id: "example-disabled",
       weight: 0,                                   // <-- set to 1 to go live
       placements: ["desktop-leaderboard", "content-1", "home-top"],

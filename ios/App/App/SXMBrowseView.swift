@@ -501,6 +501,8 @@ struct SXMBrowseView: View {
                     if !model.showingSaved && model.discoverVisible {
                         SXMSponsoredSection(origin: model.sponsoredOrigin, placement: "content-1", french: fr)
                             .id(sponsoredRevision).padding(.horizontal, 20)
+                        SXMSponsoredSection(origin: model.sponsoredOrigin, placement: "restaurant", french: fr)
+                            .id(sponsoredRevision).padding(.horizontal, 20)
                     }
                     shortcuts
                     locationPicker
