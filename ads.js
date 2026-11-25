@@ -244,6 +244,7 @@
     var href = safeHttpUrl(c.url);
     if (!href) { collapse(container); return; }   // pickCampaign already filters this, belt-and-suspenders
     var a = el("a", "ad-unit ad-campaign");
+    if (c.id === "triple-r") a.classList.add("ad-restaurant");
     a.href = href;
     a.target = "_blank";
     a.rel = "sponsored noopener nofollow";
@@ -682,6 +683,11 @@
       ".ad-sponsor{font-size:10.5px;font-weight:700;color:var(--mute,#5b6b6e);}",
       ".ad-download-note{max-width:720px;margin:10px auto 0;font-size:13px;line-height:1.5;color:var(--ink,#102a2f);text-align:left;}",
       ".ad-download-link{color:var(--sea-deep,#0a5a66);font-weight:700;text-decoration:underline;text-underline-offset:2px;}",
+      ".content-ad .ad-restaurant{flex-direction:column;align-items:stretch;gap:10px;max-width:720px;margin-inline:auto;}",
+      ".ad-restaurant .ad-flag{position:static;align-self:flex-start;}",
+      ".ad-restaurant .ad-media{height:220px;max-height:none;object-fit:cover;}",
+      ".ad-restaurant .ad-head{font-size:20px;line-height:1.25;}",
+      ".ad-restaurant .ad-text{font-size:13px;line-height:1.5;}",
       ".ad-network{padding:8px;}",
       ".ad-network .adsbygoogle{min-height:90px;}",
       /* in-grid card: span the full row of the results grid */

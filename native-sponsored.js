@@ -6,7 +6,7 @@
   root.dataset.adVisible = "false";
   var slot = document.getElementById("sponsored");
   var placement = params.get("placement");
-  if (placement !== "content-1" && placement !== "feed") return;
+  if (!["content-1", "feed", "restaurant"].includes(placement)) return;
   slot.className = placement === "feed" ? "feed-ad" : "content-ad";
   slot.setAttribute("data-ad-placement", placement);
 

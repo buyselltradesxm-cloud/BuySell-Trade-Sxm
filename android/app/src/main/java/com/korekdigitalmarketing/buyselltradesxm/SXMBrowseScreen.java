@@ -169,7 +169,7 @@ final class SXMBrowseScreen extends ScrollView {
     private final LinearLayout searchAdContainer;
     private AdView searchAd;
     private TextView searchAdDisclosure;
-    private final SXMSponsoredView sponsoredTop, sponsoredFeed;
+    private final SXMSponsoredView sponsoredTop, sponsoredFeed, sponsoredRestaurant;
     private AdView inlineAd;
     private TextView adDisclosure;
     private final Runnable adRetry = this::loadInlineAd;
@@ -342,10 +342,15 @@ final class SXMBrowseScreen extends ScrollView {
         spotlightActionParams.leftMargin = dp(8); spotlight.addView(spotlightAction, spotlightActionParams);
         sponsoredTop = new SXMSponsoredView(context, "content-1");
         sponsoredFeed = new SXMSponsoredView(context, "feed");
+        sponsoredRestaurant = new SXMSponsoredView(context, "restaurant");
         LinearLayout.LayoutParams sponsoredParams = new LinearLayout.LayoutParams(-1, 1);
         sponsoredParams.topMargin = dp(12);
         page.addView(sponsoredTop, sponsoredParams);
+        LinearLayout.LayoutParams restaurantParams = new LinearLayout.LayoutParams(-1, 1);
+        restaurantParams.setMargins(dp(18), dp(10), dp(18), dp(10));
+        page.addView(sponsoredRestaurant, restaurantParams);
         sponsoredTop.loadCampaign(french);
+        sponsoredRestaurant.loadCampaign(french);
         heading = label("", 25, true);
         LinearLayout.LayoutParams headingParams = new LinearLayout.LayoutParams(-1, -2);
         headingParams.topMargin = dp(15); headingParams.bottomMargin = dp(2);
@@ -422,6 +427,7 @@ final class SXMBrowseScreen extends ScrollView {
         if (french == useFrench) return;
         french = useFrench;
         sponsoredTop.loadCampaign(french);
+        sponsoredRestaurant.loadCampaign(french);
         if (sponsoredFeed.getUrl() != null) sponsoredFeed.loadCampaign(french);
         getContext().getSharedPreferences("sxm.browse", 0).edit().putBoolean("french", french).apply();
         status.setText("");
@@ -540,7 +546,9 @@ final class SXMBrowseScreen extends ScrollView {
         syncSearchAd();
         spotlight.setVisibility(savedOnly ? View.GONE : View.VISIBLE);
         sponsoredTop.setVisibility(savedOnly ? View.GONE : View.VISIBLE);
+        sponsoredRestaurant.setVisibility(savedOnly ? View.GONE : View.VISIBLE);
         sponsoredTop.refreshVisibility();
+        sponsoredRestaurant.refreshVisibility();
         sponsoredFeed.refreshVisibility();
         header.setText(savedOnly ? (french ? "Favoris" : "Saved") : (french ? "Découvrir" : "Discover"));
         adContainer.setVisibility(adsAllowed && inlineAd != null && inlineAd.getTag() == Boolean.TRUE ? View.VISIBLE : View.GONE);
@@ -1051,6 +1059,7 @@ final class SXMBrowseScreen extends ScrollView {
 
     void refreshSponsorVisibility() {
         if (sponsoredTop != null) sponsoredTop.refreshVisibility();
+        if (sponsoredRestaurant != null) sponsoredRestaurant.refreshVisibility();
         if (sponsoredFeed != null) sponsoredFeed.refreshVisibility();
     }
 

@@ -1,0 +1,7 @@
+ENGLISH - 1.0.13
+Discover now includes a separate sponsored section for Triple R Bar & Restaurant below the Tchala Plus section, with the restaurant's photo, English/French description and a link to https://triplerbarrestaurant.com/.
+Check the section in English and French, scroll past it, and confirm that tapping it opens the restaurant website. Check iPhone/iPad and both orientations. Listing neighbourhoods retain their original names, red text and location pins from 1.0.12.
+
+FRANÇAIS - 1.0.13
+Découvrir propose une section sponsorisée distincte pour Triple R Bar & Restaurant sous Tchala Plus, avec sa photo, une description bilingue et un lien vers https://triplerbarrestaurant.com/.
+Vérifiez la section dans les deux langues, faites défiler la page et ouvrez le site du restaurant en la touchant. Essayez sur iPhone/iPad dans les deux orientations. Les quartiers conservent leur nom d'origine, leur texte rouge et leur épingle de localisation de la version 1.0.12.
