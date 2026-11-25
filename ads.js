@@ -242,6 +242,9 @@
 
   function renderCampaign(container, key, c) {
     var href = safeHttpUrl(c.url);
+    var note = key === "content-1" && CFG.campaignDownloadNotes && CFG.campaignDownloadNotes[c.id];
+    var downloadUrl = note && safeHttpUrl(note.url);
+    if (downloadUrl) href = downloadUrl;
     if (!href) { collapse(container); return; }   // pickCampaign already filters this, belt-and-suspenders
     var a = el("a", "ad-unit ad-campaign");
     if (c.id === "triple-r") a.classList.add("ad-restaurant");
@@ -263,7 +266,7 @@
     var englishFlyer = flyers && safeImageSrc(flyers.en);
     if (frenchFlyer && englishFlyer) {
       a.classList.add("ad-flyer-campaign");
-      a.setAttribute("aria-label", [L(CFG.label), c.sponsor, L(c.text), L(c.cta)].filter(Boolean).join(". "));
+      a.setAttribute("aria-label", [L(CFG.label), c.sponsor, note ? L(note.link) + L(note.text) : L(c.text), L(c.cta)].filter(Boolean).join(". "));
       stack = el("span", "ad-flyers");
       var orderedFlyers = lang() === "fr" ? [frenchFlyer, englishFlyer] : [englishFlyer, frenchFlyer];
       orderedFlyers.forEach(function (src) {
@@ -297,22 +300,13 @@
     a.addEventListener("click", function () {
       track("ad_click", { slot: key, type: "campaign", id: c.id });
     });
-    mount(container, a, "campaign", c.id);
-    var note = key === "content-1" && CFG.campaignDownloadNotes && CFG.campaignDownloadNotes[c.id];
-    var downloadUrl = note && safeHttpUrl(note.url);
     if (downloadUrl) {
-      var caption = el("p", "ad-download-note");
-      var download = el("a", "ad-download-link", L(note.link));
-      download.href = downloadUrl;
-      download.target = "_blank";
-      download.rel = "sponsored noopener nofollow";
-      download.addEventListener("click", function () {
-        track("ad_click", { slot: key, type: "campaign", id: c.id });
-      });
-      caption.appendChild(download);
+      var caption = el("span", "ad-download-note");
+      caption.appendChild(el("strong", "ad-download-link", L(note.link)));
       caption.appendChild(document.createTextNode(L(note.text)));
-      container.appendChild(caption);
+      a.appendChild(caption);
     }
+    mount(container, a, "campaign", c.id);
     track("ad_impression", { slot: key, type: "campaign", id: c.id });
   }
 
