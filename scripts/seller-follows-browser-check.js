@@ -18,7 +18,7 @@ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg
       await page.goto('http://127.0.0.1/'+file+'?local=1');
       await page.evaluate(({me,seller})=>{
         setLang('fr');state.user=null;
-        L.unshift({...L[0],id:9901,sellerId:seller,ownerId:seller,sellerName:'Garage <b>Test</b>'});
+        L.unshift({...L[0],id:9901,sellerId:seller,ownerId:seller,sellerName:'Garage <b>Test</b>',desc:'Ligne\n'.repeat(12)+'Fin de la description.'});
         window.rows=[];window.calls=[];
         SB.enabled=()=>true;window.db={auth:{getUser:async()=>({data:{user:{id:me}},error:null}),getSession:async()=>({data:{session:null},error:null})}};
         // Any query chain is awaitable; only seller_follows returns data.
@@ -34,6 +34,13 @@ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg
         openListing(9901,false);
         window.__me=me;
       },{me,seller});
+      // Listing page order: seller card, key information, description with "Voir plus".
+      const order=await page.evaluate(()=>[...document.querySelectorAll('#detailBody .ld-seller,#detailBody .ld-section')].map(n=>n.className));
+      assert.ok(order[0].includes('ld-seller')&&order.some(c=>c.includes('ld-desc')),'Seller card first, description present: '+order);
+      assert.match(await page.locator('#detailBody .ld-keys').innerText(),/État[\s\S]*Très bon état/);
+      assert.equal(await page.locator('#detailBody .ld-seller-text b').innerText(),'Garage <b>Test</b>','Seller name escaped in card');
+      const more=page.locator('#detailBody .ld-more');
+      if(await more.count()){await more.click();assert.equal(await more.getAttribute('aria-expanded'),'true');}
       const btn=page.locator('#detailBody [data-follow-seller]');
       assert.equal(await btn.innerText(),'Suivre');
       await btn.click();

@@ -1,0 +1,25 @@
+/* Listing page: seller card, key information, description (listing-detail.js). */
+.ld-where{margin:-4px 0 0;font-size:14px;color:var(--mute)}
+.ld-heading{margin:0 0 10px;font-family:'Space Grotesk',sans-serif;font-size:19px;line-height:1.25;color:var(--ink)}
+.ld-seller,.ld-section{border-top:1.5px solid rgba(19,42,46,.18);padding-top:16px}
+.ld-seller-main{display:flex;align-items:center;gap:14px;width:100%;min-height:72px;padding:14px;border:1.5px solid rgba(19,42,46,.22);border-radius:16px;background:var(--white);color:var(--ink);font:inherit;text-align:left}
+button.ld-seller-main{cursor:pointer}
+@media (hover:hover){button.ld-seller-main:hover{border-color:var(--sea)}}
+.ld-avatar{flex:0 0 52px;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 24px/1 'Space Grotesk',sans-serif}
+.ld-seller-text{flex:1;min-width:0;display:grid;gap:3px;overflow-wrap:anywhere}
+.ld-seller-text b{font-family:'Space Grotesk',sans-serif;font-size:18px}
+.ld-seller-text span{font-size:14px;color:var(--mute)}
+.ld-chevron{flex:0 0 22px;width:22px;height:22px;color:var(--ink)}
+.ld-seller-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}
+.ld-seller-actions:empty{display:none}
+.ld-seller-actions .follow-seller-btn{margin:10px 0 0}
+.ld-seller-actions .seller-phone-link{margin-top:10px}
+.ld-keys{margin:0;display:grid}
+.ld-keys>div{display:grid;grid-template-columns:minmax(110px,42%) 1fr;gap:12px;padding:10px 0;border-bottom:1px solid rgba(19,42,46,.1)}
+.ld-keys>div:last-child{border-bottom:0}
+.ld-keys dt{color:var(--mute);font-size:14px}
+.ld-keys dd{margin:0;font-weight:700;font-size:15px;color:var(--ink);overflow-wrap:anywhere}
+.ld-desc .detail-description{border-top:0;padding-top:0;margin:0;font-size:15.5px;line-height:1.55}
+.ld-desc.folded .detail-description{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.ld-more{margin-top:8px;padding:10px 0;min-height:44px;border:0;background:none;color:var(--ink);font:inherit;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ld-more:focus-visible,.ld-seller-main:focus-visible{outline:3px solid var(--sea);outline-offset:2px}

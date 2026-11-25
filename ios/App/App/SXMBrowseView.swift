@@ -46,6 +46,10 @@ struct SXMListing: Codable, Identifiable, Equatable {
     let sellerName: String?
     /// Seller account id, for the "Follow" button. Missing on listings cached before it existed.
     let sellerId: String?
+    /// Key information (website listing-detail.js): condition id, handover mode, negotiable price.
+    let condition: String?
+    let delivery: String?
+    let negotiable: Bool?
     let vehicle: SXMVehicle?
 
     enum CodingKeys: String, CodingKey {
@@ -56,6 +60,7 @@ struct SXMListing: Codable, Identifiable, Equatable {
         case searchKeywords = "search_keywords"
         case sellerName = "seller_name", vehicle
         case sellerId = "seller_id"
+        case condition, delivery, negotiable
     }
 
     init(from decoder: Decoder) throws {
@@ -84,6 +89,9 @@ struct SXMListing: Codable, Identifiable, Equatable {
         sellerName = (try? c.decode(String.self, forKey: .sellerName)).flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 }
         vehicle = try? c.decode(SXMVehicle.self, forKey: .vehicle)
         sellerId = try? c.decode(String.self, forKey: .sellerId)
+        condition = try? c.decode(String.self, forKey: .condition)
+        delivery = try? c.decode(String.self, forKey: .delivery)
+        negotiable = try? c.decode(Bool.self, forKey: .negotiable)
     }
 
     /// Same words as the website's searchAliases(), so "bike" finds a scooter filed under Vehicles.
@@ -147,21 +155,16 @@ struct SXMListing: Codable, Identifiable, Equatable {
         [area, side == "nl" ? "Sint Maarten" : "Saint-Martin"].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
     }
 
-    /// "Seller name · Posted 3 days ago", like the website's seller box.
-    func sellerLine(french fr: Bool) -> String? {
-        var parts: [String] = []
-        if let name = sellerName { parts.append(name) }
-        if let raw = createdAt {
-            let iso = ISO8601DateFormatter()
-            iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            let date = iso.date(from: raw) ?? ISO8601DateFormatter().date(from: raw)
-            if let date = date {
-                let rel = RelativeDateTimeFormatter()
-                rel.locale = Locale(identifier: fr ? "fr_FR" : "en_US")
-                parts.append((fr ? "Publiée " : "Posted ") + rel.localizedString(for: min(date, Date()), relativeTo: Date()))
-            }
-        }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    /// "Posted 3 days ago".
+    func postedLabel(french fr: Bool) -> String? {
+        guard let raw = createdAt else { return nil }
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let date = iso.date(from: raw) ?? ISO8601DateFormatter().date(from: raw) else { return nil }
+        let rel = RelativeDateTimeFormatter()
+        rel.locale = Locale(identifier: fr ? "fr_FR" : "en_US")
+        let prefix = fr ? "Publiée " : "Posted "
+        return prefix + rel.localizedString(for: min(date, Date()), relativeTo: Date())
     }
 
     static let vehicleSubcategories: Set<String> = ["car-sale", "motorbike-sale", "scooter-sale", "truck-sale", "dealer-inventory", "boat-sale", "jet-ski-sale"]
@@ -215,6 +218,74 @@ struct SXMSpec: Identifiable {
     let label: String
     let value: String
     var id: String { label }
+}
+
+/// "Les informations clés": same rows, labels and order as the website (listing-detail.js).
+extension SXMListing {
+    func conditionLabel(french fr: Bool) -> String? {
+        switch condition {
+        case "neuf": return fr ? "Neuf" : "New"
+        case "tbe": return fr ? "Très bon état" : "Very good"
+        case "bon": return fr ? "Bon état" : "Good"
+        case "corr": return fr ? "État correct" : "Fair"
+        case "piece": return fr ? "Pour pièces" : "For parts"
+        default: return nil
+        }
+    }
+
+    func deliveryLabel(french fr: Bool) -> String? {
+        switch delivery {
+        case "pickup": return fr ? "Retrait uniquement" : "Pickup only"
+        case "delivery": return fr ? "Livraison possible" : "Delivery possible"
+        case "meetup": return fr ? "Rendez-vous possible" : "Meetup possible"
+        default: return nil
+        }
+    }
+
+    func sideLabel(french fr: Bool) -> String? {
+        switch side {
+        case "fr": return fr ? "Côté français" : "French side"
+        case "nl": return fr ? "Côté Sint Maarten" : "Sint Maarten side"
+        default: return nil
+        }
+    }
+
+    func keyInfo(french fr: Bool, typeName: String?) -> [SXMSpec] {
+        var rows: [SXMSpec] = []
+        if let value = conditionLabel(french: fr) {
+            rows.append(SXMSpec(label: fr ? "État" : "Condition", value: value))
+        }
+        if let value = SXMCategories.name(category, french: fr) {
+            rows.append(SXMSpec(label: fr ? "Catégorie" : "Category", value: value))
+        }
+        if let value = typeName {
+            rows.append(SXMSpec(label: "Type", value: value))
+        }
+        var places: [String] = []
+        if let value = area, !value.isEmpty { places.append(value) }
+        if let value = sideLabel(french: fr) { places.append(value) }
+        if !places.isEmpty {
+            rows.append(SXMSpec(label: fr ? "Lieu" : "Location", value: places.joined(separator: " · ")))
+        }
+        if let value = deliveryLabel(french: fr) {
+            rows.append(SXMSpec(label: fr ? "Remise" : "Handover", value: value))
+        }
+        if negotiable == true {
+            rows.append(SXMSpec(label: fr ? "Prix" : "Price", value: fr ? "Prix négociable" : "Negotiable price"))
+        }
+        return rows
+    }
+
+    /// Avatar colour from the seller name: same palette and hash as the website.
+    static func avatarColor(_ name: String) -> Color {
+        let palette: [(Double, Double, Double)] = [(11, 110, 127), (31, 122, 77), (180, 84, 45), (107, 79, 160), (163, 54, 107), (47, 93, 138)]
+        var hash: UInt32 = 0
+        for scalar in name.unicodeScalars {
+            hash = hash &* 31 &+ scalar.value
+        }
+        let rgb = palette[Int(hash % UInt32(palette.count))]
+        return Color(red: rgb.0 / 255, green: rgb.1 / 255, blue: rgb.2 / 255)
+    }
 }
 
 /// The listing's `vehicle` column (website vehicle form). Values arrive as text or numbers; blanks are dropped.
@@ -358,6 +429,8 @@ final class SXMBrowseModel: ObservableObject {
     var contact: (SXMListing) -> Void = { _ in }
     /// Reads (change false) or toggles (change true) "follow this seller". nil = own listing.
     var follow: (_ sellerId: String, _ change: Bool) async throws -> Bool? = { _, _ in false }
+    /// Subcategory display name ("Scooters à vendre"), nil until the website schema is loaded.
+    var subcategoryName: (_ category: String?, _ subcategory: String?) -> String? = { _, _ in nil }
     var post: () -> Void = {}
     var alerts: () -> Void = {}
     var languageChanged: (Bool) -> Void = { _ in }
@@ -390,7 +463,7 @@ final class SXMBrowseModel: ObservableObject {
         defer { loading = false }
         var parts = URLComponents(string: "\(Self.supabaseURL)/rest/v1/listings")!
         parts.queryItems = [
-            URLQueryItem(name: "select", value: "id,title,title_fr,title_en,details,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords,seller_name,seller_id,vehicle"),
+            URLQueryItem(name: "select", value: "id,title,title_fr,title_en,details,description,category,subcategory,area,side,currency,price_eur,price_usd,photos,thumb_photos,created_at,search_keywords,seller_name,seller_id,condition,delivery,negotiable,vehicle"),
             URLQueryItem(name: "seller_id", value: "not.is.null"),
             URLQueryItem(name: "or", value: "(status.is.null,status.in.(active,reserved))"),
             URLQueryItem(name: "order", value: "created_at.desc"),
@@ -463,6 +536,9 @@ extension SXMListing {
         try c.encodeIfPresent(searchKeywords, forKey: .searchKeywords)
         try c.encodeIfPresent(sellerName, forKey: .sellerName)
         try c.encodeIfPresent(sellerId, forKey: .sellerId)
+        try c.encodeIfPresent(condition, forKey: .condition)
+        try c.encodeIfPresent(delivery, forKey: .delivery)
+        try c.encodeIfPresent(negotiable, forKey: .negotiable)
         try c.encodeIfPresent(vehicle, forKey: .vehicle)
     }
 }
@@ -1032,6 +1108,31 @@ struct SXMRemoteImage: View {
     }
 }
 
+/// All loaded listings of one seller, opened from the seller card.
+struct SXMSellerListings: View {
+    let sellerId: String
+    let name: String
+    @ObservedObject var model: SXMBrowseModel
+
+    var body: some View {
+        let rows = model.listings.filter { $0.sellerId == sellerId }
+        ScrollView {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 14)], spacing: 24) {
+                ForEach(rows) { l in
+                    NavigationLink(destination: SXMListingDetail(listing: l, model: model)) {
+                        SXMListingCard(listing: l, french: model.french)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding()
+        }
+        .background(paper.ignoresSafeArea())
+        .navigationTitle(name)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 struct SXMListingDetail: View {
     let listing: SXMListing
     @ObservedObject var model: SXMBrowseModel
@@ -1043,6 +1144,7 @@ struct SXMListingDetail: View {
     @State private var following: Bool? = false
     @State private var followBusy = false
     @State private var followNote = ""
+    @State private var descriptionOpen = false
 
     private var fr: Bool { model.french }
 
@@ -1060,11 +1162,9 @@ struct SXMListingDetail: View {
                         if let cat = SXMCategories.name(listing.category, french: fr) { Text("· \(cat)") }
                     }
                     .font(.subheadline).foregroundColor(ink.opacity(0.7))
-                    if let seller = listing.sellerLine(french: fr) {
-                        Label(seller, systemImage: "person.crop.circle")
-                            .font(.subheadline).foregroundColor(ink.opacity(0.7))
+                    if let posted = listing.postedLabel(french: fr) {
+                        Text(posted).font(.subheadline).foregroundColor(ink.opacity(0.7))
                     }
-                    followButton
                 }
                 .padding(.horizontal)
 
@@ -1078,10 +1178,8 @@ struct SXMListingDetail: View {
                 }
                 .padding(.horizontal)
 
-                if let text = listing.description, !text.isEmpty {
-                    Text(text).font(.body).foregroundColor(ink).padding(.horizontal)
-                        .textSelection(.enabled)
-                }
+                sellerSection
+                keyInfoSection
 
                 let specs = listing.vehicleSpecs(french: fr)
                 if !specs.isEmpty {
@@ -1098,6 +1196,8 @@ struct SXMListingDetail: View {
                     }
                     .padding(.horizontal)
                 }
+
+                descriptionSection
 
                 if let region = region {
                     VStack(alignment: .leading, spacing: 6) {
@@ -1164,6 +1264,114 @@ struct SXMListingDetail: View {
                 }.padding(.horizontal, 12)
             }
         }
+    }
+
+    private var sellerDisplayName: String {
+        listing.sellerName ?? (fr ? "Vendeur" : "Seller")
+    }
+
+    private var sellerCount: Int {
+        guard let sellerId = listing.sellerId else { return 0 }
+        return model.listings.filter { $0.sellerId == sellerId }.count
+    }
+
+    private var sellerSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Divider()
+            Text(fr ? "Vendu par" : "Sold by").font(.title3.weight(.bold)).foregroundColor(ink)
+            if let sellerId = listing.sellerId, sellerCount > 0 {
+                NavigationLink(destination: SXMSellerListings(sellerId: sellerId, name: sellerDisplayName, model: model)) {
+                    sellerCard(chevron: true)
+                }
+                .buttonStyle(.plain)
+            } else {
+                sellerCard(chevron: false)
+            }
+            followButton
+        }
+        .padding(.horizontal)
+    }
+
+    private func sellerCard(chevron: Bool) -> some View {
+        let name = sellerDisplayName
+        let initial = String(name.trimmingCharacters(in: .whitespaces).prefix(1)).uppercased()
+        var detail = ""
+        if sellerCount == 1 { detail = fr ? "1 annonce" : "1 listing" }
+        if sellerCount > 1 { detail = fr ? "\(sellerCount) annonces" : "\(sellerCount) listings" }
+        return HStack(spacing: 14) {
+            Text(initial.isEmpty ? "?" : initial)
+                .font(.title2.weight(.bold))
+                .foregroundColor(.white)
+                .frame(width: 52, height: 52)
+                .background(Circle().fill(SXMListing.avatarColor(name)))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(name).font(.headline).foregroundColor(ink)
+                if !detail.isEmpty {
+                    Text(detail).font(.subheadline).foregroundColor(ink.opacity(0.65))
+                }
+            }
+            Spacer(minLength: 8)
+            if chevron {
+                Image(systemName: "chevron.right").foregroundColor(ink).accessibilityHidden(true)
+            }
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(ink.opacity(0.2), lineWidth: 1.5))
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder private var keyInfoSection: some View {
+        let typeName = model.subcategoryName(listing.category, listing.subcategory)
+        let rows = listing.keyInfo(french: fr, typeName: typeName)
+        if !rows.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                Divider()
+                Text(fr ? "Les informations clés" : "Key information")
+                    .font(.title3.weight(.bold)).foregroundColor(ink)
+                    .padding(.top, 14).padding(.bottom, 4)
+                ForEach(rows) { row in
+                    HStack(alignment: .top, spacing: 12) {
+                        Text(row.label).foregroundColor(ink.opacity(0.65))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text(row.value).fontWeight(.semibold).foregroundColor(ink)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .font(.subheadline)
+                    .padding(.vertical, 10)
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    @ViewBuilder private var descriptionSection: some View {
+        if let text = listing.description, !text.isEmpty {
+            let long = text.count > 320 || text.split(separator: "\n").count > 6
+            VStack(alignment: .leading, spacing: 8) {
+                Divider()
+                Text("Description").font(.title3.weight(.bold)).foregroundColor(ink).padding(.top, 6)
+                Text(text).font(.body).foregroundColor(ink)
+                    .lineLimit(long && !descriptionOpen ? 6 : nil)
+                    .textSelection(.enabled)
+                if long {
+                    Button { descriptionOpen.toggle() } label: {
+                        Text(descriptionLinkLabel).font(.subheadline.weight(.bold)).underline().foregroundColor(ink)
+                            .frame(minHeight: 44)
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    private var descriptionLinkLabel: String {
+        if descriptionOpen {
+            return fr ? "Voir moins" : "See less"
+        }
+        return fr ? "Voir plus" : "See more"
     }
 
     @ViewBuilder private var followButton: some View {

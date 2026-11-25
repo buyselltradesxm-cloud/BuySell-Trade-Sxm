@@ -2124,7 +2124,8 @@ function openBusinessPage(sellerId, syncUrl = true){
   const fr = state.lang === "fr";
   const listings = businessListings(sellerId);
   const own = idKey(state.user?.id) === idKey(sellerId) && state.user?.accountType === "business";
-  if(!listings.length && !own){ showToast(fr ? "Aucune offre publique pour cette entreprise." : "No public offers for this business."); return; }
+  if(!listings.length && !own){ showToast(fr ? "Aucune annonce publique pour ce vendeur." : "No public listings for this seller."); return; }
+  const isBusiness = own || listings.some(l=>l.pro);
   const name = listings.length ? sellerName(listings[0]) : state.user.businessName || state.user.name;
   const groups = [...new Set(listings.map(l=>l.cat))];
   const url = new URL(location.origin + location.pathname);
@@ -2133,10 +2134,10 @@ function openBusinessPage(sellerId, syncUrl = true){
   closeModal("profileModal");
   document.getElementById("detailTitle").textContent = name;
   document.getElementById("detailBody").innerHTML = `<section class="business-showcase">
-    <header class="business-hero"><span class="pro-eyebrow">${fr ? "ENTREPRISE LOCALE · SAINT-MARTIN / SINT MAARTEN" : "LOCAL BUSINESS · SAINT-MARTIN / SINT MAARTEN"}</span>
-      <h2>${esc(name)}</h2><p>${fr ? "Découvrez nos offres et contactez-nous pour en savoir plus." : "Explore our offers and get in touch to learn more."}</p>
+    <header class="business-hero"><span class="pro-eyebrow">${isBusiness ? (fr ? "ENTREPRISE LOCALE · SAINT-MARTIN / SINT MAARTEN" : "LOCAL BUSINESS · SAINT-MARTIN / SINT MAARTEN") : (fr ? "VENDEUR · SAINT-MARTIN / SINT MAARTEN" : "SELLER · SAINT-MARTIN / SINT MAARTEN")}</span>
+      <h2>${esc(name)}</h2><p>${isBusiness ? (fr ? "Découvrez nos offres et contactez-nous pour en savoir plus." : "Explore our offers and get in touch to learn more.") : (fr ? "Toutes les annonces en ligne de ce vendeur." : "All of this seller’s listings online.")}</p>
       <div class="business-tags">${groups.map(cat=>`<span>${esc((CATS.find(c=>c.id===cat)||{fr:cat,en:cat})[state.lang])}</span>`).join("")}</div>
-      <label for="businessShare">${fr ? "Partager cette entreprise" : "Share this business"}</label><input id="businessShare" readonly value="${esc(url.href)}">
+      <label for="businessShare">${isBusiness ? (fr ? "Partager cette entreprise" : "Share this business") : (fr ? "Partager ce vendeur" : "Share this seller")}</label><input id="businessShare" readonly value="${esc(url.href)}">
     </header>
     <div class="business-catalogue">${listings.map(l=>{const media=mediaFor(l);return `<article class="business-offer">
       <img src="${esc(safeUrl(media.img))}" alt="${esc(titleFor(l))}" loading="lazy">
@@ -3608,15 +3609,11 @@ function openListing(id, syncUrl = true){
           ${profile.price ? `<div class="detail-price">${listingPriceHTML(l)}</div>` : ""}
           <p>${esc(listingTitle)}</p>
         </div>
-        <div class="seller-box">
-          <b>${esc(sellerName(l))} · ${l.pro ? t().sellerPro : t().sellerLocal}</b>
-          <span>${listingLocationHTML(l.area)} · ${side} · ${agoHTML(l.ph)}</span>
-          ${l.pro && l.sellerId ? `<button type="button" class="pf-link" data-click="openBusinessPage" data-click-args='${dataArgs([l.sellerId])}'>${state.lang==="fr" ? "Voir les offres de cette entreprise" : "View this business’s offers"}</button>` : ""}
-          ${window.SellerFollows?.buttonHTML(l) || ""}
-          ${sellerPhoneHTML(l)}
-          ${profile.delivery && l.delivery ? `<br><span>${deliveryLabel(l.delivery)}${profile.meetup && l.meetup ? " · " + meetupLabel(l.meetup) : ""}${profile.negotiable && l.negotiable ? " · " + t().negotiableLabel : ""}</span>` : ""}
-          ${sellerTrustHTML(l)}
-        </div>
+        <p class="ld-where">${listingLocationHTML(l.area)} · ${side} · ${agoHTML(l.ph)}</p>
+        ${listingSellerCardHTML(l)}
+        ${listingKeyInfoHTML(l, profile)}
+        ${detailExtra}
+        ${listingDescriptionHTML(detailDesc)}
         ${listingIsSold(l) && !isOwnListing(l)
           ? `<div class="sold-notice">${state.lang==="fr" ? "Cette annonce est vendue. La messagerie est fermée." : "This listing is sold. Messaging is closed."}</div>`
           : chatHTML(l.id)}
@@ -3638,14 +3635,6 @@ function openListing(id, syncUrl = true){
             <button type="button" class="secondary-btn" data-click="copyListingLink" data-click-args='${dataArgs([l.id, "__EVENT__"])}'>${t().copyLink}</button>
           </div>
         </div>
-        ${(detailDesc || detailExtra) ? `
-          <details class="listing-extra">
-            <summary>${state.lang==="fr" ? "Description et détails" : "Description and details"}</summary>
-            <div class="listing-extra-body">
-              ${detailDesc ? `<p class="detail-description">${esc(detailDesc)}</p>` : ""}
-              ${detailExtra}
-            </div>
-          </details>` : ""}
         <aside class="listing-detail-ad" aria-label="Publicité" data-ad-placement="listing-detail"></aside>
       </div>
       ${profile.photos ? `<div class="detail-media">

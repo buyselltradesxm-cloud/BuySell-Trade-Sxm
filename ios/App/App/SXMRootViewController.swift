@@ -35,6 +35,9 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
             guard let self = self else { return false }
             return try await self.followSeller(sellerId, change)
         }
+        model.subcategoryName = { [weak self] category, subcategory in
+            self?.subcategoryName(category, subcategory)
+        }
         model.post = { [weak self] in self?.open(.post) }
         model.alerts = { [weak self] in self?.open(.alerts) }
         model.languageChanged = { [weak self] useFrench in self?.setBrowseLanguage(useFrench) }
@@ -285,6 +288,12 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
         let reply: SXMFollowReply = try await workflowModel.request("follow", ["sellerId": sellerId, "change": change])
         if reply.own { return nil }
         return reply.following
+    }
+
+    private func subcategoryName(_ category: String?, _ subcategory: String?) -> String? {
+        guard let sub = subcategory, let schema = workflowModel.session?.schema else { return nil }
+        guard let group = schema.categories.first(where: { $0.id == category }) else { return nil }
+        return group.subs.first(where: { $0.id == sub })?.name
     }
 
     private func contactSeller(_ id: String) {
