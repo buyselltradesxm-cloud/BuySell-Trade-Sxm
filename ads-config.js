@@ -159,8 +159,8 @@ window.AdsConfig = {
       weight: 1,
       sponsor: "Triple R Bar & Restaurant",
       url: "https://triplerbarrestaurant.com/",
-      image: "https://triplerbarrestaurant.com/pictures%20%26%20videos/Real.pic.Triple%20R%20Bar%20Restaurant.png",
-      alt: { en: "Triple R Bar & Restaurant in Sandy Ground", fr: "Triple R Bar & Restaurant à Sandy Ground" },
+      image: "/ads/triple-r-default.jpg",
+      alt: { en: "Triple R Bar & Restaurant menu poster", fr: "Affiche du menu Triple R Bar & Restaurant" },
       headline: { en: "Caribbean flavours. Sandy Ground vibes.", fr: "Saveurs caribéennes, ambiance Sandy Ground." },
       text: {
         en: "Discover Triple R Bar & Restaurant: Caribbean food, craft cocktails and DJ sessions in Sandy Ground, Saint Martin.",
