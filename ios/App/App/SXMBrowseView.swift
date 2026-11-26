@@ -1234,7 +1234,11 @@ struct SXMListingDetail: View {
         .sheet(isPresented: $sharing) {
             SXMShareSheet(items: [listing.displayTitle(french: fr), model.shareURL(listing)])
         }
-        .fullScreenCover(item: $zoomed) { url in SXMZoomView(url: url) }
+        .fullScreenCover(item: $zoomed) { url in
+            SXMZoomView(urls: listing.photoURLs, page: listing.photoURLs.firstIndex(of: url) ?? 0,
+                        title: listing.displayTitle(french: fr), price: listing.priceLabel,
+                        french: fr, adsAllowed: model.adsAllowed)
+        }
         .task { await locate() }
     }
 
@@ -1518,29 +1522,74 @@ extension URL: Identifiable {
 }
 
 /// Full-screen photo with pinch to zoom and double tap.
+/// Full-screen photos: centred, swipe between them, pinch or double-tap to zoom;
+/// the listing title, price and one small banner fill the space under the photo.
 struct SXMZoomView: View {
-    let url: URL
+    let urls: [URL]
+    @State var page: Int
+    let title: String
+    let price: String?
+    let french: Bool
+    let adsAllowed: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var scale: CGFloat = 1
     @State private var lastScale: CGFloat = 1
 
+    private var counter: String {
+        if urls.count < 2 { return "" }
+        return String(page + 1) + " / " + String(urls.count)
+    }
+
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Color.black.ignoresSafeArea()
-            SXMRemoteImage(url: url, fill: false)
-                .scaleEffect(scale)
-                .gesture(MagnificationGesture()
-                    .onChanged { scale = max(1, min(5, lastScale * $0)) }
-                    .onEnded { _ in lastScale = scale })
-                .onTapGesture(count: 2) {
-                    withAnimation(.spring()) { scale = scale > 1 ? 1 : 2.5; lastScale = scale }
+        VStack(spacing: 0) {
+            HStack {
+                Text(counter).font(.subheadline.weight(.semibold)).foregroundColor(.white.opacity(0.85))
+                Spacer()
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark.circle.fill").font(.largeTitle).foregroundColor(.white.opacity(0.85))
                 }
-            Button { dismiss() } label: {
-                Image(systemName: "xmark.circle.fill").font(.largeTitle).foregroundColor(.white.opacity(0.85))
+                .accessibilityLabel(french ? "Fermer" : "Close")
             }
-            .padding()
-            .accessibilityLabel("Close")
+            .padding(.horizontal)
+            .padding(.top, 8)
+
+            TabView(selection: $page) {
+                ForEach(Array(urls.enumerated()), id: \.offset) { index, url in
+                    SXMRemoteImage(url: url, fill: false)
+                        .scaleEffect(index == page ? scale : 1)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .tag(index)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .simultaneousGesture(MagnificationGesture()
+                .onChanged { scale = max(1, min(5, lastScale * $0)) }
+                .onEnded { _ in lastScale = scale })
+            .onTapGesture(count: 2) {
+                withAnimation(.spring()) { scale = scale > 1 ? 1 : 2.5; lastScale = scale }
+            }
+            .onChange(of: page) { _ in
+                scale = 1
+                lastScale = 1
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.headline).foregroundColor(.white).lineLimit(2)
+                if let price = price {
+                    Text(price).font(.title3.weight(.heavy)).foregroundColor(Color(red: 140 / 255, green: 214 / 255, blue: 226 / 255))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+
+            if adsAllowed {
+                SXMInlineAdSection(french: french, maxHeight: 60)
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+            }
         }
+        .background(Color.black.ignoresSafeArea())
     }
 }
 

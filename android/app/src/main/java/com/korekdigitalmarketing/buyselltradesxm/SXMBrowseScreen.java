@@ -926,7 +926,7 @@ final class SXMBrowseScreen extends ScrollView {
         if (gallery != null && gallery.length() > 0) {
             loadPhoto(gallery.optString(0), photo, generation, 2);
             photo.setContentDescription(french ? "Voir la photo en grand" : "View photo full screen");
-            photo.setOnClickListener(v -> { stay[0] = true; opening.setVisibility(View.GONE); showPhotoViewer(gallery, page[0]); });
+            photo.setOnClickListener(v -> { stay[0] = true; opening.setVisibility(View.GONE); showPhotoViewer(l, gallery, page[0]); });
         }
         if (gallery != null && gallery.length() > 1) {
             LinearLayout controls = new LinearLayout(getContext());
@@ -1002,11 +1002,16 @@ final class SXMBrowseScreen extends ScrollView {
         }, PREVIEW_MS);
     }
     private static final long PREVIEW_MS = 3000;
-    /** Full-screen black viewer: full-quality photo, ◀ ▶ between photos, tap the photo or ✕ to close. */
-    private void showPhotoViewer(JSONArray gallery, int start) {
+    /** Full-screen black viewer: full-quality photo, ◀ ▶ between photos, tap the photo or ✕ to close.
+     *  The listing title, price and one small banner fill the space under the photo (same as iOS). */
+    private void showPhotoViewer(JSONObject l, JSONArray gallery, int start) {
         android.app.Dialog viewer = new android.app.Dialog(getContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        LinearLayout root = new LinearLayout(getContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(Color.BLACK);
         android.widget.FrameLayout frame = new android.widget.FrameLayout(getContext());
         frame.setBackgroundColor(Color.BLACK);
+        root.addView(frame, new LinearLayout.LayoutParams(-1, 0, 1));
         ImageView big = new ImageView(getContext());
         big.setScaleType(ImageView.ScaleType.FIT_CENTER);
         frame.addView(big, new android.widget.FrameLayout.LayoutParams(-1, -1));
@@ -1032,8 +1037,50 @@ final class SXMBrowseScreen extends ScrollView {
         close.setOnClickListener(v -> viewer.dismiss());
         big.setOnClickListener(v -> viewer.dismiss());
         show.run();
-        viewer.setContentView(frame);
+        LinearLayout bottom = new LinearLayout(getContext());
+        bottom.setOrientation(LinearLayout.VERTICAL);
+        bottom.setPadding(dp(16), dp(10), dp(16), dp(14));
+        TextView name = label(displayTitle(l, french), 16, true);
+        name.setTextColor(Color.WHITE);
+        name.setMaxLines(2);
+        bottom.addView(name);
+        String amount = price(l);
+        if (!amount.isEmpty()) {
+            TextView value = label(amount, 18, true);
+            value.setTextColor(Color.rgb(140, 214, 226));
+            bottom.addView(value);
+        }
+        AdView ad = viewerAd(bottom);
+        root.addView(bottom, new LinearLayout.LayoutParams(-1, -2));
+        viewer.setOnDismissListener(d -> { if (ad != null) ad.destroy(); });
+        viewer.setContentView(root);
         viewer.show();
+    }
+    /** One small banner (max 60dp) under the viewer's caption; stays hidden until Google fills it. */
+    private AdView viewerAd(LinearLayout parent) {
+        if (!adsAllowed || !UserMessagingPlatform.getConsentInformation(getContext()).canRequestAds()) return null;
+        int width = Math.min(420, getResources().getConfiguration().screenWidthDp - 32);
+        if (width < 250) return null;
+        boolean debug = (getContext().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        LinearLayout box = new LinearLayout(getContext());
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setVisibility(View.GONE);
+        box.setPadding(0, dp(10), 0, 0);
+        TextView disclosure = label(french ? "PUBLICITÉ" : "ADVERTISEMENT", 10, true);
+        disclosure.setTextColor(Color.rgb(140, 214, 226));
+        box.addView(disclosure);
+        AdView banner = new AdView(getContext());
+        banner.setAdUnitId(debug ? "ca-app-pub-3940256099942544/6300978111" :
+            getResources().getString(R.string.admob_browse_banner_id));
+        banner.setAdSize(AdSize.getInlineAdaptiveBannerAdSize(width, 60));
+        box.addView(banner, new LinearLayout.LayoutParams(-1, -2));
+        parent.addView(box, new LinearLayout.LayoutParams(-1, -2));
+        banner.setAdListener(new AdListener() {
+            @Override public void onAdLoaded() { box.setVisibility(View.VISIBLE); }
+            @Override public void onAdFailedToLoad(LoadAdError error) { box.setVisibility(View.GONE); }
+        });
+        banner.loadAd(new AdRequest.Builder().build());
+        return banner;
     }
     private TextView viewerButton(String symbol, String description) {
         TextView b = new TextView(getContext());
