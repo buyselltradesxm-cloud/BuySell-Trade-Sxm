@@ -1,0 +1,11 @@
+ENGLISH — 1.0.17
+1. Ads: open Profile. A thin ad strip (about 60 high) may appear above the tab bar. You must still be able to scroll the whole profile page. Also check Discover, Saved and a listing for ads that do not block scrolling.
+2. Consent: on a fresh install, Google's consent popup should be in English even if your phone is set to French.
+
+Do not post test or duplicate listings, and do not tap your own ads.
+
+FRANÇAIS — 1.0.17
+1. Publicités : ouvrez Profil. Une fine bande de publicité (environ 60 de haut) peut apparaître au-dessus de la barre d'onglets. Vous devez pouvoir faire défiler toute la page de profil. Vérifiez aussi Découvrir, Favoris et une annonce : les publicités ne doivent pas bloquer le défilement.
+2. Consentement : sur une installation neuve, la fenêtre de consentement de Google doit s'afficher en anglais même si votre téléphone est en français.
+
+Ne publiez pas d'annonce de test ou en double, et ne touchez pas vos propres publicités.
