@@ -4543,7 +4543,7 @@ function renderProfile(){
     ${blockedUsersHTML()}
     <div class="pf-group pf-gap">
       ${window.SXM && SXM.isStore() ? row(fr ? "Restaurer les achats" : "Restore purchases", "data-apple-restore") + (isBusiness ? "" : row(fr ? `Gérer les abonnements ${SXM.isAndroid() ? "Google Play" : "Apple"}` : `Manage ${SXM.isAndroid() ? "Google Play" : "Apple"} subscriptions`, "data-apple-manage")) : ""}
-      ${row(t().logoutLabel, 'data-click="logoutUser"', "plain")}
+      ${row(t().logoutLabel, 'data-click="logoutUser"', "plain logout")}
     </div>
     <button type="button" class="pf-delete-account" data-click="deleteMyAccountConfirmed">${t().deleteAccountLabel}</button>`;
   refreshPushCard();
