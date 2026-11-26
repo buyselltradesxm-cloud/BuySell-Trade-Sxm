@@ -80,5 +80,25 @@
   }
   function openOwnListingMessages(){closeModal('detailModal');openMessages();}
 
-  Object.assign(window,{listingOwnerPanelHTML,openOwnListingMessages,listingSellerCardHTML,listingKeyInfoHTML,listingDescriptionHTML,toggleListingDescription});
+  // First-message suggestions (same list as the iOS Messages screen): a tap fills the
+  // message box, the buyer still chooses to send. Hidden once the buyer has written.
+  const SUGGESTIONS=[['Bonjour, est-ce toujours disponible ?','Hi, is this still available?'],
+    ['Quel est votre dernier prix ?','What is your best price?'],
+    ['Où peut-on se rencontrer ?','Where can we meet?'],
+    ['Pouvez-vous m’envoyer d’autres photos ?','Could you send more photos?']];
+  function chatSuggestionsHTML(id,thread){
+    if(!state.user||thread.messages.some(m=>m.who==='buyer')) return '';
+    return `<div class="chat-suggest" role="group" aria-label="${tr('Messages suggérés','Suggested messages')}">${SUGGESTIONS.map(([fr,en])=>{
+      const text=tr(fr,en);
+      return `<button type="button" data-click="useChatSuggestion" data-click-args='${dataArgs([String(id),text])}'>${esc(text)}</button>`;
+    }).join('')}</div>`;
+  }
+  function useChatSuggestion(id,text){
+    const input=document.getElementById('chatInput-'+id);
+    if(!input) return;
+    input.value=text;
+    input.focus();
+  }
+
+  Object.assign(window,{chatSuggestionsHTML,useChatSuggestion,listingOwnerPanelHTML,openOwnListingMessages,listingSellerCardHTML,listingKeyInfoHTML,listingDescriptionHTML,toggleListingDescription});
 })();

@@ -35,3 +35,7 @@ button.ld-seller-main{cursor:pointer}
 .detail-meta .ld-owner .owner-btn{min-height:44px;font-size:13.5px;padding:8px 6px}
 .ld-owner-messages{min-height:48px;border:0;border-radius:12px;background:var(--sea);color:#fff;font:inherit;font-weight:800;cursor:pointer}
 .ld-owner-messages:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.chat-suggest{display:flex;gap:8px;overflow-x:auto;padding:10px 12px 2px;scrollbar-width:none}
+.chat-suggest::-webkit-scrollbar{display:none}
+.chat-suggest button{flex:none;min-height:40px;padding:8px 14px;border:1.5px solid var(--sea);border-radius:999px;background:var(--white);color:var(--sea);font:inherit;font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer}
+.chat-suggest button:focus-visible{outline:3px solid var(--sea);outline-offset:2px}

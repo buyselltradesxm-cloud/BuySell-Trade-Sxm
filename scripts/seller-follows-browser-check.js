@@ -54,6 +54,10 @@ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg
       await page.waitForFunction(()=>calls.some(c=>c[0]==='delete')&&document.querySelector('#detailBody [data-follow-seller]').getAttribute('aria-pressed')==='false');
       await btn.click();
       await page.waitForFunction(()=>calls.filter(c=>c[0]==='insert').length===2);
+      // First-message suggestions fill the box, nothing is sent.
+      assert.equal(await page.locator('#detailBody .chat-suggest button').count(),4);
+      await page.locator('#detailBody .chat-suggest button').first().click();
+      assert.equal(await page.inputValue('#chatInput-9901'),'Bonjour, est-ce toujours disponible ?');
       // Native app bridge: read, toggle off, toggle on, own listing.
       const native=await page.evaluate(async({me,seller})=>{
         SB.currentUser=async()=>({id:me});

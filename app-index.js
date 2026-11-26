@@ -2459,6 +2459,7 @@ function chatHTML(id){
         <small>${t().chatOnline}</small>
       </div>
       <div class="chat-log" id="chatLog-${id}">${rows}</div>
+      ${chatSuggestionsHTML(id, thread)}
       <form class="chat-compose" data-submit="sendListingMessage" data-submit-args='${dataArgs([idParam, "__EVENT__"])}'>
         ${!state.user && state.lang === "fr" ? `<textarea id="chatInput-${id}" disabled rows="2" placeholder="${t().loginToChat}"></textarea>` : `<input id="chatInput-${id}" ${state.user ? "" : "disabled"} placeholder="${state.user ? t().chatPlaceholder : t().loginToChat}" value="${state.user ? esc(t().defaultMessage) : ""}">`}
         <button type="submit" ${state.user ? "" : "disabled"}>${t().chatSend}</button>

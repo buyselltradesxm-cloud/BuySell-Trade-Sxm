@@ -505,6 +505,29 @@ struct SXMThreadView: View {
     @State private var confirmReport = false
     @State private var blocked = false
     private var draft: Binding<String> { Binding(get: { model.messageDrafts[thread.key] ?? "" }, set: { model.messageDrafts[thread.key] = $0 }) }
+    /// First-message suggestions (same list as the website chat): a tap fills the box, the buyer sends.
+    private var suggestions: some View {
+        let texts = [
+            model.text("Bonjour, est-ce toujours disponible ?", "Hi, is this still available?"),
+            model.text("Quel est votre dernier prix ?", "What is your best price?"),
+            model.text("Où peut-on se rencontrer ?", "Where can we meet?"),
+            model.text("Pouvez-vous m'envoyer d'autres photos ?", "Could you send more photos?")
+        ]
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(texts, id: \.self) { text in
+                    Button { draft.wrappedValue = text } label: {
+                        Text(text).font(.subheadline.weight(.semibold)).padding(.horizontal, 14).frame(minHeight: 40)
+                            .overlay(Capsule().stroke(Color.accentColor, lineWidth: 1.5))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(.accentColor)
+                }
+            }
+            .padding(.vertical, 2)
+        }
+        .accessibilityLabel(model.text("Messages suggérés", "Suggested messages"))
+    }
     var body: some View {
         VStack(spacing: 0) {
             if !error.isEmpty { Text(error).foregroundColor(.red).padding() }
@@ -525,6 +548,9 @@ struct SXMThreadView: View {
             }
             if !blocked && model.session?.userId != nil {
                 VStack {
+                    if !loading && !messages.contains(where: { $0.senderId == model.session?.userId }) {
+                        suggestions
+                    }
                     TextField(model.text("Votre message", "Your message"), text: draft).textFieldStyle(.roundedBorder).disabled(sending)
                     HStack {
                         Button(model.text("Actualiser", "Refresh")) { Task { await load(manual: true) } }.disabled(loading || sending)
