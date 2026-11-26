@@ -307,9 +307,17 @@ struct SXMPostView: View {
                                 Text(model.text("Automatique", "Automatic")).tag("automatic"); Text(model.text("Manuelle", "Manual")).tag("manual")
                             }
                         }
-                        TextField(model.text("Téléphone (facultatif, visible sur l'annonce)", "Phone (optional, visible on listing)"), text: $draft.phone).keyboardType(.phonePad)
                         if fields.urgent { Toggle(model.text("Vente urgente", "Urgent sale"), isOn: $draft.urgent) }
                     }
+                }
+                // Always shown, never required (same as the website's optional seller phone).
+                Section(header: Text(model.text("Téléphone (facultatif)", "Phone (optional)")),
+                        footer: Text(model.text("Facultatif. Ce numéro sera visible par les acheteurs sur cette annonce.",
+                                                "Optional. Buyers will see this number on this listing."))) {
+                    TextField(model.text("Ex. +590 690 12 34 56", "Ex. +1 721 555 1234"), text: $draft.phone)
+                        .keyboardType(.phonePad)
+                        .textContentType(.telephoneNumber)
+                        .accessibilityLabel(model.text("Téléphone (facultatif)", "Phone (optional)"))
                 }
                 Section {
                     if !notice.isEmpty { Text(notice).foregroundColor(.primary).accessibilityAddTraits(.updatesFrequently) }
