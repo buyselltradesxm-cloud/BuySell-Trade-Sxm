@@ -244,8 +244,8 @@
     var appOpenAdId = (CFG.appOpen && CFG.appOpen[platform]) || "";
     var openOpts = CFG.appOpenOptions || {};
     var OPEN_MIN_LOAD_MS = openOpts.minLoadMs == null ? 3000 : openOpts.minLoadMs;
-    var OPEN_COLD_WINDOW_MS = openOpts.coldWindowMs == null ? 12000 : openOpts.coldWindowMs;
-    var OPEN_RESUME_AFTER_MS = openOpts.resumeAfterMs == null ? 30000 : openOpts.resumeAfterMs;
+    var OPEN_COLD_WINDOW_MS = openOpts.coldWindowMs == null ? 15000 : openOpts.coldWindowMs;
+    var OPEN_RESUME_AFTER_MS = openOpts.resumeAfterMs == null ? 15000 : openOpts.resumeAfterMs;
     var OPEN_COOLDOWN_MS = openOpts.cooldownMs == null ? 120000 : openOpts.cooldownMs;
     var OPEN_MAX_PER_SESSION = openOpts.maxPerSession == null ? 3 : openOpts.maxPerSession;
     var openReady = false, openLoading = false, openShowing = false;

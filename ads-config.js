@@ -105,8 +105,8 @@ window.AdsConfig = {
     },
     appOpenOptions: {
       minLoadMs: 3000,        // launch ad: never before the app had 3 s to paint
-      coldWindowMs: 12000,    // launch ad: shown when ready up to 12 s after launch, if the user has not tapped yet
-      resumeAfterMs: 30000,   // only after a real absence, not a quick switch (camera, photo picker, share)
+      coldWindowMs: 15000,    // launch ad: shown when ready up to 15 s after launch, if the user has not tapped yet
+      resumeAfterMs: 15000,   // back in the app after 15 s away; shorter would hit quick switches (camera, share)
       cooldownMs: 60000,      // never two open ads within a minute
       maxPerSession: 6
     },

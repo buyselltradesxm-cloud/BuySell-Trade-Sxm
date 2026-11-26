@@ -49,6 +49,7 @@ jobs:
           node --check app-review.js
           node scripts/app-growth-check.js
           node scripts/native-workflows-check.js
+          node scripts/app-open-check.js
           npm run test:store-recovery
           node --check push-notifications.js
       - uses: actions/jekyll-build-pages@v1
