@@ -1,0 +1,43 @@
+name: Submit to App Review
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Tested TestFlight version to submit (needs scripts/appstore-<version>-whats-new.txt)
+        required: true
+        type: string
+      dry_run:
+        description: Only read App Store Connect and print the plan
+        required: true
+        default: true
+        type: boolean
+permissions:
+  contents: read
+concurrency:
+  group: appstore-submit
+  cancel-in-progress: false
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the submit helper
+        run: node scripts/appstore-submit-check.js
+      - name: Submit (or dry run)
+        run: node scripts/submit-appstore-review.js
+        env:
+          APPSTORE_VERSION: ${{ inputs.version }}
+          APPSTORE_DRY_RUN: ${{ inputs.dry_run }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: appstore-submit-result
+          path: appstore-submit-result.json
+          if-no-files-found: ignore
