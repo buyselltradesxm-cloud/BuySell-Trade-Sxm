@@ -117,6 +117,7 @@
     // Listen for asynchronous failures too, otherwise a failed first request stays blank.
     AdMob.addListener('bannerAdFailedToLoad', function (error) {
       window.__BST_ADMOB_STATUS__ = { state: 'failed', code: error && error.code };
+      noteAdIssue("banner failed", error);
       bannerShown = false;
       bannerHeight = 0;
       if (layout) layout.bannerSize({height:0}).catch(function () {});
@@ -142,6 +143,11 @@
     // Pro members (paid or on the free trial) keep the small banners but never get
     // full-screen ads. The page sets the flag and fires "bst:ad-free" on account changes.
     function proMember() { return window.__BST_AD_FREE__ === true; }
+    // One report per distinct reason (telemetry de-duplicates); code 3 = no fill, 1 = invalid request.
+    function noteAdIssue(what, error) {
+      var detail = error && (error.code != null ? "code " + error.code + " " : "") + ((error && error.message) || "");
+      if (window.__BST_REPORT__) window.__BST_REPORT__("AdMob " + platform + " " + what + ": " + String(detail || "no detail").slice(0, 200));
+    }
     function syncBanner() {
       if (nativePlacementAds) {
         if (layout) {
@@ -262,7 +268,7 @@
       openLoading = true;
       AdMob.loadAppOpen({ adId: appOpenAdId, isTesting: testing })
         .then(function () { openReady = true; openLoading = false; })
-        .catch(function () { openLoading = false; setTimeout(loadAppOpen, 30000); });
+        .catch(function (error) { openLoading = false; noteAdIssue("app open failed", error); setTimeout(loadAppOpen, 30000); });
     }
     function showAppOpen() {
       if (!bannerAllowed || !openReady || openShowing || proMember() || document.hidden) return;
@@ -297,8 +303,9 @@
       }).then(function () {
         isPrepared = true;
         isPreparing = false;
-      }).catch(function () {
+      }).catch(function (error) {
         isPreparing = false;
+        noteAdIssue("interstitial failed", error);
         // Soft retry after 30s so a one-off network blip doesn't kill
         // interstitials for the rest of the session.
         setTimeout(prepareInterstitial, 30000);
@@ -338,6 +345,9 @@
       // French Saint-Martin is in the EU). If the consent check itself
       // fails, show no ad rather than one without a valid consent state.
       .then(function (consentInfo) {
+        if (!consentInfo || !consentInfo.canRequestAds) {
+          noteAdIssue("consent blocks ads", { message: "status " + (consentInfo && consentInfo.status) });
+        }
         if (consentInfo && consentInfo.canRequestAds) {
           // ATT is optional; ask only after Google's privacy choices. If
           // declined, consent-eligible contextual ads can still be requested.
@@ -363,6 +373,6 @@
           scheduleColdOpen();
         }
       })
-      .catch(function () {});
+      .catch(function (error) { noteAdIssue("setup failed", error); });
   })();
 })();

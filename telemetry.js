@@ -58,6 +58,9 @@
     if (ready) rpc("log_client_error", { p: entry }); else queue.push(entry);
   }
 
+  // Ad SDK refusals (consent, no fill, account limits) are reported like errors so the admin panel shows why no ad appears.
+  window.__BST_REPORT__ = function (message) { report(message, location.origin + "/native-admob.js", null, null, ""); };
+
   window.addEventListener("error", function (e) {
     // Failed images/scripts fire "error" with no message; those are not bugs.
     if (e && e.message) report(e.message, e.filename, e.lineno, e.colno, e.error && e.error.stack);
