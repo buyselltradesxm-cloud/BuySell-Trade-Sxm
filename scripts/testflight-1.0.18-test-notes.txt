@@ -1,0 +1,13 @@
+ENGLISH — 1.0.18
+1. App-open ad: close the app completely, then open it. A full-screen ad with a small "Continue to app" button may appear within a few seconds. Open the app again after 15 seconds away: it may appear again (at most once a minute).
+2. Banners: Discover (under the search bar and in the list), a listing (bottom), Saved, Post, Messages and Profile should now show Google banners much more often than in 1.0.17. Scrolling must still work everywhere.
+3. Full-screen ad: after about 2 minutes of use, open a listing and close it. A full-screen ad may appear (at most once every 3 minutes).
+
+Do not post test or duplicate listings, and do not tap your own ads.
+
+FRANÇAIS — 1.0.18
+1. Pub d'ouverture : fermez complètement l'app, puis rouvrez-la. Une pub plein écran avec un petit bouton « Continuer vers l'app » peut apparaître en quelques secondes. Revenez dans l'app après 15 secondes d'absence : elle peut réapparaître (au plus une fois par minute).
+2. Bannières : Découvrir (sous la recherche et dans la liste), une annonce (en bas), Favoris, Publier, Messages et Profil doivent afficher des bannières Google bien plus souvent qu'en 1.0.17. Le défilement doit toujours fonctionner partout.
+3. Pub plein écran : après environ 2 minutes d'utilisation, ouvrez une annonce puis fermez-la. Une pub plein écran peut apparaître (au plus une fois toutes les 3 minutes).
+
+Ne publiez pas d'annonce de test ou en double, et ne touchez pas vos propres publicités.
