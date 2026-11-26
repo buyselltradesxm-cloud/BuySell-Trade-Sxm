@@ -30,13 +30,13 @@ function fixture() {
   vm.createContext(c);vm.runInContext(source,c);
   return {c,calls,result,request:(action,payload={})=>c.SXMNativeWorkflows.request(action,{userId:owner,...payload})};
 }
-const draft=()=>({title:'Good phone',description:'A real phone',category:'elec',subcategory:'phones',area:'Marigot',amount:'12.50',currency:'usd',condition:'bon',photos:[{data:'/9j/2Q=='}]});
+const draft=()=>({title:'Good phone',description:'A real phone in good condition, sold with its charger.',category:'elec',subcategory:'phones',area:'Marigot',amount:'12.50',currency:'usd',condition:'bon',photos:[{data:'/9j/2Q=='}]});
 (async()=>{
   let f=fixture();
   let r=await f.request('session');assert.equal(r.data.userId,owner);assert.equal(r.data.schema.areas.length,2);
   f.c.SB.currentUser=async()=>null;assert.equal((await f.request('publish',{draft:draft()})).code,'AUTH_REQUIRED');
   f=fixture();assert.equal((await f.request('publish',{userId:peer,draft:draft()})).code,'AUTH_REQUIRED');
-  for(const mutation of [d=>d.title='x',d=>d.category='unknown',d=>d.subcategory='fake',d=>d.amount=undefined,d=>d.amount='NaN',d=>d.amount='0x20',d=>d.amount='-1',d=>d.area='elsewhere',d=>d.currency='btc',d=>d.photos=[],d=>d.photos=[{data:'invalid'}]]) {
+  for(const mutation of [d=>d.title='x',d=>d.description='Too short',d=>d.description='Phone',d=>d.subcategory='',d=>d.category='unknown',d=>d.subcategory='fake',d=>d.amount=undefined,d=>d.amount='NaN',d=>d.amount='0x20',d=>d.amount='-1',d=>d.area='elsewhere',d=>d.currency='btc',d=>d.photos=[],d=>d.photos=[{data:'invalid'}]]) {
     f=fixture();const d=draft();mutation(d);assert.equal((await f.request('publish',{draft:d})).ok,false);assert.equal(f.calls.length,0);
   }
   f=fixture();f.c.state.user.accountType='business';assert.equal((await f.request('publish',{draft:draft()})).ok,false);assert.equal(f.calls.length,0);
@@ -53,6 +53,8 @@ const draft=()=>({title:'Good phone',description:'A real phone',category:'elec',
     else assert.equal(f.calls.length,0,'Invalid weekly rates must fail before uploads');
   }
   f=fixture();const d={...draft(),category:'serv',subcategory:'',photos:[],amount:''};assert.equal((await f.request('publish',{draft:d})).ok,true);
+  f=fixture();r=await f.request('publish',{draft:{...draft(),subcategory:'',description:'Short'}});
+  assert.match(r.error,/subcategory.*description/,'Every missing item is named');assert.equal(f.calls.length,0);
   f=fixture();let release;f.c.SB.uploadPhotos=()=>new Promise(resolve=>{release=resolve;});
   const pending=f.request('publish',{draft:draft()});await new Promise(resolve=>setImmediate(resolve));
   assert.equal((await f.request('publish',{draft:draft()})).ok,false);

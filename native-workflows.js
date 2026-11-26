@@ -8,6 +8,12 @@
   const validID = value => /^(?:[0-9]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.test(String(value || ""));
   const validUser = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
   const locks = new Set();
+  // "At least one sentence": 20 characters and 4 words that contain letters (web form + native apps).
+  const descriptionIsSentence = value => {
+    const s = String(value || "").trim();
+    return s.length >= 20 && s.split(/\s+/).filter(w=>/\p{L}/u.test(w)).length >= 4;
+  };
+  window.descriptionIsSentence = descriptionIsSentence;
   function profile(cat, sub) {
     const p = postFieldProfile(cat, sub);
     return { photosRequired:!!p.photosRequired, price:!!p.price, priceRequired:p.price && p.priceRequired !== false,
@@ -63,12 +69,15 @@
           fail("Votre abonnement Pro doit être actif pour publier. Consultez votre profil.", "Your Pro subscription must be active to publish. Check your profile.");
         const d = payload.draft || {};
         const category = schema().categories.find(c=>c.id === d.category);
-        if(!category || (d.subcategory && !category.subs.some(s=>s.id === d.subcategory)))
-          fail("Choisissez une catégorie valide.", "Choose a valid category.");
-        const fields = profile(d.category,d.subcategory || "");
         const title = String(d.title || "").trim(), description = String(d.description || "").trim();
-        if(title.length < 3 || title.length > 120 || !description || description.length > 10000)
-          fail("Ajoutez un titre de 3 à 120 caractères et une description.", "Add a 3–120 character title and a description.");
+        const missing = [];
+        if(title.length < 3 || title.length > 120) missing.push(text("un titre de 3 à 120 caractères","a 3–120 character title"));
+        if(!category) missing.push(text("la catégorie","the category"));
+        else if(category.subs.length && !category.subs.some(s=>s.id === d.subcategory)) missing.push(text("la sous-catégorie","the subcategory"));
+        if(!descriptionIsSentence(description) || description.length > 10000)
+          missing.push(text("une description d’au moins une phrase (20 caractères minimum)","a description of at least one sentence (20 characters minimum)"));
+        if(missing.length) { const msg = text("Pour publier, il manque : ","To publish, please add: ") + missing.join(", ") + "."; fail(msg, msg); }
+        const fields = profile(d.category,d.subcategory || "");
         if(![...AREAS.fr,...AREAS.nl].includes(d.area)) fail("Choisissez votre secteur.", "Choose your area.");
         const rawAmount = String(d.amount ?? "").trim().replace(",",".");
         const amount = Number(rawAmount);

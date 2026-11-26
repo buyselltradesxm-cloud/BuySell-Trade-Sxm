@@ -220,6 +220,16 @@ struct SXMPostView: View {
     @State private var confirmDiscard = false
     private var category: SXMCategory? { model.session?.schema.categories.first { $0.id == draft.category } }
     private var fields: SXMFields? { category?.subs.first { $0.id == draft.subcategory }?.fields ?? category?.fields }
+    /// Same help and 20-character minimum as the website form (post-form.js).
+    private var descriptionFooter: String {
+        let count = draft.description.trimmingCharacters(in: .whitespacesAndNewlines).count
+        let hint = model.text("Au moins une phrase complète : état, caractéristiques, ce qui est inclus et comment le récupérer.",
+                              "At least one full sentence: condition, main features, what is included and how to collect it.")
+        if count >= 20 {
+            return hint + " (" + String(count) + ")"
+        }
+        return hint + " " + String(count) + " / 20"
+    }
     var body: some View {
         Form {
             if published {
@@ -246,8 +256,9 @@ struct SXMPostView: View {
                         Text(model.text("Choisir", "Choose")).tag("")
                         ForEach(model.session?.schema.areas ?? [], id: \.self) { Text($0).tag($0) }
                     }
-                    Text(model.text("Description", "Description")).font(.caption).foregroundColor(.secondary)
-                    TextEditor(text: $draft.description).frame(minHeight: 120).accessibilityLabel(model.text("Description", "Description"))
+                }
+                Section(header: Text(model.text("Description", "Description")), footer: Text(descriptionFooter)) {
+                    TextEditor(text: $draft.description).frame(minHeight: 160).accessibilityLabel(model.text("Description", "Description"))
                 }
                 Section(header: Text(model.text("Photos", "Photos")), footer: Text(model.text("Jusqu'à 8 photos. La première est la photo principale.", "Up to 8 photos. The first is the cover photo."))) {
                     ForEach(Array(draft.photos.enumerated()), id: \.element.id) { index, photo in

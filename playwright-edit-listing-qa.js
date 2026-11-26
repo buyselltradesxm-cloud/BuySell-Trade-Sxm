@@ -53,7 +53,7 @@ const { chromium } = require("playwright");
 
     await page.locator("#newTitle").fill("Edited listing title");
     await page.locator("#newPrice").fill("125");
-    await page.locator("#newDesc").fill("Updated seller description");
+    await page.locator("#newDesc").fill("Updated seller description with clear details for buyers.");
     await page.locator("#postSubmitBtn").click();
     await page.locator("#detailModal.open").waitFor({ timeout: 4000 });
 
@@ -73,7 +73,7 @@ const { chromium } = require("playwright");
     if (result.title !== "Edited listing title") errors.push(`${path}: title was not updated`);
     if (result.usd !== 125) errors.push(`${path}: USD price was not updated`);
     if (result.eur !== 115) errors.push(`${path}: EUR conversion was not updated`);
-    if (result.desc !== "Updated seller description") errors.push(`${path}: description was not updated`);
+    if (result.desc !== "Updated seller description with clear details for buyers.") errors.push(`${path}: description was not updated`);
     if (result.count !== 1) errors.push(`${path}: edit created a duplicate listing`);
     if (result.detailTitle !== "Edited listing title") errors.push(`${path}: detail modal did not reopen edited listing`);
     // The sign follows the page language: "$125" / "€115" in English, "125 $" / "115 €" in French.
