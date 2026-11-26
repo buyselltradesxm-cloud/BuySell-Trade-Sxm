@@ -93,7 +93,7 @@ begin
     ),
     body := jsonb_build_object(
       'user_id', new.recipient_id,
-      'title', coalesce(sender_name, 'Nouveau message'),
+      'title', coalesce(sender_name, 'New message'),
       'body', left(new.body, 140),
       'url', '/marketplace.html?src=push&conv=' || coalesce(new.listing_id::text, '0') || ':' || new.sender_id,
       'tag', 'msg:' || coalesce(new.listing_id::text, '0') || ':' || new.sender_id

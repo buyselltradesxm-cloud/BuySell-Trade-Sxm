@@ -101,7 +101,7 @@ begin
       body := jsonb_build_object(
         'user_id', f.follower_id,
         'title', who,
-        'body', left('Nouvelle annonce · New listing: ' || coalesce(new.title, ''), 140),
+        'body', left('New listing: ' || coalesce(new.title, ''), 140),
         'url', '/marketplace.html?src=push&listing=' || new.id,
         'tag', 'follow:' || new.id
       )

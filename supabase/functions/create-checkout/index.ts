@@ -137,13 +137,13 @@ Deno.serve(async (req) => {
       mode: "payment",
       "line_items[0][price_data][currency]": BOOST_CURRENCY,
       "line_items[0][price_data][unit_amount]": String(BOOST_PRICE_CENTS[boostDays]),
-      "line_items[0][price_data][product_data][name]": `Boost ${boostDays} jours / days — ${String(listing.title || "").slice(0, 80)}`,
+      "line_items[0][price_data][product_data][name]": `Boost ${boostDays} days / jours — ${String(listing.title || "").slice(0, 80)}`,
       "line_items[0][quantity]": "1",
       client_reference_id: user.id,
       // Terms: a boost is non-refundable once active; say so next to consent.
       "custom_text[submit][message]":
-        "Le boost démarre dès le paiement confirmé et n'est pas remboursable une fois actif. " +
-        "/ The boost starts as soon as payment is confirmed and is non-refundable once active.",
+        "The boost starts as soon as payment is confirmed and is non-refundable once active. " +
+        "/ Le boost démarre dès le paiement confirmé et n'est pas remboursable une fois actif.",
       success_url: `${SITE_URL}/?boost=success`,
       cancel_url: `${SITE_URL}/?boost=cancelled`,
     });
@@ -164,8 +164,8 @@ Deno.serve(async (req) => {
     // Auto-renewal terms shown right above Stripe's Subscribe button
     // (California ARL / FTC ROSCA: clear and conspicuous, next to consent).
     "custom_text[submit][message]":
-      "Renouvellement automatique chaque mois au même prix jusqu'à annulation. Annulable à tout moment en ligne : Profil > Gérer / annuler. " +
-      "/ Renews automatically every month at the same price until you cancel. Cancel anytime online: Profile > Manage / cancel.",
+      "Renews automatically every month at the same price until you cancel. Cancel anytime online: Profile > Manage / cancel. " +
+      "/ Renouvellement automatique chaque mois au même prix jusqu'à annulation. Annulable à tout moment en ligne : Profil > Gérer / annuler.",
     success_url: `${SITE_URL}/?checkout=success`,
     cancel_url: `${SITE_URL}/?checkout=cancelled`,
   });
