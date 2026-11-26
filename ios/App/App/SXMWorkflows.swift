@@ -325,8 +325,16 @@ struct SXMPostView: View {
                         Button(model.text("Vérifier mon profil", "Check my profile"), action: profile)
                     } else {
                         Button { Task { await publish() } } label: {
-                            if model.busy { ProgressView() } else { Text(model.text("Publier l'annonce", "Publish listing")).fontWeight(.semibold) }
-                        }.disabled(model.busy || addingPhotos || !restored || !storageError.isEmpty)
+                            if model.busy {
+                                ProgressView().tint(.white).frame(maxWidth: .infinity, minHeight: 44)
+                            } else {
+                                Text(model.text("Publier maintenant", "Publish now")).fontWeight(.bold).foregroundColor(.white)
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                            }
+                        }
+                        // Green like the website's publish button (post-form.css).
+                        .listRowBackground(Color(red: 21 / 255, green: 128 / 255, blue: 61 / 255))
+                        .disabled(model.busy || addingPhotos || !restored || !storageError.isEmpty)
                     }
                     Button(model.text("Effacer le brouillon", "Discard draft"), role: .destructive) { confirmDiscard = true }.disabled(model.busy || (!restored && !draftLoadFailed))
                 }

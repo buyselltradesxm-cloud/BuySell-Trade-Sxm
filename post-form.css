@@ -15,3 +15,7 @@
 .post-missing button span{text-decoration:underline;text-underline-offset:3px}
 .post-missing button::before{content:"•";flex:none;font-size:20px;line-height:1.1;color:#991B1B}
 .post-missing button:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+/* The publish button is green on every platform (iOS: SXMWorkflows.swift). */
+#postForm #postSubmitBtn{background:#15803D;border-color:#15803D;color:#fff;font-weight:800}
+@media (hover:hover){#postForm #postSubmitBtn:hover{background:#166534;border-color:#166534}}
+#postForm #postSubmitBtn:focus-visible{outline:3px solid #15803D;outline-offset:3px}
