@@ -65,6 +65,8 @@ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg
       // Own listing: no button.
       await page.evaluate(()=>{L.unshift({...L[0],id:9902,sellerId:__me,ownerId:__me});openListing(9902,false);});
       assert.equal(await page.locator('#detailBody [data-follow-seller]').count(),0,'No follow button on own listing');
+      assert.equal(await page.locator('#detailBody .ld-owner .owner-btn').count(),3,'Owner manages the listing');
+      assert.equal(await page.locator('#detailBody .chat-box').count(),0,'No buyer chat on own listing');
       await page.evaluate(()=>{closeModal('detailModal');openFollowedSellers();});
       await page.locator('#followedSellersModal.open #followedSellersList b').waitFor();
       assert.equal(await page.locator('#followedSellersList b').innerText(),'Garage <b>Test</b>','Seller name is escaped');

@@ -23,3 +23,15 @@ button.ld-seller-main{cursor:pointer}
 .ld-desc.folded .detail-description{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
 .ld-more{margin-top:8px;padding:10px 0;min-height:44px;border:0;background:none;color:var(--ink);font:inherit;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .ld-more:focus-visible,.ld-seller-main:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.ld-owner{display:grid;gap:10px;padding:16px;border:1.5px solid rgba(19,42,46,.22);border-radius:16px;background:var(--white)}
+.ld-owner-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ld-owner-head .ld-heading{margin:0}
+.ld-owner-status{flex:none;padding:4px 10px;border-radius:999px;background:#E7F5EC;color:#15803D;font-size:13px;font-weight:800}
+.ld-owner-status.sold{background:var(--paper-deep);color:var(--mute)}
+.ld-owner-help{margin:0;color:var(--mute);font-size:14px;line-height:1.45}
+.detail-meta .ld-owner .owner-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0;padding:0;border:0;background:none}
+.ld-owner .owner-bar-tag{display:none}
+.detail-meta .ld-owner .owner-bar>.owner-btn:first-of-type{grid-column:1/-1}
+.detail-meta .ld-owner .owner-btn{min-height:44px;font-size:13.5px;padding:8px 6px}
+.ld-owner-messages{min-height:48px;border:0;border-radius:12px;background:var(--sea);color:#fff;font:inherit;font-weight:800;cursor:pointer}
+.ld-owner-messages:focus-visible{outline:3px solid var(--sea);outline-offset:2px}

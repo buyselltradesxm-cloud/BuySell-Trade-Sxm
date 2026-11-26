@@ -3604,7 +3604,6 @@ function openListing(id, syncUrl = true){
   detail.innerHTML = `
     <div class="detail-grid ${profile.photos ? "" : "no-media"}">
       <div class="detail-meta">
-        ${ownerActionBarHTML(l)}
         <div class="listing-primary">
           ${profile.price ? `<div class="detail-price">${listingPriceHTML(l)}</div>` : ""}
           <p>${esc(listingTitle)}</p>
@@ -3614,14 +3613,14 @@ function openListing(id, syncUrl = true){
         ${listingKeyInfoHTML(l, profile)}
         ${detailExtra}
         ${listingDescriptionHTML(detailDesc)}
-        ${listingIsSold(l) && !isOwnListing(l)
+        ${isOwnListing(l) ? listingOwnerPanelHTML(l) : listingIsSold(l)
           ? `<div class="sold-notice">${state.lang==="fr" ? "Cette annonce est vendue. La messagerie est fermée." : "This listing is sold. Messaging is closed."}</div>`
           : chatHTML(l.id)}
         <div class="detail-actions">
           ${state.user || listingIsSold(l) ? "" : `<button type="button" class="primary-btn" data-click="requestListingLogin" data-click-args='${dataArgs([l.id])}'>${state.lang==="fr"?"Se connecter pour discuter":"Log in to chat"}</button>`}
           ${isOwnListing(l) && !listingIsSold(l) && !hasActiveProSubscription(state.user) ? `<button type="button" class="primary-btn" data-click="openBoostCheckout" data-click-args='${dataArgs([l.id, "__EVENT__"])}'>${t().boostCta}</button>` : ""}
           <button type="button" class="primary-btn" data-click="shareListing" data-click-args='${dataArgs([l.id, "__EVENT__"])}'>${DETAIL_ICONS.share}${t().shareLabel}</button>
-          <button type="button" class="secondary-btn" data-click="toggleFavFromDetail" data-click-args='${dataArgs([l.id])}'>${state.favs.has(idKey(id))?DETAIL_ICONS.heartOn+t().savedLabel:DETAIL_ICONS.heart+t().saveLabel}</button>
+          ${isOwnListing(l) ? "" : `<button type="button" class="secondary-btn" data-click="toggleFavFromDetail" data-click-args='${dataArgs([l.id])}'>${state.favs.has(idKey(id))?DETAIL_ICONS.heartOn+t().savedLabel:DETAIL_ICONS.heart+t().saveLabel}</button>`}
           ${l.area ? `<a class="secondary-btn map-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${l.area}, ${l.side === "nl" ? "Sint Maarten" : "Saint-Martin"}`)}" target="_blank" rel="noopener">${DETAIL_ICONS.pin}${state.lang==="fr"?"Voir le secteur sur la carte":"View area on map"}</a>` : ""}
           ${isOwnListing(l) ? "" : `<button type="button" class="secondary-btn report-btn" data-click="openReportModal" data-click-args='${dataArgs([l.id])}'>${t().reportLabel}</button>`}
         </div>

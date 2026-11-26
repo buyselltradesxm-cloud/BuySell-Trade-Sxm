@@ -988,7 +988,7 @@ final class SXMBrowseScreen extends ScrollView {
             });
             content.addView(map);
         }
-        TextView contact = button(french ? "Contacter le vendeur" : "Contact seller");
+        TextView contact = button(french ? "Voir l’annonce complète" : "View full listing");
         LinearLayout.LayoutParams contactParams = new LinearLayout.LayoutParams(-1, dp(52));
         contactParams.topMargin = dp(18); content.addView(contact, contactParams);
         ScrollView scroll = new ScrollView(getContext());

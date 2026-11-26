@@ -39,6 +39,8 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
             self?.subcategoryName(category, subcategory)
         }
         model.post = { [weak self] in self?.open(.post) }
+        model.manage = { [weak self] listing in self?.showInWeb(listing: listing.id) }
+        model.messages = { [weak self] in self?.open(.messages) }
         model.alerts = { [weak self] in self?.open(.alerts) }
         model.languageChanged = { [weak self] useFrench in self?.setBrowseLanguage(useFrench) }
         return model

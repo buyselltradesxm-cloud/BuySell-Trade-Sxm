@@ -63,5 +63,22 @@
     btn.textContent=open?tr('Voir moins','See less'):tr('Voir plus','See more');
   }
 
-  Object.assign(window,{listingSellerCardHTML,listingKeyInfoHTML,listingDescriptionHTML,toggleListingDescription});
+  // Shown to the seller on their own listing instead of the buyer chat:
+  // status, then every owner action in one place (actions from ownerActionBarHTML).
+  function listingOwnerPanelHTML(l){
+    const sold=listingIsSold(l);
+    const status=sold?tr('Vendue','Sold'):tr('En ligne','Online');
+    return `<section class="ld-owner" aria-labelledby="ldOwnerTitle">
+      <div class="ld-owner-head">
+        <h3 class="ld-heading" id="ldOwnerTitle">${tr('Gérer votre annonce','Manage your listing')}</h3>
+        <span class="ld-owner-status${sold?' sold':''}">${status}</span>
+      </div>
+      <p class="ld-owner-help">${tr('Les acheteurs vous écrivent depuis cette page. Leurs messages arrivent dans Messages.','Buyers write to you from this page. Their messages arrive in Messages.')}</p>
+      ${ownerActionBarHTML(l)}
+      <button type="button" class="ld-owner-messages" data-click="openOwnListingMessages">${tr('Messages des acheteurs','Messages from buyers')}</button>
+    </section>`;
+  }
+  function openOwnListingMessages(){closeModal('detailModal');openMessages();}
+
+  Object.assign(window,{listingOwnerPanelHTML,openOwnListingMessages,listingSellerCardHTML,listingKeyInfoHTML,listingDescriptionHTML,toggleListingDescription});
 })();

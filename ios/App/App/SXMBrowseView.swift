@@ -432,6 +432,9 @@ final class SXMBrowseModel: ObservableObject {
     /// Subcategory display name ("Scooters à vendre"), nil until the website schema is loaded.
     var subcategoryName: (_ category: String?, _ subcategory: String?) -> String? = { _, _ in nil }
     var post: () -> Void = {}
+    /// Owner tools for your own listing: the website listing page (edit, sold, delete) and the Messages tab.
+    var manage: (SXMListing) -> Void = { _ in }
+    var messages: () -> Void = {}
     var alerts: () -> Void = {}
     var languageChanged: (Bool) -> Void = { _ in }
 
@@ -1145,6 +1148,9 @@ struct SXMListingDetail: View {
     @State private var followBusy = false
     @State private var followNote = ""
     @State private var descriptionOpen = false
+    /// Learned from the signed-in web session (follow bridge); the contact button waits for it.
+    @State private var ownListing = false
+    @State private var ownershipKnown = false
 
     private var fr: Bool { model.french }
 
@@ -1168,15 +1174,7 @@ struct SXMListingDetail: View {
                 }
                 .padding(.horizontal)
 
-                Button { model.contact(listing) } label: {
-                    Label(fr ? "Contacter le vendeur" : "Contact the seller", systemImage: "bubble.left.and.bubble.right.fill")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .foregroundColor(.white)
-                        .background(RoundedRectangle(cornerRadius: 14).fill(sea))
-                }
-                .padding(.horizontal)
+                contactSection
 
                 sellerSection
                 keyInfoSection
@@ -1217,6 +1215,7 @@ struct SXMListingDetail: View {
             .padding(.bottom, 24)
         }
         .background(paper.ignoresSafeArea())
+        .task(id: listing.id) { await loadFollow() }
         // Pinned, so it shows while the buyer looks at the photos and reads the description,
         // not only after scrolling past the map. One Google ad on this screen.
         .bottomAd(model.adsAllowed)
@@ -1264,6 +1263,58 @@ struct SXMListingDetail: View {
                 }.padding(.horizontal, 12)
             }
         }
+    }
+
+    @ViewBuilder private var contactSection: some View {
+        if ownListing {
+            ownerPanel
+        } else if ownershipKnown {
+            Button { model.contact(listing) } label: {
+                Label(fr ? "Contacter le vendeur" : "Contact the seller", systemImage: "bubble.left.and.bubble.right.fill")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .foregroundColor(.white)
+                    .background(RoundedRectangle(cornerRadius: 14).fill(sea))
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    /// The seller's own listing: manage it instead of contacting yourself (same panel as the website).
+    private var ownerPanel: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(fr ? "Gérer votre annonce" : "Manage your listing").font(.title3.weight(.bold)).foregroundColor(ink)
+                Spacer(minLength: 8)
+                Text(fr ? "En ligne" : "Online")
+                    .font(.footnote.weight(.heavy))
+                    .foregroundColor(Color(red: 21 / 255, green: 128 / 255, blue: 61 / 255))
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .background(Capsule().fill(Color(red: 231 / 255, green: 245 / 255, blue: 236 / 255)))
+            }
+            Text(fr ? "Les acheteurs vous écrivent depuis cette page. Leurs messages arrivent dans Messages."
+                    : "Buyers write to you from this page. Their messages arrive in Messages.")
+                .font(.subheadline).foregroundColor(ink.opacity(0.7))
+            Button { model.manage(listing) } label: {
+                Label(fr ? "Modifier, marquer vendue ou supprimer" : "Edit, mark as sold or delete", systemImage: "slider.horizontal.3")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .foregroundColor(sea)
+                    .background(RoundedRectangle(cornerRadius: 12).stroke(sea, lineWidth: 1.5))
+            }
+            Button { model.messages() } label: {
+                Label(fr ? "Messages des acheteurs" : "Messages from buyers", systemImage: "bubble.left.and.bubble.right.fill")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .foregroundColor(.white)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(sea))
+            }
+        }
+        .padding(16)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(ink.opacity(0.2), lineWidth: 1.5))
+        .padding(.horizontal)
     }
 
     private var sellerDisplayName: String {
@@ -1386,7 +1437,6 @@ struct SXMListingDetail: View {
                     .overlay(Capsule().stroke(sea, lineWidth: 1.5))
             }
             .disabled(followBusy)
-            .task(id: sellerId) { await loadFollow(sellerId) }
             if !followNote.isEmpty {
                 Text(followNote).font(.footnote).foregroundColor(ink.opacity(0.7))
             }
@@ -1400,12 +1450,19 @@ struct SXMListingDetail: View {
         return fr ? "Suivre" : "Follow"
     }
 
-    private func loadFollow(_ sellerId: String) async {
+    private func loadFollow() async {
+        guard let sellerId = listing.sellerId else {
+            ownershipKnown = true
+            return
+        }
         do {
-            following = try await model.follow(sellerId, false)
+            let state = try await model.follow(sellerId, false)
+            following = state
+            ownListing = state == nil
         } catch {
             following = false
         }
+        ownershipKnown = true
     }
 
     private func toggleFollow(_ sellerId: String) {
