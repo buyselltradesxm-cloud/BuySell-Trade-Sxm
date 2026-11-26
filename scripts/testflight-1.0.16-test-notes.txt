@@ -1,0 +1,15 @@
+ENGLISH — 1.0.16
+1. Post: tap Post. Category and subcategory start empty and are required. The Description section shows help and a character count (20 minimum, at least one sentence). Tap the green "Publish now" button with fields missing: a red box lists everything still missing. The phone number has its own section and is optional.
+2. Your own listing: open one of your listings. Instead of "Contact the seller" you see "Manage your listing" (edit, mark as sold or delete, messages from buyers).
+3. Photos: open a listing and tap a photo. It is centred, you can swipe between photos ("2 / 6"), the title and price are under it, and a small ad may appear at the bottom.
+4. Messages: contact a seller for the first time. Four suggested messages appear above the message box; tapping one fills the box without sending.
+
+Do not post test or duplicate listings, and do not tap your own ads.
+
+FRANÇAIS — 1.0.16
+1. Publier : touchez Publier. La catégorie et la sous-catégorie sont vides au départ et obligatoires. La section Description affiche une aide et un compteur (20 caractères minimum, au moins une phrase). Touchez le bouton vert "Publier maintenant" avec des champs vides : un encadré rouge liste tout ce qui manque. Le téléphone a sa propre section et reste facultatif.
+2. Votre annonce : ouvrez une de vos annonces. A la place de "Contacter le vendeur", vous voyez "Gérer votre annonce" (modifier, marquer vendue ou supprimer, messages des acheteurs).
+3. Photos : ouvrez une annonce et touchez une photo. Elle est centrée, on glisse entre les photos ("2 / 6"), le titre et le prix sont dessous, et une petite publicité peut apparaître en bas.
+4. Messages : contactez un vendeur pour la première fois. Quatre messages suggérés apparaissent au-dessus de la zone de texte ; en toucher un remplit la zone sans envoyer.
+
+Ne publiez pas d'annonce de test ou en double, et ne touchez pas vos propres publicités.
