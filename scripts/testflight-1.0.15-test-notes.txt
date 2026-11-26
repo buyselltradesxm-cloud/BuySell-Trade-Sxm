@@ -1,0 +1,23 @@
+ENGLISH — 1.0.15
+This build adds "Follow a seller" and a clearer listing page, like the website.
+
+1. Open Discover, then open any listing. Below the contact button you should see "Sold by": a round avatar with the seller's initial, the seller name, the number of listings and an arrow.
+2. Tap the seller card: the seller's other listings open. Go back.
+3. Tap "Follow". If you are signed in it changes to "Following ✓"; tap again to unfollow. If you are signed out, a message asks you to sign in.
+4. Check "Key information" (condition, category, type, location, handover, negotiable price) and the "Description" section. A long description shows the first lines with "See more".
+5. On the website or the Profile tab, open the bell and "Followed sellers": the seller you follow is listed.
+6. When a followed seller publishes a new listing, a notification arrives on this device if notifications are allowed.
+
+Do not post test or duplicate listings; only publish a genuine listing you intend to make public.
+
+FRANÇAIS — 1.0.15
+Cette version ajoute « Suivre un vendeur » et une page d'annonce plus claire, comme sur le site.
+
+1. Ouvrez Découvrir, puis une annonce. Sous le bouton de contact, vous devez voir « Vendu par » : une pastille avec l'initiale du vendeur, son nom, son nombre d'annonces et une flèche.
+2. Touchez la carte du vendeur : ses autres annonces s'affichent. Revenez en arrière.
+3. Touchez « Suivre ». Connecté, le bouton devient « Suivi ✓ » ; touchez encore pour ne plus suivre. Déconnecté, un message vous demande de vous connecter.
+4. Vérifiez « Les informations clés » (état, catégorie, type, lieu, remise, prix négociable) et la section « Description ». Une longue description affiche les premières lignes avec « Voir plus ».
+5. Sur le site ou dans l'onglet Profil, ouvrez la cloche puis « Vendeurs suivis » : le vendeur suivi apparaît.
+6. Quand un vendeur suivi publie une nouvelle annonce, une notification arrive sur cet appareil si les notifications sont autorisées.
+
+Ne publiez pas d'annonce de test ou en double ; uniquement une vraie annonce destinée au public.
