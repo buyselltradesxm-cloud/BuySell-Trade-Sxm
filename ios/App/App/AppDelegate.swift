@@ -7,7 +7,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // English is the default: Google's consent form (UMP) follows the app's preferred language, not the in-app FR/EN toggle.
+        // shortcut: forces English for this app only (iOS system prompts too); upgrade to follow the toggle if French-first users complain.
+        UserDefaults.standard.set(["en"], forKey: "AppleLanguages")
         return true
     }
 

@@ -214,7 +214,7 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
             return
         }
         guard profileAd == nil else { return }
-        let ad = UIHostingController(rootView: SXMInlineAdSection(french: french, heightChanged: { [weak self] height in
+        let ad = UIHostingController(rootView: SXMInlineAdSection(french: french, maxHeight: 60, heightChanged: { [weak self] height in
             guard let self = self, let constraint = self.profileAdHeight else { return }
             constraint.constant = height
             self.webBottom?.constant = height > 0 ? -(height + 16) : 0

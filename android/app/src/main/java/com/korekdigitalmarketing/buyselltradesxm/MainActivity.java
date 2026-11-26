@@ -108,7 +108,7 @@ public class MainActivity extends BridgeActivity {
         pageAd = banner;
         boolean debug = (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         banner.setAdUnitId(debug ? "ca-app-pub-3940256099942544/6300978111" : getString(R.string.admob_browse_banner_id));
-        banner.setAdSize(AdSize.getInlineAdaptiveBannerAdSize(width, compact ? 60 : 300));
+        banner.setAdSize(AdSize.getInlineAdaptiveBannerAdSize(width, 60)); // a 300 dp ad took half the profile screen and blocked scrolling
         banner.setAdListener(new AdListener() {
             @Override public void onAdLoaded() {
                 if (pageAd == banner) pageAdSection.setVisibility(View.VISIBLE);
