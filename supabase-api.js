@@ -607,6 +607,8 @@
     // détectée automatiquement dans l'URL par supabase-js).
     signInWithOAuth: async function (provider) {
       if (!window.db) return { error: { message: "Supabase non configuré" } };
+      // Google otherwise signs straight back into the last account; always offer the account chooser.
+      const queryParams = provider === "google" ? { prompt: "select_account" } : undefined;
       if (window.SXM && SXM.isIOS()) {
         // Builds with the system Sign in with Apple sheet need no browser and
         // no redirect. Anything short of a session falls back to the browser
@@ -636,7 +638,7 @@
             provider: provider,
             // Retour via une page du site (toujours acceptée par Supabase) qui
             // relaie le code vers buyselltradesxm://auth/callback.
-            options: { redirectTo: "https://buyselltradesxm.com/auth-callback.html", skipBrowserRedirect: true }
+            options: { redirectTo: "https://buyselltradesxm.com/auth-callback.html", skipBrowserRedirect: true, queryParams: queryParams }
           });
           if (result.error) return result;
           const callback = await SXM.plugin().authenticate({ url: result.data.url });
@@ -660,7 +662,7 @@
         try {
           const result = await window.db.auth.signInWithOAuth({
             provider: provider,
-            options: { redirectTo: "https://buyselltradesxm.com/auth-callback.html", skipBrowserRedirect: true }
+            options: { redirectTo: "https://buyselltradesxm.com/auth-callback.html", skipBrowserRedirect: true, queryParams: queryParams }
           });
           if (result.error) return result;
           const callbackUrl = await waitForAndroidAuthCallback(android, result.data.url);
@@ -671,7 +673,7 @@
       }
       return window.db.auth.signInWithOAuth({
         provider: provider,
-        options: { redirectTo: window.location.origin + window.location.pathname }
+        options: { redirectTo: window.location.origin + window.location.pathname, queryParams: queryParams }
       });
     },
 
