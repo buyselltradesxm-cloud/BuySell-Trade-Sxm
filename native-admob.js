@@ -244,6 +244,7 @@
     var appOpenAdId = (CFG.appOpen && CFG.appOpen[platform]) || "";
     var openOpts = CFG.appOpenOptions || {};
     var OPEN_MIN_LOAD_MS = openOpts.minLoadMs == null ? 3000 : openOpts.minLoadMs;
+    var OPEN_COLD_WINDOW_MS = openOpts.coldWindowMs == null ? 12000 : openOpts.coldWindowMs;
     var OPEN_RESUME_AFTER_MS = openOpts.resumeAfterMs == null ? 30000 : openOpts.resumeAfterMs;
     var OPEN_COOLDOWN_MS = openOpts.cooldownMs == null ? 120000 : openOpts.cooldownMs;
     var OPEN_MAX_PER_SESSION = openOpts.maxPerSession == null ? 3 : openOpts.maxPerSession;
@@ -257,17 +258,29 @@
     document.addEventListener("pointerdown", function () { interacted = true; }, { once: true, capture: true });
     window.addEventListener("sxmTab", function () { interacted = true; });
 
+    // Launch ad: shown as soon as it is ready between minLoadMs and coldWindowMs after the app
+    // started, unless the user already tapped something. Checking only once at minLoadMs missed
+    // most launches, because consent + loading usually take longer than that.
+    var coldPending = false;
+    function tryColdOpen() {
+      if (!coldPending) return;
+      var age = Date.now() - startedAt;
+      if (interacted || age > OPEN_COLD_WINDOW_MS) { coldPending = false; return; }
+      if (!openReady || age < OPEN_MIN_LOAD_MS) return;
+      coldPending = false;
+      showAppOpen();
+    }
     function scheduleColdOpen() {
-      var remaining = OPEN_MIN_LOAD_MS - (Date.now() - startedAt);
-      if (remaining < 0) return;
-      setTimeout(function () { if (!interacted) showAppOpen(); }, remaining);
+      coldPending = true;
+      setTimeout(tryColdOpen, Math.max(0, OPEN_MIN_LOAD_MS - (Date.now() - startedAt)));
+      setTimeout(tryColdOpen, Math.max(0, OPEN_COLD_WINDOW_MS - (Date.now() - startedAt)));
     }
 
     function loadAppOpen() {
       if (!bannerAllowed || !appOpenAdId || openReady || openLoading || proMember() || !AdMob.loadAppOpen) return;
       openLoading = true;
       AdMob.loadAppOpen({ adId: appOpenAdId, isTesting: testing })
-        .then(function () { openReady = true; openLoading = false; })
+        .then(function () { openReady = true; openLoading = false; tryColdOpen(); })
         .catch(function (error) { openLoading = false; noteAdIssue("app open failed", error); setTimeout(loadAppOpen, 30000); });
     }
     function showAppOpen() {

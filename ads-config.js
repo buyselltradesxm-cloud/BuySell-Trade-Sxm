@@ -104,10 +104,11 @@ window.AdsConfig = {
       ios: "ca-app-pub-7816106453580174/6796030440"      // SXM iOS App Open
     },
     appOpenOptions: {
-      minLoadMs: 3000,        // only show a ready ad during the cold-open window
-      resumeAfterMs: 30000,   // only after a real absence, not a quick switch
-      cooldownMs: 120000,     // never two open ads back to back
-      maxPerSession: 3
+      minLoadMs: 3000,        // launch ad: never before the app had 3 s to paint
+      coldWindowMs: 12000,    // launch ad: shown when ready up to 12 s after launch, if the user has not tapped yet
+      resumeAfterMs: 30000,   // only after a real absence, not a quick switch (camera, photo picker, share)
+      cooldownMs: 60000,      // never two open ads within a minute
+      maxPerSession: 6
     },
 
     /* Interstitial eligibility is checked only at natural transitions
