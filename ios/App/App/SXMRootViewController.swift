@@ -31,6 +31,10 @@ final class SXMRootViewController: UIViewController, UITabBarDelegate {
     private lazy var browseModel: SXMBrowseModel = {
         let model = SXMBrowseModel(french: french)
         model.contact = { [weak self] listing in self?.contactSeller(listing.id) }
+        // native-admob.js decides: consent, Pro, 90 s first delay, 3 min cooldown, 5 per session.
+        model.detailClosed = { [weak self] in
+            self?.web.webView?.evaluateJavaScript("window.__BST_ADMOB_INTERSTITIAL__&&window.__BST_ADMOB_INTERSTITIAL__()")
+        }
         model.follow = { [weak self] sellerId, change in
             guard let self = self else { return false }
             return try await self.followSeller(sellerId, change)

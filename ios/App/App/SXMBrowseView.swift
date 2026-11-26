@@ -427,6 +427,8 @@ final class SXMBrowseModel: ObservableObject {
 
     /// Opens the authenticated native conversation with this listing's seller.
     var contact: (SXMListing) -> Void = { _ in }
+    /// A native listing page closed: a natural break for the throttled full-screen ad (native-admob.js).
+    var detailClosed: () -> Void = {}
     /// Reads (change false) or toggles (change true) "follow this seller". nil = own listing.
     var follow: (_ sellerId: String, _ change: Bool) async throws -> Bool? = { _, _ in false }
     /// Subcategory display name ("Scooters à vendre"), nil until the website schema is loaded.
@@ -965,22 +967,26 @@ struct SXMInlineAdSection: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let width = max(1, geometry.size.width - 24)
+            // The first layout pass can report 0 width; a banner requested then is 1 pt wide and Google never fills it.
+            let width = (geometry.size.width - 24).rounded()
             VStack(alignment: .leading, spacing: 8) {
                 if adHeight > 0 {
                     Text(french ? "PUBLICITÉ" : "ADVERTISEMENT")
                         .font(.system(size: 10, weight: .bold)).tracking(1.2)
                         .foregroundColor(sea)
                 }
-                SXMInlineAdBanner(width: width, maxHeight: maxHeight, onLoad: { adHeight = $0 }, onFailure: {
-                    adHeight = 0
-                    let failedAttempt = attempt
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
-                        if attempt == failedAttempt { attempt += 1 }
-                    }
-                })
-                .id(attempt)
-                .frame(width: width, height: max(1, adHeight))
+                if width >= SXMAdReport.minimumWidth {
+                    SXMInlineAdBanner(width: width, maxHeight: maxHeight, onLoad: { adHeight = $0 }, onFailure: {
+                        adHeight = 0
+                        let failedAttempt = attempt
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
+                            if attempt == failedAttempt { attempt += 1 }
+                        }
+                    })
+                    // A new width (layout settled, rotation) needs a new request at that size.
+                    .id("\(attempt)-\(Int(width))")
+                    .frame(width: width, height: max(1, adHeight))
+                }
             }
             .padding(adHeight > 0 ? 12 : 0)
             .frame(maxWidth: .infinity)
@@ -1049,20 +1055,56 @@ private struct SXMInlineAdBanner: UIViewRepresentable {
     }
 
     func updateUIView(_ banner: BannerView, context: Context) {}
-    func makeCoordinator() -> Coordinator { Coordinator(onLoad: onLoad, onFailure: onFailure) }
+    func makeCoordinator() -> Coordinator { Coordinator(width: width, onLoad: onLoad, onFailure: onFailure) }
 
     final class Coordinator: NSObject, BannerViewDelegate {
+        let width: CGFloat
         let onLoad: (CGFloat) -> Void
         let onFailure: () -> Void
-        init(onLoad: @escaping (CGFloat) -> Void, onFailure: @escaping () -> Void) {
-            self.onLoad = onLoad; self.onFailure = onFailure
+        init(width: CGFloat, onLoad: @escaping (CGFloat) -> Void, onFailure: @escaping () -> Void) {
+            self.width = width; self.onLoad = onLoad; self.onFailure = onFailure
         }
         func bannerViewDidReceiveAd(_ bannerView: BannerView) {
             DispatchQueue.main.async { self.onLoad(bannerView.intrinsicContentSize.height) }
         }
         func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+            SXMAdReport.bannerFailed(error, width: width)
             DispatchQueue.main.async { self.onFailure() }
         }
+    }
+}
+
+/// Sends Google's reason for an empty native banner to the admin error log (same RPC as telemetry.js),
+/// once per distinct reason per app launch, so a low match rate in AdMob can be explained.
+enum SXMAdReport {
+    /// Narrower banners are not requested: Google fills almost none of them.
+    static let minimumWidth: CGFloat = 200
+    private static var sent = Set<String>()
+
+    static func bannerFailed(_ error: Error, width: CGFloat) {
+        let ns = error as NSError
+        let text = "AdMob ios native banner failed: code \(ns.code) " + ns.localizedDescription
+        let message = String(text.prefix(220)) + " (width \(Int(width)))"
+        DispatchQueue.main.async { send(message) }
+    }
+
+    private static func send(_ message: String) {
+        guard !sent.contains(message) else { return }
+        sent.insert(message)
+        guard let url = URL(string: SXMBrowseModel.supabaseURL + "/rest/v1/rpc/log_client_error") else { return }
+        var entry: [String: Any] = [:]
+        entry["message"] = message
+        entry["source"] = "ios/SXMBrowseView.swift"
+        entry["page"] = "native"
+        entry["surface"] = "ios"
+        guard let body = try? JSONSerialization.data(withJSONObject: ["p": entry]) else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = body
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(SXMBrowseModel.anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer " + SXMBrowseModel.anonKey, forHTTPHeaderField: "Authorization")
+        URLSession.shared.dataTask(with: request).resume()
     }
 }
 
@@ -1216,6 +1258,7 @@ struct SXMListingDetail: View {
         }
         .background(paper.ignoresSafeArea())
         .task(id: listing.id) { await loadFollow() }
+        .onDisappear { model.detailClosed() }
         // Pinned, so it shows while the buyer looks at the photos and reads the description,
         // not only after scrolling past the map. One Google ad on this screen.
         .bottomAd(model.adsAllowed)
