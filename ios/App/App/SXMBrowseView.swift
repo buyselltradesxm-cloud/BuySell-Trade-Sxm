@@ -962,66 +962,72 @@ private struct SXMSponsoredWebView: UIViewRepresentable {
 
 /// One clearly labelled native banner between listing rows. It never loads
 /// without consent and the label appears only after an actual ad loads.
+/// Google's documented SwiftUI pattern: the banner view has its full ad size before the request goes out.
+/// The old layout kept it 1 pt tall until an ad arrived, and Google answered "No ad to show" /
+/// "Invalid ad width or height" to every iOS banner request.
+enum SXMAdSlot {
+    static func size(width: CGFloat, maxHeight: Int) -> AdSize {
+        if maxHeight >= 250 && width >= 300 { return AdSizeMediumRectangle }
+        return currentOrientationAnchoredAdaptiveBanner(width: width)
+    }
+}
+
+/// One clearly labelled banner block inside a page. Its space is reserved while Google answers;
+/// it collapses for good if no ad comes (no timer retry, so the page never jumps while scrolling).
 struct SXMInlineAdSection: View {
     let french: Bool
     var maxHeight: Int = 300
     var heightChanged: ((CGFloat) -> Void)? = nil
-    @State private var adHeight: CGFloat = 0
-    @State private var attempt = 0
+    @State private var loaded = false
+    @State private var failed = false
 
     var body: some View {
-        GeometryReader { geometry in
-            // The first layout pass can report 0 width; a banner requested then is 1 pt wide and Google never fills it.
-            let width = (geometry.size.width - 24).rounded()
-            VStack(alignment: .leading, spacing: 8) {
-                if adHeight > 0 {
+        // Pages put this block inside 20 pt margins (Profile: 90% wide) and it pads 12 pt itself.
+        let screen = UIScreen.main.bounds.width
+        let width = min(screen - 64, screen * 0.9 - 28, 436).rounded()
+        let size = SXMAdSlot.size(width: width, maxHeight: maxHeight)
+        let slot = size.size.height
+        Group {
+            if failed || width < SXMAdReport.minimumWidth {
+                Color.clear.frame(height: 1)
+            } else {
+                VStack(spacing: 8) {
                     Text(french ? "PUBLICITÉ" : "ADVERTISEMENT")
                         .font(.system(size: 10, weight: .bold)).tracking(1.2)
                         .foregroundColor(sea)
+                        .opacity(loaded ? 1 : 0)
+                    SXMInlineAdBanner(size: size, onLoad: { loaded = true }, onFailure: { failed = true })
+                        .frame(width: size.size.width, height: slot)
                 }
-                if width >= SXMAdReport.minimumWidth {
-                    SXMInlineAdBanner(width: width, maxHeight: maxHeight, onLoad: { adHeight = $0 }, onFailure: {
-                        adHeight = 0
-                        let failedAttempt = attempt
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
-                            if attempt == failedAttempt { attempt += 1 }
-                        }
-                    })
-                    // A new width (layout settled, rotation) needs a new request at that size.
-                    .id("\(attempt)-\(Int(width))")
-                    .frame(width: width, height: max(1, adHeight))
-                }
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .background(loaded ? Color.white : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
-            .padding(adHeight > 0 ? 12 : 0)
-            .frame(maxWidth: .infinity)
-            .background(adHeight > 0 ? Color.white : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
-        .frame(height: adHeight > 0 ? adHeight + 48 : 1)
-        .onChange(of: adHeight) { heightChanged?($0 > 0 ? $0 + 48 : 0) }
+        .onAppear { heightChanged?(slot + 48) }
+        .onChange(of: failed) { gone in if gone { heightChanged?(0) } }
         .accessibilityElement(children: .contain)
     }
 }
 
 /// Slim banner pinned to the bottom of the native Saved, Post and Messages screens.
-/// It stays collapsed (1 pt) until an ad loads and while the keyboard is up.
+/// Full banner height from the start (Google's pattern); hidden while the keyboard is up; gone if no ad comes.
 struct SXMBottomAd: View {
-    @State private var adHeight: CGFloat = 0
-    @State private var attempt = 0
+    @State private var loaded = false
+    @State private var failed = false
     @State private var keyboardUp = false
     var body: some View {
-        let width = UIScreen.main.bounds.width
-        SXMInlineAdBanner(width: width, anchored: true, onLoad: { adHeight = $0 }, onFailure: {
-            adHeight = 0
-            let failedAttempt = attempt
-            DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
-                if attempt == failedAttempt { attempt += 1 }
+        let size = currentOrientationAnchoredAdaptiveBanner(width: UIScreen.main.bounds.width)
+        Group {
+            if !failed {
+                SXMInlineAdBanner(size: size, onLoad: { loaded = true }, onFailure: { failed = true })
+                    .frame(width: size.size.width, height: size.size.height)
+                    .background(loaded ? Color.white : Color.clear)
+                    .frame(height: keyboardUp ? 0 : size.size.height)
+                    .clipped()
             }
-        })
-        .id(attempt)
-        .frame(width: width, height: keyboardUp ? 0 : max(1, adHeight))
-        .clipped()
-        .background(adHeight > 0 ? Color.white : Color.clear)
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardUp = false }
     }
@@ -1035,18 +1041,11 @@ extension View {
 }
 
 private struct SXMInlineAdBanner: UIViewRepresentable {
-    let width: CGFloat
-    var maxHeight = 300
-    var anchored = false
-    let onLoad: (CGFloat) -> Void
+    let size: AdSize
+    let onLoad: () -> Void
     let onFailure: () -> Void
 
     func makeUIView(context: Context) -> BannerView {
-        // Small slots use Google's standard (anchored) banner size: an inline size capped at 60 pt was refused as
-        // "Invalid ad width or height" on some screens.
-        let small = anchored || maxHeight <= 90
-        let size = small ? currentOrientationAnchoredAdaptiveBanner(width: width)
-                         : inlineAdaptiveBanner(width: width, maxHeight: CGFloat(maxHeight))
         let banner = BannerView(adSize: size)
         #if DEBUG
         banner.adUnitID = "ca-app-pub-3940256099942544/2435281174"
@@ -1058,23 +1057,23 @@ private struct SXMInlineAdBanner: UIViewRepresentable {
         banner.delegate = context.coordinator
         // Only built when model.adsAllowed, which native-admob.js sets from UMP canRequestAds and Pro status;
         // the App target cannot import GoogleUserMessagingPlatform itself (it comes in through the AdMob plugin only).
-        // Requested on the next run loop, once SwiftUI has put the banner in the window, not while it is detached.
+        // Requested on the next run loop, once SwiftUI has put the banner in the window at its full size.
         DispatchQueue.main.async { banner.load(Request()) }
         return banner
     }
 
     func updateUIView(_ banner: BannerView, context: Context) {}
-    func makeCoordinator() -> Coordinator { Coordinator(width: width, onLoad: onLoad, onFailure: onFailure) }
+    func makeCoordinator() -> Coordinator { Coordinator(width: size.size.width, onLoad: onLoad, onFailure: onFailure) }
 
     final class Coordinator: NSObject, BannerViewDelegate {
         let width: CGFloat
-        let onLoad: (CGFloat) -> Void
+        let onLoad: () -> Void
         let onFailure: () -> Void
-        init(width: CGFloat, onLoad: @escaping (CGFloat) -> Void, onFailure: @escaping () -> Void) {
+        init(width: CGFloat, onLoad: @escaping () -> Void, onFailure: @escaping () -> Void) {
             self.width = width; self.onLoad = onLoad; self.onFailure = onFailure
         }
         func bannerViewDidReceiveAd(_ bannerView: BannerView) {
-            DispatchQueue.main.async { self.onLoad(bannerView.intrinsicContentSize.height) }
+            DispatchQueue.main.async { self.onLoad() }
         }
         func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
             SXMAdReport.bannerFailed(error, width: width)

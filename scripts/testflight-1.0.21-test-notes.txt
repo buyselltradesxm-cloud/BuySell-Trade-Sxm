@@ -1,0 +1,11 @@
+ENGLISH — 1.0.21
+1. Banners: close the app completely, open it, wait a few seconds. Check Discover (under the search bar, in the list, at the very bottom), a listing, Saved, Post, Messages and Profile. Google banners should now appear on iPhone. Scrolling must work everywhere and no ad may cover content.
+2. App-open ad and full-screen ad after closing a listing: must still work as in 1.0.19.
+
+Do not post test or duplicate listings, and do not tap your own ads.
+
+FRANÇAIS — 1.0.21
+1. Bannières : fermez complètement l'app, rouvrez-la, attendez quelques secondes. Vérifiez Découvrir (sous la recherche, dans la liste, tout en bas), une annonce, Favoris, Publier, Messages et Profil. Les bannières Google doivent maintenant apparaître sur iPhone. Le défilement doit fonctionner partout et aucune pub ne doit cacher le contenu.
+2. Pub d'ouverture et pub plein écran après la fermeture d'une annonce : doivent toujours fonctionner comme en 1.0.19.
+
+Ne publiez pas d'annonce de test ou en double, et ne touchez pas vos propres publicités.
