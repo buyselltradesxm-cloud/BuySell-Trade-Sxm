@@ -151,13 +151,35 @@ function sharePageFor(l, image) {
 `;
 }
 
-function pageFor(l, shareImg) {
+function placeOf(l) {
+  return [l.area, l.side === "nl" ? "Sint Maarten" : "Saint-Martin"].filter(Boolean).join(", ");
+}
+
+function itemFor(l, heading = "h2") {
+  const price = priceOf(l);
+  return `<li><${heading}><a href="/l/${esc(l.id)}.html">${esc(l.title)}</a></${heading}><p class="meta"><span class="listing-location notranslate" translate="no">${esc(placeOf(l))}</span>${price ? " · " + esc(price.label + (l.category === "locvoit" ? " / day" : "")) : ""}</p></li>`;
+}
+
+// Up to 6 other listings, same category first, newest first: gives every page links in and out.
+function relatedFor(l, listings) {
+  return listings.filter(o => o.id !== l.id)
+    .sort((a, b) => (b.category === l.category) - (a.category === l.category) || Number(b.id) - Number(a.id))
+    .slice(0, 6);
+}
+
+const GUIDES = `<nav class="guides" aria-label="Guides"><h2>Guides</h2><ul>
+<li><a href="/guides/buy-sell-safely.html">Acheter et vendre en sécurité / Buy and sell safely</a></li>
+<li><a href="/guides/avoid-scams.html">Éviter les arnaques / Avoid scams</a></li>
+<li><a href="/guides/price-used-car.html">Estimer une voiture d'occasion / Price a used car</a></li>
+</ul></nav>`;
+
+function pageFor(l, shareImg, related = []) {
   const pageUrl = `${SITE}/l/${l.id}.html`;
   const appUrl = `/?listing=${encodeURIComponent(l.id)}`;
   const price = priceOf(l);
   const photo = firstPhoto(l);
   const category = CATEGORIES[l.category] || "";
-  const place = [l.area, l.side === "nl" ? "Sint Maarten" : "Saint-Martin"].filter(Boolean).join(", ");
+  const place = placeOf(l);
   const description = String(l.description || "").trim();
   const summary = [price?.label, place, description.replace(/\s+/g, " ")].filter(Boolean).join(" · ").slice(0, 160);
   const title = `${l.title}${price ? ` – ${price.label}` : ""} | Buy Sell Trade SXM`;
@@ -206,7 +228,8 @@ ${ldJson ? `<script type="application/ld+json">${ldJson}</script>\n` : ""}</head
 ${photo ? `<img class="photo" src="${esc(photo)}" alt="${esc(l.title)}">\n` : ""}<h1>${esc(l.title)}</h1>
 ${price ? `<p class="price">${esc(price.label)}</p>\n` : ""}<p class="meta">${category ? esc(category) + " · " : ""}<span class="listing-location notranslate" translate="no">${esc(place)}</span></p>
 ${description ? `<p class="description">${esc(description)}</p>\n` : ""}<p><a class="cta" href="${esc(appUrl)}">Voir l'annonce et contacter le vendeur<br><span lang="en">View the listing and contact the seller</span></a></p>
-<p class="more"><a href="/l/">Toutes les petites annonces de Saint-Martin et Sint Maarten</a></p>
+${related.length ? `<section class="related"><h2>Autres annonces / More listings</h2><ul class="listing-directory">${related.map(o => itemFor(o, "h3")).join("\n")}</ul></section>\n` : ""}<p class="more"><a href="/l/">Toutes les petites annonces de Saint-Martin et Sint Maarten</a></p>
+${GUIDES}
 </main>
 </body>
 </html>
@@ -224,11 +247,7 @@ function sitemapFor(listings) {
 }
 
 function directoryFor(listings) {
-  const items = listings.map(l => {
-    const price = priceOf(l);
-    const place = [l.area, l.side === "nl" ? "Sint Maarten" : "Saint-Martin"].filter(Boolean).join(", ");
-    return `<li><h2><a href="/l/${esc(l.id)}.html">${esc(l.title)}</a></h2><p class="meta"><span class="listing-location notranslate" translate="no">${esc(place)}</span>${price ? " · " + esc(price.label + (l.category === "locvoit" ? " / day" : "")) : ""}</p></li>`;
-  }).join("\n");
+  const items = listings.map(l => itemFor(l)).join("\n");
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -249,6 +268,7 @@ function directoryFor(listings) {
 <p lang="fr">Petites annonces de Saint-Martin et Sint Maarten : consultez les photos et les détails, puis contactez le vendeur sur la marketplace.</p>
 ${items ? `<ul class="listing-directory">${items}</ul>` : "<p>No listings available at the moment. Please check back soon.</p>"}
 <p class="more"><a href="/#browse">Search and filter the marketplace</a></p>
+${GUIDES}
 </main>
 </body>
 </html>
@@ -290,7 +310,7 @@ async function main() {
         fs.rmSync(path.join(shareDir, `${l.id}.jpg`), { force: true });
       }
     }
-    fs.writeFileSync(path.join(dir, `${l.id}.html`), pageFor(l, shareImg));
+    fs.writeFileSync(path.join(dir, `${l.id}.html`), pageFor(l, shareImg, relatedFor(l, listings)));
     fs.writeFileSync(path.join(shareDir, `${l.id}.html`), sharePageFor(l, shareImg || photo || `${SITE}/og-image.jpg`));
   }
   fs.writeFileSync(path.join(dir, "index.html"), directoryFor(listings));
@@ -301,7 +321,7 @@ async function main() {
   console.log(`${listings.length} listing page(s) written (${branded} share image(s)), ${removed} removed, sitemap has ${STATIC_URLS.length + listings.length} URLs`);
 }
 
-module.exports = { directoryFor, pageFor, sitemapFor };
+module.exports = { directoryFor, pageFor, relatedFor, sitemapFor };
 
 if (require.main === module) main().catch(err => {
   console.error(err.message || err);

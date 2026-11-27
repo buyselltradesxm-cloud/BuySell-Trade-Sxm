@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { directoryFor, pageFor, sitemapFor } = require("./build-listing-pages");
+const { directoryFor, pageFor, relatedFor, sitemapFor } = require("./build-listing-pages");
 
 const listings = [
   { id: 57, title: 'Car & trailer <sale>', area: 'Marigot', side: 'fr', category: 'voit', price_eur: 1250, currency: 'eur' },
@@ -20,6 +20,12 @@ assert(directory.includes('€'), 'Euro prices retain the currency symbol');
 assert(directory.includes('Sint Maarten') && directory.includes('Saint-Martin'));
 assert(directoryFor([]).includes('No listings available'), 'Empty catalog still has a useful page');
 assert(directory.includes('<link rel="canonical" href="https://buyselltradesxm.com/l/">'));
+const related = relatedFor({ id: 99, category: 'locvoit' }, listings.concat({ id: 99, category: 'locvoit' }));
+assert.equal(related[0].id, 'rental-test', 'Related listings put the same category first');
+assert(!related.some(o => o.id === 99), 'A listing is never related to itself');
+const withRelated = pageFor(listings[0], null, related);
+assert(withRelated.includes('href="/l/rental-test.html"') && withRelated.includes('href="/guides/avoid-scams.html"'), 'Listing pages link to other listings and the guides');
+assert(!withRelated.includes('<script>alert'), 'Related titles are escaped too');
 const sitemap = sitemapFor(listings);
 assert(sitemap.includes('<loc>https://buyselltradesxm.com/l/</loc>'));
 assert(!sitemap.includes('2026-09-29'), 'Do not publish the obsolete fixed homepage modification date');
