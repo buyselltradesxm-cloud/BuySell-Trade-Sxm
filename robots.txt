@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+# Cloudflare's internal helper links (email protection) are not pages
+Disallow: /cdn-cgi/
 
 # Ad-network crawlers (needed for AdSense to serve relevant ads)
 User-agent: Mediapartners-Google
