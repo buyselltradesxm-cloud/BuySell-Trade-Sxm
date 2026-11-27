@@ -1097,7 +1097,7 @@ enum SXMAdReport {
         for source in sources {
             let sourceError = source.error as NSError?
             let reason = sourceError == nil ? "ok" : "code \(sourceError!.code)"
-            details.append(source.adSourceName + " " + reason)
+            details.append((source.adSourceName ?? "?") + " " + reason)
         }
         if !details.isEmpty { message += " [" + details.joined(separator: "; ") + "]" }
         let final = String(message.prefix(480))
