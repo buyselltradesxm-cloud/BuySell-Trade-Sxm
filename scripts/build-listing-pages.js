@@ -31,7 +31,10 @@ const STATIC_URLS = [
   { loc: `${SITE}/privacy.html` },
   { loc: `${SITE}/terms.html` },
   { loc: `${SITE}/about.html` },
-  { loc: `${SITE}/contact.html` }
+  { loc: `${SITE}/contact.html` },
+  { loc: `${SITE}/guides/buy-sell-safely.html` },
+  { loc: `${SITE}/guides/price-used-car.html` },
+  { loc: `${SITE}/guides/avoid-scams.html` }
 ];
 const CATEGORIES = {
   voit: "Véhicules", immo: "Immobilier", elec: "Électronique", meub: "Maison & meubles",
