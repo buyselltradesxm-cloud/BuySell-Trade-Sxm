@@ -169,6 +169,8 @@ final class SXMBrowseScreen extends ScrollView {
     private final LinearLayout searchAdContainer;
     private AdView searchAd;
     private TextView searchAdDisclosure;
+    private final LinearLayout bottomAdContainer;
+    private AdView bottomAd;
     private final SXMSponsoredView sponsoredTop, sponsoredFeed, sponsoredRestaurant;
     private AdView inlineAd;
     private TextView adDisclosure;
@@ -366,6 +368,17 @@ final class SXMBrowseScreen extends ScrollView {
         cta = button("");
         LinearLayout.LayoutParams ctaParams = new LinearLayout.LayoutParams(-1, dp(54));
         ctaParams.topMargin = dp(24); page.addView(cta, ctaParams);
+        // Last block of Discover: part of the scrolling page, so it never covers a listing or the tab bar.
+        bottomAdContainer = new LinearLayout(context);
+        bottomAdContainer.setOrientation(LinearLayout.VERTICAL);
+        bottomAdContainer.setGravity(Gravity.CENTER_HORIZONTAL);
+        bottomAdContainer.setPadding(dp(10), dp(10), dp(10), dp(10));
+        bottomAdContainer.setBackground(outlinedShape(Color.rgb(244, 249, 247), 16, Color.rgb(218, 230, 227)));
+        bottomAdContainer.setVisibility(View.GONE);
+        LinearLayout.LayoutParams bottomAdParams = new LinearLayout.LayoutParams(-1, -2);
+        bottomAdParams.topMargin = dp(24);
+        bottomAdParams.bottomMargin = dp(16);
+        page.addView(bottomAdContainer, bottomAdParams);
         cta.setOnClickListener(v -> post.run());
         updateLanguageText();
         try {
@@ -540,6 +553,7 @@ final class SXMBrowseScreen extends ScrollView {
     void showSaved(boolean value) {
         savedOnly = value; search.setText(""); render(); scrollTo(0, 0);
         syncSearchAd();
+        syncBottomAd();
         spotlight.setVisibility(savedOnly ? View.GONE : View.VISIBLE);
         sponsoredTop.setVisibility(savedOnly ? View.GONE : View.VISIBLE);
         sponsoredRestaurant.setVisibility(savedOnly ? View.GONE : View.VISIBLE);
@@ -554,6 +568,7 @@ final class SXMBrowseScreen extends ScrollView {
     void setAdsAllowed(boolean allowed) {
         adsAllowed = allowed;
         syncSearchAd();
+        syncBottomAd();
         if (!allowed) {
             removeCallbacks(adRetry);
             adContainer.setVisibility(View.GONE);
@@ -597,6 +612,46 @@ final class SXMBrowseScreen extends ScrollView {
             }
             @Override public void onAdFailedToLoad(LoadAdError error) {
                 if (searchAd == banner) clearSearchAd();
+            }
+        });
+        banner.loadAd(new AdRequest.Builder().build());
+    }
+
+    private void clearBottomAd() {
+        bottomAdContainer.setVisibility(View.GONE);
+        if (bottomAd != null) {
+            bottomAdContainer.removeAllViews();
+            bottomAd.destroy();
+            bottomAd = null;
+        }
+    }
+
+    // Same rules as the search banner: consent, not Pro (adsAllowed), Discover only. Shown only once Google sends an ad.
+    private void syncBottomAd() {
+        if (!adsAllowed || savedOnly || !UserMessagingPlatform.getConsentInformation(getContext()).canRequestAds()) {
+            clearBottomAd();
+            return;
+        }
+        if (bottomAd != null) return;
+        int width = Math.min(420, getResources().getConfiguration().screenWidthDp - 52);
+        if (width < 250) return;
+        boolean debug = (getContext().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        AdView banner = new AdView(getContext());
+        bottomAd = banner;
+        banner.setAdUnitId(debug ? "ca-app-pub-3940256099942544/6300978111" :
+            getResources().getString(R.string.admob_browse_banner_id));
+        banner.setAdSize(AdSize.getInlineAdaptiveBannerAdSize(width, 250));
+        TextView disclosure = label(french ? "PUBLICITÉ" : "ADVERTISEMENT", 10, true);
+        disclosure.setTextColor(SEA);
+        disclosure.setPadding(0, 0, 0, dp(6));
+        bottomAdContainer.addView(disclosure, new LinearLayout.LayoutParams(-1, -2));
+        bottomAdContainer.addView(banner, new LinearLayout.LayoutParams(-1, -2));
+        banner.setAdListener(new AdListener() {
+            @Override public void onAdLoaded() {
+                if (bottomAd == banner) bottomAdContainer.setVisibility(View.VISIBLE);
+            }
+            @Override public void onAdFailedToLoad(LoadAdError error) {
+                if (bottomAd == banner) clearBottomAd();
             }
         });
         banner.loadAd(new AdRequest.Builder().build());
@@ -648,14 +703,22 @@ final class SXMBrowseScreen extends ScrollView {
     // Hiding this screen must also hide and pause the ad, or its video layer can keep painting over the web listing page.
     @Override protected void onVisibilityChanged(View changed, int visibility) {
         super.onVisibilityChanged(changed, visibility);
+        if (changed == this && bottomAd != null) {
+            if (visibility == View.VISIBLE) { bottomAd.setVisibility(View.VISIBLE); bottomAd.resume(); }
+            else { bottomAd.pause(); bottomAd.setVisibility(View.GONE); }
+        }
         if (changed != this || inlineAd == null) return;
         if (visibility == View.VISIBLE) { inlineAd.setVisibility(View.VISIBLE); inlineAd.resume(); }
         else { inlineAd.pause(); inlineAd.setVisibility(View.GONE); }
     }
 
     // Coming back to the app must not restart the ad while this screen is hidden behind the web page.
-    void resumeAd() { if (inlineAd != null && getVisibility() == View.VISIBLE) inlineAd.resume(); }
-    void pauseAd() { if (inlineAd != null) inlineAd.pause(); }
+    void resumeAd() {
+        if (getVisibility() != View.VISIBLE) return;
+        if (inlineAd != null) inlineAd.resume();
+        if (bottomAd != null) bottomAd.resume();
+    }
+    void pauseAd() { if (inlineAd != null) inlineAd.pause(); if (bottomAd != null) bottomAd.pause(); }
     void destroyAd() { removeCallbacks(adRetry); if (inlineAd != null) { inlineAd.destroy(); inlineAd = null; } io.shutdownNow(); }
     private void setRows(JSONArray rows) {
         listings.clear();
@@ -1117,6 +1180,7 @@ final class SXMBrowseScreen extends ScrollView {
 
     @Override protected void onDetachedFromWindow() {
         clearSearchAd();
+        clearBottomAd();
         super.onDetachedFromWindow();
         io.shutdownNow();
     }

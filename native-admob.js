@@ -159,11 +159,16 @@
               placement = "profile";
             } else if (compactListingAds && modal.id === "detailModal" && modal.querySelector("#detailBody img")) {
               placement = "listing-detail";
+            } else if (modal.id === "messagesModal" || modal.id === "postModal") {
+              placement = modal.id === "postModal" ? "post" : "messages";
             }
+            // The strip sits between the page and the tab bar; while the keyboard is up it would eat typing room.
+            var typing = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+            if (typing && (placement === "post" || placement === "messages")) placement = "";
           }
           if (placement !== sentPageAd) {
             sentPageAd = placement;
-            layout.nativePageAd({allowed: !!placement, compact: placement === "listing-detail"}).catch(function () {});
+            layout.nativePageAd({allowed: !!placement, compact: placement !== "profile"}).catch(function () {});
           }
         }
         return;
@@ -195,6 +200,8 @@
         if (profile) purchaseWatch.observe(profile, { childList: true, subtree: true });
         var detail = document.getElementById("detailBody");
         if (detail) purchaseWatch.observe(detail, { childList: true, subtree: true });
+        document.addEventListener("focusin", syncBanner);
+        document.addEventListener("focusout", function () { setTimeout(syncBanner, 80); });
       }
     });
 

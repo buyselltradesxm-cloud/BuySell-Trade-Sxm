@@ -618,6 +618,10 @@ struct SXMBrowseView: View {
                             .frame(maxWidth: .infinity).foregroundColor(.white)
                             .background(RoundedRectangle(cornerRadius: 18).fill(sea))
                     }.padding(.horizontal, 20)
+                    // Last block of Discover: inside the scroll view, so it never covers a listing or the tab bar.
+                    if !model.showingSaved && model.discoverVisible && model.adsAllowed {
+                        SXMInlineAdSection(french: fr, maxHeight: 250).padding(.horizontal, 20)
+                    }
                 }.padding(.vertical, 20)
             }
             .background(paper.ignoresSafeArea())
