@@ -319,7 +319,12 @@ public class SXMNativePlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPr
     /// The web consent and subscription state also controls the native Discover ad.
     @objc func nativeAdsState(_ call: CAPPluginCall) {
         let allowed = call.getBool("allowed") ?? false
+        let bannerId = call.getString("bannerId") ?? ""
         DispatchQueue.main.async { [weak self] in
+            // The site's ads-config.js chooses the banner unit, so a unit Google stops filling can be swapped without a build.
+            if bannerId.range(of: "^ca-app-pub-[0-9]+/[0-9]+$", options: .regularExpression) != nil {
+                SXMAdReport.bannerUnitID = bannerId
+            }
             self?.root?.setNativeAdsAllowed(allowed)
             call.resolve()
         }

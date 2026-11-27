@@ -103,7 +103,7 @@
     }).catch(function () {});
     function syncNativeAds() {
       if (layout) layout.nativeAdsState({allowed: bannerAllowed}).catch(function () {});
-      if (iosShell) iosShell.nativeAdsState({allowed: bannerAllowed}).catch(function () {});
+      if (iosShell) iosShell.nativeAdsState({allowed: bannerAllowed, bannerId: (CFG.banner && CFG.banner.ios) || ""}).catch(function () {});
     }
     window.__BST_ADMOB_SET_BROWSE__ = function (visible) {
       nativeBrowseVisible = !!visible;

@@ -1042,12 +1042,16 @@ private struct SXMInlineAdBanner: UIViewRepresentable {
     let onFailure: () -> Void
 
     func makeUIView(context: Context) -> BannerView {
-        let banner = BannerView(adSize: anchored ? currentOrientationAnchoredAdaptiveBanner(width: width)
-                                                 : inlineAdaptiveBanner(width: width, maxHeight: CGFloat(maxHeight)))
+        // Small slots use Google's standard (anchored) banner size: an inline size capped at 60 pt was refused as
+        // "Invalid ad width or height" on some screens.
+        let small = anchored || maxHeight <= 90
+        let size = small ? currentOrientationAnchoredAdaptiveBanner(width: width)
+                         : inlineAdaptiveBanner(width: width, maxHeight: CGFloat(maxHeight))
+        let banner = BannerView(adSize: size)
         #if DEBUG
         banner.adUnitID = "ca-app-pub-3940256099942544/2435281174"
         #else
-        banner.adUnitID = "ca-app-pub-7816106453580174/9133808428"
+        banner.adUnitID = SXMAdReport.bannerUnitID
         #endif
         banner.rootViewController = UIApplication.shared.connectedScenes
             .compactMap { ($0 as? UIWindowScene)?.keyWindow?.rootViewController }.first
@@ -1084,6 +1088,8 @@ private struct SXMInlineAdBanner: UIViewRepresentable {
 enum SXMAdReport {
     /// Narrower banners are not requested: Google fills almost none of them.
     static let minimumWidth: CGFloat = 200
+    /// Release banner unit; native-admob.js sends the one from ads-config.js at launch ("SXM iOS Banner 2" by default).
+    static var bannerUnitID = "ca-app-pub-7816106453580174/5624573094"
     private static var sent = Set<String>()
 
     static func bannerFailed(_ error: Error, width: CGFloat) {

@@ -80,7 +80,9 @@ window.AdsConfig = {
     testing: false,
     banner: {
       android: "ca-app-pub-7816106453580174/5881780931", // "SXM Android Banner"
-      ios: "ca-app-pub-7816106453580174/9133808428"       // SXM iOS Banner
+      // iOS app 1.0.20+ reads this id for its native banners, so a stuck unit can be swapped without a build.
+      // 9133808428 ("SXM iOS Banner") got "No ad to show" for days; 5624573094 is "SXM iOS Banner 2" (2026-11-27).
+      ios: "ca-app-pub-7816106453580174/5624573094"       // SXM iOS Banner 2
     },
 
     /* Interstitial (full-screen video / image) ad unit.
