@@ -683,11 +683,6 @@
       ".ad-website{font-size:13px;font-weight:700;line-height:1.4;color:var(--sea-deep,#0a5a66);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere;}",
       ".ad-download-note{max-width:720px;margin:10px auto 0;font-size:13px;line-height:1.5;color:var(--ink,#102a2f);text-align:left;}",
       ".ad-download-link{color:var(--sea-deep,#0a5a66);font-weight:700;text-decoration:underline;text-underline-offset:2px;}",
-      ".content-ad .ad-restaurant{flex-direction:column;align-items:stretch;gap:10px;max-width:720px;margin-inline:auto;}",
-      ".ad-restaurant .ad-flag{position:static;align-self:flex-start;}",
-      ".content-ad .ad-unit.ad-restaurant .ad-media{width:100%;height:auto;max-height:none;max-width:420px;margin-inline:auto;object-fit:contain;}",
-      ".ad-restaurant .ad-head{font-size:20px;line-height:1.25;}",
-      ".ad-restaurant .ad-text{font-size:13px;line-height:1.5;}",
       ".ad-network{padding:8px;}",
       ".ad-network .adsbygoogle{min-height:90px;}",
       /* in-grid card: span the full row of the results grid */
@@ -716,8 +711,8 @@
       "}",
       ".content-ad .ad-unit.ad-flyer-campaign{flex-direction:column;align-items:center;gap:8px;animation:ad-flyer-arrive .55s ease-out both;}",
       ".content-ad .ad-flyer-campaign .ad-flag{position:static;align-self:flex-start;}",
-      ".ad-flyers{display:grid;width:100%;max-width:720px;}",
-      ".ad-reel{display:block;position:relative;width:100%;max-width:380px;aspect-ratio:676/920;margin-inline:auto;background:#101820;border-radius:9px;overflow:hidden;}",
+      ".ad-flyers{display:grid;width:100%;max-width:600px;}",
+      ".ad-reel{display:block;position:relative;width:100%;max-width:440px;aspect-ratio:1;margin-inline:auto;background:#f1ece0;border-radius:9px;overflow:hidden;}",
       ".ad-reel img,.ad-reel video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .3s ease;}",
       ".ad-reel .ad-reel-current{opacity:1;}",
       ".ad-flyers img{grid-area:1/1;display:block;width:100%;height:auto;border-radius:9px;}",
@@ -726,7 +721,21 @@
       "@media(hover:hover){.ad-flyer-campaign:hover .ad-flyers img+img{animation-play-state:paused;}}",
       "@media(prefers-reduced-motion:reduce){.content-ad .ad-unit.ad-flyer-campaign,.ad-flyers img+img{animation:none;}}",
       "@keyframes ad-flyer-arrive{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}",
-      "@keyframes ad-flyer-switch{0%,47%,100%{opacity:0;}50%,97%{opacity:1;}}"
+      "@keyframes ad-flyer-switch{0%,47%,100%{opacity:0;}50%,97%{opacity:1;}}",
+      /* Sponsor layout for ANY image or video shape: media keeps its proportions and never exceeds 440px,
+         text gets a readable column (below the media; beside it for tall images on desktop). See ads/README.md. */
+      ".ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:100%;max-width:720px;margin-inline:auto;}",
+      ".ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign .ad-flag{position:static;align-self:flex-start;}",
+      ".ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign .ad-media{width:auto;height:auto;max-width:100%;max-height:440px;align-self:center;object-fit:contain;}",
+      ".ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign .ad-body{flex:none;}",
+      ".ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign .ad-head{font-size:20px;line-height:1.25;}",
+      ".ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign .ad-text{font-size:13px;line-height:1.5;}",
+      "@media(min-width:901px){.ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign.ad-portrait{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);grid-template-rows:auto 1fr auto auto auto 1fr;column-gap:24px;row-gap:8px;}",
+      ".ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign.ad-portrait .ad-flag{grid-column:1/-1;grid-row:1;justify-self:start;}",
+      ".ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign.ad-portrait .ad-media{grid-column:1;grid-row:2/-1;justify-self:center;}",
+      ".ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign.ad-portrait .ad-body{grid-column:2;grid-row:3;}",
+      ".ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign.ad-portrait .ad-sponsor{grid-column:2;grid-row:4;}",
+      ".ad-managed:not(.mobile-sticky-ad):not(.desktop-leaderboard-ad) .ad-unit.ad-campaign.ad-portrait .ad-website{grid-column:2;grid-row:5;}}"
     ].join("");
     document.head.appendChild(s);
   }

@@ -3,6 +3,16 @@
 Drop advertiser images here and reference them from `ads-config.js` →
 `campaigns[]` as `image: "/ads/filename.jpg"`.
 
+## Rule for every sponsored image or video
+
+Before publishing a new sponsor, check how it looks and give it a section that fits it.
+
+- Any shape works. The picture keeps its proportions, is never cropped and is at most 440 px tall.
+- Text sits under the picture. On desktop, a tall picture has its text beside it.
+- Videos play in a square stage (`campaignReels`), so tall and wide slides both fit.
+- Shrink big files first (about 1200 px on the long side, under 200 KB for images).
+- Look at it on a computer and a phone (FR and EN) before it goes live, and adjust the layout in `ads.js` if the text is squeezed or the card is too big.
+
 ## How to sell and publish a banner
 
 1. Agree a price and dates with the business (flat fee per week/month).
@@ -10,7 +20,7 @@ Drop advertiser images here and reference them from `ads-config.js` →
    - **Leaderboard / content band (`desktop-leaderboard`, `content-1`)**:
      1200 × 300 px, JPG or PNG, < 200 KB. Shown as a wide strip on desktop.
    - **Mobile / in-feed / listing-detail**: the same image is reused,
-     cropped to fit. A 1200 × 628 px image also works well.
+     shown whole. A 1200 × 628 px image also works well.
    - Keep important text away from the edges; a "Sponsored" label is added
      automatically in the top corner.
 3. Save it here, e.g. `ads/acme-1200x300.jpg`.
