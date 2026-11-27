@@ -698,7 +698,7 @@
       ".mobile-sticky-ad .ad-media{width:56px;height:56px;max-height:none;flex:none;}",
       ".mobile-sticky-ad .ad-cta{margin-top:0;}",
       /* mid-content band (home): constrain width, add breathing room */
-      '.content-ad[data-ad-state="filled"]{max-width:1320px;margin:18px auto;padding:0 24px;}',
+      '.content-ad[data-ad-state="filled"]{box-sizing:border-box;width:100%;max-width:1320px;margin:18px auto;padding:0 24px;}',
       /* listing-detail slot inside the modal */
       '.listing-detail-ad[data-ad-state="filled"]{margin-top:16px;}',
       /* desktop leaderboard + content band: horizontal layout */
