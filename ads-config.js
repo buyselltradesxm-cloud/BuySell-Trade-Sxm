@@ -105,8 +105,8 @@ window.AdsConfig = {
      * messages for a listing are used. Empty = feature off. Each unit needs the
      * admob-reward edge function as its server-side verification callback. */
     rewarded: {
-      android: "",
-      ios: ""
+      android: "ca-app-pub-7816106453580174/6956614871", // SXM Android Rewarded Messages (3 messages, SSV -> admob-reward)
+      ios: "ca-app-pub-7816106453580174/5148709180"      // SXM iOS Rewarded Messages (3 messages, SSV -> admob-reward)
     },
     appOpen: {
       android: "ca-app-pub-7816106453580174/8292769938", // SXM Android App Open
