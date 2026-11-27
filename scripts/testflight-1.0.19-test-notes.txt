@@ -1,0 +1,13 @@
+ENGLISH — 1.0.19
+1. Discover: scroll to the very bottom, under the "Selling something?" button. A Google ad block may appear there. It must not cover any listing and scrolling must still work.
+2. Banners: Discover, a listing, Saved, Post, Messages and Profile should show Google banners more often than before.
+3. Messages: everything must work as before (send, refresh, block, report).
+
+Do not post test or duplicate listings, and do not tap your own ads.
+
+FRANÇAIS — 1.0.19
+1. Découvrir : descendez tout en bas, sous le bouton « Un objet à vendre ? ». Un bloc de publicité Google peut y apparaître. Il ne doit cacher aucune annonce et le défilement doit toujours fonctionner.
+2. Bannières : Découvrir, une annonce, Favoris, Publier, Messages et Profil doivent afficher des bannières Google plus souvent qu'avant.
+3. Messages : tout doit fonctionner comme avant (envoyer, actualiser, bloquer, signaler).
+
+Ne publiez pas d'annonce de test ou en double, et ne touchez pas vos propres publicités.

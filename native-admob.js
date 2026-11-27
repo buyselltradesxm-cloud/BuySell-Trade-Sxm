@@ -332,6 +332,54 @@
       });
     }
 
+    /* ---- Rewarded video: +3 messages for a listing -------------------------
+       Only on the user's own tap. Google calls the admob-reward edge function
+       (server-side verification); this only waits until the database shows the
+       new reward. Resolves "granted", "skipped", "unavailable" or "failed". */
+    var rewardedAdId = (CFG.rewarded && CFG.rewarded[platform]) || "";
+    function rewardCount(listingId) {
+      return window.db.rpc("message_ad_reward_status", { p_listing_id: Number(listingId) })
+        .then(function (r) { return r && r.data && typeof r.data.rewards === "number" ? r.data.rewards : -1; });
+    }
+    window.__BST_REWARD_MESSAGES_READY__ = function () {
+      return !!(rewardedAdId && bannerAllowed && AdMob.prepareRewardVideoAd && window.db);
+    };
+    window.__BST_REWARD_MESSAGES__ = function (listingId, userId) {
+      if (!window.__BST_REWARD_MESSAGES_READY__() || !/^\d+$/.test(String(listingId)) || !userId) {
+        return Promise.resolve("unavailable");
+      }
+      var before = -1, earned = false, handles = [];
+      var closed = new Promise(function (resolve) {
+        Promise.all([
+          AdMob.addListener("onRewardedVideoAdReward", function () { earned = true; }),
+          AdMob.addListener("onRewardedVideoAdDismissed", function () { resolve(); }),
+          AdMob.addListener("onRewardedVideoAdFailedToShow", function () { resolve(); })
+        ]).then(function (h) { handles = h; });
+      });
+      function cleanup() { handles.forEach(function (h) { if (h && h.remove) h.remove(); }); }
+      return rewardCount(listingId).then(function (n) { before = n; })
+        .then(function () {
+          return AdMob.prepareRewardVideoAd({ adId: rewardedAdId, isTesting: testing,
+            ssv: { userId: String(userId), customData: String(listingId) } });
+        })
+        // showRewardVideoAd only resolves once the reward is earned; closing early ends via the Dismissed event.
+        .then(function () { AdMob.showRewardVideoAd().then(function () { earned = true; }).catch(function () {}); return closed; })
+        .then(function () {
+          if (!earned) return "skipped";
+          // Google's callback reaches the server within seconds; wait for it (max ~20 s).
+          var tries = 0;
+          return (function poll() {
+            return rewardCount(listingId).then(function (n) {
+              if (n > before) return "granted";
+              if (++tries >= 10) return "failed";
+              return new Promise(function (r) { setTimeout(r, 2000); }).then(poll);
+            });
+          })();
+        })
+        .catch(function (error) { noteAdIssue("rewarded failed", error); return "failed"; })
+        .then(function (result) { cleanup(); return result; });
+    };
+
     // Expose a single call that the web UI can fire at any transition
     // point. Returns true if the ad was shown, false if throttled.
     window.__BST_ADMOB_INTERSTITIAL__ = function () {

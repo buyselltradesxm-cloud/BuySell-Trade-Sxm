@@ -512,6 +512,8 @@ struct SXMThreadView: View {
     @State private var confirmBlock = false
     @State private var confirmReport = false
     @State private var blocked = false
+    @State private var canWatchVideo = false
+    @State private var watching = false
     private var draft: Binding<String> { Binding(get: { model.messageDrafts[thread.key] ?? "" }, set: { model.messageDrafts[thread.key] = $0 }) }
     /// First-message suggestions (same list as the website chat): a tap fills the box, the buyer sends.
     private var suggestions: some View {
@@ -539,6 +541,14 @@ struct SXMThreadView: View {
     var body: some View {
         VStack(spacing: 0) {
             if !error.isEmpty { Text(error).foregroundColor(.red).padding() }
+            if canWatchVideo {
+                Button { Task { await watchVideo() } } label: {
+                    if watching { ProgressView() } else { Label(model.text("Regarder une vidéo : +3 messages", "Watch a video: +3 messages"), systemImage: "play.rectangle.fill") }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(watching || sending)
+                .padding(.bottom, 8)
+            }
             ScrollViewReader { reader in
                 List {
                     if hasMore { Button(model.text("Messages plus anciens", "Older messages")) { Task { await load(older: true) } }.disabled(loading) }
@@ -628,10 +638,29 @@ struct SXMThreadView: View {
             if !messages.contains(where: { $0.id == message.id }) { messages.append(message) }
             if draft.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines) == body { draft.wrappedValue = "" }
             error = ""
+            canWatchVideo = false
         } catch {
             self.error = error.localizedDescription
-            uncertain = (error as? SXMWorkflowError)?.code == "UNCERTAIN_WRITE"
+            let code = (error as? SXMWorkflowError)?.code ?? ""
+            uncertain = code == "UNCERTAIN_WRITE"
+            canWatchVideo = code == "MESSAGE_LIMIT"
         }
+    }
+    /// Only on the user's tap: the web layer shows Google's rewarded video and waits for the server
+    /// to confirm it (+3 messages for this listing), then the waiting message is sent.
+    private func watchVideo() async {
+        guard !watching, let listingId = thread.listingId else { return }
+        watching = true
+        defer { watching = false }
+        do {
+            let _: SXMDone = try await model.request("reward", ["listingId": listingId])
+            canWatchVideo = false
+            error = ""
+        } catch {
+            self.error = error.localizedDescription
+            return
+        }
+        await send()
     }
     private func moderate(_ action: String) async {
         guard !model.busy else { return }

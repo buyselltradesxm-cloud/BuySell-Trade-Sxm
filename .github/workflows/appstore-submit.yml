@@ -6,6 +6,11 @@ on:
         description: Tested TestFlight version to submit (needs scripts/appstore-<version>-whats-new.txt)
         required: true
         type: string
+      replace_waiting:
+        description: Cancel a submission still WAITING_FOR_REVIEW and submit this version instead (never one IN_REVIEW)
+        required: false
+        default: false
+        type: boolean
       dry_run:
         description: Only read App Store Connect and print the plan
         required: true
@@ -32,6 +37,7 @@ jobs:
         env:
           APPSTORE_VERSION: ${{ inputs.version }}
           APPSTORE_DRY_RUN: ${{ inputs.dry_run }}
+          APPSTORE_REPLACE_WAITING: ${{ inputs.replace_waiting }}
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}

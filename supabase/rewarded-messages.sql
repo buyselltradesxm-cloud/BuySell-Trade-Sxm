@@ -1,12 +1,12 @@
 -- Rewarded video ads unlock extra messages for free accounts.
 --
 -- A free account may send five messages per listing. In the store apps it can
--- watch a rewarded video ad to send five more for that listing. Google's AdMob
+-- watch a rewarded video ad to send three more for that listing. Google's AdMob
 -- servers confirm each completed video to the admob-reward edge function
 -- (server-side verification); only that function, running as service role,
 -- can record a reward. The phone never grants itself anything.
 --
--- Limits: three rewards per listing (20 messages at most) and ten rewards per
+-- Limits: three rewards per listing (14 messages at most) and ten rewards per
 -- account per day. Apply after security-hardening-v3.sql; this replaces its
 -- enforce_message_rate_limit() and keeps the same throttle and Pro exemption.
 
@@ -37,7 +37,7 @@ returns jsonb language sql stable security definer set search_path = public as $
                  where r.user_id = auth.uid() and r.listing_id = p_listing_id),
     'rewards_today', (select count(*) from public.message_ad_rewards r
                        where r.user_id = auth.uid() and r.created_at > now() - interval '1 day'),
-    'per_reward', 5, 'max_per_listing', 3, 'max_per_day', 10
+    'per_reward', 3, 'max_per_listing', 3, 'max_per_day', 10
   )
   where auth.uid() is not null;
 $$;
@@ -120,14 +120,14 @@ begin
      where m.sender_id = new.sender_id
        and m.listing_id is not distinct from new.listing_id;
 
-    -- Five free messages, plus five for each rewarded video watched.
+    -- Five free messages, plus three for each rewarded video watched.
     select count(*)::integer
       into reward_count
       from public.message_ad_rewards r
      where r.user_id = new.sender_id
        and r.listing_id is not distinct from new.listing_id;
 
-    if free_messages >= 5 + 5 * coalesce(reward_count, 0) then
+    if free_messages >= 5 + 3 * coalesce(reward_count, 0) then
       raise exception 'free_listing_message_limit_reached'
         using errcode = 'P0001';
     end if;

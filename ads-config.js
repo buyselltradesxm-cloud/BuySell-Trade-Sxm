@@ -99,6 +99,13 @@ window.AdsConfig = {
      * AdMob policy). Shown on a cold start after appOpenMinLoadMs, and when the
      * app comes back to the foreground after appOpenResumeAfterMs in background.
      * Never for Pro members. */
+    /* Rewarded video: "watch a video, send 3 more messages" once the 5 free
+     * messages for a listing are used. Empty = feature off. Each unit needs the
+     * admob-reward edge function as its server-side verification callback. */
+    rewarded: {
+      android: "",
+      ios: ""
+    },
     appOpen: {
       android: "ca-app-pub-7816106453580174/8292769938", // SXM Android App Open
       ios: "ca-app-pub-7816106453580174/6796030440"      // SXM iOS App Open

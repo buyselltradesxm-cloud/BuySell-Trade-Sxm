@@ -3799,6 +3799,21 @@ function scrollChatToBottom(id){
 
 const pendingMessageInputs = new WeakSet();
 
+// Store apps only: once the 5 free messages for a listing are used, offer a rewarded video (+3 messages).
+// Returns true when the server confirmed the reward; otherwise it has already told the user why.
+async function earnMessagesWithVideo(listingId){
+  const fr = state.lang === "fr";
+  if(!listingId || !window.__BST_REWARD_MESSAGES_READY__?.()){ showToast(t().freeMessageLimit); return false; }
+  if(!confirm(fr ? "Vous avez utilisé vos 5 messages gratuits pour cette annonce. Regarder une courte vidéo pour envoyer 3 messages de plus ?"
+                 : "You've used your 5 free messages for this listing. Watch a short video to send 3 more?")){ showToast(t().freeMessageLimit); return false; }
+  const result = await window.__BST_REWARD_MESSAGES__(listingId, state.user?.id);
+  if(result === "granted") return true;
+  showToast(result === "skipped"
+    ? (fr ? "Vidéo fermée avant la fin : aucun message ajouté." : "Video closed before the end: no messages added.")
+    : (fr ? "Aucune vidéo disponible pour le moment. Réessayez plus tard ou passez à Pro." : "No video available right now. Try again later or upgrade to Pro."));
+  return false;
+}
+
 async function sendConfirmedMessage(input, opts, canClearInput = () => true){
   if(input && pendingMessageInputs.has(input)) return null;
   const userId = state.user?.id;
@@ -3806,8 +3821,12 @@ async function sendConfirmedMessage(input, opts, canClearInput = () => true){
   if(input) pendingMessageInputs.add(input);
   try{
     if(!(window.SB && SB.enabled() && SB.sendMessage) || !opts.recipientId || isBlockedUser(opts.recipientId)) throw new Error("Messaging unavailable");
-    const sent = await SB.sendMessage(opts);
-    if(sent?.error_code === "free_listing_message_limit_reached"){ showToast(t().freeMessageLimit); return null; }
+    let sent = await SB.sendMessage(opts);
+    if(sent?.error_code === "free_listing_message_limit_reached"){
+      if(!(await earnMessagesWithVideo(opts.listingId))) return null;
+      sent = await SB.sendMessage(opts);
+      if(sent?.error_code === "free_listing_message_limit_reached"){ showToast(t().freeMessageLimit); return null; }
+    }
     if(!sent) throw new Error("Message was not saved");
     if(state.user?.id !== userId || authProjectionRevision !== revision) return null;
     // Preserve anything typed while this request was in flight.

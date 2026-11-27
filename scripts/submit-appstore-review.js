@@ -4,7 +4,9 @@
 //   2. attaches the VALID build of VERSION, 3. sets "What's New" on every localization,
 //   4. adds the version to a review submission and submits it.
 // It stops, changing nothing, when another submission is already waiting or in review
-// (a waiting submission is never cancelled) or when the build is not VALID.
+// or when the build is not VALID. Only with APPSTORE_REPLACE_WAITING=true (the owner
+// asked for it) is a submission still WAITING_FOR_REVIEW cancelled and replaced; one
+// already IN_REVIEW is never touched. Cancelling puts the app back at the end of the queue.
 const fs = require('node:fs');
 const path = require('node:path');
 const {appleClient} = require('./configure-testflight-internal');
@@ -24,7 +26,8 @@ function readNotes(version) {
   return {fr, en};
 }
 
-async function submit(api, version, notes, dryRun) {
+async function submit(api, version, notes, dryRun, opts = {}) {
+  const pause = opts.pause || (ms => new Promise(resolve => setTimeout(resolve, ms)));
   if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Invalid version');
   const plan = {version, dryRun, steps: []};
   const builds = await api(`/v1/builds?filter[app]=${APP}&filter[preReleaseVersion.version]=${version}&sort=-uploadedDate&limit=5`);
@@ -35,7 +38,20 @@ async function submit(api, version, notes, dryRun) {
   const subs = await api(`/v1/reviewSubmissions?filter[app]=${APP}&filter[platform]=IOS&limit=20`);
   const busy = subs.data.filter(s => BUSY.includes(s.attributes.state));
   plan.openSubmissions = subs.data.filter(s => s.attributes.state !== 'COMPLETE').map(s => ({id: s.id, state: s.attributes.state}));
-  if (busy.length) throw new Error('Another submission is already ' + busy.map(s => s.attributes.state).join(', ') + ' — nothing changed');
+  const replaceable = opts.replaceWaiting && busy.length && busy.every(s => s.attributes.state === 'WAITING_FOR_REVIEW');
+  if (busy.length && !replaceable) throw new Error('Another submission is already ' + busy.map(s => s.attributes.state).join(', ') + ' — nothing changed');
+  if (replaceable) {
+    plan.steps.push('cancel waiting submission ' + busy.map(s => s.id).join(', '));
+    if (dryRun) { plan.steps.push(`then attach build ${build.attributes.version} of ${version} to the released-from-review version and submit`); return plan; }
+    for (const s of busy) await api(`/v1/reviewSubmissions/${s.id}`, 'PATCH', {data: {type: 'reviewSubmissions', id: s.id, attributes: {canceled: true}}});
+    // Apple releases the version asynchronously; wait until nothing is waiting any more.
+    for (let i = 0; ; i++) {
+      const now = await api(`/v1/apps/${APP}/appStoreVersions?filter[platform]=IOS&limit=50`);
+      if (!now.data.some(v => BUSY.includes(v.attributes.appStoreState))) break;
+      if (i >= 40) throw new Error('Cancelled, but the version is still in review after 2 minutes — run again to finish');
+      await pause(3000);
+    }
+  }
 
   const versions = await api(`/v1/apps/${APP}/appStoreVersions?filter[platform]=IOS&limit=50`);
   plan.versions = versions.data.map(v => ({id: v.id, version: v.attributes.versionString, state: v.attributes.appStoreState}));
@@ -85,7 +101,7 @@ module.exports = {submit, whatsNewFor, readNotes};
 if (require.main === module) {
   const version = process.env.APPSTORE_VERSION || '';
   const dryRun = process.env.APPSTORE_DRY_RUN !== 'false';
-  submit(appleClient(process.env), version, readNotes(version), dryRun).then(plan => {
+  submit(appleClient(process.env), version, readNotes(version), dryRun, {replaceWaiting: process.env.APPSTORE_REPLACE_WAITING === 'true'}).then(plan => {
     fs.writeFileSync('appstore-submit-result.json', JSON.stringify(plan, null, 2) + '\n');
     console.log(JSON.stringify(plan, null, 2));
   }).catch(error => { console.error(error.message); process.exit(1); });

@@ -175,9 +175,20 @@
         }
         writeStarted = true;
         const sent=await SB.sendMessage({listingId:payload.listingId,recipientId:payload.otherId,body,senderName:state.user.name,expectedUserId:user.id});check();
-        if(sent?.error_code) fail("Limite de messages gratuits atteinte. Consultez votre profil.","Free message limit reached. Check your profile.");
+        if(sent?.error_code) {
+          // The native thread offers "watch a video for 3 more messages" on this code when the store app can show one.
+          if(window.__BST_REWARD_MESSAGES_READY__?.() && payload.listingId != null) fail("Vos 5 messages gratuits pour cette annonce sont utilisés. Regardez une courte vidéo pour en envoyer 3 de plus.","Your 5 free messages for this listing are used. Watch a short video to send 3 more.","MESSAGE_LIMIT");
+          fail("Limite de messages gratuits atteinte. Consultez votre profil.","Free message limit reached. Check your profile.");
+        }
         if(!sent?.id) fail("Envoi non confirmé. Actualisez la conversation avant de réessayer.","Send not confirmed. Refresh the conversation before retrying.","UNCERTAIN_WRITE");
         data=message(sent);
+      } else if(action === "reward") {
+        // Only after the user tapped the video button in the native thread.
+        if(!validID(payload.listingId) || typeof window.__BST_REWARD_MESSAGES__ !== "function") fail("Vidéo indisponible.","Video unavailable.");
+        const result = await window.__BST_REWARD_MESSAGES__(payload.listingId, user.id); check();
+        if(result === "skipped") fail("Vidéo fermée avant la fin : aucun message ajouté.","Video closed before the end: no messages added.");
+        if(result !== "granted") fail("Aucune vidéo disponible pour le moment. Réessayez plus tard ou passez à Pro.","No video available right now. Try again later or upgrade to Pro.");
+        data={done:true};
       } else if(action === "block") {
         if(!validUser(payload.otherId) || payload.otherId === user.id || !await SB.blockUser(payload.otherId,payload.name,user.id)) fail("Blocage non confirmé.","Block not confirmed.");
         check();data={done:true};
@@ -193,7 +204,7 @@
     let timer;
     try { return await Promise.race([request(action,payload), new Promise(resolve=>{
       timer=setTimeout(()=>resolve({ok:false,code:["publish","send"].includes(action)?"UNCERTAIN_WRITE":"REQUEST_FAILED",
-        error:text("Délai dépassé. Vérifiez votre profil ou la conversation avant de réessayer.","Request timed out. Check your profile or conversation before retrying.")}),action === "publish"?120000:30000);
+        error:text("Délai dépassé. Vérifiez votre profil ou la conversation avant de réessayer.","Request timed out. Check your profile or conversation before retrying.")}),["publish","reward"].includes(action)?120000:30000);
     })]); } finally { clearTimeout(timer); }
   }};
   if(window.SXMNativeInfo?.nativeWorkflows && window.db) {
