@@ -1,0 +1,11 @@
+FRANÇAIS
+Affichage amélioré sur tous les écrans d'iPhone : les pages s'adaptent mieux à la taille de votre écran.
+Messagerie plus fiable.
+Ouverture de l'application plus fluide.
+Corrections de bugs et amélioration de la stabilité.
+
+ENGLISH
+Improved display on every iPhone screen: pages fit your screen size better.
+More reliable messaging.
+Smoother app start.
+Bug fixes and stability improvements.
