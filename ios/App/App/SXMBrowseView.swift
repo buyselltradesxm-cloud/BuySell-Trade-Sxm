@@ -1050,7 +1050,8 @@ private struct SXMInlineAdBanner: UIViewRepresentable {
         banner.delegate = context.coordinator
         // Only built when model.adsAllowed, which native-admob.js sets from UMP canRequestAds and Pro status;
         // the App target cannot import GoogleUserMessagingPlatform itself (it comes in through the AdMob plugin only).
-        banner.load(Request())
+        // Requested on the next run loop, once SwiftUI has put the banner in the window, not while it is detached.
+        DispatchQueue.main.async { banner.load(Request()) }
         return banner
     }
 
@@ -1084,8 +1085,19 @@ enum SXMAdReport {
     static func bannerFailed(_ error: Error, width: CGFloat) {
         let ns = error as NSError
         let text = "AdMob ios native banner failed: code \(ns.code) " + ns.localizedDescription
-        let message = String(text.prefix(220)) + " (width \(Int(width)))"
-        DispatchQueue.main.async { send(message) }
+        var message = String(text.prefix(160)) + " (width \(Int(width)))"
+        // Which ad sources Google asked and why each one passed (AdMob Network, Magnite, OpenX...).
+        let info = ns.userInfo.values.compactMap { $0 as? ResponseInfo }.first
+        let sources = info?.adNetworkInfoArray ?? []
+        var details: [String] = []
+        for source in sources {
+            let sourceError = source.error as NSError?
+            let reason = sourceError == nil ? "ok" : "code \(sourceError!.code)"
+            details.append(source.adSourceName + " " + reason)
+        }
+        if !details.isEmpty { message += " [" + details.joined(separator: "; ") + "]" }
+        let final = String(message.prefix(480))
+        DispatchQueue.main.async { send(final) }
     }
 
     private static func send(_ message: String) {
